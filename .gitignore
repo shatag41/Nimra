@@ -1,0 +1,21 @@
+# Dependencies
+**/node_modules/
+
+# Next.js build output
+**/nimra-web/.next/
+**/nimra-web/out/
+
+# Expo build output and local config
+**/nimra-mobile/.expo/
+**/nimra-mobile/dist/
+
+# Local env files (contain sensitive API URLs)
+**/.env
+**/.env.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+
+# Operating System Files
+.DS_Store
+Thumbs.db
