@@ -115,63 +115,72 @@ export const mockCMSData: CMSData = {
   }
 };
 
-const getAPIUrl = (): string => {
-  return process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || '';
+// Internal proxy URL - avoids CORS/redirect issues with Google Apps Script
+const getProxyUrl = (): string => {
+  // In browser use relative path; in SSR (server components) use absolute localhost URL
+  if (typeof window !== 'undefined') {
+    return '/api/cms';
+  }
+  // Server-side: use localhost (Next.js dev) or the VERCEL_URL in production
+  const base = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : 'http://localhost:3000';
+  return `${base}/api/cms`;
 };
 
-// Fetch CMS Data
+const hasAppsScriptConfigured = (): boolean => {
+  return !!process.env.NEXT_PUBLIC_APPS_SCRIPT_URL;
+};
+
+// Fetch CMS Data via internal proxy
 export const fetchCMSData = async (): Promise<CMSData> => {
-  const url = getAPIUrl();
-  if (!url) {
-    console.log("No NEXT_PUBLIC_APPS_SCRIPT_URL configured. Using NIMRA offline Mock CMS.");
+  if (!hasAppsScriptConfigured()) {
+    console.log('No NEXT_PUBLIC_APPS_SCRIPT_URL configured. Using NIMRA offline Mock CMS.');
     return mockCMSData;
   }
 
   try {
-    const res = await fetch(url, {
+    const res = await fetch(getProxyUrl(), {
       method: 'GET',
-      next: { revalidate: 300 } // Cache data for 5 minutes (ISR)
+      next: { revalidate: 300 }, // Cache data for 5 minutes (ISR)
     });
-    if (!res.ok) throw new Error("CMS Fetch failed");
+    if (!res.ok) throw new Error(`CMS proxy returned ${res.status}`);
     const data = await res.json();
-    
-    // Ensure formatting is robust
+
+    if (data.error) throw new Error(data.error);
+
+    // Merge with mock data as fallback for missing fields
     return {
       banners: data.banners && data.banners.length > 0 ? data.banners : mockCMSData.banners,
       products: data.products && data.products.length > 0 ? data.products : mockCMSData.products,
       faqs: data.faqs && data.faqs.length > 0 ? data.faqs : mockCMSData.faqs,
-      companyInfo: { ...mockCMSData.companyInfo, ...data.companyInfo }
+      companyInfo: { ...mockCMSData.companyInfo, ...data.companyInfo },
     };
   } catch (err) {
-    console.warn("Error loading CMS from Google Sheet Apps Script. Falling back to mock data.", err);
+    console.warn('Error loading CMS data. Falling back to mock data.', err);
     return mockCMSData;
   }
 };
 
-// Submit Inquiry to Google Sheets
+// Submit Inquiry via internal proxy to Google Sheets
 export const submitInquiry = async (inquiry: InquirySubmission): Promise<{ success: boolean; message: string }> => {
-  const url = getAPIUrl();
-  if (!url) {
-    console.log("No Apps Script URL configured. Mock submitting inquiry:", inquiry);
-    // Simulate API network latency
+  if (!hasAppsScriptConfigured()) {
+    console.log('No Apps Script URL configured. Mock submitting inquiry:', inquiry);
     await new Promise((resolve) => setTimeout(resolve, 800));
-    return { success: true, message: "Inquiry mock-submitted successfully! (Connect Apps Script URL to write to Google Sheets)" };
+    return { success: true, message: 'Inquiry received! (Connect Apps Script URL to save to Google Sheets)' };
   }
 
   try {
-    const res = await fetch(url, {
+    const res = await fetch('/api/cms', {
       method: 'POST',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(inquiry)
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(inquiry),
     });
-    if (!res.ok) throw new Error("Post inquiry failed");
+    if (!res.ok) throw new Error(`Proxy returned ${res.status}`);
     const result = await res.json();
     return result;
   } catch (err) {
-    console.error("Error submitting inquiry:", err);
-    return { success: false, message: "Failed to submit inquiry. Please check your internet connection or try again later." };
+    console.error('Error submitting inquiry:', err);
+    return { success: false, message: 'Failed to submit inquiry. Please try again later.' };
   }
 };
