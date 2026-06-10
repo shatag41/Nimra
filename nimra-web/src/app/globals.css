@@ -11,6 +11,7 @@
   
   --bg-primary: #f8fafc;
   --bg-secondary: #ffffff;
+  --nav-bg: #f1f5f9;
   --text-primary: #0f172a;
   --text-secondary: #475569;
   --border-color: #e2e8f0;
@@ -32,6 +33,7 @@
 [data-theme="dark"] {
   --bg-primary: #0b0f19;
   --bg-secondary: #111827;
+  --nav-bg: #151c2a;
   --text-primary: #f8fafc;
   --text-secondary: #9ca3af;
   --border-color: #1f2937;

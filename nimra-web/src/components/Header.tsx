@@ -140,11 +140,12 @@ export default function Header({ companyInfo }: HeaderProps) {
           display: flex;
           align-items: center;
           transition: all var(--transition-normal);
-          background: transparent;
-          border-bottom: 1px solid transparent;
+          background: var(--nav-bg);
+          border-bottom: 1px solid var(--border-color);
         }
         .header.scrolled {
           height: 70px;
+          background: var(--nav-bg);
           box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
           border-bottom: 1px solid var(--border-color);
         }
