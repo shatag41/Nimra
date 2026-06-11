@@ -1,6 +1,16 @@
 import { NextResponse } from 'next/server';
 
-const APPS_SCRIPT_URL = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || '';
+const APPS_SCRIPT_URL = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || process.env.EXPO_PUBLIC_APPS_SCRIPT_URL || '';
+
+const hasRequiredInquiryFields = (body: Record<string, unknown>) => {
+  const phone = String(body.phone || '').trim();
+  return Boolean(
+    String(body.name || '').trim() &&
+    /^\d{10}$/.test(phone) &&
+    String(body.subject || '').trim() &&
+    String(body.message || '').trim()
+  );
+};
 
 // Proxy GET requests to Google Apps Script (avoids redirect + CORS issues)
 export async function GET() {
@@ -43,6 +53,13 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
+    if (!hasRequiredInquiryFields(body)) {
+      return NextResponse.json(
+        { success: false, message: 'Please fill out all required fields with a valid 10-digit phone number.' },
+        { status: 400 }
+      );
+    }
+
     const res = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       redirect: 'follow',
@@ -56,13 +73,23 @@ export async function POST(req: Request) {
     const text = await res.text();
 
     if (text.trim().startsWith('<')) {
-      return NextResponse.json({ success: false, error: 'Apps Script returned HTML' }, { status: 502 });
+      return NextResponse.json({ success: false, message: 'Google Sheets returned an invalid response.' }, { status: 502 });
     }
 
     const data = JSON.parse(text);
-    return NextResponse.json(data);
+    if (!res.ok || data.success === false) {
+      return NextResponse.json(
+        { success: false, message: data.message || data.error || 'Google Sheets did not save the inquiry.' },
+        { status: 502 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: data.message || 'Inquiry submitted successfully',
+    });
   } catch (err) {
     console.error('Inquiry proxy error:', err);
-    return NextResponse.json({ success: false, error: String(err) }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'Unable to submit inquiry right now.' }, { status: 500 });
   }
 }

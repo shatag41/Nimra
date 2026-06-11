@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { CompanyInfo } from '../../types/cms';
 import { submitInquiry } from '../../utils/api';
@@ -12,15 +12,19 @@ interface ContactClientProps {
 export default function ContactClient({ companyInfo }: ContactClientProps) {
   const searchParams = useSearchParams();
   const [mapTab, setMapTab] = useState<'office' | 'plant'>('office');
+  const product = searchParams.get('product');
+  const subjectParam = searchParams.get('subject');
   
   // Form state
-  const [form, setForm] = useState({
+  const [form, setForm] = useState(() => ({
     name: '',
     email: '',
     phone: '',
-    subject: '',
-    message: '',
-  });
+    subject: product ? subjectParam || `Inquiry for ${product}` : subjectParam || '',
+    message: product
+      ? `Hello, I'd like to check pricing and delivery availability for the ${product}. Please contact me.`
+      : '',
+  }));
 
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({
@@ -28,26 +32,17 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
     message: '',
   });
 
-  // Prefill form from URL query parameters
-  useEffect(() => {
-    const product = searchParams.get('product');
-    const subjectParam = searchParams.get('subject');
-    if (product) {
-      setForm((prev) => ({
-        ...prev,
-        subject: subjectParam || `Inquiry for ${product}`,
-        message: `Hello, I'd like to check pricing and delivery availability for the ${product}. Please contact me.`,
-      }));
-    } else if (subjectParam) {
-      setForm((prev) => ({
-        ...prev,
-        subject: subjectParam,
-      }));
-    }
-  }, [searchParams]);
+  const isPhoneValid = /^\d{10}$/.test(form.phone.trim());
+  const isFormValid = Boolean(
+    form.name.trim() &&
+    isPhoneValid &&
+    form.subject.trim() &&
+    form.message.trim()
+  );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+    const { name } = e.target;
+    const value = name === 'phone' ? e.target.value.replace(/\D/g, '').slice(0, 10) : e.target.value;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -55,10 +50,10 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
     e.preventDefault();
 
     // Basic Validation
-    if (!form.name || !form.phone || !form.message) {
+    if (!isFormValid) {
       setStatus({
         type: 'error',
-        message: 'Please fill out all required fields: Name, Phone, and Message.',
+        message: 'Please fill in all required fields correctly before submitting.',
       });
       return;
     }
@@ -80,7 +75,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
           message: response.message || 'Something went wrong. Please try again.',
         });
       }
-    } catch (err) {
+    } catch {
       setStatus({
         type: 'error',
         message: 'Could not connect to the server. Please check your network.',
@@ -96,7 +91,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
         <div className="container">
           <span className="badge badge-primary">Contact Us</span>
           <h1>Get In Touch With NIMRA</h1>
-          <p>We'd love to hear from you. Reach out for bulk water supplies, dealership opportunities, or quality inquiries.</p>
+          <p>We&apos;d love to hear from you. Reach out for bulk water supplies, dealership opportunities, or quality inquiries.</p>
         </div>
       </section>
 
@@ -243,7 +238,10 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
                       name="phone"
                       value={form.phone}
                       onChange={handleChange}
-                      placeholder="e.g. +91 8888378411"
+                      placeholder="e.g. 8888378411"
+                      inputMode="numeric"
+                      pattern="[0-9]{10}"
+                      maxLength={10}
                       required
                     />
                   </div>
@@ -262,7 +260,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="subject">Subject / Product Interested</label>
+                  <label htmlFor="subject">Subject / Product Interested <span className="req">*</span></label>
                   <input
                     type="text"
                     id="subject"
@@ -270,6 +268,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
                     value={form.subject}
                     onChange={handleChange}
                     placeholder="e.g. Bulk order of 20L jars"
+                    required
                   />
                 </div>
 
@@ -286,7 +285,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
                   ></textarea>
                 </div>
 
-                <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: '100%', marginTop: '1rem' }}>
+                <button type="submit" className="btn btn-primary inquiry-submit" disabled={loading || !isFormValid} style={{ width: '100%', marginTop: '1rem' }}>
                   {loading ? (
                     <>
                       <div className="spinner"></div>
@@ -299,6 +298,11 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
                     </>
                   )}
                 </button>
+                {!isFormValid && !loading && (
+                  <p className="validation-message">
+                    Please fill in all required fields correctly before submitting.
+                  </p>
+                )}
               </form>
             </div>
             
@@ -487,6 +491,26 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
           outline: none;
           border-color: var(--primary-color);
           box-shadow: 0 0 0 3px rgba(0, 162, 153, 0.1);
+        }
+        .inquiry-submit:disabled {
+          background: #d1d5db;
+          border-color: #d1d5db;
+          color: #6b7280;
+          box-shadow: none;
+          cursor: not-allowed;
+          opacity: 1;
+        }
+        .inquiry-submit:disabled:hover {
+          background: #d1d5db;
+          color: #6b7280;
+          transform: none;
+          box-shadow: none;
+        }
+        .validation-message {
+          color: #991b1b;
+          font-size: 0.85rem;
+          line-height: 1.4;
+          margin: -0.5rem 0 0;
         }
         .spinner {
           width: 20px;

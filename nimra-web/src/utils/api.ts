@@ -129,7 +129,7 @@ const getProxyUrl = (): string => {
 };
 
 const hasAppsScriptConfigured = (): boolean => {
-  return !!process.env.NEXT_PUBLIC_APPS_SCRIPT_URL;
+  return Boolean(process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || process.env.EXPO_PUBLIC_APPS_SCRIPT_URL);
 };
 
 // Fetch CMS Data via internal proxy
@@ -164,21 +164,23 @@ export const fetchCMSData = async (): Promise<CMSData> => {
 
 // Submit Inquiry via internal proxy to Google Sheets
 export const submitInquiry = async (inquiry: InquirySubmission): Promise<{ success: boolean; message: string }> => {
-  if (!hasAppsScriptConfigured()) {
-    console.log('No Apps Script URL configured. Mock submitting inquiry:', inquiry);
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    return { success: true, message: 'Inquiry received! (Connect Apps Script URL to save to Google Sheets)' };
-  }
-
   try {
     const res = await fetch('/api/cms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(inquiry),
     });
-    if (!res.ok) throw new Error(`Proxy returned ${res.status}`);
     const result = await res.json();
-    return result;
+    if (!res.ok || !result.success) {
+      return {
+        success: false,
+        message: result.message || result.error || `Failed to submit inquiry. Please try again later.`,
+      };
+    }
+    return {
+      success: true,
+      message: result.message || 'Inquiry submitted successfully!',
+    };
   } catch (err) {
     console.error('Error submitting inquiry:', err);
     return { success: false, message: 'Failed to submit inquiry. Please try again later.' };
