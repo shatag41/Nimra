@@ -3,13 +3,13 @@ import {
   StyleSheet,
   Text,
   View,
-  SafeAreaView,
   TouchableOpacity,
   StatusBar,
   Linking,
   ActivityIndicator,
   Platform
 } from 'react-native';
+import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { COLORS } from './src/styles/theme';
 import { fetchCMSData, mockCMSData } from './src/utils/api';
 import { CMSData } from './src/types/cms';
@@ -115,6 +115,7 @@ export default function App() {
   };
 
   return (
+    <SafeAreaProvider>
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.card }]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={theme.card} />
       
@@ -196,13 +197,13 @@ export default function App() {
         </TouchableOpacity>
       </View>
     </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    paddingTop: Platform.OS === 'android' ? 25 : 0,
   },
   loadingContainer: {
     flex: 1,
