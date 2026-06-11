@@ -34,6 +34,14 @@ export default function InquiryScreen({ isDark, prefillParams, onClearPrefill }:
     message: '',
   });
 
+  const isPhoneValid = /^\d{10}$/.test(form.phone.trim());
+  const isFormValid = Boolean(
+    form.name.trim() &&
+    isPhoneValid &&
+    form.subject.trim() &&
+    form.message.trim()
+  );
+
   // Prefill when redirected from products or other screens
   useEffect(() => {
     if (prefillParams) {
@@ -51,11 +59,17 @@ export default function InquiryScreen({ isDark, prefillParams, onClearPrefill }:
     }
   }, [prefillParams]);
 
+  const handlePhoneChange = (text: string) => {
+    setForm((prev) => ({ ...prev, phone: text.replace(/\D/g, '').slice(0, 10) }));
+  };
+
   const handleSubmit = async () => {
-    if (!form.name || !form.phone || !form.message) {
+    if (!isFormValid) {
       setStatus({
         type: 'error',
-        message: 'Please fill out all required fields: Name, Phone, and Message.',
+        message: isPhoneValid
+          ? 'Please fill in all required fields correctly before submitting.'
+          : 'Phone number must be exactly 10 digits.',
       });
       return;
     }
@@ -137,11 +151,15 @@ export default function InquiryScreen({ isDark, prefillParams, onClearPrefill }:
           <TextInput
             style={[styles.input, { backgroundColor: theme.card, borderColor: theme.border, color: theme.text }]}
             value={form.phone}
-            onChangeText={(text) => setForm((prev) => ({ ...prev, phone: text }))}
-            placeholder="e.g. +91 8888378411"
+            onChangeText={handlePhoneChange}
+            placeholder="e.g. 8888378411"
             placeholderTextColor={theme.textMuted}
-            keyboardType="phone-pad"
+            keyboardType="number-pad"
+            maxLength={10}
           />
+          {form.phone.length > 0 && !isPhoneValid && (
+            <Text style={styles.validationText}>Phone number must be exactly 10 digits.</Text>
+          )}
         </View>
 
         <View style={styles.group}>
@@ -158,7 +176,7 @@ export default function InquiryScreen({ isDark, prefillParams, onClearPrefill }:
         </View>
 
         <View style={styles.group}>
-          <Text style={[styles.label, { color: theme.text }]}>Subject / Product</Text>
+          <Text style={[styles.label, { color: theme.text }]}>Subject / Product *</Text>
           <TextInput
             style={[styles.input, { backgroundColor: theme.card, borderColor: theme.border, color: theme.text }]}
             value={form.subject}
@@ -182,9 +200,12 @@ export default function InquiryScreen({ isDark, prefillParams, onClearPrefill }:
         </View>
 
         <TouchableOpacity 
-          style={[styles.btn, { backgroundColor: COLORS.primary }]}
+          style={[
+            styles.btn,
+            { backgroundColor: isFormValid && !loading ? COLORS.primary : '#d1d5db' },
+          ]}
           onPress={handleSubmit}
-          disabled={loading}
+          disabled={loading || !isFormValid}
         >
           {loading ? (
             <ActivityIndicator size="small" color="white" />
@@ -192,6 +213,9 @@ export default function InquiryScreen({ isDark, prefillParams, onClearPrefill }:
             <Text style={styles.btnText}>Submit Inquiry</Text>
           )}
         </TouchableOpacity>
+        {!isFormValid && !loading && (
+          <Text style={styles.validationText}>Please fill in all required fields correctly before submitting.</Text>
+        )}
       </View>
     </ScrollView>
   );
@@ -224,6 +248,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   errorText: {
+    color: '#ef4444',
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  validationText: {
     color: '#ef4444',
     fontSize: 12,
     lineHeight: 16,

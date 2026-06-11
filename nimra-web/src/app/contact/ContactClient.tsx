@@ -244,6 +244,9 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
                       maxLength={10}
                       required
                     />
+                    {form.phone.length > 0 && !isPhoneValid && (
+                      <p className="field-validation-message">Phone number must be exactly 10 digits.</p>
+                    )}
                   </div>
 
                   <div className="form-group">
@@ -511,6 +514,12 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
           font-size: 0.85rem;
           line-height: 1.4;
           margin: -0.5rem 0 0;
+        }
+        .field-validation-message {
+          color: #991b1b;
+          font-size: 0.8rem;
+          line-height: 1.4;
+          margin: 0;
         }
         .spinner {
           width: 20px;
