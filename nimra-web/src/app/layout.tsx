@@ -74,21 +74,15 @@ export default async function RootLayout({
         />
       </head>
       <body>
-<<<<<<< HEAD
         <StyledJsxRegistry>
-=======
-        <CartProvider>
->>>>>>> 16d7f312f02eb279a224b440d251812d33331741
-          <Header companyInfo={data.companyInfo} />
-          <main style={{ flex: '1', paddingTop: '80px' }}>
-            {children}
-          </main>
-          <Footer companyInfo={data.companyInfo} />
-<<<<<<< HEAD
+          <CartProvider>
+            <Header companyInfo={data.companyInfo} />
+            <main style={{ flex: '1', paddingTop: '80px' }}>
+              {children}
+            </main>
+            <Footer companyInfo={data.companyInfo} />
+          </CartProvider>
         </StyledJsxRegistry>
-=======
-        </CartProvider>
->>>>>>> 16d7f312f02eb279a224b440d251812d33331741
       </body>
     </html>
   );
