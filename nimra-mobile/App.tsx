@@ -7,46 +7,65 @@ import {
   StatusBar,
   Linking,
   ActivityIndicator,
-  Platform
 } from 'react-native';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { COLORS } from './src/styles/theme';
 import { fetchCMSData, mockCMSData } from './src/utils/api';
-import { CMSData } from './src/types/cms';
+import { CMSData, Product } from './src/types/cms';
+import { CartProvider, useCart } from './src/context/CartContext';
 
 // Import Screens
 import HomeScreen from './src/screens/HomeScreen';
 import ProductsScreen from './src/screens/ProductsScreen';
 import InquiryScreen from './src/screens/InquiryScreen';
 import AboutScreen from './src/screens/AboutScreen';
+import ProductDetailScreen from './src/screens/ProductDetailScreen';
+import CartScreen from './src/screens/CartScreen';
+import CheckoutScreen from './src/screens/CheckoutScreen';
+import TrackOrderScreen from './src/screens/TrackOrderScreen';
 
-export default function App() {
+type ScreenName = 'Home' | 'Products' | 'ProductDetail' | 'Cart' | 'Checkout' | 'Track' | 'Inquiry' | 'About';
+
+function AppShell() {
+  const cart = useCart();
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isDark, setIsDark] = useState(false);
-  const [currentTab, setCurrentTab] = useState<string>('Home');
+  const [currentTab, setCurrentTab] = useState<ScreenName>('Home');
   const [cmsData, setCmsData] = useState<CMSData>(mockCMSData);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [prefillParams, setPrefillParams] = useState<{ product?: string; subject?: string } | null>(null);
 
-  // Fetch CMS Data on launch
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const data = await fetchCMSData();
-        setCmsData(data);
-      } catch (err) {
-        console.warn("Failed to load live data, keeping offline mock CMS.", err);
-      } finally {
-        setLoading(false);
-      }
+  const loadData = async (silent = false) => {
+    if (silent) {
+      setIsRefreshing(true);
+    } else {
+      setLoading(true);
     }
+
+    try {
+      const data = await fetchCMSData();
+      setCmsData(data);
+    } catch (err) {
+      console.warn('Failed to load live data, keeping offline mock CMS.', err);
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
     loadData();
   }, []);
 
   const handleNavigate = (tab: string, params?: any) => {
     if (params) {
       setPrefillParams(params);
+      if (params.product) {
+        setSelectedProduct(params.product);
+      }
     }
-    setCurrentTab(tab);
+    setCurrentTab(tab as ScreenName);
   };
 
   const handleCall = () => {
@@ -59,6 +78,16 @@ export default function App() {
     const text = "Hi NIMRA, I'd like to check packaged drinking water prices.";
     Linking.openURL(`https://wa.me/${wpNum}?text=${encodeURIComponent(text)}`).catch((err) => 
       console.error("WhatsApp failed:", err)
+    );
+  };
+
+  const handleOrderWhatsApp = () => {
+    const wpNum = cmsData.companyInfo.WhatsAppNumber || '918888378411';
+    const text = cart.items.length
+      ? `Hi NIMRA, I want to place this order:\n${cart.items.map((item) => `- ${item.name} x ${item.quantity}`).join('\n')}\nTotal: Rs ${Math.round(cart.grandTotal)}`
+      : "Hi NIMRA, I'd like to place an order.";
+    Linking.openURL(`https://wa.me/${wpNum}?text=${encodeURIComponent(text)}`).catch((err) =>
+      console.error('WhatsApp failed:', err)
     );
   };
 
@@ -92,6 +121,40 @@ export default function App() {
             products={cmsData.products}
             isDark={isDark}
             onNavigate={handleNavigate}
+            onAddToCart={cart.addProduct}
+            onRefresh={() => loadData(true)}
+          />
+        );
+      case 'ProductDetail':
+        return (
+          <ProductDetailScreen
+            product={selectedProduct}
+            isDark={isDark}
+            onNavigate={handleNavigate}
+          />
+        );
+      case 'Cart':
+        return (
+          <CartScreen
+            companyInfo={cmsData.companyInfo}
+            isDark={isDark}
+            onNavigate={handleNavigate}
+            onOpenWhatsApp={handleOrderWhatsApp}
+          />
+        );
+      case 'Checkout':
+        return (
+          <CheckoutScreen
+            companyInfo={cmsData.companyInfo}
+            isDark={isDark}
+            onNavigate={handleNavigate}
+          />
+        );
+      case 'Track':
+        return (
+          <TrackOrderScreen
+            isDark={isDark}
+            onNavigate={handleNavigate}
           />
         );
       case 'Inquiry':
@@ -115,7 +178,6 @@ export default function App() {
   };
 
   return (
-    <SafeAreaProvider>
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.card }]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={theme.card} />
       
@@ -133,6 +195,19 @@ export default function App() {
           {/* Quick WhatsApp */}
           <TouchableOpacity style={[styles.headerBtn, { backgroundColor: '#e8fced' }]} onPress={handleWhatsApp}>
             <Text style={styles.headerBtnEmoji}>💬</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.headerBtn, { backgroundColor: '#e0f2fe' }]} onPress={() => handleNavigate('Track')}>
+            <Text style={styles.headerBtnEmoji}>📦</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.headerBtn, { backgroundColor: '#fff7ed', position: 'relative' }]} onPress={() => handleNavigate('Cart')}>
+            <Text style={styles.headerBtnEmoji}>🛒</Text>
+            {cart.totalItems > 0 && (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{cart.totalItems}</Text>
+              </View>
+            )}
           </TouchableOpacity>
 
           {/* Theme Switch */}
@@ -197,6 +272,15 @@ export default function App() {
         </TouchableOpacity>
       </View>
     </SafeAreaView>
+  );
+}
+
+export default function App() {
+  return (
+    <SafeAreaProvider>
+      <CartProvider>
+        <AppShell />
+      </CartProvider>
     </SafeAreaProvider>
   );
 }
@@ -237,17 +321,34 @@ const styles = StyleSheet.create({
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   headerBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerBtnEmoji: {
     fontSize: 14,
+  },
+  cartBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: COLORS.orange,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  cartBadgeText: {
+    color: 'white',
+    fontSize: 9,
+    fontWeight: '800',
   },
   tabBar: {
     position: 'absolute',

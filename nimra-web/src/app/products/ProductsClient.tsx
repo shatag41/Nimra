@@ -3,118 +3,103 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Product } from '../../types/cms';
+import { useCart } from '../../components/CartProvider';
+import { formatCurrency, isOrderable, normalizeCategory } from '../../utils/commerce';
 
 interface ProductsClientProps {
   products: Product[];
 }
 
+const categories = [
+  { id: 'All', name: 'All Products' },
+  { id: 'Packaged Drinking Water', name: 'Packaged Drinking Water' },
+  { id: 'Mineral Water', name: 'Mineral Water' },
+  { id: 'Bulk Water', name: 'Bulk Water' },
+  { id: 'Upcoming RUSH Soda', name: 'RUSH Soda' },
+];
+
 export default function ProductsClient({ products }: ProductsClientProps) {
-  const [activeTab, setActiveTab] = useState<'All' | 'Water' | 'Soda'>('All');
+  const [activeTab, setActiveTab] = useState('All');
+  const [addedId, setAddedId] = useState<string | null>(null);
+  const { addProduct } = useCart();
 
-  const categories = [
-    { id: 'All', name: 'All Products' },
-    { id: 'Water', name: 'Packaged Water' },
-    { id: 'Soda', name: 'RUSH Soda (Coming Soon)' },
-  ];
+  const filteredProducts = products.filter((product) =>
+    activeTab === 'All' ? true : normalizeCategory(product.Category) === activeTab
+  );
 
-  const filteredProducts = products.filter((p) => {
-    if (activeTab === 'All') return true;
-    if (activeTab === 'Water') return p.Category === 'Packaged Water';
-    return false; // Soda is handled separately below
-  });
+  const handleAdd = (product: Product) => {
+    addProduct(product);
+    setAddedId(String(product.ID || product.Name));
+    window.setTimeout(() => setAddedId(null), 1200);
+  };
 
   return (
     <>
       <section className="products-hero">
         <div className="container">
           <span className="badge badge-primary">Products</span>
-          <h1>Hydration for Every Need</h1>
-          <p>Explore our premium range of ISI certified mineral-enriched packaged drinking water, packed in various convenient capacities.</p>
+          <h1>Order NIMRA Water</h1>
+          <p>Choose packaged drinking water, mineral water, bulk jars, and future RUSH Soda products managed directly from Google Sheets.</p>
         </div>
       </section>
 
       <section className="products-catalog-section">
         <div className="container">
-          {/* Category Tabs */}
           <div className="catalog-tabs">
-            {categories.map((cat) => (
+            {categories.map((category) => (
               <button
-                key={cat.id}
-                className={`tab-btn ${activeTab === cat.id ? 'active' : ''}`}
-                onClick={() => setActiveTab(cat.id as any)}
+                key={category.id}
+                className={`tab-btn ${activeTab === category.id ? 'active' : ''}`}
+                onClick={() => setActiveTab(category.id)}
               >
-                {cat.name}
+                {category.name}
               </button>
             ))}
           </div>
 
-          {activeTab === 'Soda' ? (
-            /* Soda Teaser Screen */
-            <div className="soda-teaser-card glass animate-fade-in">
-              <span className="badge badge-orange">Teaser</span>
-              <h2>RUSH Soda Sparkling Range</h2>
-              <p>
-                We are currently establishing our carbonated filling lines at our Daund plant. Our upcoming **RUSH Soda** range will offer extra-fizzy double-filtered club sodas, ideal for dining, social mixers, and absolute refreshment.
-              </p>
-              <div className="soda-teaser-grid">
-                <div className="teaser-item">
-                  <div className="circle-num">1</div>
-                  <h4>Extra Fizz</h4>
-                  <p>Specially carbonated under high pressure for lasting bubbles.</p>
-                </div>
-                <div className="teaser-item">
-                  <div className="circle-num">2</div>
-                  <h4>Pure Water base</h4>
-                  <p>Uses our 10-step dual filtration NIMRA base water.</p>
-                </div>
-                <div className="teaser-item">
-                  <div className="circle-num">3</div>
-                  <h4>Eco-Friendly Pack</h4>
-                  <p>100% recyclable, premium double-walled cans and glass bottles.</p>
-                </div>
-              </div>
-              <Link href="/contact?subject=Rush%20Soda%20Inquiry" className="btn btn-primary" style={{ background: '#f97316', border: 'none', boxShadow: '0 4px 14px rgba(249, 115, 22, 0.3)' }}>
-                Register for Launch News
-              </Link>
-            </div>
-          ) : (
-            /* Water Range Grid */
-            <div className="catalog-grid animate-fade-in">
-              {filteredProducts.map((product) => (
-                <div key={product.ID} className="catalog-card glass">
+          <div className="catalog-grid animate-fade-in">
+            {filteredProducts.map((product) => {
+              const orderable = isOrderable(product);
+              const id = String(product.ID || product.Name);
+              return (
+                <article key={id} className="catalog-card glass">
                   <div className="cat-img-box">
                     <img src={product.ImageUrl} alt={product.Name} />
                   </div>
                   <div className="cat-info-box">
                     <div className="cat-meta">
                       <span className="cat-volume">{product.Volume}</span>
-                      <span className="cat-badge">Water</span>
+                      <span className="cat-badge">{normalizeCategory(product.Category)}</span>
                     </div>
                     <h3>{product.Name}</h3>
                     <p>{product.Description}</p>
+                    {product.Specifications && <p className="specs">{product.Specifications}</p>}
                     <div className="cat-price-row">
                       <div>
-                        <span className="price-lbl">Retail Price</span>
-                        <div className="price-val">₹{product.Price}</div>
+                        <span className="price-lbl">{orderable ? 'Retail Price' : 'Expected Price'}</span>
+                        <div className="price-val">{formatCurrency(Number(product.Price))}</div>
                       </div>
-                      <Link 
-                        href={`/contact?product=${encodeURIComponent(product.Name)}&subject=${encodeURIComponent(`Inquiry for ${product.Name}`)}`} 
-                        className="btn btn-primary btn-sm"
-                      >
-                        Inquire Now
-                      </Link>
+                      {orderable ? (
+                        <button className="btn btn-primary btn-sm" onClick={() => handleAdd(product)}>
+                          {addedId === id ? 'Added' : 'Add to Cart'}
+                        </button>
+                      ) : (
+                        <Link href="/contact?subject=RUSH%20Soda%20Launch" className="btn btn-secondary btn-sm">
+                          Notify Me
+                        </Link>
+                      )}
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                </article>
+              );
+            })}
+          </div>
         </div>
       </section>
 
       <style jsx>{`
         .products-hero {
-          background: linear-gradient(135deg, rgba(0, 162, 153, 0.05) 0%, rgba(15, 23, 42, 0.02) 100%);
+          background: linear-gradient(135deg, rgba(0, 162, 153, 0.06) 0%, rgba(15, 23, 42, 0.02) 100%);
           text-align: center;
           padding: 4rem 0 2rem;
           border-bottom: 1px solid var(--border-color);
@@ -125,7 +110,7 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           margin-bottom: 1rem;
         }
         .products-hero p {
-          max-width: 600px;
+          max-width: 680px;
           margin: 0 auto;
           color: var(--text-secondary);
           font-size: 1.1rem;
@@ -136,41 +121,35 @@ export default function ProductsClient({ products }: ProductsClientProps) {
         .catalog-tabs {
           display: flex;
           justify-content: center;
-          gap: 1.5rem;
-          margin-bottom: 4rem;
+          gap: 1rem;
+          margin-bottom: 3rem;
           flex-wrap: wrap;
         }
         .tab-btn {
-          padding: 0.75rem 2rem;
-          border-radius: 50px;
+          padding: 0.75rem 1.4rem;
+          border-radius: 999px;
           border: 1px solid var(--border-color);
           background: var(--bg-primary);
           color: var(--text-secondary);
           font-family: var(--font-heading);
           font-weight: 600;
-          font-size: 0.95rem;
+          font-size: 0.9rem;
           cursor: pointer;
           transition: all var(--transition-fast);
         }
-        .tab-btn:hover {
-          border-color: var(--primary-color);
-          color: var(--primary-color);
-        }
-        .tab-btn.active {
+        .tab-btn:hover, .tab-btn.active {
           background: var(--primary-color);
           border-color: var(--primary-color);
           color: white;
           box-shadow: 0 4px 12px rgba(0, 162, 153, 0.2);
         }
-
-        /* Catalog Grid */
         .catalog-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
           gap: 2rem;
         }
         .catalog-card {
-          border-radius: 24px;
+          border-radius: 8px;
           padding: 1.5rem;
           display: flex;
           flex-direction: column;
@@ -178,7 +157,7 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           transition: all var(--transition-normal);
         }
         .catalog-card:hover {
-          transform: translateY(-6px);
+          transform: translateY(-4px);
           box-shadow: var(--card-hover-shadow);
         }
         .cat-img-box {
@@ -187,19 +166,20 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           align-items: center;
           justify-content: center;
           margin-bottom: 1.5rem;
-          border-radius: 16px;
+          border-radius: 8px;
           background: var(--bg-primary);
           overflow: hidden;
         }
         .cat-img-box img {
-          max-height: 85%;
-          max-width: 85%;
+          max-height: 86%;
+          max-width: 86%;
           object-fit: contain;
           border-radius: 8px;
-          transition: transform var(--transition-normal);
         }
-        .catalog-card:hover .cat-img-box img {
-          transform: scale(1.05);
+        .cat-info-box {
+          display: flex;
+          flex: 1;
+          flex-direction: column;
         }
         .cat-info-box h3 {
           font-size: 1.35rem;
@@ -209,34 +189,41 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           font-size: 0.9rem;
           color: var(--text-secondary);
           line-height: 1.6;
-          margin-bottom: 2rem;
+          margin-bottom: 1rem;
+        }
+        .specs {
+          padding: 0.75rem;
+          background: var(--bg-primary);
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          font-size: 0.8rem !important;
         }
         .cat-meta {
           display: flex;
           gap: 0.75rem;
           margin-bottom: 0.75rem;
           align-items: center;
+          flex-wrap: wrap;
+        }
+        .cat-volume, .cat-badge {
+          font-size: 0.75rem;
+          font-weight: 700;
+          padding: 0.25rem 0.75rem;
+          border-radius: 999px;
         }
         .cat-volume {
-          font-size: 0.75rem;
-          font-weight: 700;
           color: var(--primary-color);
           background: rgba(0, 162, 153, 0.1);
-          padding: 0.25rem 0.75rem;
-          border-radius: 50px;
         }
         .cat-badge {
-          font-size: 0.75rem;
-          font-weight: 700;
           color: var(--text-secondary);
           background: var(--bg-primary);
-          padding: 0.25rem 0.75rem;
-          border-radius: 50px;
         }
         .cat-price-row {
           display: flex;
           align-items: center;
           justify-content: space-between;
+          gap: 1rem;
           margin-top: auto;
           border-top: 1px solid var(--border-color);
           padding-top: 1.25rem;
@@ -251,77 +238,25 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           font-weight: 800;
           color: var(--text-primary);
         }
-
-        /* Soda Teaser styling */
-        .soda-teaser-card {
-          border-radius: 24px;
-          padding: 4rem;
-          text-align: center;
-          max-width: 800px;
-          margin: 0 auto;
-          box-shadow: var(--card-shadow);
-          border: 1px solid rgba(249, 115, 22, 0.2);
+        button.btn {
+          border: none;
+          cursor: pointer;
         }
-        .soda-teaser-card h2 {
-          font-size: 2.2rem;
-          margin-top: 1rem;
-          margin-bottom: 1.5rem;
-        }
-        .soda-teaser-card p {
-          color: var(--text-secondary);
-          line-height: 1.7;
-          margin-bottom: 3rem;
-        }
-        .soda-teaser-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 2rem;
-          margin-bottom: 3.5rem;
-        }
-        .teaser-item {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-        }
-        .circle-num {
-          width: 50px;
-          height: 50px;
-          border-radius: 50%;
-          background: rgba(249, 115, 22, 0.1);
-          color: #f97316;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 1.25rem;
-          font-weight: 800;
-          margin-bottom: 1rem;
-        }
-        .teaser-item h4 {
-          margin-bottom: 0.5rem;
-          font-size: 1.1rem;
-        }
-        .teaser-item p {
-          font-size: 0.85rem;
-          color: var(--text-secondary);
-          line-height: 1.4;
-          margin-bottom: 0;
-        }
-
         @media (max-width: 1024px) {
           .catalog-grid {
             grid-template-columns: repeat(2, 1fr);
           }
-          .soda-teaser-grid {
-            grid-template-columns: 1fr;
-            gap: 2rem;
-          }
-          .soda-teaser-card {
-            padding: 2.5rem;
-          }
         }
-        @media (max-width: 600px) {
+        @media (max-width: 640px) {
+          .products-hero h1 {
+            font-size: 2.2rem;
+          }
           .catalog-grid {
             grid-template-columns: 1fr;
+          }
+          .cat-price-row {
+            align-items: flex-start;
+            flex-direction: column;
           }
         }
       `}</style>

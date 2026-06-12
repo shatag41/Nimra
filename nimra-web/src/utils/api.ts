@@ -1,4 +1,4 @@
-import { CMSData, InquirySubmission } from '../types/cms';
+import { CMSData, InquirySubmission, OrderRecord, OrderSubmission } from '../types/cms';
 
 // Mock Data representing NIMRA brand details, products, banners, and FAQs
 export const mockCMSData: CMSData = {
@@ -65,12 +65,36 @@ export const mockCMSData: CMSData = {
     },
     {
       ID: 5,
+      Name: "NIMRA 5 Litre Can",
+      Category: "Bulk Water",
+      Volume: "5L",
+      Price: "55.00",
+      Description: "Family-sized purified water can for home kitchens, travel groups, and small gatherings.",
+      ImageUrl: "https://images.unsplash.com/photo-1527109011752-2d34ff6a28d6?auto=format&fit=crop&q=80&w=600",
+      Specifications: "RO purified, mineral balanced, recyclable food-grade pack",
+      Active: true
+    },
+    {
+      ID: 6,
       Name: "NIMRA 20 Litre Dispenser Jar",
-      Category: "Packaged Water",
-      Volume: "20L",
+      Category: "Bulk Water",
+      Volume: "20L Jar",
       Price: "80.00",
       Description: "Eco-friendly bulk jar for continuous hydration at office spaces and household kitchen units.",
       ImageUrl: "https://images.unsplash.com/photo-1589135790587-8d77d70cfd00?auto=format&fit=crop&q=80&w=600",
+      Specifications: "Returnable jar, dispenser compatible, scheduled delivery available",
+      Active: true
+    },
+    {
+      ID: 7,
+      Name: "RUSH Club Soda 500ml",
+      Category: "Upcoming RUSH Soda",
+      Volume: "500ml",
+      Price: "25.00",
+      Description: "Upcoming extra-fizzy RUSH soda made on NIMRA's purified water base.",
+      ImageUrl: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&q=80&w=600",
+      Specifications: "Coming soon, carbonated beverage, launch stock managed from Sheets",
+      StockStatus: "Coming Soon",
       Active: true
     }
   ],
@@ -164,13 +188,15 @@ export const fetchCMSData = async (): Promise<CMSData> => {
 
 // Submit Inquiry via internal proxy to Google Sheets
 export const submitInquiry = async (inquiry: InquirySubmission): Promise<{ success: boolean; message: string }> => {
+  console.log('API Utility: submitInquiry called with payload:', inquiry);
   try {
     const res = await fetch('/api/cms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(inquiry),
+      body: JSON.stringify({ ...inquiry, type: 'inquiry' }),
     });
     const result = await res.json();
+    console.log('API Utility: submitInquiry server response:', result);
     if (!res.ok || !result.success) {
       return {
         success: false,
@@ -182,7 +208,59 @@ export const submitInquiry = async (inquiry: InquirySubmission): Promise<{ succe
       message: result.message || 'Inquiry submitted successfully!',
     };
   } catch (err) {
-    console.error('Error submitting inquiry:', err);
+    console.error('API Utility: Error submitting inquiry:', err);
     return { success: false, message: 'Failed to submit inquiry. Please try again later.' };
+  }
+};
+
+export const submitOrder = async (order: OrderSubmission): Promise<{ success: boolean; message: string; orderId?: string }> => {
+  const payload: OrderSubmission = {
+    ...order,
+    paymentMethod: order.paymentMethod || 'Cash on Delivery',
+    source: order.source || 'Website',
+  };
+
+  console.log('API Utility: submitOrder called. Payload:', payload);
+
+  try {
+    const res = await fetch('/api/cms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const result = await res.json();
+    console.log('API Utility: submitOrder server response:', result);
+    if (!res.ok || !result.success) {
+      return {
+        success: false,
+        message: result.message || result.error || 'Failed to place order. Please try again later.',
+      };
+    }
+    return {
+      success: true,
+      message: 'Order placed successfully',
+      orderId: result.orderId,
+    };
+  } catch (err) {
+    console.error('Error placing order:', err);
+    return { success: false, message: 'Failed to place order. Please try again later.' };
+  }
+};
+
+export const trackOrder = async (
+  orderId: string,
+  mobile: string
+): Promise<{ success: boolean; message?: string; order?: OrderRecord }> => {
+  try {
+    const params = new URLSearchParams({ action: 'trackOrder', orderId, mobile });
+    const res = await fetch(`/api/cms?${params.toString()}`, { method: 'GET' });
+    const result = await res.json();
+    if (!res.ok || !result.success) {
+      return { success: false, message: result.message || result.error || 'Order not found.' };
+    }
+    return { success: true, order: result.order };
+  } catch (err) {
+    console.error('Error tracking order:', err);
+    return { success: false, message: 'Unable to track order right now.' };
   }
 };
