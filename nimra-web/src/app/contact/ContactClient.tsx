@@ -409,6 +409,9 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
           font-size: 0.9rem;
           color: var(--text-secondary);
           cursor: pointer;
+          transition: color var(--transition-fast), background var(--transition-fast);
+        }
+        :global(html.theme-transition) .map-tab-btn {
           transition: all var(--transition-fast);
         }
         .map-tab-btn:hover {
@@ -488,6 +491,10 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
           color: var(--text-primary);
           font-family: var(--font-body);
           font-size: 0.95rem;
+          transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+        }
+        :global(html.theme-transition) input, 
+        :global(html.theme-transition) textarea {
           transition: all var(--transition-fast);
         }
         input:focus, textarea:focus {

@@ -294,6 +294,9 @@ export default function AboutClient({ companyInfo }: AboutClientProps) {
           box-shadow: var(--card-shadow);
           transition: transform var(--transition-fast);
         }
+        :global(html.theme-transition) .timeline-card {
+          transition: transform var(--transition-fast), background-color var(--transition-normal), border-color var(--transition-normal);
+        }
         .timeline-card:hover {
           transform: translateX(5px);
         }

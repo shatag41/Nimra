@@ -410,8 +410,11 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           flex-direction: column;
           align-items: center;
           text-align: center;
-          transition: all var(--transition-normal);
+          transition: transform var(--transition-normal), box-shadow var(--transition-normal);
           box-shadow: var(--card-shadow);
+        }
+        :global(html.theme-transition) .product-preview-card {
+          transition: transform var(--transition-normal), box-shadow var(--transition-normal), background-color var(--transition-normal), border-color var(--transition-normal);
         }
         .product-preview-card:hover {
           transform: translateY(-8px);
@@ -623,7 +626,10 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           border: 1px solid var(--border-color);
           overflow: hidden;
           cursor: pointer;
-          transition: all var(--transition-normal);
+          transition: border-color var(--transition-normal);
+        }
+        :global(html.theme-transition) .faq-item {
+          transition: border-color var(--transition-normal), background-color var(--transition-normal), color var(--transition-normal);
         }
         .faq-item:hover {
           border-color: var(--primary-color);

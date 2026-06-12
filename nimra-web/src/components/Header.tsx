@@ -23,12 +23,20 @@ export default function Header({ companyInfo }: HeaderProps) {
     setTheme(activeTheme);
     document.documentElement.setAttribute('data-theme', activeTheme);
 
+    // Enable CSS transitions after the initial load to prevent visual flashing on page load/refresh
+    const transitionTimeout = setTimeout(() => {
+      document.documentElement.classList.add('theme-transition');
+    }, 150);
+
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
 
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      clearTimeout(transitionTimeout);
+    };
   }, []);
 
   const toggleTheme = () => {

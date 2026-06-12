@@ -1,8 +1,22 @@
 import type { Metadata } from 'next';
+import { Inter, Outfit } from 'next/font/google';
 import './globals.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { fetchCMSData } from '../utils/api';
+import StyledJsxRegistry from './registry';
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+});
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-outfit',
+});
 
 export async function generateMetadata(): Promise<Metadata> {
   const data = await fetchCMSData();
@@ -39,13 +53,33 @@ export default async function RootLayout({
   const data = await fetchCMSData();
 
   return (
-    <html lang="en">
+    <html lang="en" className={`${inter.variable} ${outfit.variable}`} data-scroll-behavior="smooth" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var savedTheme = localStorage.getItem('theme');
+                  if (!savedTheme) {
+                    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                    savedTheme = systemTheme;
+                  }
+                  document.documentElement.setAttribute('data-theme', savedTheme);
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body>
-        <Header companyInfo={data.companyInfo} />
-        <main style={{ flex: '1', paddingTop: '80px' }}>
-          {children}
-        </main>
-        <Footer companyInfo={data.companyInfo} />
+        <StyledJsxRegistry>
+          <Header companyInfo={data.companyInfo} />
+          <main style={{ flex: '1', paddingTop: '80px' }}>
+            {children}
+          </main>
+          <Footer companyInfo={data.companyInfo} />
+        </StyledJsxRegistry>
       </body>
     </html>
   );
