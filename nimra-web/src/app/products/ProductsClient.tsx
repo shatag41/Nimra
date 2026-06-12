@@ -154,7 +154,7 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           display: flex;
           flex-direction: column;
           box-shadow: var(--card-shadow);
-          transition: all var(--transition-normal);
+          transition: color var(--transition-fast), border-color var(--transition-fast), background-color var(--transition-fast), box-shadow var(--transition-fast);
         }
         .catalog-card:hover {
           transform: translateY(-4px);
