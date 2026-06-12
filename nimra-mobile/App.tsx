@@ -25,6 +25,17 @@ import CheckoutScreen from './src/screens/CheckoutScreen';
 import TrackOrderScreen from './src/screens/TrackOrderScreen';
 import AdminPortalScreen from './src/screens/AdminPortalScreen';
 
+// Auth
+import { AuthProvider, useAuth } from './src/context/AuthContext';
+import LoginScreen from './src/screens/auth/LoginScreen';
+import RegisterScreen from './src/screens/auth/RegisterScreen';
+import ForgotPasswordScreen from './src/screens/auth/ForgotPasswordScreen';
+
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+const Stack = createNativeStackNavigator();
+
 type ScreenName = 'Home' | 'Products' | 'ProductDetail' | 'Cart' | 'Checkout' | 'Track' | 'Inquiry' | 'About' | 'AdminPortal';
 
 function AppShell() {
@@ -35,7 +46,10 @@ function AppShell() {
   const [currentTab, setCurrentTab] = useState<ScreenName>('Home');
   const [cmsData, setCmsData] = useState<CMSData>(mockCMSData);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [prefillParams, setPrefillParams] = useState<{ product?: string; subject?: string } | null>(null);
+  
+  const { user, logout } = useAuth();
 
   const loadData = async (silent = false) => {
     if (silent) {
@@ -68,6 +82,15 @@ function AppShell() {
     }
     setCurrentTab(tab as ScreenName);
   };
+
+  // Enforce role-based initial tab
+  useEffect(() => {
+    if (user && user.Role === 'Admin') {
+      setCurrentTab('AdminPortal');
+    } else {
+      setCurrentTab('Home');
+    }
+  }, [user]);
 
   const handleCall = () => {
     const phone = cmsData.companyInfo.Phone || '+918888378411';
@@ -228,13 +251,22 @@ function AppShell() {
             <Text style={styles.headerBtnEmoji}>{isDark ? '☀️' : '🌙'}</Text>
           </TouchableOpacity>
 
-          {/* Admin Lock Button */}
-          <TouchableOpacity 
-            style={[styles.headerBtn, { backgroundColor: '#fee2e2' }]} 
-            onPress={() => handleNavigate('AdminPortal')}
-          >
-            <Text style={styles.headerBtnEmoji}>🔑</Text>
-          </TouchableOpacity>
+          {/* Admin Lock / Logout Button */}
+          {user?.Role === 'Admin' && currentTab !== 'AdminPortal' ? (
+            <TouchableOpacity 
+              style={[styles.headerBtn, { backgroundColor: '#fee2e2' }]} 
+              onPress={() => handleNavigate('AdminPortal')}
+            >
+              <Text style={styles.headerBtnEmoji}>🔑</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity 
+              style={[styles.headerBtn, { backgroundColor: '#fee2e2' }]} 
+              onPress={logout}
+            >
+              <Text style={styles.headerBtnEmoji}>🚪</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
@@ -255,50 +287,82 @@ function AppShell() {
         </View>
       )}
 
-      {/* BOTTOM NAVIGATION BAR */}
-      <View style={[styles.tabBar, { backgroundColor: theme.card, borderTopColor: theme.border }]}>
-        <TouchableOpacity 
-          style={styles.tabItem}
-          onPress={() => handleNavigate('Home')}
-        >
-          <Text style={[styles.tabIcon, { color: currentTab === 'Home' ? COLORS.primary : theme.textMuted }]}>🏠</Text>
-          <Text style={[styles.tabLabel, { color: currentTab === 'Home' ? COLORS.primary : theme.textMuted }]}>Home</Text>
-        </TouchableOpacity>
+      {/* BOTTOM NAVIGATION BAR (Hide for Admin Portal) */}
+      {currentTab !== 'AdminPortal' && (
+        <View style={[styles.tabBar, { backgroundColor: theme.card, borderTopColor: theme.border }]}>
+          <TouchableOpacity 
+            style={styles.tabItem}
+            onPress={() => handleNavigate('Home')}
+          >
+            <Text style={[styles.tabIcon, { color: currentTab === 'Home' ? COLORS.primary : theme.textMuted }]}>🏠</Text>
+            <Text style={[styles.tabLabel, { color: currentTab === 'Home' ? COLORS.primary : theme.textMuted }]}>Home</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={styles.tabItem}
-          onPress={() => handleNavigate('Products')}
-        >
-          <Text style={[styles.tabIcon, { color: currentTab === 'Products' ? COLORS.primary : theme.textMuted }]}>💧</Text>
-          <Text style={[styles.tabLabel, { color: currentTab === 'Products' ? COLORS.primary : theme.textMuted }]}>Products</Text>
-        </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.tabItem}
+            onPress={() => handleNavigate('Products')}
+          >
+            <Text style={[styles.tabIcon, { color: currentTab === 'Products' ? COLORS.primary : theme.textMuted }]}>💧</Text>
+            <Text style={[styles.tabLabel, { color: currentTab === 'Products' ? COLORS.primary : theme.textMuted }]}>Products</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={styles.tabItem}
-          onPress={() => handleNavigate('Inquiry')}
-        >
-          <Text style={[styles.tabIcon, { color: currentTab === 'Inquiry' ? COLORS.primary : theme.textMuted }]}>✉️</Text>
-          <Text style={[styles.tabLabel, { color: currentTab === 'Inquiry' ? COLORS.primary : theme.textMuted }]}>Inquiry</Text>
-        </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.tabItem}
+            onPress={() => handleNavigate('Inquiry')}
+          >
+            <Text style={[styles.tabIcon, { color: currentTab === 'Inquiry' ? COLORS.primary : theme.textMuted }]}>✉️</Text>
+            <Text style={[styles.tabLabel, { color: currentTab === 'Inquiry' ? COLORS.primary : theme.textMuted }]}>Inquiry</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={styles.tabItem}
-          onPress={() => handleNavigate('About')}
-        >
-          <Text style={[styles.tabIcon, { color: currentTab === 'About' ? COLORS.primary : theme.textMuted }]}>ℹ️</Text>
-          <Text style={[styles.tabLabel, { color: currentTab === 'About' ? COLORS.primary : theme.textMuted }]}>About</Text>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity 
+            style={styles.tabItem}
+            onPress={() => handleNavigate('About')}
+          >
+            <Text style={[styles.tabIcon, { color: currentTab === 'About' ? COLORS.primary : theme.textMuted }]}>ℹ️</Text>
+            <Text style={[styles.tabLabel, { color: currentTab === 'About' ? COLORS.primary : theme.textMuted }]}>About</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
+  );
+}
+
+function RootNavigator() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <View style={[styles.loadingContainer, { backgroundColor: COLORS.light.background }]}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
+
+  return (
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {isAuthenticated ? (
+          <Stack.Screen name="AppShell" component={AppShell} />
+        ) : (
+          <>
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+          </>
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 
 export default function App() {
   return (
     <SafeAreaProvider>
-      <CartProvider>
-        <AppShell />
-      </CartProvider>
+      <AuthProvider>
+        <CartProvider>
+          <RootNavigator />
+        </CartProvider>
+      </AuthProvider>
     </SafeAreaProvider>
   );
 }

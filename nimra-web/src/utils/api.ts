@@ -1,4 +1,20 @@
 import { CMSData, InquirySubmission, OrderRecord, OrderSubmission, AdminUser, Notification, Inquiry, Product, Banner, FAQ, CompanyInfo } from '../types/cms';
+import type { User } from '../context/AuthContext';
+
+export type AuthRequest =
+  | { type: 'login'; username: string; password: string }
+  | { type: 'register'; user: { Name: string; Username?: string; Mobile?: string; Password: string; Role?: string } }
+  | { type: 'googleSignIn'; email: string; name: string; role?: string }
+  | { type: 'requestOTP'; email: string }
+  | { type: 'resetPassword'; email: string; otp: string; newPassword: string };
+
+export type AuthResponse = {
+  success: boolean;
+  message?: string;
+  user?: User;
+  orderId?: string;
+  [key: string]: unknown;
+};
 
 // Mock Data representing NIMRA brand details, products, banners, and FAQs
 export const mockCMSData: CMSData = {
@@ -156,6 +172,41 @@ const hasAppsScriptConfigured = (): boolean => {
   return Boolean(process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || process.env.EXPO_PUBLIC_APPS_SCRIPT_URL);
 };
 
+const readJsonResponse = async <T>(res: Response, fallback: T): Promise<T> => {
+  const text = await res.text();
+  const trimmed = text.trim();
+
+  if (!res.ok || !trimmed || trimmed.startsWith('<')) {
+    return fallback;
+  }
+
+  try {
+    return JSON.parse(trimmed) as T;
+  } catch {
+    return fallback;
+  }
+};
+
+// Compatibility wrapper used by auth pages.
+export const sendRequest = async (payload: AuthRequest): Promise<AuthResponse> => {
+  const res = await fetch('/api/cms', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    return {
+      success: false,
+      message: data.message || data.error || 'Request failed.',
+    };
+  }
+
+  return data as AuthResponse;
+};
+
 // Fetch CMS Data via internal proxy
 export const fetchCMSData = async (): Promise<CMSData> => {
   if (!hasAppsScriptConfigured()) {
@@ -268,15 +319,9 @@ export const trackOrder = async (
 // Admin Portal API Methods
 
 export const fetchOrders = async (): Promise<OrderRecord[]> => {
-  try {
-    const res = await fetch('/api/cms?action=getOrders', { method: 'GET', cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch orders');
-    const data = await res.json();
-    return Array.isArray(data) ? data : (data.orders || []);
-  } catch (err) {
-    console.error('Error fetching orders:', err);
-    return [];
-  }
+  const res = await fetch('/api/cms?action=getOrders', { method: 'GET', cache: 'no-store' });
+  const data = await readJsonResponse<{ orders?: OrderRecord[] } | OrderRecord[]>(res, []);
+  return Array.isArray(data) ? data : (data.orders || []);
 };
 
 export const updateOrderStatus = async (orderId: string, status: string): Promise<{ success: boolean; message: string }> => {
@@ -295,27 +340,15 @@ export const updateOrderStatus = async (orderId: string, status: string): Promis
 };
 
 export const fetchInquiries = async (): Promise<Inquiry[]> => {
-  try {
-    const res = await fetch('/api/cms?action=getInquiries', { method: 'GET', cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch inquiries');
-    const data = await res.json();
-    return Array.isArray(data) ? data : (data.inquiries || []);
-  } catch (err) {
-    console.error('Error fetching inquiries:', err);
-    return [];
-  }
+  const res = await fetch('/api/cms?action=getInquiries', { method: 'GET', cache: 'no-store' });
+  const data = await readJsonResponse<{ inquiries?: Inquiry[] } | Inquiry[]>(res, []);
+  return Array.isArray(data) ? data : (data.inquiries || []);
 };
 
 export const fetchUsers = async (): Promise<AdminUser[]> => {
-  try {
-    const res = await fetch('/api/cms?action=getUsers', { method: 'GET', cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch users');
-    const data = await res.json();
-    return Array.isArray(data) ? data : (data.users || []);
-  } catch (err) {
-    console.error('Error fetching users:', err);
-    return [];
-  }
+  const res = await fetch('/api/cms?action=getUsers', { method: 'GET', cache: 'no-store' });
+  const data = await readJsonResponse<{ users?: AdminUser[] } | AdminUser[]>(res, []);
+  return Array.isArray(data) ? data : (data.users || []);
 };
 
 export const saveUser = async (user: Partial<AdminUser>, action: 'create' | 'update' | 'delete'): Promise<{ success: boolean; message: string; ID?: string | number }> => {
@@ -334,15 +367,9 @@ export const saveUser = async (user: Partial<AdminUser>, action: 'create' | 'upd
 };
 
 export const fetchNotifications = async (): Promise<Notification[]> => {
-  try {
-    const res = await fetch('/api/cms?action=getNotifications', { method: 'GET', cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch notifications');
-    const data = await res.json();
-    return Array.isArray(data) ? data : (data.notifications || []);
-  } catch (err) {
-    console.error('Error fetching notifications:', err);
-    return [];
-  }
+  const res = await fetch('/api/cms?action=getNotifications', { method: 'GET', cache: 'no-store' });
+  const data = await readJsonResponse<{ notifications?: Notification[] } | Notification[]>(res, []);
+  return Array.isArray(data) ? data : (data.notifications || []);
 };
 
 export const saveNotification = async (notification: Partial<Notification>, action: 'create' | 'update' | 'delete'): Promise<{ success: boolean; message: string; ID?: string | number }> => {

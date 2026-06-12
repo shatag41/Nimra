@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { CompanyInfo } from '../types/cms';
 import { useCart } from './CartProvider';
+import { useAuth } from '../context/AuthContext';
 
 interface HeaderProps {
   companyInfo: CompanyInfo;
@@ -16,6 +17,7 @@ export default function Header({ companyInfo }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const { totalItems } = useCart();
+  const { user, logout } = useAuth();
 
   // Load theme from localStorage and handle scroll effects
   useEffect(() => {
@@ -48,13 +50,31 @@ export default function Header({ companyInfo }: HeaderProps) {
     document.documentElement.setAttribute('data-theme', newTheme);
   };
 
-  const navLinks = [
-    { name: 'Home', href: '/' },
-    { name: 'Products', href: '/products' },
-    { name: 'Track Order', href: '/track' },
-    { name: 'About Us', href: '/about' },
-    { name: 'Contact Us', href: '/contact' },
-  ];
+  const getNavLinks = () => {
+    if (user?.Role === 'Admin') {
+      return [
+        { name: 'Dashboard', href: '/admin' },
+        { name: 'Products Mgmt', href: '/admin/products' },
+        { name: 'Orders Mgmt', href: '/admin/orders' },
+      ];
+    } else if (user?.Role === 'Customer') {
+      return [
+        { name: 'Home', href: '/' },
+        { name: 'Products', href: '/products' },
+        { name: 'Track Order', href: '/track' },
+        { name: 'About Us', href: '/about' },
+        { name: 'Contact Us', href: '/contact' },
+      ];
+    } else {
+      return [
+        { name: 'Home', href: '/' },
+        { name: 'About Us', href: '/about' },
+        { name: 'Contact Us', href: '/contact' },
+      ];
+    }
+  };
+
+  const navLinks = getNavLinks();
 
   return (
     <>
@@ -97,15 +117,23 @@ export default function Header({ companyInfo }: HeaderProps) {
               )}
             </button>
 
-            {/* Inquiry Trigger CTA */}
-            <Link href="/cart" className="cart-link" aria-label={`Cart with ${totalItems} items`}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
-              <span>{totalItems}</span>
-            </Link>
+            {/* Cart Icon (only for Customers) */}
+            {(!user || user.Role === 'Customer') && (
+              <Link href="/cart" className="cart-link" aria-label={`Cart with ${totalItems} items`}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+                <span>{totalItems}</span>
+              </Link>
+            )}
 
-            <Link href="/checkout" className="btn-cta">
-              Order Now
-            </Link>
+            {user ? (
+              <button onClick={logout} className="btn-cta bg-red-500 hover:bg-red-600 border-none">
+                Logout
+              </button>
+            ) : (
+              <Link href="/login" className="btn-cta">
+                Login
+              </Link>
+            )}
 
             {/* Mobile Menu Button */}
             <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="mobile-menu-btn" aria-label="Toggle Menu">
@@ -132,14 +160,34 @@ export default function Header({ companyInfo }: HeaderProps) {
                   {link.name}
                 </Link>
               ))}
-              <Link
-                href="/cart"
-                className="btn btn-primary"
-                style={{ marginTop: '1.5rem', width: '100%' }}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                View Cart ({totalItems})
-              </Link>
+              {(!user || user.Role === 'Customer') && (
+                <Link
+                  href="/cart"
+                  className="btn btn-primary"
+                  style={{ marginTop: '1.5rem', width: '100%' }}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  View Cart ({totalItems})
+                </Link>
+              )}
+              {user ? (
+                <button
+                  className="btn btn-error"
+                  style={{ marginTop: '0.5rem', width: '100%' }}
+                  onClick={() => { setMobileMenuOpen(false); logout(); }}
+                >
+                  Logout
+                </button>
+              ) : (
+                <Link
+                  href="/login"
+                  className="btn btn-primary"
+                  style={{ marginTop: '0.5rem', width: '100%' }}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Login
+                </Link>
+              )}
             </nav>
           </div>
         )}

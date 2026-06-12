@@ -1,22 +1,11 @@
 import type { Metadata } from 'next';
-import { Inter, Outfit } from 'next/font/google';
+import { AuthProvider } from '../context/AuthContext';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import './globals.css';
 import LayoutWrapper from '../components/LayoutWrapper';
 import { CartProvider } from '../components/CartProvider';
 import { fetchCMSData } from '../utils/api';
 import StyledJsxRegistry from './registry';
-
-const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-inter',
-});
-
-const outfit = Outfit({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-outfit',
-});
 
 export async function generateMetadata(): Promise<Metadata> {
   const data = await fetchCMSData();
@@ -53,7 +42,7 @@ export default async function RootLayout({
   const data = await fetchCMSData();
 
   return (
-    <html lang="en" className={`${inter.variable} ${outfit.variable}`} data-scroll-behavior="smooth" suppressHydrationWarning>
+    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -73,13 +62,17 @@ export default async function RootLayout({
         />
       </head>
       <body>
-        <StyledJsxRegistry>
-          <CartProvider>
-            <LayoutWrapper companyInfo={data.companyInfo}>
-              {children}
-            </LayoutWrapper>
-          </CartProvider>
-        </StyledJsxRegistry>
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'dummy_client_id'}>
+          <AuthProvider>
+            <StyledJsxRegistry>
+              <CartProvider>
+                <LayoutWrapper companyInfo={data.companyInfo}>
+                  {children}
+                </LayoutWrapper>
+              </CartProvider>
+            </StyledJsxRegistry>
+          </AuthProvider>
+        </GoogleOAuthProvider>
       </body>
     </html>
   );

@@ -326,6 +326,44 @@
   ],
   "users": [
     {
+      "ID": 5,
+      "Name": "john",
+      "Username": "john@gmail.com",
+      "Mobile": "9768532676",
+      "Password": "john",
+      "Role": "Customer",
+      "Active": true
+    },
+    {
+      "ID": 4,
+      "Name": "Shata G",
+      "Username": "shatagg41@gmail.com",
+      "Mobile": "9875444367",
+      "Password": "shata",
+      "Role": "Customer",
+      "Active": true
+    },
+    {
+      "ID": 3,
+      "Name": "Shata G",
+      "Username": "rafeyyshaikhh@gmail.com",
+      "Mobile": "7387299044",
+      "Password": "shats",
+      "Role": "Customer",
+      "Active": true
+    },
+    {
+      "ID": 2,
+      "Name": "Shata G",
+      "Username": "shatag41@gmail.com",
+      "Mobile": "",
+      "Password": "",
+      "Role": "Customer",
+      "Active": true,
+      "ResetOTP": "123456",
+      "ResetOTPExpiresAt": "2026-06-12T20:54:40.050Z"
+    },
+    {
       "ID": 1,
       "Username": "admin",
       "Password": "nimraadmin123",

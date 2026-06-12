@@ -35,6 +35,20 @@ async function writeLocalDb(data: any) {
   }
 }
 
+function safeUser(user: any) {
+  if (!user) return null;
+  const { Password, ResetOTP, ResetOTPExpiresAt, ...rest } = user;
+  return rest;
+}
+
+function normalizeEmail(value?: string) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function normalizeMobile(value?: string) {
+  return String(value || '').replace(/\D/g, '');
+}
+
 // Proxy GET requests to Google Apps Script or fall back to local JSON
 export async function GET(req: Request) {
   const requestUrl = new URL(req.url);
@@ -297,6 +311,139 @@ export async function POST(req: Request) {
       db.companyInfo = payload.companyInfo;
       await writeLocalDb(db);
       return NextResponse.json({ success: true, message: 'Company Info updated successfully (Local Database)' });
+
+    } else if (payload.type === 'login') {
+      const username = String(payload.username || '').trim().toLowerCase();
+      const password = String(payload.password || '');
+      const user = (db.users || []).find((u: any) => {
+        const active = u.Active === true || u.Active === 'true' || u.Active === undefined;
+        const matchesUsername = normalizeEmail(u.Username) === username || normalizeMobile(u.Mobile) === normalizeMobile(username);
+        return active && matchesUsername && String(u.Password || '') === password;
+      });
+
+      if (!user) {
+        return NextResponse.json({ success: false, message: 'Invalid username/mobile or password.' }, { status: 401 });
+      }
+
+      return NextResponse.json({ success: true, user: safeUser(user) });
+
+    } else if (payload.type === 'register') {
+      const incomingUser = payload.user || {};
+      const name = String(incomingUser.Name || '').trim();
+      const username = normalizeEmail(incomingUser.Username);
+      const mobile = normalizeMobile(incomingUser.Mobile);
+      const password = String(incomingUser.Password || '');
+      const role = incomingUser.Role || 'Customer';
+
+      if (!name || !password || (!username && !mobile)) {
+        return NextResponse.json(
+          { success: false, message: 'Name, password, and either email or mobile are required.' },
+          { status: 400 }
+        );
+      }
+
+      const duplicate = (db.users || []).find((u: any) =>
+        (username && normalizeEmail(u.Username) === username) ||
+        (mobile && normalizeMobile(u.Mobile) === mobile)
+      );
+
+      if (duplicate) {
+        return NextResponse.json(
+          { success: false, message: 'An account with this email or mobile already exists.' },
+          { status: 409 }
+        );
+      }
+
+      const maxId = db.users.reduce((max: number, u: any) => Number(u.ID) > max ? Number(u.ID) : max, 0);
+      const newUser = {
+        ID: maxId + 1,
+        Name: name,
+        Username: username || mobile,
+        Mobile: mobile,
+        Password: password,
+        Role: role,
+        Active: true,
+      };
+
+      db.users.unshift(newUser);
+      await writeLocalDb(db);
+      return NextResponse.json({ success: true, user: safeUser(newUser), message: 'Registration successful.' });
+
+    } else if (payload.type === 'googleSignIn') {
+      const email = normalizeEmail(payload.email);
+      const name = String(payload.name || '').trim() || 'Google User';
+      const role = payload.role || 'Customer';
+
+      if (!email) {
+        return NextResponse.json({ success: false, message: 'Google account email is required.' }, { status: 400 });
+      }
+
+      let user = (db.users || []).find((u: any) => normalizeEmail(u.Username) === email);
+      if (user) {
+        user.Name = user.Name || name;
+        user.Role = user.Role || role;
+        user.Active = user.Active !== false && user.Active !== 'false';
+      } else {
+        const maxId = db.users.reduce((max: number, u: any) => Number(u.ID) > max ? Number(u.ID) : max, 0);
+        user = {
+          ID: maxId + 1,
+          Name: name,
+          Username: email,
+          Mobile: '',
+          Password: '',
+          Role: role,
+          Active: true,
+        };
+        db.users.unshift(user);
+      }
+
+      await writeLocalDb(db);
+      return NextResponse.json({ success: true, user: safeUser(user), message: 'Google sign-in successful.' });
+
+    } else if (payload.type === 'requestOTP') {
+      const email = normalizeEmail(payload.email);
+      const user = (db.users || []).find((u: any) => normalizeEmail(u.Username) === email);
+      if (!user) {
+        return NextResponse.json({ success: false, message: 'No account found for this email.' }, { status: 404 });
+      }
+
+      const otp = '123456';
+      user.ResetOTP = otp;
+      user.ResetOTPExpiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+      await writeLocalDb(db);
+
+      return NextResponse.json({
+        success: true,
+        message: 'OTP generated successfully. Use 123456 in local development.',
+      });
+
+    } else if (payload.type === 'resetPassword') {
+      const email = normalizeEmail(payload.email);
+      const otp = String(payload.otp || '').trim();
+      const newPassword = String(payload.newPassword || '');
+      const user = (db.users || []).find((u: any) => normalizeEmail(u.Username) === email);
+
+      if (!user) {
+        return NextResponse.json({ success: false, message: 'No account found for this email.' }, { status: 404 });
+      }
+
+      const isOtpValid = String(user.ResetOTP || '') === otp;
+      const isOtpFresh = !user.ResetOTPExpiresAt || new Date(user.ResetOTPExpiresAt).getTime() >= Date.now();
+
+      if (!isOtpValid || !isOtpFresh) {
+        return NextResponse.json({ success: false, message: 'Invalid or expired OTP.' }, { status: 400 });
+      }
+
+      if (!newPassword) {
+        return NextResponse.json({ success: false, message: 'New password is required.' }, { status: 400 });
+      }
+
+      user.Password = newPassword;
+      delete user.ResetOTP;
+      delete user.ResetOTPExpiresAt;
+      await writeLocalDb(db);
+
+      return NextResponse.json({ success: true, message: 'Password reset successfully.' });
 
     } else if (payload.type === 'userCRUD') {
       const action = payload.action;

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Cookies from 'js-cookie';
 import {
   CMSData,
   OrderRecord,
@@ -86,12 +87,37 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
   // Check auth on mount
   useEffect(() => {
     const session = localStorage.getItem('nimra_admin_user');
-    if (!session) {
-      router.push('/admin/login');
-    } else {
-      setCurrentUser(JSON.parse(session));
-      setAuthChecked(true);
+    if (session) {
+      try {
+        setCurrentUser(JSON.parse(session));
+        setAuthChecked(true);
+        return;
+      } catch {
+        localStorage.removeItem('nimra_admin_user');
+      }
     }
+
+    const appSession = Cookies.get('nimra_user');
+    if (appSession) {
+      try {
+        const user = JSON.parse(appSession);
+        if (user?.Role === 'Admin') {
+          const adminSession = {
+            username: user.Username,
+            role: user.Role,
+            name: user.Name,
+          };
+          localStorage.setItem('nimra_admin_user', JSON.stringify(adminSession));
+          setCurrentUser(adminSession);
+          setAuthChecked(true);
+          return;
+        }
+      } catch {
+        Cookies.remove('nimra_user');
+      }
+    }
+
+    router.replace('/admin/login');
   }, [router]);
 
   // Load all dashboard databases
@@ -128,7 +154,8 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
 
   const handleLogout = () => {
     localStorage.removeItem('nimra_admin_user');
-    router.push('/admin/login');
+    Cookies.remove('nimra_user');
+    router.replace('/admin/login');
   };
 
   // Dashboard Stats Calculations

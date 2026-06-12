@@ -1,0 +1,164 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { useGoogleLogin } from '@react-oauth/google';
+import Link from 'next/link';
+import { sendRequest } from '../../utils/api';
+
+export default function LoginPage() {
+  const { login } = useAuth();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const res = await sendRequest({ type: 'login', username, password });
+      if (res.success && res.user) {
+        login(res.user);
+      } else {
+        setError(res.message ?? 'Login failed. Please try again.');
+      }
+    } catch {
+      setError('Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (accessToken: string) => {
+    try {
+      setError('');
+      const profileRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (!profileRes.ok) {
+        throw new Error('Failed to load Google profile.');
+      }
+
+      const payload = await profileRes.json();
+
+      const res = await sendRequest({ 
+        type: 'googleSignIn', 
+        email: payload.email, 
+        name: payload.name 
+      });
+
+      if (res.success && res.user) {
+        login(res.user);
+      } else {
+        setError(res.message ?? 'Google Sign-In failed.');
+      }
+    } catch {
+      setError('Google Sign-In failed.');
+    }
+  };
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: (tokenResponse) => handleGoogleSuccess(tokenResponse.access_token),
+    onError: () => setError('Google Sign-In failed'),
+  });
+
+  return (
+    <section className="auth-page">
+      <div className="auth-shell glass">
+        <aside className="auth-brand-panel">
+          <div className="auth-brand-content">
+            <div className="auth-logo">
+              <svg width="36" height="36" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M50 5C50 5 15 45 15 65C15 84.33 30.67 100 50 100C69.33 100 85 84.33 85 65C85 45 50 5 50 5Z" fill="url(#loginWaterGrad)"/>
+                <path d="M43 75C37 75 32 70 32 64C32 63.45 32.45 63 33 63C33.55 63 34 63.45 34 64C34 68.97 38.03 73 43 73C43.55 73 44 73.45 44 74C44 74.55 43.55 75 43 75Z" fill="white" fillOpacity="0.6"/>
+                <defs>
+                  <linearGradient id="loginWaterGrad" x1="50" y1="5" x2="50" y2="100" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#00E5FF"/>
+                    <stop offset="1" stopColor="#00a299"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+              <span>NIMRA</span>
+            </div>
+            <h1>Pure hydration, delivered with trust.</h1>
+            <p>Sign in to manage your orders, track deliveries, and place inquiries for NIMRA packaged drinking water.</p>
+            <div className="auth-highlights">
+              <div className="auth-highlight"><strong>10-step</strong><span>purification care</span></div>
+              <div className="auth-highlight"><strong>Pune</strong><span>local supply network</span></div>
+              <div className="auth-highlight"><strong>Secure</strong><span>customer access</span></div>
+            </div>
+          </div>
+          <div className="auth-brand-footer">T.S. Enterprises packaged drinking water portal</div>
+        </aside>
+
+        <div className="auth-card">
+          <div className="auth-card-header">
+            <span className="auth-kicker">Customer Access</span>
+            <h2>Login to NIMRA</h2>
+            <p>Use your registered email or mobile number to continue.</p>
+          </div>
+
+          <form className="auth-form" onSubmit={handleSubmit}>
+            {error && <div className="auth-alert error">{error}</div>}
+
+          <div className="auth-field">
+            <label htmlFor="username">Email or Mobile</label>
+            <input 
+              id="username"
+              type="text" 
+              placeholder="email or 10-digit mobile" 
+              className="auth-input" 
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required 
+            />
+          </div>
+          
+          <div className="auth-field">
+            <div className="auth-field-row">
+              <label htmlFor="password">Password</label>
+              <Link href="/forgot-password" className="auth-link">Forgot password?</Link>
+            </div>
+            <input 
+              id="password"
+              type="password" 
+              placeholder="password" 
+              className="auth-input" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required 
+            />
+          </div>
+          
+          <div>
+            <button className="btn btn-primary auth-submit" type="submit" disabled={isLoading}>
+              {isLoading ? 'Logging in...' : 'Login'}
+            </button>
+          </div>
+
+          <div className="auth-divider">OR</div>
+
+          <div className="auth-google">
+             <button
+                type="button"
+                className="auth-google-button"
+                onClick={() => googleLogin()}
+                disabled={isLoading}
+             >
+                Continue with Google
+             </button>
+          </div>
+
+          <div className="auth-footer-link">
+            Don&apos;t have an account? <Link href="/register" className="auth-link">Register</Link>
+          </div>
+        </form>
+      </div>
+      </div>
+    </section>
+  );
+}

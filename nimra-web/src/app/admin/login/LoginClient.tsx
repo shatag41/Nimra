@@ -2,6 +2,7 @@
 
 import React, { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Cookies from 'js-cookie';
 import { fetchUsers } from '../../../utils/api';
 import { AdminUser } from '../../../types/cms';
 
@@ -16,7 +17,26 @@ export default function LoginClient() {
   useEffect(() => {
     const session = localStorage.getItem('nimra_admin_user');
     if (session) {
-      router.push('/admin');
+      try {
+        const adminSession = JSON.parse(session);
+        if (!Cookies.get('nimra_user')) {
+          Cookies.set(
+            'nimra_user',
+            JSON.stringify({
+              ID: 0,
+              Name: adminSession.name,
+              Username: adminSession.username,
+              Mobile: '',
+              Role: adminSession.role,
+              Active: true,
+            }),
+            { expires: 7 }
+          );
+        }
+        router.replace('/admin');
+      } catch {
+        localStorage.removeItem('nimra_admin_user');
+      }
     }
   }, [router]);
 
@@ -35,7 +55,16 @@ export default function LoginClient() {
       );
 
       if (matchedUser) {
+        const userSession = {
+          ID: matchedUser.ID,
+          Name: matchedUser.Name,
+          Username: matchedUser.Username,
+          Mobile: '',
+          Role: matchedUser.Role,
+          Active: true,
+        };
         // Save user session
+        Cookies.set('nimra_user', JSON.stringify(userSession), { expires: 7 });
         localStorage.setItem(
           'nimra_admin_user',
           JSON.stringify({
@@ -44,7 +73,7 @@ export default function LoginClient() {
             name: matchedUser.Name,
           })
         );
-        router.push('/admin');
+        router.replace('/admin');
       } else {
         setError('Invalid username or password. Please try again.');
       }

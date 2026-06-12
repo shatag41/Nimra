@@ -77,6 +77,21 @@ function doPost(e) {
     } else if (params.type === 'notificationCRUD') {
       Logger.log("doPost: Routing to notificationCRUD()");
       return jsonResponse(handleNotificationCRUD(spreadsheet, params));
+    } else if (params.type === 'login') {
+      Logger.log("doPost: Routing to handleAuthLogin()");
+      return jsonResponse(handleAuthLogin(spreadsheet, params));
+    } else if (params.type === 'register') {
+      Logger.log("doPost: Routing to handleAuthRegister()");
+      return jsonResponse(handleAuthRegister(spreadsheet, params));
+    } else if (params.type === 'googleSignIn') {
+      Logger.log("doPost: Routing to handleAuthGoogleSignIn()");
+      return jsonResponse(handleAuthGoogleSignIn(spreadsheet, params));
+    } else if (params.type === 'requestOTP') {
+      Logger.log("doPost: Routing to handleAuthRequestOTP()");
+      return jsonResponse(handleAuthRequestOTP(spreadsheet, params));
+    } else if (params.type === 'resetPassword') {
+      Logger.log("doPost: Routing to handleAuthResetPassword()");
+      return jsonResponse(handleAuthResetPassword(spreadsheet, params));
     } else {
       // Fallback structural check to identify request type
       if (params.customer && params.items) {
@@ -715,4 +730,227 @@ function handleNotificationCRUD(spreadsheet, params) {
 function jsonResponse(data) {
   return ContentService.createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+// --- AUTHENTICATION FUNCTIONS ---
+
+function hashPassword(password) {
+  // Simple hashing for demonstration purposes. In a real scenario, use an external API or more robust mechanism if possible, 
+  // as Apps Script doesn't have a built-in bcrypt.
+  var signature = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, password);
+  var hexString = '';
+  for (var i = 0; i < signature.length; i++) {
+    var byte = signature[i];
+    if (byte < 0) byte += 256;
+    var hex = byte.toString(16);
+    if (hex.length == 1) hex = '0' + hex;
+    hexString += hex;
+  }
+  return hexString;
+}
+
+function handleAuthLogin(spreadsheet, params) {
+  var username = String(params.username || '').trim(); // Can be email or mobile
+  var password = String(params.password || '').trim();
+  
+  if (!username || !password) {
+    return { success: false, message: 'Username and password are required.' };
+  }
+
+  var users = getUsersData(spreadsheet);
+  var hashedPassword = hashPassword(password);
+  
+  for (var i = 0; i < users.length; i++) {
+    var user = users[i];
+    if ((String(user.Username).trim() === username || String(user.Mobile).trim() === username) && user.Password === hashedPassword) {
+      if (!user.Active) {
+        return { success: false, message: 'Your account is inactive. Please contact support.' };
+      }
+      
+      // Update Last Login
+      updateUserLastLogin(spreadsheet, user.ID);
+      
+      // Remove password from response
+      var safeUser = Object.assign({}, user);
+      delete safeUser.Password;
+      
+      return { success: true, message: 'Login successful', user: safeUser };
+    }
+  }
+  
+  return { success: false, message: 'Invalid username or password.' };
+}
+
+function handleAuthRegister(spreadsheet, params) {
+  var user = params.user || {};
+  var name = String(user.Name || '').trim();
+  var mobile = String(user.Mobile || '').trim();
+  var email = String(user.Username || '').trim();
+  var password = String(user.Password || '').trim();
+  var role = String(user.Role || 'Customer').trim();
+  
+  if (!name || !password || (!mobile && !email)) {
+    return { success: false, message: 'Name, password, and at least one contact method (email/mobile) are required.' };
+  }
+
+  var users = getUsersData(spreadsheet);
+  
+  // Check duplicates
+  for (var i = 0; i < users.length; i++) {
+    var u = users[i];
+    if (email && String(u.Username).trim() === email) {
+      return { success: false, message: 'Email already registered.' };
+    }
+    if (mobile && String(u.Mobile).trim() === mobile) {
+      return { success: false, message: 'Mobile number already registered.' };
+    }
+  }
+  
+  // Create user
+  var newUser = {
+    Name: name,
+    Username: email,
+    Mobile: mobile,
+    Password: hashPassword(password),
+    Role: role,
+    Active: true
+  };
+  
+  var result = handleUserCRUD(spreadsheet, { action: 'create', user: newUser });
+  if (result.success) {
+    newUser.ID = result.ID;
+    delete newUser.Password;
+    return { success: true, message: 'Registration successful', user: newUser };
+  }
+  return result;
+}
+
+function handleAuthGoogleSignIn(spreadsheet, params) {
+  var email = String(params.email || '').trim();
+  var name = String(params.name || '').trim();
+  var role = String(params.role || 'Customer').trim(); // Default role for new users
+  
+  if (!email) {
+    return { success: false, message: 'Email is required for Google Sign-In.' };
+  }
+
+  var users = getUsersData(spreadsheet);
+  
+  for (var i = 0; i < users.length; i++) {
+    var u = users[i];
+    if (String(u.Username).trim() === email) {
+      if (!u.Active) {
+        return { success: false, message: 'Your account is inactive. Please contact support.' };
+      }
+      updateUserLastLogin(spreadsheet, u.ID);
+      var safeUser = Object.assign({}, u);
+      delete safeUser.Password;
+      return { success: true, message: 'Login successful', user: safeUser };
+    }
+  }
+  
+  // Create new user if not found
+  // Use a random strong password for google sign in users so they can't login via normal method unless they reset password
+  var randomPass = Utilities.getUuid();
+  var newUser = {
+    Name: name,
+    Username: email,
+    Mobile: '',
+    Password: hashPassword(randomPass),
+    Role: role,
+    Active: true
+  };
+  
+  var result = handleUserCRUD(spreadsheet, { action: 'create', user: newUser });
+  if (result.success) {
+    newUser.ID = result.ID;
+    delete newUser.Password;
+    return { success: true, message: 'Registration successful', user: newUser };
+  }
+  return result;
+}
+
+function handleAuthRequestOTP(spreadsheet, params) {
+  var email = String(params.email || '').trim();
+  if (!email) return { success: false, message: 'Email is required.' };
+  
+  var users = getUsersData(spreadsheet);
+  var userFound = false;
+  for (var i = 0; i < users.length; i++) {
+    if (String(users[i].Username).trim() === email) {
+      userFound = true;
+      break;
+    }
+  }
+  
+  if (!userFound) return { success: false, message: 'Email not found.' };
+  
+  var otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit OTP
+  
+  // Store OTP in a new sheet or cache. For simplicity, use CacheService
+  var cache = CacheService.getScriptCache();
+  cache.put('otp_' + email, otp, 600); // Valid for 10 minutes
+  
+  try {
+    MailApp.sendEmail({
+      to: email,
+      subject: "NIMRA Password Reset OTP",
+      body: "Your OTP for password reset is: " + otp + "\nThis OTP is valid for 10 minutes."
+    });
+    return { success: true, message: 'OTP sent to email.' };
+  } catch (e) {
+    return { success: false, message: 'Failed to send email. Please try again later.' };
+  }
+}
+
+function handleAuthResetPassword(spreadsheet, params) {
+  var email = String(params.email || '').trim();
+  var otp = String(params.otp || '').trim();
+  var newPassword = String(params.newPassword || '').trim();
+  
+  if (!email || !otp || !newPassword) {
+    return { success: false, message: 'Email, OTP, and new password are required.' };
+  }
+  
+  var cache = CacheService.getScriptCache();
+  var cachedOtp = cache.get('otp_' + email);
+  
+  if (!cachedOtp || cachedOtp !== otp) {
+    return { success: false, message: 'Invalid or expired OTP.' };
+  }
+  
+  var sheet = spreadsheet.getSheetByName('Users');
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var idIndex = headers.indexOf('User ID') !== -1 ? headers.indexOf('User ID') : headers.indexOf('ID');
+  var emailIndex = headers.indexOf('Email') !== -1 ? headers.indexOf('Email') : headers.indexOf('Username');
+  var passIndex = headers.indexOf('Password (hashed)') !== -1 ? headers.indexOf('Password (hashed)') : headers.indexOf('Password');
+  
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][emailIndex]).trim() === email) {
+      sheet.getRange(i + 1, passIndex + 1).setValue(hashPassword(newPassword));
+      cache.remove('otp_' + email);
+      return { success: true, message: 'Password reset successfully.' };
+    }
+  }
+  
+  return { success: false, message: 'User not found.' };
+}
+
+function updateUserLastLogin(spreadsheet, userId) {
+  var sheet = spreadsheet.getSheetByName('Users');
+  if (!sheet) return;
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var idIndex = headers.indexOf('User ID') !== -1 ? headers.indexOf('User ID') : headers.indexOf('ID');
+  var lastLoginIndex = headers.indexOf('Last Login');
+  
+  if (lastLoginIndex === -1) return; // Ignore if column doesn't exist
+  
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idIndex]).trim() === String(userId).trim()) {
+      sheet.getRange(i + 1, lastLoginIndex + 1).setValue(new Date().toISOString());
+      break;
+    }
+  }
 }
