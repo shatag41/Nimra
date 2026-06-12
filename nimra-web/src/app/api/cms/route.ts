@@ -1,86 +1,132 @@
 import { NextResponse } from 'next/server';
+import fs from 'fs/promises';
+import path from 'path';
 
 const APPS_SCRIPT_URL = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || process.env.EXPO_PUBLIC_APPS_SCRIPT_URL || '';
+const DB_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'db.json');
 
-const hasRequiredInquiryFields = (body: Record<string, unknown>) => {
-  const phone = String(body.phone || '').trim();
-  return Boolean(
-    String(body.name || '').trim() &&
-    /^\d{10}$/.test(phone) &&
-    String(body.subject || '').trim() &&
-    String(body.message || '').trim()
-  );
-};
-
-const hasRequiredOrderFields = (body: Record<string, unknown>) => {
-  const customer = body.customer as Record<string, unknown> | undefined;
-  const mobile = String(customer?.mobile || '').trim();
-  const pincode = String(customer?.pincode || '').trim();
-  return Boolean(
-    body.type === 'order' &&
-    customer &&
-    String(customer.name || '').trim() &&
-    /^\d{10}$/.test(mobile) &&
-    String(customer.address || '').trim() &&
-    String(customer.city || '').trim() &&
-    String(customer.state || '').trim() &&
-    /^\d{6}$/.test(pincode) &&
-    Array.isArray(body.items) &&
-    body.items.length > 0 &&
-    Number(body.total) > 0
-  );
-};
-
-// Proxy GET requests to Google Apps Script (avoids redirect + CORS issues)
-export async function GET(req: Request) {
-  if (!APPS_SCRIPT_URL) {
-    return NextResponse.json({ error: 'No Apps Script URL configured' }, { status: 500 });
-  }
-
+// Local DB Helpers
+async function readLocalDb() {
   try {
-    const requestUrl = new URL(req.url);
-    const targetUrl = new URL(APPS_SCRIPT_URL);
-    requestUrl.searchParams.forEach((value, key) => targetUrl.searchParams.set(key, value));
-
-    const res = await fetch(targetUrl.toString(), {
-      method: 'GET',
-      redirect: 'follow',
-      headers: {
-        'Accept': 'application/json',
-      },
-      next: { revalidate: 300 }, // Cache for 5 minutes
-    });
-
-    const text = await res.text();
-
-    // Detect HTML error pages
-    if (text.trim().startsWith('<')) {
-      console.error('Apps Script returned HTML instead of JSON. Check deployment settings.');
-      return NextResponse.json({ error: 'Apps Script returned HTML - check deployment' }, { status: 502 });
-    }
-
-    const data = JSON.parse(text);
-    return NextResponse.json(data);
+    const data = await fs.readFile(DB_FILE_PATH, 'utf-8');
+    return JSON.parse(data);
   } catch (err) {
-    console.error('CMS proxy error:', err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    console.error('Error reading local db.json, returning empty structure', err);
+    return {
+      banners: [],
+      products: [],
+      faqs: [],
+      companyInfo: {},
+      orders: [],
+      inquiries: [],
+      users: [],
+      notifications: []
+    };
   }
 }
 
-// Proxy POST requests (inquiries and orders)
-export async function POST(req: Request) {
-  if (!APPS_SCRIPT_URL) {
-    return NextResponse.json({ error: 'No Apps Script URL configured' }, { status: 500 });
+async function writeLocalDb(data: any) {
+  try {
+    await fs.writeFile(DB_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
+    return true;
+  } catch (err) {
+    console.error('Error writing to local db.json', err);
+    return false;
+  }
+}
+
+// Proxy GET requests to Google Apps Script or fall back to local JSON
+export async function GET(req: Request) {
+  const requestUrl = new URL(req.url);
+  const action = requestUrl.searchParams.get('action');
+
+  // Try to use Google Sheets if configured
+  if (APPS_SCRIPT_URL) {
+    try {
+      const targetUrl = new URL(APPS_SCRIPT_URL);
+      requestUrl.searchParams.forEach((value, key) => targetUrl.searchParams.set(key, value));
+
+      const res = await fetch(targetUrl.toString(), {
+        method: 'GET',
+        redirect: 'follow',
+        headers: {
+          'Accept': 'application/json',
+        },
+        next: { revalidate: 0 }, // Do not cache for admin operations to get live sync
+      });
+
+      const text = await res.text();
+      if (!text.trim().startsWith('<')) {
+        const data = JSON.parse(text);
+        
+        // Determine if Apps Script actually handled the requested action
+        let handledByAppsScript = true;
+        if (action === 'getUsers' && !data.users && !Array.isArray(data)) handledByAppsScript = false;
+        if (action === 'getOrders' && !data.orders && !Array.isArray(data)) handledByAppsScript = false;
+        if (action === 'getInquiries' && !data.inquiries && !Array.isArray(data)) handledByAppsScript = false;
+        if (action === 'getNotifications' && !data.notifications && !Array.isArray(data)) handledByAppsScript = false;
+        if (action === 'trackOrder' && !data.order) handledByAppsScript = false;
+        
+        if (handledByAppsScript) {
+          return NextResponse.json(data);
+        } else {
+          console.warn(`Apps Script did not handle action '${action}'. Falling back to local database.`);
+        }
+      } else {
+        console.warn('Apps Script returned HTML. Falling back to local database.');
+      }
+    } catch (err) {
+      console.warn('Google Sheets GET fetch failed, falling back to local db:', err);
+    }
   }
 
+  // Local JSON Database Fallback
+  const db = await readLocalDb();
+  if (action === 'getBanners') {
+    return NextResponse.json(db.banners.filter((b: any) => b.Active !== false));
+  } else if (action === 'getProducts') {
+    return NextResponse.json(db.products.filter((p: any) => p.Active !== false));
+  } else if (action === 'getFAQs') {
+    return NextResponse.json(db.faqs.filter((f: any) => f.Active !== false));
+  } else if (action === 'getCompanyInfo') {
+    return NextResponse.json(db.companyInfo);
+  } else if (action === 'trackOrder') {
+    const orderId = requestUrl.searchParams.get('orderId');
+    const mobile = requestUrl.searchParams.get('mobile');
+    const order = db.orders.find((o: any) => 
+      (orderId && String(o.orderId).trim() === String(orderId).trim()) ||
+      (mobile && String(o.customer.mobile).trim() === String(mobile).trim())
+    );
+    if (order) {
+      return NextResponse.json({ success: true, order });
+    }
+    return NextResponse.json({ success: false, message: 'No matching order found.' });
+  } else if (action === 'getOrders') {
+    return NextResponse.json(db.orders || []);
+  } else if (action === 'getInquiries') {
+    return NextResponse.json(db.inquiries || []);
+  } else if (action === 'getUsers') {
+    return NextResponse.json(db.users || []);
+  } else if (action === 'getNotifications') {
+    return NextResponse.json(db.notifications || []);
+  } else {
+    // Return all customer CMS collections
+    return NextResponse.json({
+      banners: db.banners,
+      products: db.products,
+      faqs: db.faqs,
+      companyInfo: db.companyInfo
+    });
+  }
+}
+
+// Proxy POST requests or write to local DB
+export async function POST(req: Request) {
   try {
     const body = await req.json();
-
-    console.log('NIMRA /api/cms POST payload:', body);
-
     const payload = { ...body };
 
-    // Auto-detect and normalize the request type if missing
+    // Auto-detect submission type if missing
     if (!payload.type) {
       if (payload.customer && payload.items) {
         payload.type = 'order';
@@ -88,76 +134,230 @@ export async function POST(req: Request) {
         payload.type = 'inquiry';
       } else {
         return NextResponse.json(
-          { success: false, message: 'Invalid request payload. Unable to determine submission type.' },
+          { success: false, message: 'Invalid request payload. Unable to determine action type.' },
           { status: 400 }
         );
       }
     }
 
-    // Validate request according to its normalized type
+    // Attempt Google Sheets API first
+    if (APPS_SCRIPT_URL) {
+      try {
+        const res = await fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          redirect: 'follow',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const text = await res.text();
+        if (!text.trim().startsWith('<')) {
+          const data = JSON.parse(text);
+          if (data.success !== false) {
+            return NextResponse.json(data);
+          }
+        }
+        console.warn('Apps Script returned error or HTML. Falling back to local database.');
+      } catch (err) {
+        console.warn('Google Sheets POST failed, falling back to local db:', err);
+      }
+    }
+
+    // Local JSON Database Fallback
+    const db = await readLocalDb();
+    const timestamp = new Date().toISOString();
+
     if (payload.type === 'order') {
-      console.log('CMS Proxy Route: Normalized payload matches "order". Calling hasRequiredOrderFields validation...');
-      if (!hasRequiredOrderFields(payload)) {
-        console.warn('CMS Proxy Route: Order validation failed.');
-        return NextResponse.json(
-          { success: false, message: 'Please complete checkout with a valid mobile number, pincode, and cart items.' },
-          { status: 400 }
-        );
-      }
-      console.log('CMS Proxy Route: Order validation passed. Proxying request to Google Apps Script...');
+      const orderId = 'NIMRA-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + Math.floor(Math.random() * 900 + 100);
+      const newOrder = {
+        orderId,
+        status: 'Pending',
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        customer: payload.customer,
+        items: payload.items,
+        subtotal: Number(payload.subtotal || 0),
+        deliveryCharge: Number(payload.deliveryCharge || 0),
+        total: Number(payload.total || 0),
+        paymentMethod: payload.paymentMethod || 'Cash on Delivery',
+        source: payload.source || 'Website'
+      };
+      db.orders.unshift(newOrder);
+      await writeLocalDb(db);
+      return NextResponse.json({ success: true, orderId, message: 'Order placed successfully (Local Database)' });
+
     } else if (payload.type === 'inquiry') {
-      console.log('CMS Proxy Route: Normalized payload matches "inquiry". Calling hasRequiredInquiryFields validation...');
-      if (!hasRequiredInquiryFields(payload)) {
-        console.warn('CMS Proxy Route: Inquiry validation failed.');
-        return NextResponse.json(
-          { success: false, message: 'Please fill out all required fields with a valid 10-digit phone number.' },
-          { status: 400 }
-        );
+      const newInquiry = {
+        Timestamp: timestamp,
+        Name: payload.name,
+        Email: payload.email,
+        Phone: payload.phone,
+        Subject: payload.subject,
+        Message: payload.message
+      };
+      db.inquiries.unshift(newInquiry);
+      await writeLocalDb(db);
+      return NextResponse.json({ success: true, message: 'Inquiry submitted successfully (Local Database)' });
+
+    } else if (payload.type === 'updateOrderStatus') {
+      const index = db.orders.findIndex((o: any) => String(o.orderId).trim() === String(payload.orderId).trim());
+      if (index !== -1) {
+        db.orders[index].status = payload.status;
+        db.orders[index].updatedAt = timestamp;
+        await writeLocalDb(db);
+        return NextResponse.json({ success: true, message: 'Order status updated successfully (Local Database)' });
       }
-      console.log('CMS Proxy Route: Inquiry validation passed. Proxying request to Google Apps Script...');
-    } else {
-      console.warn('CMS Proxy Route: Invalid payload type:', payload.type);
-      return NextResponse.json(
-        { success: false, message: 'Invalid submission type. Must be "order" or "inquiry".' },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, message: 'Order not found.' }, { status: 404 });
+
+    } else if (payload.type === 'productCRUD') {
+      const action = payload.action;
+      const product = payload.product;
+
+      if (action === 'create') {
+        const maxId = db.products.reduce((max: number, p: any) => Number(p.ID) > max ? Number(p.ID) : max, 0);
+        product.ID = maxId + 1;
+        product.Active = true;
+        db.products.push(product);
+        await writeLocalDb(db);
+        return NextResponse.json({ success: true, message: 'Product created successfully (Local Database)', ID: product.ID });
+      }
+
+      const index = db.products.findIndex((p: any) => String(p.ID).trim() === String(product.ID).trim());
+      if (index !== -1) {
+        if (action === 'delete') {
+          db.products.splice(index, 1);
+          await writeLocalDb(db);
+          return NextResponse.json({ success: true, message: 'Product deleted successfully (Local Database)' });
+        } else if (action === 'update') {
+          db.products[index] = { ...db.products[index], ...product };
+          await writeLocalDb(db);
+          return NextResponse.json({ success: true, message: 'Product updated successfully (Local Database)' });
+        }
+      }
+      return NextResponse.json({ success: false, message: 'Product ID not found.' }, { status: 404 });
+
+    } else if (payload.type === 'bannerCRUD') {
+      const action = payload.action;
+      const banner = payload.banner;
+
+      if (action === 'create') {
+        const maxId = db.banners.reduce((max: number, b: any) => Number(b.ID) > max ? Number(b.ID) : max, 0);
+        banner.ID = maxId + 1;
+        banner.Active = true;
+        db.banners.push(banner);
+        await writeLocalDb(db);
+        return NextResponse.json({ success: true, message: 'Banner created successfully (Local Database)', ID: banner.ID });
+      }
+
+      const index = db.banners.findIndex((b: any) => String(b.ID).trim() === String(banner.ID).trim());
+      if (index !== -1) {
+        if (action === 'delete') {
+          db.banners.splice(index, 1);
+          await writeLocalDb(db);
+          return NextResponse.json({ success: true, message: 'Banner deleted successfully (Local Database)' });
+        } else if (action === 'update') {
+          db.banners[index] = { ...db.banners[index], ...banner };
+          await writeLocalDb(db);
+          return NextResponse.json({ success: true, message: 'Banner updated successfully (Local Database)' });
+        }
+      }
+      return NextResponse.json({ success: false, message: 'Banner ID not found.' }, { status: 404 });
+
+    } else if (payload.type === 'faqCRUD') {
+      const action = payload.action;
+      const faq = payload.faq;
+
+      if (action === 'create') {
+        const maxId = db.faqs.reduce((max: number, f: any) => Number(f.ID) > max ? Number(f.ID) : max, 0);
+        faq.ID = maxId + 1;
+        faq.Active = true;
+        db.faqs.push(faq);
+        await writeLocalDb(db);
+        return NextResponse.json({ success: true, message: 'FAQ created successfully (Local Database)', ID: faq.ID });
+      }
+
+      const index = db.faqs.findIndex((f: any) => String(f.ID).trim() === String(faq.ID).trim());
+      if (index !== -1) {
+        if (action === 'delete') {
+          db.faqs.splice(index, 1);
+          await writeLocalDb(db);
+          return NextResponse.json({ success: true, message: 'FAQ deleted successfully (Local Database)' });
+        } else if (action === 'update') {
+          db.faqs[index] = { ...db.faqs[index], ...faq };
+          await writeLocalDb(db);
+          return NextResponse.json({ success: true, message: 'FAQ updated successfully (Local Database)' });
+        }
+      }
+      return NextResponse.json({ success: false, message: 'FAQ ID not found.' }, { status: 404 });
+
+    } else if (payload.type === 'companyInfoUpdate') {
+      db.companyInfo = payload.companyInfo;
+      await writeLocalDb(db);
+      return NextResponse.json({ success: true, message: 'Company Info updated successfully (Local Database)' });
+
+    } else if (payload.type === 'userCRUD') {
+      const action = payload.action;
+      const user = payload.user;
+
+      if (action === 'create') {
+        const maxId = db.users.reduce((max: number, u: any) => Number(u.ID) > max ? Number(u.ID) : max, 0);
+        user.ID = maxId + 1;
+        user.Active = true;
+        db.users.push(user);
+        await writeLocalDb(db);
+        return NextResponse.json({ success: true, message: 'User created successfully (Local Database)', ID: user.ID });
+      }
+
+      const index = db.users.findIndex((u: any) => String(u.ID).trim() === String(user.ID).trim());
+      if (index !== -1) {
+        if (action === 'delete') {
+          db.users.splice(index, 1);
+          await writeLocalDb(db);
+          return NextResponse.json({ success: true, message: 'User deleted successfully (Local Database)' });
+        } else if (action === 'update') {
+          db.users[index] = { ...db.users[index], ...user };
+          await writeLocalDb(db);
+          return NextResponse.json({ success: true, message: 'User updated successfully (Local Database)' });
+        }
+      }
+      return NextResponse.json({ success: false, message: 'User ID not found.' }, { status: 404 });
+
+    } else if (payload.type === 'notificationCRUD') {
+      const action = payload.action;
+      const notification = payload.notification;
+
+      if (action === 'create') {
+        const maxId = db.notifications.reduce((max: number, n: any) => Number(n.ID) > max ? Number(n.ID) : max, 0);
+        notification.ID = maxId + 1;
+        notification.Timestamp = timestamp;
+        notification.Read = false;
+        db.notifications.push(notification);
+        await writeLocalDb(db);
+        return NextResponse.json({ success: true, message: 'Notification created successfully (Local Database)', ID: notification.ID });
+      }
+
+      const index = db.notifications.findIndex((n: any) => String(n.ID).trim() === String(notification.ID).trim());
+      if (index !== -1) {
+        if (action === 'delete') {
+          db.notifications.splice(index, 1);
+          await writeLocalDb(db);
+          return NextResponse.json({ success: true, message: 'Notification deleted successfully (Local Database)' });
+        } else if (action === 'update') {
+          db.notifications[index] = { ...db.notifications[index], ...notification };
+          await writeLocalDb(db);
+          return NextResponse.json({ success: true, message: 'Notification updated successfully (Local Database)' });
+        }
+      }
+      return NextResponse.json({ success: false, message: 'Notification ID not found.' }, { status: 404 });
     }
 
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      redirect: 'follow',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+    return NextResponse.json({ success: false, message: 'Action type not recognized.' }, { status: 400 });
 
-    const text = await res.text();
-    console.log('CMS Proxy Route: Received raw response from Google Sheets Apps Script:', text);
-
-    if (text.trim().startsWith('<')) {
-      console.error('CMS Proxy Route: Received HTML response instead of JSON. Web App may have crashed or is outdated.');
-      return NextResponse.json({ success: false, message: 'Google Sheets returned an invalid response.' }, { status: 502 });
-    }
-
-    const data = JSON.parse(text);
-    console.log('CMS Proxy Route: Google Sheets Apps Script parsed response:', data);
-    if (!res.ok || data.success === false) {
-      console.warn('CMS Proxy Route: Apps Script save returned failure.');
-      return NextResponse.json(
-        { success: false, message: data.message || data.error || (payload.type === 'order' ? 'Google Sheets did not save the order.' : 'Google Sheets did not save the inquiry.') },
-        { status: 502 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: data.message || (payload.type === 'order' ? 'Order placed successfully' : 'Inquiry submitted successfully'),
-      orderId: data.orderId,
-    });
   } catch (err) {
-    console.error('Inquiry proxy error:', err);
-    return NextResponse.json({ success: false, message: 'Unable to process your request right now.' }, { status: 500 });
+    console.error('API POST error:', err);
+    return NextResponse.json({ success: false, message: 'Internal server error processing request.' }, { status: 500 });
   }
 }

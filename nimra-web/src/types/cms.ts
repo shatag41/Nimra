@@ -97,7 +97,34 @@ export interface OrderSubmission {
 
 export interface OrderRecord extends OrderSubmission {
   orderId: string;
-  status: 'Pending' | 'Confirmed' | 'Processing' | 'Out for Delivery' | 'Delivered';
+  status: 'Pending' | 'Confirmed' | 'Processing' | 'Dispatched' | 'Out for Delivery' | 'Delivered' | 'Cancelled';
   createdAt: string;
   updatedAt?: string;
 }
+
+export interface AdminUser {
+  ID: string | number;
+  Username: string;
+  Password?: string;
+  Role: 'Admin' | 'Manager';
+  Name: string;
+  Active?: boolean | string;
+}
+
+export interface Notification {
+  ID: string | number;
+  Timestamp: string;
+  Title: string;
+  Message: string;
+  Read?: boolean | string;
+}
+
+export interface Inquiry {
+  Timestamp: string;
+  Name: string;
+  Email: string;
+  Phone: string;
+  Subject: string;
+  Message: string;
+}
+

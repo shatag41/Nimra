@@ -73,7 +73,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!hydrated) return;
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items)).catch((error) => {
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items)).catch((error: any) => {
       console.warn('Unable to persist mobile cart', error);
     });
   }, [hydrated, items]);

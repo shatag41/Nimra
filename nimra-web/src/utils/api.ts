@@ -1,4 +1,4 @@
-import { CMSData, InquirySubmission, OrderRecord, OrderSubmission } from '../types/cms';
+import { CMSData, InquirySubmission, OrderRecord, OrderSubmission, AdminUser, Notification, Inquiry, Product, Banner, FAQ, CompanyInfo } from '../types/cms';
 
 // Mock Data representing NIMRA brand details, products, banners, and FAQs
 export const mockCMSData: CMSData = {
@@ -166,7 +166,7 @@ export const fetchCMSData = async (): Promise<CMSData> => {
   try {
     const res = await fetch(getProxyUrl(), {
       method: 'GET',
-      next: { revalidate: 300 }, // Cache data for 5 minutes (ISR)
+      cache: 'no-store', // Always fetch fresh data so new products display instantly
     });
     if (!res.ok) throw new Error(`CMS proxy returned ${res.status}`);
     const data = await res.json();
@@ -264,3 +264,159 @@ export const trackOrder = async (
     return { success: false, message: 'Unable to track order right now.' };
   }
 };
+
+// Admin Portal API Methods
+
+export const fetchOrders = async (): Promise<OrderRecord[]> => {
+  try {
+    const res = await fetch('/api/cms?action=getOrders', { method: 'GET', cache: 'no-store' });
+    if (!res.ok) throw new Error('Failed to fetch orders');
+    const data = await res.json();
+    return Array.isArray(data) ? data : (data.orders || []);
+  } catch (err) {
+    console.error('Error fetching orders:', err);
+    return [];
+  }
+};
+
+export const updateOrderStatus = async (orderId: string, status: string): Promise<{ success: boolean; message: string }> => {
+  try {
+    const res = await fetch('/api/cms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'updateOrderStatus', orderId, status }),
+    });
+    const data = await res.json();
+    return { success: data.success, message: data.message || 'Updated status successfully' };
+  } catch (err) {
+    console.error('Error updating order status:', err);
+    return { success: false, message: 'Failed to update order status' };
+  }
+};
+
+export const fetchInquiries = async (): Promise<Inquiry[]> => {
+  try {
+    const res = await fetch('/api/cms?action=getInquiries', { method: 'GET', cache: 'no-store' });
+    if (!res.ok) throw new Error('Failed to fetch inquiries');
+    const data = await res.json();
+    return Array.isArray(data) ? data : (data.inquiries || []);
+  } catch (err) {
+    console.error('Error fetching inquiries:', err);
+    return [];
+  }
+};
+
+export const fetchUsers = async (): Promise<AdminUser[]> => {
+  try {
+    const res = await fetch('/api/cms?action=getUsers', { method: 'GET', cache: 'no-store' });
+    if (!res.ok) throw new Error('Failed to fetch users');
+    const data = await res.json();
+    return Array.isArray(data) ? data : (data.users || []);
+  } catch (err) {
+    console.error('Error fetching users:', err);
+    return [];
+  }
+};
+
+export const saveUser = async (user: Partial<AdminUser>, action: 'create' | 'update' | 'delete'): Promise<{ success: boolean; message: string; ID?: string | number }> => {
+  try {
+    const res = await fetch('/api/cms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'userCRUD', action, user }),
+    });
+    const data = await res.json();
+    return { success: data.success, message: data.message || 'User saved successfully', ID: data.ID };
+  } catch (err) {
+    console.error('Error saving user:', err);
+    return { success: false, message: 'Failed to save user' };
+  }
+};
+
+export const fetchNotifications = async (): Promise<Notification[]> => {
+  try {
+    const res = await fetch('/api/cms?action=getNotifications', { method: 'GET', cache: 'no-store' });
+    if (!res.ok) throw new Error('Failed to fetch notifications');
+    const data = await res.json();
+    return Array.isArray(data) ? data : (data.notifications || []);
+  } catch (err) {
+    console.error('Error fetching notifications:', err);
+    return [];
+  }
+};
+
+export const saveNotification = async (notification: Partial<Notification>, action: 'create' | 'update' | 'delete'): Promise<{ success: boolean; message: string; ID?: string | number }> => {
+  try {
+    const res = await fetch('/api/cms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'notificationCRUD', action, notification }),
+    });
+    const data = await res.json();
+    return { success: data.success, message: data.message || 'Notification saved successfully', ID: data.ID };
+  } catch (err) {
+    console.error('Error saving notification:', err);
+    return { success: false, message: 'Failed to save notification' };
+  }
+};
+
+export const saveProduct = async (product: Partial<Product>, action: 'create' | 'update' | 'delete'): Promise<{ success: boolean; message: string; ID?: string | number }> => {
+  try {
+    const res = await fetch('/api/cms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'productCRUD', action, product }),
+    });
+    const data = await res.json();
+    return { success: data.success, message: data.message || 'Product saved successfully', ID: data.ID };
+  } catch (err) {
+    console.error('Error saving product:', err);
+    return { success: false, message: 'Failed to save product' };
+  }
+};
+
+export const saveBanner = async (banner: Partial<Banner>, action: 'create' | 'update' | 'delete'): Promise<{ success: boolean; message: string; ID?: string | number }> => {
+  try {
+    const res = await fetch('/api/cms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'bannerCRUD', action, banner }),
+    });
+    const data = await res.json();
+    return { success: data.success, message: data.message || 'Banner saved successfully', ID: data.ID };
+  } catch (err) {
+    console.error('Error saving banner:', err);
+    return { success: false, message: 'Failed to save banner' };
+  }
+};
+
+export const saveFAQ = async (faq: Partial<FAQ>, action: 'create' | 'update' | 'delete'): Promise<{ success: boolean; message: string; ID?: string | number }> => {
+  try {
+    const res = await fetch('/api/cms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'faqCRUD', action, faq }),
+    });
+    const data = await res.json();
+    return { success: data.success, message: data.message || 'FAQ saved successfully', ID: data.ID };
+  } catch (err) {
+    console.error('Error saving FAQ:', err);
+    return { success: false, message: 'Failed to save FAQ' };
+  }
+};
+
+export const saveCompanyInfo = async (companyInfo: CompanyInfo): Promise<{ success: boolean; message: string }> => {
+  try {
+    const res = await fetch('/api/cms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'companyInfoUpdate', companyInfo }),
+    });
+    const data = await res.json();
+    return { success: data.success, message: data.message || 'Company info saved successfully' };
+  } catch (err) {
+    console.error('Error saving company info:', err);
+    return { success: false, message: 'Failed to save company info' };
+  }
+};
+

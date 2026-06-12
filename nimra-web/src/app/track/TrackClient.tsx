@@ -6,7 +6,7 @@ import { OrderRecord } from '../../types/cms';
 import { trackOrder } from '../../utils/api';
 import { formatCurrency } from '../../utils/commerce';
 
-const steps = ['Pending', 'Confirmed', 'Processing', 'Out for Delivery', 'Delivered'];
+const steps = ['Pending', 'Confirmed', 'Processing', 'Dispatched', 'Out for Delivery', 'Delivered', 'Cancelled'];
 
 export default function TrackClient() {
   const params = useSearchParams();
@@ -58,12 +58,21 @@ export default function TrackClient() {
               </div>
             </div>
             <div className="steps">
-              {steps.map((step, index) => (
-                <div key={step} className={`step ${index <= activeIndex ? 'active' : ''}`}>
-                  <span>{index + 1}</span>
-                  <p>{step}</p>
-                </div>
-              ))}
+              {steps.map((step, index) => {
+                // If order is Cancelled, don't light up other future steps; only light up Pending/Confirmed/Processing etc. if they happened before cancellation, or just show Cancelled.
+                const isCancelled = order.status === 'Cancelled';
+                const isStepCancelled = step === 'Cancelled';
+                let isStepActive = index <= activeIndex;
+                if (isCancelled && !isStepCancelled && step !== 'Pending' && step !== 'Confirmed' && step !== 'Processing') {
+                  isStepActive = false; // Hide future steps as active if cancelled
+                }
+                return (
+                  <div key={step} className={`step ${isStepActive ? 'active' : ''} ${isStepCancelled && isCancelled ? 'cancelled' : ''}`}>
+                    <span>{isStepCancelled && isCancelled ? '✕' : index + 1}</span>
+                    <p>{step}</p>
+                  </div>
+                );
+              })}
             </div>
             <div className="items">
               {order.items.map((item) => (
@@ -86,11 +95,13 @@ export default function TrackClient() {
         .result-head { display: flex; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; }
         .result-head span { display: block; color: var(--text-secondary); font-size: 0.85rem; }
         .result-head strong { font-size: 1.2rem; }
-        .steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem; margin: 2rem 0; }
-        .step { text-align: center; color: var(--text-secondary); }
-        .step span { width: 34px; height: 34px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--bg-primary); border: 1px solid var(--border-color); font-weight: 800; margin-bottom: 0.5rem; }
+        .steps { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; margin: 2rem 0; }
+        .step { text-align: center; color: var(--text-secondary); font-size: 0.85rem; }
+        .step span { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--bg-primary); border: 1px solid var(--border-color); font-weight: 800; margin-bottom: 0.5rem; }
         .step.active span { background: var(--primary-color); border-color: var(--primary-color); color: white; }
         .step.active p { color: var(--text-primary); font-weight: 800; }
+        .step.cancelled span { background: #ef4444; border-color: #ef4444; color: white; }
+        .step.cancelled p { color: #ef4444; font-weight: 800; }
         .items div { display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); padding: 0.75rem 0; }
         @media (max-width: 760px) { .track-form { grid-template-columns: 1fr; } .steps { grid-template-columns: 1fr; text-align: left; } .step { display: flex; align-items: center; gap: 0.75rem; text-align: left; } .step span { margin-bottom: 0; } }
       `}</style>

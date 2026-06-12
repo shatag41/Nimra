@@ -1,0 +1,346 @@
+{
+  "banners": [
+    {
+      "ID": 1,
+      "Title": "Pure Hydration. Healthy Living.",
+      "Subtitle": "NIMRA Packaged Drinking Water keeps you fresh and energized through every moment of the day.",
+      "ImageUrl": "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&q=80&w=1200",
+      "ButtonText": "Explore Products",
+      "ButtonLink": "#products",
+      "Active": true
+    },
+    {
+      "ID": 2,
+      "Title": "Mineral Balanced Purity",
+      "Subtitle": "Sourced responsibly and purified through a rigorous 10-step process for absolute safety.",
+      "ImageUrl": "https://images.unsplash.com/photo-1559839914-17aae19cec71?auto=format&fit=crop&q=80&w=1200",
+      "ButtonText": "Our Quality Standards",
+      "ButtonLink": "/quality",
+      "Active": true
+    }
+  ],
+  "products": [
+    {
+      "ID": 1,
+      "Name": "NIMRA 250ml Bottle",
+      "Category": "Packaged Water",
+      "Volume": "250ml",
+      "Price": "6.00",
+      "Description": "Perfect pocket-sized pure drinking water for short trips, conferences, and quick refreshments.",
+      "ImageUrl": "https://images.unsplash.com/photo-1616166330003-8e550d199b26?auto=format&fit=crop&q=80&w=600",
+      "Active": true
+    },
+    {
+      "ID": 2,
+      "Name": "NIMRA 500ml Bottle",
+      "Category": "Packaged Water",
+      "Volume": "500ml",
+      "Price": "10.00",
+      "Description": "Your convenient hydration companion for daily commutes, gyms, and office desks.",
+      "ImageUrl": "https://images.unsplash.com/photo-1523362628745-0c100150b504?auto=format&fit=crop&q=80&w=600",
+      "Active": true
+    },
+    {
+      "ID": 3,
+      "Name": "NIMRA 1 Litre Bottle",
+      "Category": "Packaged Water",
+      "Volume": "1L",
+      "Price": "20.00",
+      "Description": "Standard 1 Litre bottle for absolute pure hydration at home, dining, or long travel.",
+      "ImageUrl": "https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&q=80&w=600",
+      "Active": true
+    },
+    {
+      "ID": 4,
+      "Name": "NIMRA 2 Litre Bottle",
+      "Category": "Packaged Water",
+      "Volume": "2L",
+      "Price": "30.00",
+      "Description": "Bigger size for family picnics and long journeys. Keep clean water accessible for all.",
+      "ImageUrl": "https://images.unsplash.com/photo-1563822249548-9a72b6353cd1?auto=format&fit=crop&q=80&w=600",
+      "Active": true
+    },
+    {
+      "ID": 5,
+      "Name": "NIMRA 5 Litre Can",
+      "Category": "Bulk Water",
+      "Volume": "5L",
+      "Price": "55.00",
+      "Description": "Family-sized purified water can for home kitchens, travel groups, and small gatherings.",
+      "ImageUrl": "https://images.unsplash.com/photo-1527109011752-2d34ff6a28d6?auto=format&fit=crop&q=80&w=600",
+      "Specifications": "RO purified, mineral balanced, recyclable food-grade pack",
+      "Active": true
+    },
+    {
+      "ID": 6,
+      "Name": "NIMRA 20 Litre Dispenser Jar",
+      "Category": "Bulk Water",
+      "Volume": "20L Jar",
+      "Price": "80.00",
+      "Description": "Eco-friendly bulk jar for continuous hydration at office spaces and household kitchen units.",
+      "ImageUrl": "https://images.unsplash.com/photo-1589135790587-8d77d70cfd00?auto=format&fit=crop&q=80&w=600",
+      "Specifications": "Returnable jar, dispenser compatible, scheduled delivery available",
+      "Active": true
+    },
+    {
+      "ID": 7,
+      "Name": "RUSH Club Soda 500ml",
+      "Category": "Upcoming RUSH Soda",
+      "Volume": "500ml",
+      "Price": "25.00",
+      "Description": "Upcoming extra-fizzy RUSH soda made on NIMRA's purified water base.",
+      "ImageUrl": "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&q=80&w=600",
+      "Specifications": "Coming soon, carbonated beverage, launch stock managed from Sheets",
+      "StockStatus": "Coming Soon",
+      "Active": true
+    },
+    {
+      "Name": "hiii",
+      "Category": "Packaged Water",
+      "Volume": "1L",
+      "Price": "30",
+      "Description": "bottle",
+      "ImageUrl": "https://unsplash.com/photos/clear-plastic-bottle-on-white-table-edBR3b2JAuA",
+      "Active": true,
+      "ID": 8
+    }
+  ],
+  "faqs": [
+    {
+      "ID": 1,
+      "Question": "What makes NIMRA Packaged Drinking Water pure?",
+      "Answer": "NIMRA water goes through a advanced 10-step purification process, including sand filtration, carbon filtration, reverse osmosis (RO), mineral enrichment (including magnesium and potassium), and final UV & Ozonation sterilization.",
+      "Active": true
+    },
+    {
+      "ID": 2,
+      "Question": "Where is NIMRA water manufactured?",
+      "Answer": "NIMRA water is manufactured at our state-of-the-art packaging plant located at SR No. 83/1/3/4/2, Near Jagtap Vasti, Daund, Pune, Lingali - 413801. Our facility complies with all Bureau of Indian Standards (BIS) and FSSAI hygiene norms.",
+      "Active": true
+    },
+    {
+      "ID": 3,
+      "Question": "Can I place bulk orders for corporate events or weddings?",
+      "Answer": "Yes! We specialize in bulk corporate orders. You can fill out our inquiry form or contact us directly at +91 8888378411 to arrange scheduled deliveries of 20L jars or smaller individual bottle sizes.",
+      "Active": true
+    },
+    {
+      "ID": 4,
+      "Question": "Is there a delivery fee for corporate jars?",
+      "Answer": "Delivery charges vary based on distance, quantity, and scheduled frequency. For Camp (Pune) and Daund (Lingali) surrounding regions, we offer free shipping on minimum bulk orders.",
+      "Active": true
+    }
+  ],
+  "companyInfo": {
+    "BrandName": "NIMRA",
+    "Phone": "+91 8888378411",
+    "Email": "tsenterprises.nat@gmail.com",
+    "OfficeAddress": "#10, Gulistan Building, K.B. Hidayatullah Road, Camp, Pune – 411001",
+    "PlantAddress": "SR No. 83/1/3/4/2, Near Jagtap Vasti, Daund, Pune, Lingali – 413801",
+    "WhatsAppNumber": "918888378411",
+    "OfficeMapEmbed": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3783.3986064563814!2d73.8821966759132!3d18.510931269472713!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bc2c1ee354a72d7%3A0xe54eefcaef17b9b1!2sGulistan%20Building!5e0!3m2!1sen!2sin!4v1717961234567!5m2!1sen!2sin",
+    "PlantMapEmbed": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3785.807890123456!2d74.5801234567891!3d18.4601234567891!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTjCsDI3JzM2LjQiTiA3NCszNCc0OC40IkU!5e0!3m2!1sen!2sin!4v1717961298765!5m2!1sen!2sin",
+    "AboutStory": "At NIMRA, we believe that pure drinking water is the cornerstone of robust health and energetic living. Founded under T.S. Enterprises, NIMRA has committed itself to raising the standard of hydration. By merging nature's finest water sources with high-end, advanced purification technologies, we ensure that every sip of NIMRA packaged drinking water is crisp, refreshing, and filled with vital minerals.",
+    "QualityText": "Quality is not just a checklist at NIMRA; it is our philosophy. Our state-of-the-art testing labs run strict controls every hour. The water undergoes dual carbon filtration, high-pressure reverse osmosis membranes, mineral configuration balancing, and double sterilization through UV and ozone barriers to keep the water completely sterile, clean, and delicious.",
+    "InfrastructureText": "Our Daund (Lingali) manufacturing plant represents the pinnacle of modern beverage packaging technology. Spanning several acres, the facility features fully automated bottle blow-moulding, touch-free filling lines, strict HEPA-filtered clean room environments, and rapid logistics storage to pack and dispatch thousands of cases daily with absolute cleanliness."
+  },
+  "orders": [
+    {
+      "orderId": "NIMRA-20260601-100201-123",
+      "status": "Processing",
+      "createdAt": "2026-06-01T10:02:01.000Z",
+      "updatedAt": "2026-06-12T17:16:27.107Z",
+      "customer": {
+        "name": "Raj Patel",
+        "mobile": "9876543210",
+        "email": "raj.patel@gmail.com",
+        "address": "Flat 402, Sunshine Heights, Kalyani Nagar",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "pincode": "411006",
+        "instructions": "Leave at gate if not available"
+      },
+      "items": [
+        {
+          "productId": "3",
+          "name": "NIMRA 1 Litre Bottle",
+          "category": "Packaged Water",
+          "volume": "1L",
+          "price": 20,
+          "imageUrl": "https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&q=80&w=600",
+          "quantity": 10
+        }
+      ],
+      "subtotal": 200,
+      "deliveryCharge": 50,
+      "total": 250,
+      "paymentMethod": "Cash on Delivery",
+      "source": "Website"
+    },
+    {
+      "orderId": "NIMRA-20260605-151022-456",
+      "status": "Delivered",
+      "createdAt": "2026-06-05T15:10:22.000Z",
+      "updatedAt": "2026-06-06T11:30:00.000Z",
+      "customer": {
+        "name": "TechPark Office",
+        "mobile": "8888888888",
+        "email": "facilities@techpark.in",
+        "address": "Tower C, 5th Floor, Cyber City, Magarpatta",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "pincode": "411028",
+        "instructions": "Deliver to pantry department"
+      },
+      "items": [
+        {
+          "productId": "6",
+          "name": "NIMRA 20 Litre Dispenser Jar",
+          "category": "Bulk Water",
+          "volume": "20L Jar",
+          "price": 80,
+          "imageUrl": "https://images.unsplash.com/photo-1589135790587-8d77d70cfd00?auto=format&fit=crop&q=80&w=600",
+          "quantity": 20
+        }
+      ],
+      "subtotal": 1600,
+      "deliveryCharge": 0,
+      "total": 1600,
+      "paymentMethod": "Cash on Delivery",
+      "source": "Website"
+    },
+    {
+      "orderId": "NIMRA-20260610-093011-789",
+      "status": "Pending",
+      "createdAt": "2026-06-10T09:30:11.000Z",
+      "updatedAt": "2026-06-10T09:30:11.000Z",
+      "customer": {
+        "name": "Amit Sharma",
+        "mobile": "9999888877",
+        "email": "amit.sharma@yahoo.com",
+        "address": "Row House 3, Green Gardens, Camp",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "pincode": "411001",
+        "instructions": "Deliver before 2 PM"
+      },
+      "items": [
+        {
+          "productId": "5",
+          "name": "NIMRA 5 Litre Can",
+          "category": "Bulk Water",
+          "volume": "5L",
+          "price": 55,
+          "imageUrl": "https://images.unsplash.com/photo-1527109011752-2d34ff6a28d6?auto=format&fit=crop&q=80&w=600",
+          "quantity": 2
+        }
+      ],
+      "subtotal": 110,
+      "deliveryCharge": 0,
+      "total": 110,
+      "paymentMethod": "Cash on Delivery",
+      "source": "Mobile App"
+    },
+    {
+      "orderId": "NIMRA-20260611-120000-888",
+      "status": "Processing",
+      "createdAt": "2026-06-11T12:00:00.000Z",
+      "updatedAt": "2026-06-11T14:20:00.000Z",
+      "customer": {
+        "name": "Cafe Coffee",
+        "mobile": "7777666655",
+        "email": "order@cafecoffee.com",
+        "address": "Shop 12, Lingali Road, Daund",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "pincode": "413801",
+        "instructions": "Need 24 bottles of 500ml"
+      },
+      "items": [
+        {
+          "productId": "2",
+          "name": "NIMRA 500ml Bottle",
+          "category": "Packaged Water",
+          "volume": "500ml",
+          "price": 10,
+          "imageUrl": "https://images.unsplash.com/photo-1523362628745-0c100150b504?auto=format&fit=crop&q=80&w=600",
+          "quantity": 24
+        }
+      ],
+      "subtotal": 240,
+      "deliveryCharge": 0,
+      "total": 240,
+      "paymentMethod": "Cash on Delivery",
+      "source": "Website"
+    },
+    {
+      "orderId": "NIMRA-20260612-142211-999",
+      "status": "Cancelled",
+      "createdAt": "2026-06-12T14:22:11.000Z",
+      "updatedAt": "2026-06-12T14:40:00.000Z",
+      "customer": {
+        "name": "Priya Sen",
+        "mobile": "9890123456",
+        "email": "priya.sen@gmail.com",
+        "address": "B-301, Royal Oasis, K.B. Hidayatullah Road",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "pincode": "411001",
+        "instructions": ""
+      },
+      "items": [
+        {
+          "productId": "6",
+          "name": "NIMRA 20 Litre Dispenser Jar",
+          "category": "Bulk Water",
+          "volume": "20L Jar",
+          "price": 80,
+          "imageUrl": "https://images.unsplash.com/photo-1589135790587-8d77d70cfd00?auto=format&fit=crop&q=80&w=600",
+          "quantity": 1
+        }
+      ],
+      "subtotal": 80,
+      "deliveryCharge": 0,
+      "total": 80,
+      "paymentMethod": "Cash on Delivery",
+      "source": "Mobile App"
+    }
+  ],
+  "inquiries": [
+    {
+      "Timestamp": "2026-06-10T14:35:00.000Z",
+      "Name": "Karan Malhotra",
+      "Email": "karan.m@gmail.com",
+      "Phone": "9878987890",
+      "Subject": "Bulk Order Discount",
+      "Message": "We are hosting an annual sports event in Daund next month and require around 200 cases of 500ml bottles. Do you offer corporate/bulk discounts?"
+    },
+    {
+      "Timestamp": "2026-06-11T16:12:00.000Z",
+      "Name": "Sneha Joshi",
+      "Email": "sneha@joshiresidency.in",
+      "Phone": "9123456789",
+      "Subject": "Scheduled Delivery",
+      "Message": "I want to arrange a weekly delivery of 5 dispenser jars (20L) to my restaurant in Camp, Pune. Please get in touch to discuss pricing."
+    }
+  ],
+  "users": [
+    {
+      "ID": 1,
+      "Username": "admin",
+      "Password": "nimraadmin123",
+      "Role": "Admin",
+      "Name": "System Admin",
+      "Active": true
+    }
+  ],
+  "notifications": [
+    {
+      "ID": 1,
+      "Timestamp": "2026-06-12T20:00:00.000Z",
+      "Title": "Welcome to NIMRA CMS",
+      "Message": "Your secure Admin Portal is fully set up and ready.",
+      "Read": false
+    }
+  ]
+}

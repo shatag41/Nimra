@@ -18,6 +18,14 @@ function doGet(e) {
     return jsonResponse(getCompanyInfoData(spreadsheet.getSheetByName('CompanyInfo')));
   } else if (action === 'trackOrder') {
     return jsonResponse(trackOrder(spreadsheet, e.parameter.orderId, e.parameter.mobile));
+  } else if (action === 'getOrders') {
+    return jsonResponse(getAllOrders(spreadsheet));
+  } else if (action === 'getInquiries') {
+    return jsonResponse(getSheetData(spreadsheet.getSheetByName('Inquiries')));
+  } else if (action === 'getUsers') {
+    return jsonResponse(getUsersData(spreadsheet));
+  } else if (action === 'getNotifications') {
+    return jsonResponse(getNotificationsData(spreadsheet));
   } else {
     // Return all data in one request to optimize API calls!
     var data = {
@@ -48,6 +56,27 @@ function doPost(e) {
     } else if (params.type === 'inquiry') {
       Logger.log("doPost: Routing to saveInquiry()");
       return jsonResponse(saveInquiry(spreadsheet, params));
+    } else if (params.type === 'updateOrderStatus') {
+      Logger.log("doPost: Routing to updateOrderStatus()");
+      return jsonResponse(updateOrderStatus(spreadsheet, params));
+    } else if (params.type === 'productCRUD') {
+      Logger.log("doPost: Routing to productCRUD()");
+      return jsonResponse(handleProductCRUD(spreadsheet, params));
+    } else if (params.type === 'bannerCRUD') {
+      Logger.log("doPost: Routing to bannerCRUD()");
+      return jsonResponse(handleBannerCRUD(spreadsheet, params));
+    } else if (params.type === 'faqCRUD') {
+      Logger.log("doPost: Routing to faqCRUD()");
+      return jsonResponse(handleFaqCRUD(spreadsheet, params));
+    } else if (params.type === 'companyInfoUpdate') {
+      Logger.log("doPost: Routing to companyInfoUpdate()");
+      return jsonResponse(handleCompanyInfoUpdate(spreadsheet, params));
+    } else if (params.type === 'userCRUD') {
+      Logger.log("doPost: Routing to userCRUD()");
+      return jsonResponse(handleUserCRUD(spreadsheet, params));
+    } else if (params.type === 'notificationCRUD') {
+      Logger.log("doPost: Routing to notificationCRUD()");
+      return jsonResponse(handleNotificationCRUD(spreadsheet, params));
     } else {
       // Fallback structural check to identify request type
       if (params.customer && params.items) {
@@ -58,7 +87,7 @@ function doPost(e) {
         return jsonResponse(saveInquiry(spreadsheet, params));
       } else {
         Logger.log("doPost Error: Invalid payload structure.");
-        return jsonResponse({ success: false, message: 'Invalid payload type. Must be "order" or "inquiry" and contain required fields.' });
+        return jsonResponse({ success: false, message: 'Invalid payload type. Must be a valid admin action or contain required customer/inquiry fields.' });
       }
     }
   } catch (error) {
@@ -162,6 +191,19 @@ function saveOrder(spreadsheet, params) {
   return { success: true, orderId: orderId, message: 'Order placed successfully' };
 }
 
+function getAllOrders(spreadsheet) {
+  var sheet = spreadsheet.getSheetByName('Orders');
+  if (!sheet) return [];
+  var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return [];
+  var headers = data[0];
+  var orders = [];
+  for (var i = 1; i < data.length; i++) {
+    orders.push(rowToOrder(headers, data[i]));
+  }
+  return orders;
+}
+
 function trackOrder(spreadsheet, orderId, mobile) {
   var sheet = spreadsheet.getSheetByName('Orders');
   if (!sheet || (!orderId && !mobile)) {
@@ -185,6 +227,28 @@ function trackOrder(spreadsheet, orderId, mobile) {
   }
 
   return { success: false, message: 'No matching order found for this Order ID and mobile number.' };
+}
+
+function updateOrderStatus(spreadsheet, params) {
+  var orderId = params.orderId;
+  var status = params.status;
+  var sheet = spreadsheet.getSheetByName('Orders');
+  if (!sheet) return { success: false, message: 'Orders sheet not found.' };
+  
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var orderIdIndex = headers.indexOf('Order ID');
+  var statusIndex = headers.indexOf('Order Status');
+  var updatedAtIndex = headers.indexOf('Updated At');
+  
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][orderIdIndex]).trim() === String(orderId).trim()) {
+      sheet.getRange(i + 1, statusIndex + 1).setValue(status);
+      sheet.getRange(i + 1, updatedAtIndex + 1).setValue(new Date());
+      return { success: true, message: 'Order status updated successfully' };
+    }
+  }
+  return { success: false, message: 'Order ID ' + orderId + ' not found.' };
 }
 
 function rowToOrder(headers, row) {
@@ -287,7 +351,7 @@ function getSheetData(sheet) {
       var key = headers[j].toString().trim();
       var val = data[i][j];
       row[key] = val;
-      if (key.toLowerCase() === 'active' && val === false) {
+      if (key.toLowerCase() === 'active' && (val === false || val === 'false')) {
         active = false;
       }
     }
@@ -312,8 +376,343 @@ function getCompanyInfoData(sheet) {
   return info;
 }
 
+function getUsersData(spreadsheet) {
+  var sheet = spreadsheet.getSheetByName('Users');
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet('Users');
+    var headers = ['User ID', 'Full Name', 'Mobile', 'Email', 'Password (hashed)', 'Role (Admin/Customer)', 'Status', 'Registration Date', 'Last Login'];
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    
+    // Seed default users
+    sheet.appendRow([1, 'System Admin', '', 'admin', 'nimraadmin123', 'Admin', 'Active', new Date().toISOString(), '']);
+  }
+  
+  var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return [];
+  var headers = data[0];
+  var rows = [];
+  
+  for (var i = 1; i < data.length; i++) {
+    var row = {};
+    var active = true;
+    for (var j = 0; j < headers.length; j++) {
+      var key = headers[j].toString().trim();
+      var val = data[i][j];
+      
+      // Map custom headers to what frontend expects
+      if (key === 'User ID' || key === 'ID') row['ID'] = val;
+      else if (key === 'Full Name' || key === 'Name') row['Name'] = val;
+      else if (key === 'Email' || key === 'Username') row['Username'] = val;
+      else if (key === 'Password (hashed)' || key === 'Password') row['Password'] = val;
+      else if (key === 'Role (Admin/Customer)' || key === 'Role') row['Role'] = val;
+      else if (key === 'Status' || key === 'Active') {
+        var isActive = (val === 'Active' || val === true || val === 'TRUE');
+        row['Active'] = isActive;
+        active = isActive;
+      }
+      else {
+        row[key] = val;
+      }
+    }
+    // If Active property wasn't set by mapping, assume true unless specified
+    if (row['Active'] === undefined) row['Active'] = true;
+    
+    if (active || row['Active']) {
+      rows.push(row);
+    }
+  }
+  return rows;
+}
+
+function getNotificationsData(spreadsheet) {
+  var sheet = spreadsheet.getSheetByName('Notifications');
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet('Notifications');
+    var headers = ['ID', 'Timestamp', 'Title', 'Message', 'Read'];
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.appendRow([1, new Date().toISOString(), 'Welcome to Nimra CMS', 'Your secure Admin Portal is fully set up and ready.', false]);
+  }
+  return getSheetData(sheet);
+}
+
+function handleProductCRUD(spreadsheet, params) {
+  var action = params.action; // 'create' | 'update' | 'delete'
+  var product = params.product;
+  var sheet = spreadsheet.getSheetByName('Products');
+  if (!sheet) return { success: false, message: 'Products sheet not found.' };
+
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var idIndex = headers.indexOf('ID');
+
+  var rowValues = [
+    product.ID,
+    product.Name,
+    product.Category,
+    product.Volume,
+    product.Price,
+    product.Description,
+    product.ImageUrl,
+    product.Specifications || '',
+    product.StockStatus || 'In Stock',
+    product.DiscountPercent || '',
+    product.ComboPack || '',
+    product.Active !== undefined ? product.Active : true
+  ];
+
+  if (action === 'create') {
+    // Generate new numeric ID if not provided
+    if (!product.ID) {
+      var maxId = 0;
+      for (var i = 1; i < data.length; i++) {
+        var currId = Number(data[i][idIndex]);
+        if (!isNaN(currId) && currId > maxId) maxId = currId;
+      }
+      product.ID = maxId + 1;
+      rowValues[0] = product.ID;
+    }
+    sheet.appendRow(rowValues);
+    return { success: true, message: 'Product created successfully', ID: product.ID };
+  }
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idIndex]).trim() === String(product.ID).trim()) {
+      if (action === 'delete') {
+        sheet.deleteRow(i + 1);
+        return { success: true, message: 'Product deleted successfully' };
+      } else if (action === 'update') {
+        sheet.getRange(i + 1, 1, 1, rowValues.length).setValues([rowValues]);
+        return { success: true, message: 'Product updated successfully' };
+      }
+    }
+  }
+  return { success: false, message: 'Product ID not found.' };
+}
+
+function handleBannerCRUD(spreadsheet, params) {
+  var action = params.action;
+  var banner = params.banner;
+  var sheet = spreadsheet.getSheetByName('Banners');
+  if (!sheet) return { success: false, message: 'Banners sheet not found.' };
+
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var idIndex = headers.indexOf('ID');
+
+  var rowValues = [
+    banner.ID,
+    banner.Title,
+    banner.Subtitle,
+    banner.ImageUrl,
+    banner.ButtonText,
+    banner.ButtonLink,
+    banner.Active !== undefined ? banner.Active : true
+  ];
+
+  if (action === 'create') {
+    if (!banner.ID) {
+      var maxId = 0;
+      for (var i = 1; i < data.length; i++) {
+        var currId = Number(data[i][idIndex]);
+        if (!isNaN(currId) && currId > maxId) maxId = currId;
+      }
+      banner.ID = maxId + 1;
+      rowValues[0] = banner.ID;
+    }
+    sheet.appendRow(rowValues);
+    return { success: true, message: 'Banner created successfully', ID: banner.ID };
+  }
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idIndex]).trim() === String(banner.ID).trim()) {
+      if (action === 'delete') {
+        sheet.deleteRow(i + 1);
+        return { success: true, message: 'Banner deleted successfully' };
+      } else if (action === 'update') {
+        sheet.getRange(i + 1, 1, 1, rowValues.length).setValues([rowValues]);
+        return { success: true, message: 'Banner updated successfully' };
+      }
+    }
+  }
+  return { success: false, message: 'Banner ID not found.' };
+}
+
+function handleFaqCRUD(spreadsheet, params) {
+  var action = params.action;
+  var faq = params.faq;
+  var sheet = spreadsheet.getSheetByName('FAQs');
+  if (!sheet) return { success: false, message: 'FAQs sheet not found.' };
+
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var idIndex = headers.indexOf('ID');
+
+  var rowValues = [
+    faq.ID,
+    faq.Question,
+    faq.Answer,
+    faq.Active !== undefined ? faq.Active : true
+  ];
+
+  if (action === 'create') {
+    if (!faq.ID) {
+      var maxId = 0;
+      for (var i = 1; i < data.length; i++) {
+        var currId = Number(data[i][idIndex]);
+        if (!isNaN(currId) && currId > maxId) maxId = currId;
+      }
+      faq.ID = maxId + 1;
+      rowValues[0] = faq.ID;
+    }
+    sheet.appendRow(rowValues);
+    return { success: true, message: 'FAQ created successfully', ID: faq.ID };
+  }
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idIndex]).trim() === String(faq.ID).trim()) {
+      if (action === 'delete') {
+        sheet.deleteRow(i + 1);
+        return { success: true, message: 'FAQ deleted successfully' };
+      } else if (action === 'update') {
+        sheet.getRange(i + 1, 1, 1, rowValues.length).setValues([rowValues]);
+        return { success: true, message: 'FAQ updated successfully' };
+      }
+    }
+  }
+  return { success: false, message: 'FAQ ID not found.' };
+}
+
+function handleCompanyInfoUpdate(spreadsheet, params) {
+  var info = params.companyInfo;
+  var sheet = spreadsheet.getSheetByName('CompanyInfo');
+  if (!sheet) return { success: false, message: 'CompanyInfo sheet not found.' };
+
+  // Clear sheet content except header
+  sheet.clearContents();
+  sheet.getRange(1, 1, 1, 2).setValues([['Key', 'Value']]);
+
+  var rows = [];
+  for (var key in info) {
+    if (info.hasOwnProperty(key)) {
+      rows.push([key, info[key]]);
+    }
+  }
+  if (rows.length > 0) {
+    sheet.getRange(2, 1, rows.length, 2).setValues(rows);
+  }
+  return { success: true, message: 'Company Info updated successfully' };
+}
+
+function handleUserCRUD(spreadsheet, params) {
+  var action = params.action;
+  var user = params.user;
+  var sheet = spreadsheet.getSheetByName('Users');
+  if (!sheet) return { success: false, message: 'Users sheet not found.' };
+
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  
+  // Find ID index (check both possible column names)
+  var idIndex = headers.indexOf('User ID');
+  if (idIndex === -1) idIndex = headers.indexOf('ID');
+  if (idIndex === -1) return { success: false, message: 'User ID column not found.' };
+
+  // Prepare row values based on existing headers
+  var rowValues = new Array(headers.length);
+  for (var j = 0; j < headers.length; j++) {
+    var key = headers[j].toString().trim();
+    if (key === 'User ID' || key === 'ID') rowValues[j] = user.ID;
+    else if (key === 'Full Name' || key === 'Name') rowValues[j] = user.Name || '';
+    else if (key === 'Email' || key === 'Username') rowValues[j] = user.Username || '';
+    else if (key === 'Password (hashed)' || key === 'Password') rowValues[j] = user.Password || '';
+    else if (key === 'Role (Admin/Customer)' || key === 'Role') rowValues[j] = user.Role || 'Customer';
+    else if (key === 'Status' || key === 'Active') rowValues[j] = (user.Active !== false) ? 'Active' : 'Inactive';
+    else if (key === 'Registration Date') rowValues[j] = action === 'create' ? new Date().toISOString() : data[1] ? data[1][j] : '';
+    else rowValues[j] = ''; // Keep empty for others like Last Login or Mobile
+  }
+
+  if (action === 'create') {
+    if (!user.ID) {
+      var maxId = 0;
+      for (var i = 1; i < data.length; i++) {
+        var currId = Number(data[i][idIndex]);
+        if (!isNaN(currId) && currId > maxId) maxId = currId;
+      }
+      user.ID = maxId + 1;
+      rowValues[idIndex] = user.ID;
+    }
+    sheet.appendRow(rowValues);
+    return { success: true, message: 'User created successfully', ID: user.ID };
+  }
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idIndex]).trim() === String(user.ID).trim()) {
+      if (action === 'delete') {
+        sheet.deleteRow(i + 1);
+        return { success: true, message: 'User deleted successfully' };
+      } else if (action === 'update') {
+        // Keep existing values for unmapped columns
+        for (var j = 0; j < headers.length; j++) {
+          var key = headers[j].toString().trim();
+          if (key === 'Mobile' || key === 'Registration Date' || key === 'Last Login') {
+             rowValues[j] = data[i][j];
+          }
+        }
+        sheet.getRange(i + 1, 1, 1, rowValues.length).setValues([rowValues]);
+        return { success: true, message: 'User updated successfully' };
+      }
+    }
+  }
+  return { success: false, message: 'User ID not found.' };
+}
+
+function handleNotificationCRUD(spreadsheet, params) {
+  var action = params.action;
+  var notification = params.notification;
+  var sheet = spreadsheet.getSheetByName('Notifications');
+  if (!sheet) return { success: false, message: 'Notifications sheet not found.' };
+
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var idIndex = headers.indexOf('ID');
+
+  var rowValues = [
+    notification.ID,
+    notification.Timestamp || new Date().toISOString(),
+    notification.Title,
+    notification.Message,
+    notification.Read !== undefined ? notification.Read : false
+  ];
+
+  if (action === 'create') {
+    if (!notification.ID) {
+      var maxId = 0;
+      for (var i = 1; i < data.length; i++) {
+        var currId = Number(data[i][idIndex]);
+        if (!isNaN(currId) && currId > maxId) maxId = currId;
+      }
+      notification.ID = maxId + 1;
+      rowValues[0] = notification.ID;
+    }
+    sheet.appendRow(rowValues);
+    return { success: true, message: 'Notification created successfully', ID: notification.ID };
+  }
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idIndex]).trim() === String(notification.ID).trim()) {
+      if (action === 'delete') {
+        sheet.deleteRow(i + 1);
+        return { success: true, message: 'Notification deleted successfully' };
+      } else if (action === 'update') {
+        sheet.getRange(i + 1, 1, 1, rowValues.length).setValues([rowValues]);
+        return { success: true, message: 'Notification updated successfully' };
+      }
+    }
+  }
+  return { success: false, message: 'Notification ID not found.' };
+}
+
 function jsonResponse(data) {
-  // Note: ContentService does not support setHeader() - CORS is handled by the Next.js proxy.
   return ContentService.createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
 }

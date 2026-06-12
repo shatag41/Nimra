@@ -23,8 +23,9 @@ import ProductDetailScreen from './src/screens/ProductDetailScreen';
 import CartScreen from './src/screens/CartScreen';
 import CheckoutScreen from './src/screens/CheckoutScreen';
 import TrackOrderScreen from './src/screens/TrackOrderScreen';
+import AdminPortalScreen from './src/screens/AdminPortalScreen';
 
-type ScreenName = 'Home' | 'Products' | 'ProductDetail' | 'Cart' | 'Checkout' | 'Track' | 'Inquiry' | 'About';
+type ScreenName = 'Home' | 'Products' | 'ProductDetail' | 'Cart' | 'Checkout' | 'Track' | 'Inquiry' | 'About' | 'AdminPortal';
 
 function AppShell() {
   const cart = useCart();
@@ -172,6 +173,15 @@ function AppShell() {
             isDark={isDark}
           />
         );
+      case 'AdminPortal':
+        return (
+          <AdminPortalScreen
+            isDark={isDark}
+            companyInfo={cmsData.companyInfo}
+            onRefresh={() => loadData(true)}
+            onNavigate={handleNavigate}
+          />
+        );
       default:
         return null;
     }
@@ -216,6 +226,14 @@ function AppShell() {
             onPress={() => setIsDark(!isDark)}
           >
             <Text style={styles.headerBtnEmoji}>{isDark ? '☀️' : '🌙'}</Text>
+          </TouchableOpacity>
+
+          {/* Admin Lock Button */}
+          <TouchableOpacity 
+            style={[styles.headerBtn, { backgroundColor: '#fee2e2' }]} 
+            onPress={() => handleNavigate('AdminPortal')}
+          >
+            <Text style={styles.headerBtnEmoji}>🔑</Text>
           </TouchableOpacity>
         </View>
       </View>

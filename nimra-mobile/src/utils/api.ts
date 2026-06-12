@@ -1,4 +1,4 @@
-import { CMSData, InquirySubmission, OrderRecord, OrderSubmission } from '../types/cms';
+import { CMSData, InquirySubmission, OrderRecord, OrderSubmission, AdminUser, Notification, Inquiry, Product, Banner, FAQ, CompanyInfo } from '../types/cms';
 
 export const mockCMSData: CMSData = {
   banners: [
@@ -232,3 +232,172 @@ export const trackOrder = async (
     return { success: false, message: 'Unable to track order right now.' };
   }
 };
+
+// Admin Portal API Methods for Mobile
+
+export const fetchOrders = async (): Promise<OrderRecord[]> => {
+  const url = getAPIUrl();
+  if (!url) return [];
+  try {
+    const res = await fetch(`${url}?action=getOrders`);
+    if (!res.ok) throw new Error('Fetch failed');
+    return await res.json();
+  } catch (err) {
+    console.error(err);
+    return [];
+  }
+};
+
+export const updateOrderStatus = async (orderId: string, status: string): Promise<{ success: boolean; message: string }> => {
+  const url = getAPIUrl();
+  if (!url) return { success: true, message: 'Mock update success' };
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'updateOrderStatus', orderId, status }),
+    });
+    return await res.json();
+  } catch (err) {
+    console.error(err);
+    return { success: false, message: 'Connection error' };
+  }
+};
+
+export const fetchInquiries = async (): Promise<Inquiry[]> => {
+  const url = getAPIUrl();
+  if (!url) return [];
+  try {
+    const res = await fetch(`${url}?action=getInquiries`);
+    return await res.json();
+  } catch (err) {
+    console.error(err);
+    return [];
+  }
+};
+
+export const fetchUsers = async (): Promise<AdminUser[]> => {
+  const url = getAPIUrl();
+  if (!url) {
+    return [
+      { ID: 1, Username: 'admin', Password: 'nimraadmin123', Role: 'Admin', Name: 'System Admin', Active: true },
+      { ID: 2, Username: 'manager', Password: 'nimramanager123', Role: 'Manager', Name: 'Store Manager', Active: true }
+    ];
+  }
+  try {
+    const res = await fetch(`${url}?action=getUsers`);
+    return await res.json();
+  } catch (err) {
+    console.error(err);
+    return [];
+  }
+};
+
+export const saveUser = async (user: Partial<AdminUser>, action: 'create' | 'update' | 'delete'): Promise<{ success: boolean; message: string }> => {
+  const url = getAPIUrl();
+  if (!url) return { success: true, message: 'Mock saved' };
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'userCRUD', action, user }),
+    });
+    return await res.json();
+  } catch (err) {
+    console.error(err);
+    return { success: false, message: 'Connection error' };
+  }
+};
+
+export const fetchNotifications = async (): Promise<Notification[]> => {
+  const url = getAPIUrl();
+  if (!url) return [];
+  try {
+    const res = await fetch(`${url}?action=getNotifications`);
+    return await res.json();
+  } catch (err) {
+    console.error(err);
+    return [];
+  }
+};
+
+export const saveNotification = async (notification: Partial<Notification>, action: 'create' | 'update' | 'delete'): Promise<{ success: boolean; message: string }> => {
+  const url = getAPIUrl();
+  if (!url) return { success: true, message: 'Mock saved' };
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'notificationCRUD', action, notification }),
+    });
+    return await res.json();
+  } catch (err) {
+    console.error(err);
+    return { success: false, message: 'Connection error' };
+  }
+};
+
+export const saveProduct = async (product: Partial<Product>, action: 'create' | 'update' | 'delete'): Promise<{ success: boolean; message: string }> => {
+  const url = getAPIUrl();
+  if (!url) return { success: true, message: 'Mock saved' };
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'productCRUD', action, product }),
+    });
+    return await res.json();
+  } catch (err) {
+    console.error(err);
+    return { success: false, message: 'Connection error' };
+  }
+};
+
+export const saveBanner = async (banner: Partial<Banner>, action: 'create' | 'update' | 'delete'): Promise<{ success: boolean; message: string }> => {
+  const url = getAPIUrl();
+  if (!url) return { success: true, message: 'Mock saved' };
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'bannerCRUD', action, banner }),
+    });
+    return await res.json();
+  } catch (err) {
+    console.error(err);
+    return { success: false, message: 'Connection error' };
+  }
+};
+
+export const saveFAQ = async (faq: Partial<FAQ>, action: 'create' | 'update' | 'delete'): Promise<{ success: boolean; message: string }> => {
+  const url = getAPIUrl();
+  if (!url) return { success: true, message: 'Mock saved' };
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'faqCRUD', action, faq }),
+    });
+    return await res.json();
+  } catch (err) {
+    console.error(err);
+    return { success: false, message: 'Connection error' };
+  }
+};
+
+export const saveCompanyInfo = async (companyInfo: CompanyInfo): Promise<{ success: boolean; message: string }> => {
+  const url = getAPIUrl();
+  if (!url) return { success: true, message: 'Mock saved' };
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'companyInfoUpdate', companyInfo }),
+    });
+    return await res.json();
+  } catch (err) {
+    console.error(err);
+    return { success: false, message: 'Connection error' };
+  }
+};
+

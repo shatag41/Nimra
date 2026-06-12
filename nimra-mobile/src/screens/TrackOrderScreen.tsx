@@ -10,7 +10,7 @@ interface TrackOrderScreenProps {
   onNavigate: (tab: string, params?: any) => void;
 }
 
-const statusSteps: OrderRecord['status'][] = ['Pending', 'Confirmed', 'Processing', 'Out for Delivery', 'Delivered'];
+const statusSteps: OrderRecord['status'][] = ['Pending', 'Confirmed', 'Processing', 'Dispatched', 'Out for Delivery', 'Delivered', 'Cancelled'];
 
 export default function TrackOrderScreen({ isDark, onNavigate }: TrackOrderScreenProps) {
   const theme = isDark ? COLORS.dark : COLORS.light;
@@ -94,13 +94,36 @@ export default function TrackOrderScreen({ isDark, onNavigate }: TrackOrderScree
 
           <View style={styles.progressRow}>
             {statusSteps.map((step, index) => {
-              const active = index <= activeIndex;
+              const isCancelled = order.status === 'Cancelled';
+              const isStepCancelled = step === 'Cancelled';
+              let active = index <= activeIndex;
+              if (isCancelled && !isStepCancelled && step !== 'Pending' && step !== 'Confirmed' && step !== 'Processing') {
+                active = false;
+              }
+              const showRed = isStepCancelled && isCancelled;
+              
               return (
                 <View key={step} style={styles.progressStep}>
-                  <View style={[styles.stepDot, active && styles.stepDotActive]}>
-                    <Text style={[styles.stepDotText, active && styles.stepDotTextActive]}>{index + 1}</Text>
+                  <View style={[
+                    styles.stepDot, 
+                    active && styles.stepDotActive,
+                    showRed && { backgroundColor: '#ef4444', borderColor: '#ef4444' }
+                  ]}>
+                    <Text style={[
+                      styles.stepDotText, 
+                      active && styles.stepDotTextActive,
+                      showRed && { color: 'white' }
+                    ]}>
+                      {showRed ? '✕' : index + 1}
+                    </Text>
                   </View>
-                  <Text style={[styles.stepLabel, { color: active ? theme.text : theme.textMuted }]}>{step}</Text>
+                  <Text style={[
+                    styles.stepLabel, 
+                    { color: active ? theme.text : theme.textMuted },
+                    showRed && { color: '#ef4444', fontWeight: '800' }
+                  ]}>
+                    {step}
+                  </Text>
                 </View>
               );
             })}
@@ -153,13 +176,13 @@ const styles = StyleSheet.create({
   metaValue: { fontSize: 15, fontWeight: '800' },
   statusPill: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: COLORS.primaryLight },
   statusPillText: { color: COLORS.primary, fontSize: 11, fontWeight: '800' },
-  progressRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 6, flexWrap: 'wrap' },
-  progressStep: { alignItems: 'center', gap: 6, flexBasis: '18%' },
-  stepDot: { width: 32, height: 32, borderRadius: 16, borderWidth: 1, borderColor: '#cbd5e1', alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' },
+  progressRow: { flexDirection: 'row', justifyContent: 'flex-start', gap: 8, flexWrap: 'wrap', marginVertical: 8 },
+  progressStep: { alignItems: 'center', gap: 6, width: '22%', marginVertical: 6 },
+  stepDot: { width: 28, height: 28, borderRadius: 14, borderWidth: 1, borderColor: '#cbd5e1', alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' },
   stepDotActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  stepDotText: { fontSize: 11, fontWeight: '800', color: '#64748b' },
+  stepDotText: { fontSize: 10, fontWeight: '800', color: '#64748b' },
   stepDotTextActive: { color: 'white' },
-  stepLabel: { fontSize: 10, fontWeight: '700', textAlign: 'center', lineHeight: 14 },
+  stepLabel: { fontSize: 9, fontWeight: '700', textAlign: 'center', lineHeight: 12 },
   detailGrid: { gap: 10 },
   detailBlock: { gap: 2 },
   sectionTitle: { fontSize: 16, fontWeight: '800', marginTop: 4 },

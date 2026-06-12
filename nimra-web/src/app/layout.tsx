@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter, Outfit } from 'next/font/google';
 import './globals.css';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
+import LayoutWrapper from '../components/LayoutWrapper';
 import { CartProvider } from '../components/CartProvider';
 import { fetchCMSData } from '../utils/api';
 import StyledJsxRegistry from './registry';
@@ -76,11 +75,9 @@ export default async function RootLayout({
       <body>
         <StyledJsxRegistry>
           <CartProvider>
-            <Header companyInfo={data.companyInfo} />
-            <main style={{ flex: '1', paddingTop: '80px' }}>
+            <LayoutWrapper companyInfo={data.companyInfo}>
               {children}
-            </main>
-            <Footer companyInfo={data.companyInfo} />
+            </LayoutWrapper>
           </CartProvider>
         </StyledJsxRegistry>
       </body>
