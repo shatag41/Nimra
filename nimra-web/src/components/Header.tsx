@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { CompanyInfo } from '../types/cms';
+import { useCart } from './CartProvider';
 
 interface HeaderProps {
   companyInfo: CompanyInfo;
@@ -14,6 +15,7 @@ export default function Header({ companyInfo }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+  const { totalItems } = useCart();
 
   // Load theme from localStorage and handle scroll effects
   useEffect(() => {
@@ -41,6 +43,7 @@ export default function Header({ companyInfo }: HeaderProps) {
   const navLinks = [
     { name: 'Home', href: '/' },
     { name: 'Products', href: '/products' },
+    { name: 'Track Order', href: '/track' },
     { name: 'About Us', href: '/about' },
     { name: 'Contact Us', href: '/contact' },
   ];
@@ -87,8 +90,13 @@ export default function Header({ companyInfo }: HeaderProps) {
             </button>
 
             {/* Inquiry Trigger CTA */}
-            <Link href="/contact" className="btn-cta">
-              Get in Touch
+            <Link href="/cart" className="cart-link" aria-label={`Cart with ${totalItems} items`}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+              <span>{totalItems}</span>
+            </Link>
+
+            <Link href="/checkout" className="btn-cta">
+              Order Now
             </Link>
 
             {/* Mobile Menu Button */}
@@ -117,12 +125,12 @@ export default function Header({ companyInfo }: HeaderProps) {
                 </Link>
               ))}
               <Link
-                href="/contact"
+                href="/cart"
                 className="btn btn-primary"
                 style={{ marginTop: '1.5rem', width: '100%' }}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Inquire Now
+                View Cart ({totalItems})
               </Link>
             </nav>
           </div>
@@ -204,6 +212,34 @@ export default function Header({ companyInfo }: HeaderProps) {
           display: flex;
           align-items: center;
           gap: 1.25rem;
+        }
+        .cart-link {
+          position: relative;
+          width: 42px;
+          height: 42px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid var(--border-color);
+          border-radius: 50%;
+          color: var(--text-primary);
+          background: var(--bg-primary);
+        }
+        .cart-link span {
+          position: absolute;
+          top: -5px;
+          right: -5px;
+          min-width: 20px;
+          height: 20px;
+          padding: 0 5px;
+          border-radius: 999px;
+          background: var(--primary-color);
+          color: white;
+          font-size: 0.7rem;
+          font-weight: 800;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
         }
         .icon-btn {
           background: transparent;

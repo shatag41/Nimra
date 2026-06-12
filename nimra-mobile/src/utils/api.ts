@@ -1,4 +1,4 @@
-import { CMSData, InquirySubmission } from '../types/cms';
+import { CMSData, InquirySubmission, OrderRecord, OrderSubmission } from '../types/cms';
 
 export const mockCMSData: CMSData = {
   banners: [
@@ -158,7 +158,7 @@ export const submitInquiry = async (inquiry: InquirySubmission): Promise<{ succe
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(inquiry)
+      body: JSON.stringify({ ...inquiry, type: 'inquiry' })
     });
     if (!res.ok) throw new Error("Post inquiry failed");
     const result = await res.json();
@@ -166,5 +166,69 @@ export const submitInquiry = async (inquiry: InquirySubmission): Promise<{ succe
   } catch (err) {
     console.error("Error submitting inquiry:", err);
     return { success: false, message: "Failed to submit inquiry. Please check your network connection." };
+  }
+};
+
+export const submitOrder = async (order: OrderSubmission): Promise<{ success: boolean; message: string; orderId?: string }> => {
+  const url = getAPIUrl();
+  const payload: OrderSubmission = {
+    ...order,
+    paymentMethod: order.paymentMethod || 'Cash on Delivery',
+    source: order.source || 'Mobile App',
+  };
+
+  console.log('NIMRA mobile checkout payload:', payload);
+
+  if (!url) {
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    return {
+      success: true,
+      message: 'Order mock-submitted successfully. Connect Apps Script URL to write to Google Sheets.',
+      orderId: `NIMRA-MOCK-${Date.now()}`,
+    };
+  }
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const result = await res.json();
+    if (!res.ok || !result.success) {
+      return { success: false, message: result.message || result.error || 'Failed to place order.' };
+    }
+    return { success: true, message: 'Order placed successfully', orderId: result.orderId };
+  } catch (err) {
+    console.error('Error submitting order:', err);
+    return { success: false, message: 'Failed to submit order. Please check your network connection.' };
+  }
+};
+
+export const trackOrder = async (
+  orderId: string,
+  mobile: string
+): Promise<{ success: boolean; message?: string; order?: OrderRecord }> => {
+  const url = getAPIUrl();
+  if (!url) {
+    return { success: false, message: 'Tracking requires the Apps Script URL to be configured.' };
+  }
+
+  try {
+    const params = new URLSearchParams({ action: 'trackOrder' });
+    if (orderId.trim()) params.set('orderId', orderId.trim());
+    if (mobile.trim()) params.set('mobile', mobile.trim());
+
+    const res = await fetch(`${url}?${params.toString()}`);
+    const result = await res.json();
+
+    if (!res.ok || !result.success) {
+      return { success: false, message: result.message || result.error || 'Order not found.' };
+    }
+
+    return { success: true, order: result.order };
+  } catch (err) {
+    console.error('Error tracking order:', err);
+    return { success: false, message: 'Unable to track order right now.' };
   }
 };

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { CartProvider } from '../components/CartProvider';
 import { fetchCMSData } from '../utils/api';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -41,11 +42,13 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Header companyInfo={data.companyInfo} />
-        <main style={{ flex: '1', paddingTop: '80px' }}>
-          {children}
-        </main>
-        <Footer companyInfo={data.companyInfo} />
+        <CartProvider>
+          <Header companyInfo={data.companyInfo} />
+          <main style={{ flex: '1', paddingTop: '80px' }}>
+            {children}
+          </main>
+          <Footer companyInfo={data.companyInfo} />
+        </CartProvider>
       </body>
     </html>
   );

@@ -11,11 +11,15 @@ export interface Banner {
 export interface Product {
   ID: string | number;
   Name: string;
-  Category: string; // 'Packaged Water' | 'Soda' | etc.
-  Volume: string; // '250ml' | '500ml' | '1L' | '2L' | '20L'
+  Category: string; // 'Packaged Drinking Water' | 'Mineral Water' | 'Bulk Water' | 'RUSH Soda' | etc.
+  Volume: string; // '250ml' | '500ml' | '1L' | '2L' | '5L' | '20L Jar'
   Price: number | string;
   Description: string;
   ImageUrl: string;
+  Specifications?: string;
+  StockStatus?: string;
+  DiscountPercent?: number | string;
+  ComboPack?: string;
   Active?: boolean | string;
 }
 
@@ -49,9 +53,51 @@ export interface CMSData {
 }
 
 export interface InquirySubmission {
+  type?: 'inquiry';
   name: string;
   email: string;
   phone: string;
   subject: string;
   message: string;
+}
+
+export interface CartItem {
+  productId: string;
+  name: string;
+  category: string;
+  volume: string;
+  price: number;
+  imageUrl: string;
+  quantity: number;
+}
+
+export interface OrderCustomer {
+  name: string;
+  mobile: string;
+  email: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  instructions?: string;
+}
+
+export interface OrderSubmission {
+  type: 'order';
+  customer: OrderCustomer;
+  items: CartItem[];
+  subtotal: number;
+  deliveryCharge: number;
+  total: number;
+  paymentMethod?: string;
+  source?: 'Website' | 'Mobile App' | string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface OrderRecord extends OrderSubmission {
+  orderId: string;
+  status: 'Pending' | 'Confirmed' | 'Processing' | 'Out for Delivery' | 'Delivered';
+  createdAt: string;
+  updatedAt?: string;
 }
