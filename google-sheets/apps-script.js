@@ -266,6 +266,15 @@ function updateOrderStatus(spreadsheet, params) {
   return { success: false, message: 'Order ID ' + orderId + ' not found.' };
 }
 
+function toISOString(date) {
+  if (!date) return '';
+  if (typeof date === 'string') return date;
+  if (date instanceof Date) {
+    return date.toISOString();
+  }
+  return String(date);
+}
+
 function rowToOrder(headers, row) {
   function value(name) {
     var index = headers.indexOf(name);
@@ -290,8 +299,8 @@ function rowToOrder(headers, row) {
     type: 'order',
     orderId: value('Order ID'),
     status: value('Order Status') || 'Pending',
-    createdAt: value('Order Date'),
-    updatedAt: value('Updated At') || value('Order Date'),
+    createdAt: toISOString(value('Order Date')),
+    updatedAt: toISOString(value('Updated At')) || toISOString(value('Order Date')),
     customer: {
       name: value('Customer Name'),
       mobile: value('Mobile Number'),
@@ -304,7 +313,7 @@ function rowToOrder(headers, row) {
     },
     items: items,
     subtotal: Number(value('Subtotal') || 0),
-    deliveryCharge: Number(value('Delivery Charges') || 0),
+    deliveryCharge: Number(value('Delivery Charge') || 0),
     total: Number(value('Total Amount') || 0),
     paymentMethod: value('Payment Method') || 'Cash on Delivery',
     source: value('Source') || 'Website'
@@ -326,7 +335,7 @@ function ensureOrdersSheet(spreadsheet) {
     'Products',
     'Quantities',
     'Subtotal',
-    'Delivery Charges',
+    'Delivery Charge',
     'Total Amount',
     'Payment Method',
     'Order Status',
@@ -365,7 +374,12 @@ function getSheetData(sheet) {
     for (var j = 0; j < headers.length; j++) {
       var key = headers[j].toString().trim();
       var val = data[i][j];
-      row[key] = val;
+      // Convert dates to ISO strings
+      if (val instanceof Date) {
+        row[key] = toISOString(val);
+      } else {
+        row[key] = val;
+      }
       if (key.toLowerCase() === 'active' && (val === false || val === 'false')) {
         active = false;
       }
@@ -872,70 +886,204 @@ function handleAuthGoogleSignIn(spreadsheet, params) {
 }
 
 function handleAuthRequestOTP(spreadsheet, params) {
-  var email = String(params.email || '').trim();
+  var email = normalizeEmail(params.email);
   if (!email) return { success: false, message: 'Email is required.' };
-  
-  var users = getUsersData(spreadsheet);
-  var userFound = false;
-  for (var i = 0; i < users.length; i++) {
-    if (String(users[i].Username).trim() === email) {
-      userFound = true;
-      break;
-    }
+  if (!isValidEmail(email)) return { success: false, message: 'Enter a valid registered email address.' };
+
+  var userMatch = findUserRowByEmail(spreadsheet, email);
+  if (!userMatch) return { success: false, message: 'Email not found.' };
+  if (userMatch.user.Active === false) {
+    return { success: false, message: 'Your account is inactive. Please contact support.' };
   }
-  
-  if (!userFound) return { success: false, message: 'Email not found.' };
-  
+
   var otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit OTP
-  
-  // Store OTP in a new sheet or cache. For simplicity, use CacheService
+  var expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+  var otpIndex = ensureUserColumn(userMatch.sheet, userMatch.headers, 'ResetOTP');
+  var expiresIndex = ensureUserColumn(userMatch.sheet, userMatch.headers, 'ResetOTPExpiresAt');
+  userMatch.sheet.getRange(userMatch.rowNumber, otpIndex + 1).setValue(otp);
+  userMatch.sheet.getRange(userMatch.rowNumber, expiresIndex + 1).setValue(expiresAt.toISOString());
+
+  // Cache is fast, sheet columns are the durable fallback.
   var cache = CacheService.getScriptCache();
   cache.put('otp_' + email, otp, 600); // Valid for 10 minutes
-  
+
   try {
-    MailApp.sendEmail({
-      to: email,
-      subject: "NIMRA Password Reset OTP",
-      body: "Your OTP for password reset is: " + otp + "\nThis OTP is valid for 10 minutes."
-    });
-    return { success: true, message: 'OTP sent to email.' };
+    sendPasswordResetOtpEmail(email, otp, userMatch.user.Name);
+    return { success: true, message: 'OTP sent to your registered email.' };
   } catch (e) {
-    return { success: false, message: 'Failed to send email. Please try again later.' };
+    var emailError = getErrorMessage(e);
+    Logger.log('handleAuthRequestOTP email failure: ' + emailError);
+    return {
+      success: false,
+      message: 'Failed to send email: ' + emailError,
+      hint: 'Run authorizeNimraEmailSending once in Apps Script, then deploy a new Web App version with Execute as Me.'
+    };
   }
 }
 
 function handleAuthResetPassword(spreadsheet, params) {
-  var email = String(params.email || '').trim();
+  var email = normalizeEmail(params.email);
   var otp = String(params.otp || '').trim();
   var newPassword = String(params.newPassword || '').trim();
   
   if (!email || !otp || !newPassword) {
     return { success: false, message: 'Email, OTP, and new password are required.' };
   }
+  if (newPassword.length < 4) {
+    return { success: false, message: 'New password must be at least 4 characters.' };
+  }
   
   var cache = CacheService.getScriptCache();
   var cachedOtp = cache.get('otp_' + email);
-  
-  if (!cachedOtp || cachedOtp !== otp) {
+
+  var userMatch = findUserRowByEmail(spreadsheet, email);
+  if (!userMatch) return { success: false, message: 'User not found.' };
+
+  var otpIndex = findHeaderIndex(userMatch.headers, ['ResetOTP', 'Reset OTP']);
+  var expiresIndex = findHeaderIndex(userMatch.headers, ['ResetOTPExpiresAt', 'Reset OTP Expires At']);
+  var sheetOtp = otpIndex >= 0 ? String(userMatch.row[otpIndex] || '').trim() : '';
+  var expiresAt = expiresIndex >= 0 ? new Date(userMatch.row[expiresIndex]) : null;
+  var hasValidSheetOtp = sheetOtp === otp && expiresAt && !isNaN(expiresAt.getTime()) && expiresAt.getTime() >= Date.now();
+
+  if ((cachedOtp && cachedOtp !== otp) || (!cachedOtp && !hasValidSheetOtp)) {
     return { success: false, message: 'Invalid or expired OTP.' };
   }
-  
+
+  var passIndex = findHeaderIndex(userMatch.headers, ['Password (hashed)', 'Password']);
+  if (passIndex < 0) {
+    return { success: false, message: 'Password column not found.' };
+  }
+
+  userMatch.sheet.getRange(userMatch.rowNumber, passIndex + 1).setValue(hashPassword(newPassword));
+  if (otpIndex >= 0) userMatch.sheet.getRange(userMatch.rowNumber, otpIndex + 1).setValue('');
+  if (expiresIndex >= 0) userMatch.sheet.getRange(userMatch.rowNumber, expiresIndex + 1).setValue('');
+  cache.remove('otp_' + email);
+  return { success: true, message: 'Password reset successfully.' };
+}
+
+function normalizeEmail(email) {
+  return String(email || '').trim().toLowerCase();
+}
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function findHeaderIndex(headers, names) {
+  for (var i = 0; i < names.length; i++) {
+    var index = headers.indexOf(names[i]);
+    if (index >= 0) return index;
+  }
+  return -1;
+}
+
+function ensureUserColumn(sheet, headers, name) {
+  var index = headers.indexOf(name);
+  if (index >= 0) return index;
+  var nextColumn = headers.length + 1;
+  sheet.getRange(1, nextColumn).setValue(name);
+  headers.push(name);
+  return headers.length - 1;
+}
+
+function findUserRowByEmail(spreadsheet, email) {
+  getUsersData(spreadsheet); // Ensure the Users sheet and headers exist.
   var sheet = spreadsheet.getSheetByName('Users');
+  if (!sheet) return null;
+
   var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return null;
+
   var headers = data[0];
-  var idIndex = headers.indexOf('User ID') !== -1 ? headers.indexOf('User ID') : headers.indexOf('ID');
-  var emailIndex = headers.indexOf('Email') !== -1 ? headers.indexOf('Email') : headers.indexOf('Username');
-  var passIndex = headers.indexOf('Password (hashed)') !== -1 ? headers.indexOf('Password (hashed)') : headers.indexOf('Password');
-  
+  var emailIndex = findHeaderIndex(headers, ['Email', 'Username']);
+  if (emailIndex < 0) return null;
+
   for (var i = 1; i < data.length; i++) {
-    if (String(data[i][emailIndex]).trim() === email) {
-      sheet.getRange(i + 1, passIndex + 1).setValue(hashPassword(newPassword));
-      cache.remove('otp_' + email);
-      return { success: true, message: 'Password reset successfully.' };
+    if (normalizeEmail(data[i][emailIndex]) === email) {
+      var users = getUsersData(spreadsheet);
+      var rowIdIndex = findHeaderIndex(headers, ['User ID', 'ID']);
+      var rowId = rowIdIndex >= 0 ? String(data[i][rowIdIndex]).trim() : '';
+      var user = null;
+
+      for (var j = 0; j < users.length; j++) {
+        if (rowId && String(users[j].ID).trim() === rowId) {
+          user = users[j];
+          break;
+        }
+        if (!rowId && normalizeEmail(users[j].Username) === email) {
+          user = users[j];
+          break;
+        }
+      }
+
+      return {
+        sheet: sheet,
+        headers: headers,
+        row: data[i],
+        rowNumber: i + 1,
+        user: user || { Username: email, Active: true, Name: '' }
+      };
     }
   }
-  
-  return { success: false, message: 'User not found.' };
+
+  return null;
+}
+
+function sendPasswordResetOtpEmail(email, otp, name) {
+  var displayName = String(name || 'NIMRA customer').trim();
+  var subject = 'NIMRA password reset OTP';
+  var plainBody = 'Hello ' + displayName + ',\n\n' +
+    'Your OTP for NIMRA password reset is: ' + otp + '\n\n' +
+    'This OTP is valid for 10 minutes. If you did not request this, you can ignore this email.\n\n' +
+    'NIMRA Support';
+  var htmlBody = '<p>Hello ' + escapeHtml(displayName) + ',</p>' +
+    '<p>Your OTP for NIMRA password reset is:</p>' +
+    '<p style="font-size:28px;font-weight:700;letter-spacing:6px;margin:16px 0;">' + otp + '</p>' +
+    '<p>This OTP is valid for 10 minutes. If you did not request this, you can ignore this email.</p>' +
+    '<p>NIMRA Support</p>';
+
+  var message = {
+    to: email,
+    subject: subject,
+    body: plainBody,
+    htmlBody: htmlBody,
+    name: 'NIMRA Support'
+  };
+
+  try {
+    MailApp.sendEmail(message);
+  } catch (mailError) {
+    Logger.log('MailApp failed, retrying with GmailApp: ' + getErrorMessage(mailError));
+    GmailApp.sendEmail(email, subject, plainBody, {
+      htmlBody: htmlBody,
+      name: 'NIMRA Support'
+    });
+  }
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function getErrorMessage(error) {
+  if (!error) return 'Unknown error';
+  return error.message || error.toString();
+}
+
+function authorizeNimraEmailSending() {
+  var email = Session.getEffectiveUser().getEmail();
+  if (!email) {
+    throw new Error('Could not detect the effective user email. Run this from the Apps Script editor account that owns the web app deployment.');
+  }
+
+  sendPasswordResetOtpEmail(email, '000000', 'NIMRA Admin');
+  return 'Authorization email sent to ' + email + '. Now deploy the Web App as a new version.';
 }
 
 function updateUserLastLogin(spreadsheet, userId) {

@@ -129,6 +129,10 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
       const fetchedUsers = await fetchUsers();
       const fetchedNotifs = await fetchNotifications();
 
+      console.log('[refreshData] Fetched orders:', fetchedOrders);
+      console.log('[refreshData] Fetched inquiries:', fetchedInquiries);
+      console.log('[refreshData] Fetched users:', fetchedUsers);
+
       setOrders(fetchedOrders);
       setInquiries(fetchedInquiries);
       setUsers(fetchedUsers);
@@ -692,6 +696,8 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             {/* ORDERS TAB */}
             {activeTab === 'orders' && (
               <div className="orders-tab card glass">
+                {/* Log orders */}
+                {(() => { console.log('[AdminPortal] Orders in state:', orders); return null; })()}
                 <div className="table-responsive">
                   <table className="admin-table">
                     <thead>
@@ -706,13 +712,13 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                       </tr>
                     </thead>
                     <tbody>
-                      {orders.map((o) => (
-                        <tr key={o.orderId}>
+                      {orders.map((o, idx) => (
+                        <tr key={o.orderId || idx}>
                           <td><strong>{o.orderId}</strong></td>
-                          <td>{new Date(o.createdAt).toLocaleDateString()}</td>
+                          <td>{o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'N/A'}</td>
                           <td>
-                            <div>{o.customer.name}</div>
-                            <small>{o.customer.mobile}</small>
+                            <div>{o.customer?.name || 'N/A'}</div>
+                            <small>{o.customer?.mobile || 'N/A'}</small>
                           </td>
                           <td><strong>{formatCurrency(o.total)}</strong></td>
                           <td>{o.paymentMethod}</td>

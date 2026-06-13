@@ -173,16 +173,28 @@ const hasAppsScriptConfigured = (): boolean => {
 };
 
 const readJsonResponse = async <T>(res: Response, fallback: T): Promise<T> => {
+  console.log('[readJsonResponse] Starting with response ok:', res.ok, 'status:', res.status, 'url:', res.url);
   const text = await res.text();
   const trimmed = text.trim();
+  console.log('[readJsonResponse] Full trimmed response (first 2000 chars):', trimmed.substring(0, 2000));
 
-  if (!res.ok || !trimmed || trimmed.startsWith('<')) {
+  if (!res.ok || !trimmed) {
+    console.warn('[readJsonResponse] Returning fallback because res.ok:', res.ok, 'or trimmed empty');
     return fallback;
   }
-
+  
+  // Check if it's JSON before checking for <
   try {
-    return JSON.parse(trimmed) as T;
-  } catch {
+    const parsed = JSON.parse(trimmed) as T;
+    console.log('[readJsonResponse] Successfully parsed:', parsed);
+    return parsed;
+  } catch (jsonErr) {
+    console.warn('[readJsonResponse] JSON parse failed:', jsonErr, '- checking if it starts with <');
+    if (trimmed.startsWith('<')) {
+      console.warn('[readJsonResponse] Trimmed starts with <, returning fallback');
+      return fallback;
+    }
+    console.error('[readJsonResponse] Unknown error, returning fallback');
     return fallback;
   }
 };
@@ -245,8 +257,22 @@ export const submitInquiry = async (inquiry: InquirySubmission): Promise<{ succe
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...inquiry, type: 'inquiry' }),
     });
-    const result = await res.json();
-    console.log('API Utility: submitInquiry server response:', result);
+    const text = await res.text();
+    console.log('API Utility: submitInquiry raw response:', text);
+    
+    let result;
+    if (!text.trim().startsWith('{')) {
+      console.error('API Utility: submitInquiry received non-JSON response, response:', text);
+      // Since we now have local fallback in API route, this shouldn't happen, but just in case
+      return {
+        success: false,
+        message: 'Google Sheets backend not available. Please try again later.',
+      };
+    } else {
+      result = JSON.parse(text);
+      console.log('API Utility: submitInquiry server response:', result);
+    }
+    
     if (!res.ok || !result.success) {
       return {
         success: false,
@@ -278,8 +304,23 @@ export const submitOrder = async (order: OrderSubmission): Promise<{ success: bo
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    const result = await res.json();
-    console.log('API Utility: submitOrder server response:', result);
+    
+    const text = await res.text();
+    console.log('API Utility: submitOrder raw response (full):', text);
+    
+    let result;
+    if (!text.trim().startsWith('{')) {
+      console.error('API Utility: submitOrder received non-JSON response, response:', text);
+      // Since we now have local fallback in API route, this shouldn't happen, but just in case
+      return {
+        success: false,
+        message: 'Google Sheets backend not available. Please try again later.',
+      };
+    } else {
+      result = JSON.parse(text);
+      console.log('API Utility: submitOrder server response:', result);
+    }
+    
     if (!res.ok || !result.success) {
       return {
         success: false,
@@ -288,7 +329,7 @@ export const submitOrder = async (order: OrderSubmission): Promise<{ success: bo
     }
     return {
       success: true,
-      message: 'Order placed successfully',
+      message: result.message || 'Order placed successfully',
       orderId: result.orderId,
     };
   } catch (err) {
@@ -318,8 +359,17 @@ export const trackOrder = async (
 // Admin Portal API Methods
 
 export const fetchOrders = async (): Promise<OrderRecord[]> => {
-  const res = await fetch('/api/cms?action=getOrders', { method: 'GET', cache: 'no-store' });
+  console.log('[fetchOrders] Starting...');
+  const res = await fetch(`/api/cms?action=getOrders&_t=${Date.now()}`, { 
+    method: 'GET', 
+    cache: 'no-store',
+    headers: {
+      'Accept': 'application/json',
+    },
+  });
+  console.log('[fetchOrders] Response status:', res.status, 'url:', res.url, 'type:', res.type);
   const data = await readJsonResponse<{ orders?: OrderRecord[] } | OrderRecord[]>(res, []);
+  console.log('[fetchOrders] Returning data:', data);
   return Array.isArray(data) ? data : (data.orders || []);
 };
 
@@ -339,14 +389,30 @@ export const updateOrderStatus = async (orderId: string, status: string): Promis
 };
 
 export const fetchInquiries = async (): Promise<Inquiry[]> => {
-  const res = await fetch('/api/cms?action=getInquiries', { method: 'GET', cache: 'no-store' });
+  console.log('[fetchInquiries] Starting...');
+  const res = await fetch(`/api/cms?action=getInquiries&_t=${Date.now()}`, { 
+    method: 'GET', 
+    cache: 'no-store',
+    headers: {
+      'Accept': 'application/json',
+    },
+  });
   const data = await readJsonResponse<{ inquiries?: Inquiry[] } | Inquiry[]>(res, []);
+  console.log('[fetchInquiries] Returning data:', data);
   return Array.isArray(data) ? data : (data.inquiries || []);
 };
 
 export const fetchUsers = async (): Promise<AdminUser[]> => {
-  const res = await fetch('/api/cms?action=getUsers', { method: 'GET', cache: 'no-store' });
+  console.log('[fetchUsers] Starting...');
+  const res = await fetch(`/api/cms?action=getUsers&_t=${Date.now()}`, { 
+    method: 'GET', 
+    cache: 'no-store',
+    headers: {
+      'Accept': 'application/json',
+    },
+  });
   const data = await readJsonResponse<{ users?: AdminUser[] } | AdminUser[]>(res, []);
+  console.log('[fetchUsers] Returning data:', data);
   return Array.isArray(data) ? data : (data.users || []);
 };
 
@@ -365,9 +431,17 @@ export const saveUser = async (user: Partial<AdminUser>, action: 'create' | 'upd
   }
 };
 
-export const fetchNotifications = async (): Promise<Notification[]> => {
-  const res = await fetch('/api/cms?action=getNotifications', { method: 'GET', cache: 'no-store' });
+export const fetchNotifications = async (): Promise<Notification[]> => { 
+  console.log('[fetchNotifications] Starting...');
+  const res = await fetch(`/api/cms?action=getNotifications&_t=${Date.now()}`, { 
+    method: 'GET', 
+    cache: 'no-store',
+    headers: {
+      'Accept': 'application/json',
+    },
+  });
   const data = await readJsonResponse<{ notifications?: Notification[] } | Notification[]>(res, []);
+  console.log('[fetchNotifications] Returning data:', data);
   return Array.isArray(data) ? data : (data.notifications || []);
 };
 
