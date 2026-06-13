@@ -4,7 +4,6 @@ import type { NextRequest } from 'next/server';
 export function proxy(request: NextRequest) {
   const userCookie = request.cookies.get('nimra_user')?.value;
   const { pathname } = request.nextUrl;
-  console.log('[PROXY] Request path:', pathname, 'User cookie:', !!userCookie);
 
   if (pathname.startsWith('/api/') || pathname.startsWith('/_next/')) {
     return NextResponse.next();
@@ -12,7 +11,6 @@ export function proxy(request: NextRequest) {
 
   const publicPaths = ['/login', '/register', '/forgot-password', '/admin/login'];
   const isPublicPath = publicPaths.includes(pathname);
-  console.log('[PROXY] isPublicPath:', isPublicPath);
 
   let user = null;
   if (userCookie) {

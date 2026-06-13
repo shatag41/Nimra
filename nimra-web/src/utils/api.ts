@@ -173,25 +173,19 @@ const hasAppsScriptConfigured = (): boolean => {
 };
 
 const readJsonResponse = async <T>(res: Response, fallback: T): Promise<T> => {
-  console.log('[readJsonResponse] Starting with response ok:', res.ok, 'status:', res.status, 'url:', res.url);
   const text = await res.text();
   const trimmed = text.trim();
-  console.log('[readJsonResponse] Full trimmed response (first 2000 chars):', trimmed.substring(0, 2000));
 
   if (!res.ok || !trimmed) {
-    console.warn('[readJsonResponse] Returning fallback because res.ok:', res.ok, 'or trimmed empty');
     return fallback;
   }
   
   // Check if it's JSON before checking for <
   try {
     const parsed = JSON.parse(trimmed) as T;
-    console.log('[readJsonResponse] Successfully parsed:', parsed);
     return parsed;
   } catch (jsonErr) {
-    console.warn('[readJsonResponse] JSON parse failed:', jsonErr, '- checking if it starts with <');
     if (trimmed.startsWith('<')) {
-      console.warn('[readJsonResponse] Trimmed starts with <, returning fallback');
       return fallback;
     }
     console.error('[readJsonResponse] Unknown error, returning fallback');
@@ -238,7 +232,7 @@ export const fetchCMSData = async (): Promise<CMSData> => {
       companyInfo: data.companyInfo || {},
     };
   } catch (err) {
-    console.warn('Error loading CMS data.', err);
+    console.error('Error loading CMS data.', err);
     return {
       banners: [],
       products: [],
@@ -250,7 +244,6 @@ export const fetchCMSData = async (): Promise<CMSData> => {
 
 // Submit Inquiry via internal proxy to Google Sheets
 export const submitInquiry = async (inquiry: InquirySubmission): Promise<{ success: boolean; message: string }> => {
-  console.log('API Utility: submitInquiry called with payload:', inquiry);
   try {
     const res = await fetch('/api/cms', {
       method: 'POST',
@@ -258,7 +251,6 @@ export const submitInquiry = async (inquiry: InquirySubmission): Promise<{ succe
       body: JSON.stringify({ ...inquiry, type: 'inquiry' }),
     });
     const text = await res.text();
-    console.log('API Utility: submitInquiry raw response:', text);
     
     let result;
     if (!text.trim().startsWith('{')) {
@@ -270,7 +262,6 @@ export const submitInquiry = async (inquiry: InquirySubmission): Promise<{ succe
       };
     } else {
       result = JSON.parse(text);
-      console.log('API Utility: submitInquiry server response:', result);
     }
     
     if (!res.ok || !result.success) {
@@ -296,8 +287,6 @@ export const submitOrder = async (order: OrderSubmission): Promise<{ success: bo
     source: order.source || 'Website',
   };
 
-  console.log('API Utility: submitOrder called. Payload:', payload);
-
   try {
     const res = await fetch('/api/cms', {
       method: 'POST',
@@ -306,7 +295,6 @@ export const submitOrder = async (order: OrderSubmission): Promise<{ success: bo
     });
     
     const text = await res.text();
-    console.log('API Utility: submitOrder raw response (full):', text);
     
     let result;
     if (!text.trim().startsWith('{')) {
@@ -318,7 +306,6 @@ export const submitOrder = async (order: OrderSubmission): Promise<{ success: bo
       };
     } else {
       result = JSON.parse(text);
-      console.log('API Utility: submitOrder server response:', result);
     }
     
     if (!res.ok || !result.success) {
@@ -359,7 +346,6 @@ export const trackOrder = async (
 // Admin Portal API Methods
 
 export const fetchOrders = async (): Promise<OrderRecord[]> => {
-  console.log('[fetchOrders] Starting...');
   const res = await fetch(`/api/cms?action=getOrders&_t=${Date.now()}`, { 
     method: 'GET', 
     cache: 'no-store',
@@ -367,9 +353,7 @@ export const fetchOrders = async (): Promise<OrderRecord[]> => {
       'Accept': 'application/json',
     },
   });
-  console.log('[fetchOrders] Response status:', res.status, 'url:', res.url, 'type:', res.type);
   const data = await readJsonResponse<{ orders?: OrderRecord[] } | OrderRecord[]>(res, []);
-  console.log('[fetchOrders] Returning data:', data);
   return Array.isArray(data) ? data : (data.orders || []);
 };
 
@@ -389,7 +373,6 @@ export const updateOrderStatus = async (orderId: string, status: string): Promis
 };
 
 export const fetchInquiries = async (): Promise<Inquiry[]> => {
-  console.log('[fetchInquiries] Starting...');
   const res = await fetch(`/api/cms?action=getInquiries&_t=${Date.now()}`, { 
     method: 'GET', 
     cache: 'no-store',
@@ -398,12 +381,10 @@ export const fetchInquiries = async (): Promise<Inquiry[]> => {
     },
   });
   const data = await readJsonResponse<{ inquiries?: Inquiry[] } | Inquiry[]>(res, []);
-  console.log('[fetchInquiries] Returning data:', data);
   return Array.isArray(data) ? data : (data.inquiries || []);
 };
 
 export const fetchUsers = async (): Promise<AdminUser[]> => {
-  console.log('[fetchUsers] Starting...');
   const res = await fetch(`/api/cms?action=getUsers&_t=${Date.now()}`, { 
     method: 'GET', 
     cache: 'no-store',
@@ -412,7 +393,6 @@ export const fetchUsers = async (): Promise<AdminUser[]> => {
     },
   });
   const data = await readJsonResponse<{ users?: AdminUser[] } | AdminUser[]>(res, []);
-  console.log('[fetchUsers] Returning data:', data);
   return Array.isArray(data) ? data : (data.users || []);
 };
 
@@ -432,7 +412,6 @@ export const saveUser = async (user: Partial<AdminUser>, action: 'create' | 'upd
 };
 
 export const fetchNotifications = async (): Promise<Notification[]> => { 
-  console.log('[fetchNotifications] Starting...');
   const res = await fetch(`/api/cms?action=getNotifications&_t=${Date.now()}`, { 
     method: 'GET', 
     cache: 'no-store',
@@ -441,7 +420,6 @@ export const fetchNotifications = async (): Promise<Notification[]> => {
     },
   });
   const data = await readJsonResponse<{ notifications?: Notification[] } | Notification[]>(res, []);
-  console.log('[fetchNotifications] Returning data:', data);
   return Array.isArray(data) ? data : (data.notifications || []);
 };
 

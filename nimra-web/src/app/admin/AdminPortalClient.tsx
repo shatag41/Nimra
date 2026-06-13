@@ -28,6 +28,7 @@ import {
   saveCompanyInfo,
 } from '../../utils/api';
 import { formatCurrency } from '../../utils/commerce';
+import LogoutConfirmationModal from '../../components/LogoutConfirmationModal';
 
 interface AdminPortalClientProps {
   initialCMSData: CMSData;
@@ -63,6 +64,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
   // Modals state
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
   const [orderStatusVal, setOrderStatusVal] = useState('');
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   
   // Product Edit Form state
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
@@ -129,10 +131,6 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
       const fetchedUsers = await fetchUsers();
       const fetchedNotifs = await fetchNotifications();
 
-      console.log('[refreshData] Fetched orders:', fetchedOrders);
-      console.log('[refreshData] Fetched inquiries:', fetchedInquiries);
-      console.log('[refreshData] Fetched users:', fetchedUsers);
-
       setOrders(fetchedOrders);
       setInquiries(fetchedInquiries);
       setUsers(fetchedUsers);
@@ -156,10 +154,14 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
     setTimeout(() => setAlertMsg({ text: '', type: 'success' }), 4000);
   };
 
-  const handleLogout = () => {
+  const performLogout = () => {
     localStorage.removeItem('nimra_admin_user');
     Cookies.remove('nimra_user');
     router.replace('/login');
+  };
+
+  const handleLogout = () => {
+    setIsLogoutModalOpen(true);
   };
 
   // Dashboard Stats Calculations
@@ -696,8 +698,6 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             {/* ORDERS TAB */}
             {activeTab === 'orders' && (
               <div className="orders-tab card glass">
-                {/* Log orders */}
-                {(() => { console.log('[AdminPortal] Orders in state:', orders); return null; })()}
                 <div className="table-responsive">
                   <table className="admin-table">
                     <thead>
@@ -1611,6 +1611,15 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           </div>
         </div>
       )}
+
+      <LogoutConfirmationModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={() => {
+          setIsLogoutModalOpen(false);
+          performLogout();
+        }}
+      />
 
       {/* ==================================================== */}
       {/* DESIGN SYSTEM CSS */}

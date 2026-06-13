@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { CompanyInfo } from '../types/cms';
 import { useCart } from './CartProvider';
 import { useAuth } from '../context/AuthContext';
+import LogoutConfirmationModal from './LogoutConfirmationModal';
 
 interface HeaderProps {
   companyInfo: CompanyInfo;
@@ -15,6 +16,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const pathname = usePathname();
   const { totalItems } = useCart();
   const { user, logout } = useAuth();
@@ -127,7 +129,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
             )}
 
             {user ? (
-              <button onClick={logout} className="btn-cta bg-red-500 hover:bg-red-600 border-none">
+              <button onClick={() => setIsLogoutModalOpen(true)} className="btn-cta bg-red-500 hover:bg-red-600 border-none">
                 Logout
               </button>
             ) : (
@@ -177,7 +179,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                 <button
                   className="btn btn-error"
                   style={{ marginTop: '0.5rem', width: '100%' }}
-                  onClick={() => { setMobileMenuOpen(false); logout(); }}
+                  onClick={() => { setMobileMenuOpen(false); setIsLogoutModalOpen(true); }}
                 >
                   Logout
                 </button>
@@ -196,6 +198,15 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           </div>
         )}
       </header>
+
+      <LogoutConfirmationModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={() => {
+          setIsLogoutModalOpen(false);
+          logout();
+        }}
+      />
 
       <style jsx>{`
         .header {

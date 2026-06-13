@@ -6,8 +6,6 @@ const APPS_SCRIPT_URL = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || process.env.E
 export async function GET(req: Request) {
   const requestUrl = new URL(req.url);
   const action = requestUrl.searchParams.get('action');
-  console.log('[API GET] Received request with action:', action);
-  console.log('[API GET] APPS_SCRIPT_URL:', APPS_SCRIPT_URL);
   
   // Sample fallback data if Google Sheets not available
   const fallbackData = {
@@ -74,7 +72,6 @@ export async function GET(req: Request) {
     try {
       const targetUrl = new URL(APPS_SCRIPT_URL);
       requestUrl.searchParams.forEach((value, key) => targetUrl.searchParams.set(key, value));
-      console.log('[API GET] Fetching from Apps Script URL:', targetUrl.toString());
 
       const res = await fetch(targetUrl.toString(), {
         method: 'GET',
@@ -86,16 +83,12 @@ export async function GET(req: Request) {
       });
 
       const text = await res.text();
-      console.log('[API GET] Apps Script response text:', text.substring(0, 500)); // Log first 500 chars
       if (!text.trim().startsWith('<')) {
         const data = JSON.parse(text);
-        console.log('[API GET] Parsed data:', data);
         return NextResponse.json(data);
-      } else {
-        console.warn('Apps Script returned HTML, using local fallback.');
       }
     } catch (err) {
-      console.warn('Google Sheets GET fetch failed, using local fallback:', err);
+      console.error('Google Sheets GET fetch failed, using local fallback:', err);
     }
   }
 
@@ -135,9 +128,6 @@ export async function POST(req: Request) {
     const body = await req.json();
     const payload = { ...body };
 
-    console.log('[API POST] Received payload type:', payload.type);
-    console.log('[API POST] APPS_SCRIPT_URL configured:', !!APPS_SCRIPT_URL);
-
     let useFallback = true;
     
     if (APPS_SCRIPT_URL) {
@@ -153,20 +143,16 @@ export async function POST(req: Request) {
         });
 
         const text = await res.text();
-        console.log('[API POST] Apps Script response text:', text.substring(0, 500));
         if (!text.trim().startsWith('<')) {
           const data = JSON.parse(text);
-          console.log('[API POST] Apps Script parsed data:', data);
           return NextResponse.json(data);
         }
-        console.warn('Apps Script returned error or HTML, using local fallback.');
       } catch (err) {
-        console.warn('Google Sheets POST failed, using local fallback:', err);
+        console.error('Google Sheets POST failed, using local fallback:', err);
       }
     }
 
     // Local fallback if Google Sheets not available
-    console.log('[API POST] Using local fallback for payload type:', payload.type);
     
     if (payload.type === 'order') {
       const orderId = `NIMRA-${Date.now()}-${Math.floor(Math.random() * 1000)}`;

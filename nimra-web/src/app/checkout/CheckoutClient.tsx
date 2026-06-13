@@ -39,7 +39,6 @@ export default function CheckoutClient() {
       return;
     }
 
-    console.log('Checkout Page: Form submitted. Inputs: Mobile=' + form.mobile + ', Pincode=' + form.pincode + ', Items=' + cart.items.length);
     setStatus({ kind: 'loading', message: 'Placing your order...' });
     const orderData = {
       type: 'order' as const,
@@ -51,9 +50,7 @@ export default function CheckoutClient() {
       paymentMethod: 'Cash on Delivery' as const,
       source: 'Website' as const,
     };
-    console.log('Checkout Page: Submitting order payload:', orderData);
     const result = await submitOrder(orderData);
-    console.log('Checkout Page: submitOrder result:', result);
 
     if (result.success) {
       cart.clearCart();

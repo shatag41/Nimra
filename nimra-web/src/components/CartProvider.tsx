@@ -28,7 +28,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) setItems(JSON.parse(saved));
     } catch (err) {
-      console.warn('Unable to restore cart', err);
+      // Ignore cart restore errors
     } finally {
       setHydrated(true);
     }
