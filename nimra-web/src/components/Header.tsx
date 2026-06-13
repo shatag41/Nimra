@@ -11,7 +11,7 @@ interface HeaderProps {
   companyInfo: CompanyInfo;
 }
 
-export default function Header({ companyInfo }: HeaderProps) {
+export default React.memo(function Header({ companyInfo }: HeaderProps) {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -100,6 +100,7 @@ export default function Header({ companyInfo }: HeaderProps) {
               <Link
                 key={link.name}
                 href={link.href}
+                prefetch={true}
                 className={`nav-link ${pathname === link.href ? 'active' : ''}`}
               >
                 {link.name}
@@ -119,7 +120,7 @@ export default function Header({ companyInfo }: HeaderProps) {
 
             {/* Cart Icon (only for Customers) */}
             {(!user || user.Role === 'Customer') && (
-              <Link href="/cart" className="cart-link" aria-label={`Cart with ${totalItems} items`}>
+              <Link href="/cart" prefetch={true} className="cart-link" aria-label={`Cart with ${totalItems} items`}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
                 <span>{totalItems}</span>
               </Link>
@@ -130,7 +131,7 @@ export default function Header({ companyInfo }: HeaderProps) {
                 Logout
               </button>
             ) : (
-              <Link href="/login" className="btn-cta">
+              <Link href="/login" prefetch={true} className="btn-cta">
                 Login
               </Link>
             )}
@@ -154,6 +155,7 @@ export default function Header({ companyInfo }: HeaderProps) {
                 <Link
                   key={link.name}
                   href={link.href}
+                  prefetch={true}
                   className={`mobile-nav-link ${pathname === link.href ? 'active' : ''}`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -163,6 +165,7 @@ export default function Header({ companyInfo }: HeaderProps) {
               {(!user || user.Role === 'Customer') && (
                 <Link
                   href="/cart"
+                  prefetch={true}
                   className="btn btn-primary"
                   style={{ marginTop: '1.5rem', width: '100%' }}
                   onClick={() => setMobileMenuOpen(false)}
@@ -181,6 +184,7 @@ export default function Header({ companyInfo }: HeaderProps) {
               ) : (
                 <Link
                   href="/login"
+                  prefetch={true}
                   className="btn btn-primary"
                   style={{ marginTop: '0.5rem', width: '100%' }}
                   onClick={() => setMobileMenuOpen(false)}
@@ -376,4 +380,4 @@ export default function Header({ companyInfo }: HeaderProps) {
       `}</style>
     </>
   );
-}
+});

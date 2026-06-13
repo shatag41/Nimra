@@ -61,7 +61,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'dummy_client_id'}>
           <AuthProvider>
             <StyledJsxRegistry>

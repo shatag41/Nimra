@@ -51,7 +51,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const login = (userData: User) => {
     const isAdminUser = userData.Role === 'Admin';
     setUser(userData);
-    Cookies.set('nimra_user', JSON.stringify(userData), { expires: 7 }); // 7 days
+    // Session cookie: removed { expires: 7 } so it expires on window close
+    Cookies.set('nimra_user', JSON.stringify(userData)); 
     if (isAdminUser) {
       localStorage.setItem(
         'nimra_admin_user',

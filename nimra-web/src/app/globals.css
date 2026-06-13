@@ -123,6 +123,11 @@ html.theme-transition .glass {
   100% { transform: translateY(-120vh) scale(1.2); opacity: 0; }
 }
 
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
 .animate-fade-in {
   animation: fadeIn var(--transition-normal) forwards;
 }
@@ -193,6 +198,13 @@ section {
   background: #008080;
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0, 162, 153, 0.4);
+}
+
+.btn-primary:active,
+.btn-cta:active,
+.auth-submit:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 10px rgba(0, 162, 153, 0.3);
 }
 
 .btn-secondary {
@@ -272,7 +284,7 @@ section {
 
 /* Auth pages */
 .auth-page {
-  min-height: calc(100vh - 80px);
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -375,6 +387,12 @@ section {
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(10px);
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.auth-highlight:hover {
+  background: rgba(255, 255, 255, 0.14);
+  transform: translateY(-2px);
 }
 
 .auth-highlight strong {
@@ -479,6 +497,28 @@ section {
   color: var(--text-secondary);
   cursor: not-allowed;
   opacity: 0.8;
+}
+
+/* Password toggle button */
+.password-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: color var(--transition-fast), transform var(--transition-fast);
+  padding: 4px;
+}
+
+.password-toggle-btn:hover {
+  color: var(--primary-color);
+  transform: translateY(-50%) scale(1.15);
 }
 
 .auth-help {

@@ -117,7 +117,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
       }
     }
 
-    router.replace('/admin/login');
+    router.replace('/login');
   }, [router]);
 
   // Load all dashboard databases
@@ -155,7 +155,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
   const handleLogout = () => {
     localStorage.removeItem('nimra_admin_user');
     Cookies.remove('nimra_user');
-    router.replace('/admin/login');
+    router.replace('/login');
   };
 
   // Dashboard Stats Calculations
@@ -505,10 +505,6 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             ⚙️ Settings
           </button>
         </nav>
-
-        <button onClick={handleLogout} className="btn-logout">
-          🚪 Logout Session
-        </button>
       </aside>
 
       {/* MAIN VIEW */}
@@ -526,6 +522,9 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
               <span className="dot active"></span>
               {process.env.NEXT_PUBLIC_APPS_SCRIPT_URL ? 'Connected to Google Sheets' : 'Local Fallback Mode'}
             </span>
+            <button onClick={handleLogout} className="btn btn-secondary" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>
+              Logout
+            </button>
           </div>
         </header>
 

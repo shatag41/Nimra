@@ -31,12 +31,12 @@ export interface FAQ {
 }
 
 export interface CompanyInfo {
-  BrandName: string;
-  Phone: string;
-  Email: string;
-  OfficeAddress: string;
-  PlantAddress: string;
-  WhatsAppNumber: string;
+  BrandName?: string;
+  Phone?: string;
+  Email?: string;
+  OfficeAddress?: string;
+  PlantAddress?: string;
+  WhatsAppNumber?: string;
   OfficeMapEmbed?: string;
   PlantMapEmbed?: string;
   AboutStory?: string;

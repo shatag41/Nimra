@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { COLORS } from './src/styles/theme';
-import { fetchCMSData, mockCMSData } from './src/utils/api';
+import { fetchCMSData } from './src/utils/api';
 import { CMSData, Product } from './src/types/cms';
 import { CartProvider, useCart } from './src/context/CartContext';
 
@@ -44,8 +44,12 @@ function AppShell() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [currentTab, setCurrentTab] = useState<ScreenName>('Home');
-  const [cmsData, setCmsData] = useState<CMSData>(mockCMSData);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [cmsData, setCmsData] = useState<CMSData>({
+    banners: [],
+    products: [],
+    faqs: [],
+    companyInfo: {},
+  });
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [prefillParams, setPrefillParams] = useState<{ product?: string; subject?: string } | null>(null);
   

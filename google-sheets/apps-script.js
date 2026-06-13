@@ -398,8 +398,8 @@ function getUsersData(spreadsheet) {
     var headers = ['User ID', 'Full Name', 'Mobile', 'Email', 'Password (hashed)', 'Role (Admin/Customer)', 'Status', 'Registration Date', 'Last Login'];
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     
-    // Seed default users
-    sheet.appendRow([1, 'System Admin', '', 'admin', 'nimraadmin123', 'Admin', 'Active', new Date().toISOString(), '']);
+    // Seed default users with hashed password
+    sheet.appendRow([1, 'System Admin', '', 'admin', hashPassword('nimraadmin123'), 'Admin', 'Active', new Date().toISOString(), '']);
   }
   
   var data = sheet.getDataRange().getValues();
@@ -762,7 +762,8 @@ function handleAuthLogin(spreadsheet, params) {
   
   for (var i = 0; i < users.length; i++) {
     var user = users[i];
-    if ((String(user.Username).trim() === username || String(user.Mobile).trim() === username) && user.Password === hashedPassword) {
+    if ((String(user.Username).trim() === username || String(user.Mobile).trim() === username) && 
+        (user.Password === hashedPassword || user.Password === password)) { // Check both hashed and plain text for backwards compatibility
       if (!user.Active) {
         return { success: false, message: 'Your account is inactive. Please contact support.' };
       }

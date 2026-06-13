@@ -1,4 +1,5 @@
 import { CMSData, InquirySubmission, OrderRecord, OrderSubmission, AdminUser, Notification, Inquiry, Product, Banner, FAQ, CompanyInfo } from '../types/cms';
+import type { User } from '../context/AuthContext';
 
 export const mockCMSData: CMSData = {
   banners: [
@@ -118,12 +119,116 @@ const getAPIUrl = (): string => {
   return process.env.EXPO_PUBLIC_APPS_SCRIPT_URL || '';
 };
 
+export type AuthRequest =
+  | { type: 'login'; username: string; password: string }
+  | { type: 'register'; user: { Name: string; Username?: string; Mobile?: string; Password: string; Role?: string } }
+  | { type: 'googleSignIn'; email: string; name: string; role?: string }
+  | { type: 'requestOTP'; email: string }
+  | { type: 'resetPassword'; email: string; otp: string; newPassword: string };
+
+export type AuthResponse = {
+  success: boolean;
+  message?: string;
+  user?: {
+    ID: string | number;
+    Name: string;
+    Username: string;
+    Mobile?: string;
+    Role: string;
+    Active: boolean;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+};
+
+export const normalizeAuthUser = (user: AuthResponse['user']): User | null => {
+  if (!user) return null;
+
+  const id = typeof user.ID === 'number' ? user.ID : Number(user.ID);
+  if (!Number.isFinite(id)) return null;
+
+  return {
+    ID: id,
+    Name: user.Name,
+    Username: user.Username,
+    Mobile: user.Mobile ?? '',
+    Role: user.Role,
+    Active: user.Active,
+  };
+};
+
+// Auth utility used by Login, Register and ForgotPassword screens.
+// Sends the request to the Apps Script backend (or returns a mock if unconfigured).
+export const sendRequest = async (payload: AuthRequest): Promise<AuthResponse> => {
+  const url = getAPIUrl();
+
+  if (!url) {
+    // --- Local mock fallback so screens work even without Apps Script ---
+    if (payload.type === 'login') {
+      // Accept hardcoded credentials for offline dev testing
+      if (payload.username === 'admin' && payload.password === 'nimraadmin123') {
+        return { success: true, user: { ID: 1, Name: 'System Admin', Username: 'admin', Role: 'Admin', Active: true } };
+      }
+      return { success: false, message: 'Invalid credentials. Connect Apps Script URL to use real accounts.' };
+    }
+    if (payload.type === 'register') {
+      const u = payload.user;
+      if (!u.Name || !u.Password || (!u.Username && !u.Mobile)) {
+        return { success: false, message: 'Name, password, and email or mobile are required.' };
+      }
+      if (u.Password.length < 6) {
+        return { success: false, message: 'Password must be at least 6 characters.' };
+      }
+      const mockUser = {
+        ID: Date.now(),
+        Name: u.Name,
+        Username: u.Username || u.Mobile || '',
+        Mobile: u.Mobile || '',
+        Role: u.Role || 'Customer',
+        Active: true,
+      };
+      return { success: true, user: mockUser, message: 'Mock registration successful.' };
+    }
+    if (payload.type === 'requestOTP') {
+      return { success: true, message: 'OTP sent (use 123456 in offline mode).' };
+    }
+    if (payload.type === 'resetPassword') {
+      if (payload.otp === '123456') {
+        return { success: true, message: 'Password reset successful (offline mock).' };
+      }
+      return { success: false, message: 'Invalid OTP.' };
+    }
+    return { success: false, message: 'Action not supported in offline mode.' };
+  }
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      return { success: false, message: data.message || data.error || 'Request failed.' };
+    }
+    return data as AuthResponse;
+  } catch (err) {
+    console.error('sendRequest error:', err);
+    return { success: false, message: 'Network error. Please check your connection.' };
+  }
+};
+
 // Fetch CMS Data
 export const fetchCMSData = async (): Promise<CMSData> => {
   const url = getAPIUrl();
   if (!url) {
-    console.log("No EXPO_PUBLIC_APPS_SCRIPT_URL configured. Using NIMRA offline Mock CMS.");
-    return mockCMSData;
+    console.log("No EXPO_PUBLIC_APPS_SCRIPT_URL configured.");
+    return {
+      banners: [],
+      products: [],
+      faqs: [],
+      companyInfo: {},
+    };
   }
 
   try {
@@ -132,14 +237,19 @@ export const fetchCMSData = async (): Promise<CMSData> => {
     const data = await res.json();
     
     return {
-      banners: data.banners && data.banners.length > 0 ? data.banners : mockCMSData.banners,
-      products: data.products && data.products.length > 0 ? data.products : mockCMSData.products,
-      faqs: data.faqs && data.faqs.length > 0 ? data.faqs : mockCMSData.faqs,
-      companyInfo: { ...mockCMSData.companyInfo, ...data.companyInfo }
+      banners: data.banners || [],
+      products: data.products || [],
+      faqs: data.faqs || [],
+      companyInfo: data.companyInfo || {}
     };
   } catch (err) {
-    console.warn("Error loading CMS from Apps Script. Falling back to mock data.", err);
-    return mockCMSData;
+    console.warn("Error loading CMS from Apps Script.", err);
+    return {
+      banners: [],
+      products: [],
+      faqs: [],
+      companyInfo: {},
+    };
   }
 };
 

@@ -3,7 +3,7 @@
 import React, { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
-import { fetchUsers } from '../../../utils/api';
+import { sendRequest } from '../../../utils/api';
 import { AdminUser } from '../../../types/cms';
 
 export default function LoginClient() {
@@ -46,15 +46,9 @@ export default function LoginClient() {
     setError('');
 
     try {
-      const users = await fetchUsers();
-      const matchedUser = users.find(
-        (u: AdminUser) =>
-          u.Username.toLowerCase() === username.toLowerCase() &&
-          u.Password === password &&
-          (u.Active === true || u.Active === 'true')
-      );
-
-      if (matchedUser) {
+      const res = await sendRequest({ type: 'login', username, password });
+      if (res.success && res.user) {
+        const matchedUser = res.user;
         const userSession = {
           ID: matchedUser.ID,
           Name: matchedUser.Name,
@@ -75,7 +69,7 @@ export default function LoginClient() {
         );
         router.replace('/admin');
       } else {
-        setError('Invalid username or password. Please try again.');
+        setError(res.message || 'Invalid username or password. Please try again.');
       }
     } catch (err) {
       console.error(err);

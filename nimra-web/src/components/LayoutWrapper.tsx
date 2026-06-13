@@ -14,8 +14,9 @@ interface LayoutWrapperProps {
 export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperProps) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith('/admin');
+  const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password';
 
-  if (isAdmin) {
+  if (isAdmin || isAuthPage) {
     return (
       <main style={{ flex: '1' }}>
         {children}

@@ -209,11 +209,6 @@ export const sendRequest = async (payload: AuthRequest): Promise<AuthResponse> =
 
 // Fetch CMS Data via internal proxy
 export const fetchCMSData = async (): Promise<CMSData> => {
-  if (!hasAppsScriptConfigured()) {
-    console.log('No NEXT_PUBLIC_APPS_SCRIPT_URL configured. Using NIMRA offline Mock CMS.');
-    return mockCMSData;
-  }
-
   try {
     const res = await fetch(getProxyUrl(), {
       method: 'GET',
@@ -224,16 +219,20 @@ export const fetchCMSData = async (): Promise<CMSData> => {
 
     if (data.error) throw new Error(data.error);
 
-    // Merge with mock data as fallback for missing fields
     return {
-      banners: data.banners && data.banners.length > 0 ? data.banners : mockCMSData.banners,
-      products: data.products && data.products.length > 0 ? data.products : mockCMSData.products,
-      faqs: data.faqs && data.faqs.length > 0 ? data.faqs : mockCMSData.faqs,
-      companyInfo: { ...mockCMSData.companyInfo, ...data.companyInfo },
+      banners: data.banners || [],
+      products: data.products || [],
+      faqs: data.faqs || [],
+      companyInfo: data.companyInfo || {},
     };
   } catch (err) {
-    console.warn('Error loading CMS data. Falling back to mock data.', err);
-    return mockCMSData;
+    console.warn('Error loading CMS data.', err);
+    return {
+      banners: [],
+      products: [],
+      faqs: [],
+      companyInfo: {},
+    };
   }
 };
 
