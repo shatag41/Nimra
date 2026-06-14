@@ -5,7 +5,7 @@ export interface User {
   ID: number;
   Name: string;
   Username: string; // Email
-  Mobile: string;
+  Mobile?: string;
   Role: string; // 'Admin' | 'Customer'
   Active: boolean;
 }

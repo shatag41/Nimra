@@ -99,7 +99,7 @@ export default function ProductsClient({ products }: ProductsClientProps) {
 
       <style jsx>{`
         .products-hero {
-          background: linear-gradient(135deg, rgba(0, 162, 153, 0.06) 0%, rgba(15, 23, 42, 0.02) 100%);
+          background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.06) 0%, rgba(var(--secondary-rgb), 0.02) 100%);
           text-align: center;
           padding: 4rem 0 2rem;
           border-bottom: 1px solid var(--border-color);
@@ -117,6 +117,7 @@ export default function ProductsClient({ products }: ProductsClientProps) {
         }
         .products-catalog-section {
           background-color: var(--bg-secondary);
+          padding: 2rem 0;
         }
         .catalog-tabs {
           display: flex;
@@ -141,7 +142,7 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           background: var(--primary-color);
           border-color: var(--primary-color);
           color: white;
-          box-shadow: 0 4px 12px rgba(0, 162, 153, 0.2);
+          box-shadow: var(--shadow-md);
         }
         .catalog-grid {
           display: grid;
@@ -149,16 +150,16 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           gap: 2rem;
         }
         .catalog-card {
-          border-radius: 8px;
+          border-radius: var(--radius-xl);
           padding: 1.5rem;
           display: flex;
           flex-direction: column;
-          box-shadow: var(--card-shadow);
-          transition: color var(--transition-fast), border-color var(--transition-fast), background-color var(--transition-fast), box-shadow var(--transition-fast);
+          box-shadow: var(--shadow-md);
+          transition: all var(--transition-normal);
         }
         .catalog-card:hover {
-          transform: translateY(-4px);
-          box-shadow: var(--card-hover-shadow);
+          transform: translateY(-6px);
+          box-shadow: var(--shadow-xl);
         }
         .cat-img-box {
           height: 250px;
@@ -166,7 +167,7 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           align-items: center;
           justify-content: center;
           margin-bottom: 1.5rem;
-          border-radius: 8px;
+          border-radius: var(--radius-lg);
           background: var(--bg-primary);
           overflow: hidden;
         }
@@ -174,7 +175,11 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           max-height: 86%;
           max-width: 86%;
           object-fit: contain;
-          border-radius: 8px;
+          border-radius: var(--radius-md);
+          transition: transform var(--transition-normal);
+        }
+        .catalog-card:hover .cat-img-box img {
+          transform: scale(1.05);
         }
         .cat-info-box {
           display: flex;
@@ -195,7 +200,7 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           padding: 0.75rem;
           background: var(--bg-primary);
           border: 1px solid var(--border-color);
-          border-radius: 8px;
+          border-radius: var(--radius-md);
           font-size: 0.8rem !important;
         }
         .cat-meta {
@@ -213,11 +218,12 @@ export default function ProductsClient({ products }: ProductsClientProps) {
         }
         .cat-volume {
           color: var(--primary-color);
-          background: rgba(0, 162, 153, 0.1);
+          background: rgba(var(--primary-rgb), 0.1);
         }
         .cat-badge {
           color: var(--text-secondary);
           background: var(--bg-primary);
+          border: 1px solid var(--border-light);
         }
         .cat-price-row {
           display: flex;
@@ -230,7 +236,7 @@ export default function ProductsClient({ products }: ProductsClientProps) {
         }
         .price-lbl {
           font-size: 0.75rem;
-          color: var(--text-secondary);
+          color: var(--text-muted);
           display: block;
         }
         .price-val {

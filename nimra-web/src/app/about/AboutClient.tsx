@@ -138,7 +138,7 @@ export default function AboutClient({ companyInfo }: AboutClientProps) {
 
       <style jsx>{`
         .about-hero {
-          background: linear-gradient(135deg, rgba(0, 162, 153, 0.05) 0%, rgba(15, 23, 42, 0.02) 100%);
+          background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.05) 0%, rgba(var(--secondary-rgb), 0.02) 100%);
           text-align: center;
           padding: 4rem 0 2rem;
         }
@@ -160,6 +160,7 @@ export default function AboutClient({ companyInfo }: AboutClientProps) {
           z-index: 100;
           border-top: 1px solid var(--border-color);
           border-bottom: 1px solid var(--border-color);
+          background: var(--bg-secondary);
         }
         .submenu-container {
           display: flex;
@@ -190,8 +191,9 @@ export default function AboutClient({ companyInfo }: AboutClientProps) {
           left: 0;
           width: 0;
           height: 3px;
-          background: var(--primary-color);
+          background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
           transition: width var(--transition-fast);
+          border-radius: var(--radius-sm);
         }
         .submenu-btn.active::after {
           width: 100%;
@@ -233,13 +235,13 @@ export default function AboutClient({ companyInfo }: AboutClientProps) {
         }
         .stat-lbl {
           font-size: 0.8rem;
-          color: var(--text-secondary);
+          color: var(--text-muted);
           margin-top: 0.25rem;
         }
         .about-img-box img {
           width: 100%;
-          border-radius: 20px;
-          box-shadow: var(--card-shadow);
+          border-radius: var(--radius-xl);
+          box-shadow: var(--shadow-xl);
         }
 
         /* Quality Timeline */
@@ -285,20 +287,21 @@ export default function AboutClient({ companyInfo }: AboutClientProps) {
           border-radius: 50%;
           background: var(--bg-secondary);
           border: 4px solid var(--primary-color);
-          box-shadow: 0 0 10px rgba(0, 162, 153, 0.3);
+          box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.3);
           z-index: 10;
         }
         .timeline-card {
           padding: 1.5rem;
-          border-radius: 16px;
-          box-shadow: var(--card-shadow);
-          transition: transform var(--transition-fast);
-        }
-        :global(html.theme-transition) .timeline-card {
-          transition: transform var(--transition-fast), background-color var(--transition-normal), border-color var(--transition-normal);
+          border-radius: var(--radius-xl);
+          box-shadow: var(--shadow-md);
+          background: var(--bg-primary);
+          border: 1px solid var(--border-color);
+          transition: all var(--transition-normal);
         }
         .timeline-card:hover {
           transform: translateX(5px);
+          border-color: var(--primary-color);
+          box-shadow: var(--shadow-lg);
         }
         .timeline-card h4 {
           color: var(--primary-color);
@@ -315,24 +318,28 @@ export default function AboutClient({ companyInfo }: AboutClientProps) {
         .plant-info-card {
           margin-top: 2rem;
           padding: 1.5rem;
-          border-radius: 16px;
+          border-radius: var(--radius-xl);
           border-left: 4px solid var(--primary-color);
+          background: var(--bg-primary);
+          border: 1px solid var(--border-color);
+          box-shadow: var(--shadow-md);
         }
         .plant-info-card h4 {
           margin-bottom: 0.5rem;
         }
         .plant-map-box {
-          box-shadow: var(--card-shadow);
-          border-radius: 16px;
+          box-shadow: var(--shadow-xl);
+          border-radius: var(--radius-xl);
           overflow: hidden;
           background: var(--bg-primary);
+          border: 1px solid var(--border-color);
         }
         .map-placeholder {
           height: 350px;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: var(--text-secondary);
+          color: var(--text-muted);
         }
 
         @media (max-width: 1024px) {

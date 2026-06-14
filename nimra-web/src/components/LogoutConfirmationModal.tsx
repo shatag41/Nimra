@@ -122,7 +122,7 @@ export default function LogoutConfirmationModal({
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(0, 0, 0, 0.5);
+          background: rgba(0, 0, 0, 0.6);
           z-index: 10000;
           animation: fadeIn 0.2s ease-out;
         }
@@ -134,12 +134,13 @@ export default function LogoutConfirmationModal({
           transform: translate(-50%, -50%);
           background: var(--bg-primary);
           padding: 2rem;
-          border-radius: 12px;
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+          border-radius: var(--radius-xl);
+          box-shadow: var(--shadow-xl);
+          border: 1px solid var(--border-color);
           z-index: 10001;
           width: 90%;
           max-width: 400px;
-          animation: slideIn 0.3s ease-out;
+          animation: scaleIn 0.3s ease-out;
         }
 
         .modal-title {
@@ -162,34 +163,6 @@ export default function LogoutConfirmationModal({
           justify-content: flex-end;
         }
 
-        .btn {
-          padding: 0.75rem 1.5rem;
-          border-radius: 8px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          border: none;
-          font-family: var(--font-heading);
-        }
-
-        .btn-secondary {
-          background: var(--border-color);
-          color: var(--text-primary);
-        }
-
-        .btn-secondary:hover {
-          background: rgba(0, 0, 0, 0.1);
-        }
-
-        .btn-error {
-          background: #ef4444;
-          color: white;
-        }
-
-        .btn-error:hover {
-          background: #dc2626;
-        }
-
         @keyframes fadeIn {
           from {
             opacity: 0;
@@ -199,14 +172,14 @@ export default function LogoutConfirmationModal({
           }
         }
 
-        @keyframes slideIn {
+        @keyframes scaleIn {
           from {
             opacity: 0;
-            transform: translate(-50%, -45%);
+            transform: translate(-50%, -50%) scale(0.9);
           }
           to {
             opacity: 1;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%) scale(1);
           }
         }
 
@@ -218,10 +191,6 @@ export default function LogoutConfirmationModal({
 
           .modal-actions {
             flex-direction: column-reverse;
-          }
-
-          .btn {
-            width: 100%;
           }
         }
       `}</style>

@@ -105,8 +105,9 @@ export interface OrderRecord extends OrderSubmission {
 export interface AdminUser {
   ID: string | number;
   Username: string;
+  Mobile?: string;
   Password?: string;
-  Role: 'Admin' | 'Manager';
+  Role: 'Admin' | 'Manager' | 'Customer';
   Name: string;
   Active?: boolean | string;
 }

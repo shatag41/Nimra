@@ -106,8 +106,9 @@ export interface AdminUser {
   ID: string | number;
   Username: string;
   Password?: string;
-  Role: 'Admin' | 'Manager';
+  Role: 'Admin' | 'Manager' | 'Customer';
   Name: string;
+  Mobile?: string;
   Active?: boolean | string;
 }
 

@@ -14,19 +14,46 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const validate = () => {
+    if (!username.trim()) {
+      setError('Email or mobile number is required');
+      return false;
+    }
+
+    // Check if username is numeric (mobile)
+    const isNumeric = /^\d+$/.test(username.trim());
+    if (isNumeric && username.trim().length !== 10) {
+      setError('Mobile number must be exactly 10 digits');
+      return false;
+    }
+
+    if (!password) {
+      setError('Password is required');
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!validate()) {
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const res = await sendRequest({ type: 'login', username, password });
+      const res = await sendRequest({ type: 'login', username: username.trim(), password });
       if (res.success && res.user) {
         login(res.user);
       } else {
         setError(res.message ?? 'Login failed. Please try again.');
       }
-    } catch {
+    } catch (err) {
+      console.error('Login error:', err);
       setError('Login failed. Please try again.');
     } finally {
       setIsLoading(false);

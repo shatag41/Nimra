@@ -315,7 +315,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
 
       <style jsx>{`
         .contact-hero {
-          background: linear-gradient(135deg, rgba(0, 162, 153, 0.05) 0%, rgba(15, 23, 42, 0.02) 100%);
+          background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.05) 0%, rgba(var(--secondary-rgb), 0.02) 100%);
           text-align: center;
           padding: 4rem 0 2rem;
           border-bottom: 1px solid var(--border-color);
@@ -345,7 +345,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
           margin-bottom: 0.5rem;
         }
         .subtitle {
-          color: var(--text-secondary);
+          color: var(--text-muted);
           font-size: 0.95rem;
           margin-bottom: 2rem;
         }
@@ -358,17 +358,25 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
         }
         .info-card {
           padding: 1.25rem;
-          border-radius: 16px;
+          border-radius: var(--radius-xl);
           display: flex;
           gap: 1rem;
           align-items: flex-start;
-          box-shadow: var(--card-shadow);
+          box-shadow: var(--shadow-md);
+          background: var(--bg-primary);
+          border: 1px solid var(--border-color);
+          transition: all var(--transition-normal);
+        }
+        .info-card:hover {
+          border-color: var(--primary-color);
+          box-shadow: var(--shadow-lg);
+          transform: translateY(-2px);
         }
         .info-icon {
           width: 44px;
           height: 44px;
-          border-radius: 10px;
-          background: rgba(0, 162, 153, 0.1);
+          border-radius: var(--radius-md);
+          background: rgba(var(--primary-rgb), 0.1);
           color: var(--primary-color);
           display: flex;
           align-items: center;
@@ -391,9 +399,11 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
 
         /* Maps wrapper */
         .map-wrapper {
-          border-radius: 20px;
+          border-radius: var(--radius-xl);
           overflow: hidden;
-          box-shadow: var(--card-shadow);
+          box-shadow: var(--shadow-lg);
+          background: var(--bg-primary);
+          border: 1px solid var(--border-color);
         }
         .map-tabs {
           display: flex;
@@ -409,9 +419,6 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
           font-size: 0.9rem;
           color: var(--text-secondary);
           cursor: pointer;
-          transition: color var(--transition-fast), background var(--transition-fast);
-        }
-        :global(html.theme-transition) .map-tab-btn {
           transition: all var(--transition-fast);
         }
         .map-tab-btn:hover {
@@ -419,7 +426,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
         }
         .map-tab-btn.active {
           color: var(--primary-color);
-          background: var(--bg-primary);
+          background: var(--bg-secondary);
           border-bottom: 2px solid var(--primary-color);
         }
         .map-iframe-container {
@@ -430,34 +437,36 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
           display: flex;
           align-items: center;
           justify-content: center;
-          color: var(--text-secondary);
+          color: var(--text-muted);
         }
 
         /* Form styling */
         .form-col {
-          border-radius: 24px;
+          border-radius: var(--radius-xl);
           padding: 2.5rem;
-          box-shadow: var(--card-shadow);
+          box-shadow: var(--shadow-lg);
           height: fit-content;
+          background: var(--bg-primary);
+          border: 1px solid var(--border-color);
         }
         .status-banner {
           display: flex;
           align-items: center;
           gap: 0.75rem;
           padding: 1rem 1.25rem;
-          border-radius: 12px;
+          border-radius: var(--radius-md);
           font-size: 0.9rem;
           margin-bottom: 1.5rem;
           line-height: 1.4;
         }
         .status-banner.success {
           background: rgba(16, 185, 129, 0.15);
-          color: #065f46;
+          color: var(--accent-color);
           border: 1px solid rgba(16, 185, 129, 0.25);
         }
         .status-banner.error {
           background: rgba(239, 68, 68, 0.15);
-          color: #991b1b;
+          color: #ef4444;
           border: 1px solid rgba(239, 68, 68, 0.25);
         }
         .inquiry-form {
@@ -485,45 +494,41 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
         }
         input, textarea {
           padding: 0.85rem 1.1rem;
-          border-radius: 10px;
-          border: 1px solid var(--border-color);
-          background-color: var(--bg-primary);
+          border-radius: var(--radius-md);
+          border: 1.5px solid var(--border-color);
+          background-color: var(--bg-secondary);
           color: var(--text-primary);
           font-family: var(--font-body);
           font-size: 0.95rem;
-          transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-        }
-        :global(html.theme-transition) input, 
-        :global(html.theme-transition) textarea {
           transition: all var(--transition-fast);
         }
         input:focus, textarea:focus {
           outline: none;
           border-color: var(--primary-color);
-          box-shadow: 0 0 0 3px rgba(0, 162, 153, 0.1);
+          box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
         }
         .inquiry-submit:disabled {
-          background: #d1d5db;
-          border-color: #d1d5db;
-          color: #6b7280;
+          background: var(--text-muted);
+          border-color: var(--text-muted);
+          color: var(--text-secondary);
           box-shadow: none;
           cursor: not-allowed;
-          opacity: 1;
+          opacity: 0.7;
         }
         .inquiry-submit:disabled:hover {
-          background: #d1d5db;
-          color: #6b7280;
+          background: var(--text-muted);
+          color: var(--text-secondary);
           transform: none;
           box-shadow: none;
         }
         .validation-message {
-          color: #991b1b;
+          color: #ef4444;
           font-size: 0.85rem;
           line-height: 1.4;
           margin: -0.5rem 0 0;
         }
         .field-validation-message {
-          color: #991b1b;
+          color: #ef4444;
           font-size: 0.8rem;
           line-height: 1.4;
           margin: 0;

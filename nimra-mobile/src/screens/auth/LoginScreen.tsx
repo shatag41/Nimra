@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { normalizeAuthUser, sendRequest } from '../../utils/api';
@@ -11,15 +11,35 @@ export default function LoginScreen({ navigation }: any) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  const validate = () => {
+    if (!username.trim()) {
+      Alert.alert('Error', 'Email or mobile number is required');
+      return false;
+    }
+
+    // Check if username is numeric (mobile)
+    const isNumeric = /^\d+$/.test(username.trim());
+    if (isNumeric && username.trim().length !== 10) {
+      Alert.alert('Error', 'Mobile number must be exactly 10 digits');
+      return false;
+    }
+
+    if (!password) {
+      Alert.alert('Error', 'Password is required');
+      return false;
+    }
+
+    return true;
+  };
+
   const handleLogin = async () => {
-    if (!username || !password) {
-      Alert.alert('Error', 'Please enter username and password');
+    if (!validate()) {
       return;
     }
 
     setIsLoading(true);
     try {
-      const res = await sendRequest({ type: 'login', username, password });
+      const res = await sendRequest({ type: 'login', username: username.trim(), password });
       const authUser = normalizeAuthUser(res.user);
       if (res.success && authUser) {
         await login(authUser);
@@ -27,6 +47,7 @@ export default function LoginScreen({ navigation }: any) {
         Alert.alert('Login Failed', res.message ?? 'An unexpected error occurred.');
       }
     } catch (err) {
+      console.error('Login error:', err);
       Alert.alert('Error', 'Network error or server unavailable');
     } finally {
       setIsLoading(false);

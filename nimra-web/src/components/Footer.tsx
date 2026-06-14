@@ -102,58 +102,69 @@ export default function Footer({ companyInfo }: FooterProps) {
 
       <style jsx>{`
         .footer {
-          background-color: var(--secondary-color);
-          color: #94a3b8;
-          padding: 5rem 0 2rem;
-          border-top: 1px solid rgba(255, 255, 255, 0.05);
+          background: var(--bg-secondary);
+          color: var(--text-secondary);
+          padding: 4rem 0 2rem;
+          border-top: 1px solid var(--border-color);
           font-size: 0.9rem;
         }
         .footer-grid {
           display: grid;
           grid-template-columns: 1.2fr 0.8fr 1fr 1.2fr;
           gap: 3rem;
-          margin-bottom: 4rem;
+          margin-bottom: 3rem;
         }
         .footer-col h3 {
-          color: white;
+          color: var(--text-primary);
           font-family: var(--font-heading);
-          font-size: 1.15rem;
-          font-weight: 600;
-          margin-bottom: 1.5rem;
+          font-size: 1.1rem;
+          font-weight: 700;
+          margin-bottom: 1.25rem;
           position: relative;
-          padding-bottom: 0.5rem;
+          padding-bottom: 0.75rem;
         }
         .footer-col h3::after {
           content: '';
           position: absolute;
           bottom: 0;
           left: 0;
-          width: 30px;
-          height: 2px;
-          background-color: var(--primary-color);
+          width: 40px;
+          height: 3px;
+          background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+          border-radius: var(--radius-sm);
         }
         .footer-logo {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
+          gap: 0.75rem;
           font-family: var(--font-heading);
           font-weight: 800;
           font-size: 1.6rem;
-          color: white;
+          color: var(--text-primary);
           margin-bottom: 1rem;
+          transition: transform var(--transition-fast);
+        }
+        .footer-logo:hover {
+          transform: translateX(4px);
         }
         .brand-pitch {
-          line-height: 1.6;
+          line-height: 1.7;
+          color: var(--text-muted);
         }
         .footer-links {
           list-style: none;
           display: flex;
           flex-direction: column;
-          gap: 0.75rem;
+          gap: 0.6rem;
+        }
+        .footer-links a {
+          transition: all var(--transition-fast);
+          display: inline-block;
+          padding: 0.2rem 0;
         }
         .footer-links a:hover {
           color: var(--primary-color);
-          padding-left: 4px;
+          transform: translateX(6px);
         }
         .contact-details {
           list-style: none;
@@ -163,24 +174,31 @@ export default function Footer({ companyInfo }: FooterProps) {
         }
         .contact-details li {
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           gap: 0.75rem;
+        }
+        .contact-details li svg {
+          margin-top: 2px;
+          flex-shrink: 0;
+          color: var(--primary-color);
         }
         .contact-details a:hover {
           color: var(--primary-color);
         }
         .address-item strong {
           display: block;
-          color: white;
+          color: var(--text-primary);
           font-size: 0.85rem;
-          margin-bottom: 0.25rem;
+          margin-bottom: 0.5rem;
+          font-weight: 700;
         }
         .address-item p {
-          line-height: 1.5;
+          line-height: 1.6;
+          color: var(--text-muted);
         }
         .footer-bottom {
           padding-top: 2rem;
-          border-top: 1px solid rgba(255, 255, 255, 0.05);
+          border-top: 1px solid var(--border-color);
           display: flex;
           justify-content: space-between;
           align-items: center;
@@ -194,19 +212,54 @@ export default function Footer({ companyInfo }: FooterProps) {
         .footer-legal a:hover {
           color: var(--primary-color);
         }
+        .whatsapp-fab {
+          position: fixed;
+          bottom: 2rem;
+          right: 2rem;
+          width: 60px;
+          height: 60px;
+          background: linear-gradient(135deg, #25D366, #128C7E);
+          color: white;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: var(--shadow-lg);
+          z-index: 1000;
+          transition: all var(--transition-normal);
+          animation: float 3s ease-in-out infinite;
+        }
+        .whatsapp-fab:hover {
+          transform: scale(1.1) rotate(10deg);
+          box-shadow: 0 8px 30px rgba(37, 211, 102, 0.4);
+        }
 
         @media (max-width: 1024px) {
           .footer-grid {
             grid-template-columns: 1fr 1fr;
           }
         }
-        @media (max-width: 600px) {
+        @media (max-width: 640px) {
           .footer-grid {
             grid-template-columns: 1fr;
+            gap: 2rem;
+          }
+          .footer {
+            padding: 3rem 0 1.5rem;
           }
           .footer-bottom {
             flex-direction: column;
             text-align: center;
+          }
+          .footer-legal {
+            flex-direction: column;
+            gap: 0.75rem;
+          }
+          .whatsapp-fab {
+            width: 56px;
+            height: 56px;
+            bottom: 1.5rem;
+            right: 1.5rem;
           }
         }
       `}</style>

@@ -125,7 +125,18 @@ function setupNIMRASheets() {
     ]]);
   }
 
-  SpreadsheetApp.getUi().alert('NIMRA Sheets setup complete. Catalog, inquiry, and order tabs are ready.');
+  // Set up Users sheet
+  var usersSheet = getOrCreateSheet(ss, 'Users');
+  if (usersSheet.getLastRow() === 0) {
+    var userHeaders = ['User ID', 'Full Name', 'Mobile', 'Email', 'Password (hashed)', 'Role (Admin/Customer)', 'Status', 'Registration Date', 'Last Login'];
+    usersSheet.getRange(1, 1, 1, userHeaders.length).setValues([userHeaders]);
+    // Seed default admin user
+    // We need to define hashPassword here or just use a placeholder
+    // For setup, we'll just use a simple placeholder hash, user can reset it later
+    usersSheet.appendRow([1, 'System Admin', '', 'admin', 'placeholder_hash', 'Admin', 'Active', new Date().toISOString(), '']);
+  }
+
+  SpreadsheetApp.getUi().alert('NIMRA Sheets setup complete. Catalog, inquiry, order, and user tabs are ready.');
 }
 
 function getOrCreateSheet(ss, name) {

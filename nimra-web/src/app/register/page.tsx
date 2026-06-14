@@ -16,17 +16,56 @@ export default function RegisterPage() {
   const [role, setRole] = useState('Customer');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({
+    name: '',
+    email: '',
+    mobile: '',
+    password: '',
+  });
+
+  const validate = () => {
+    const newErrors = { name: '', email: '', mobile: '', password: '' };
+    let isValid = true;
+
+    if (!name.trim()) {
+      newErrors.name = 'Full name is required';
+      isValid = false;
+    }
+
+    if (!email.trim() && !mobile.trim()) {
+      newErrors.email = 'At least one of email or mobile is required';
+      newErrors.mobile = 'At least one of email or mobile is required';
+      isValid = false;
+    }
+
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = 'Please enter a valid email address';
+      isValid = false;
+    }
+
+    if (mobile.trim() && !/^[0-9]{10}$/.test(mobile)) {
+      newErrors.mobile = 'Mobile number must be 10 digits';
+      isValid = false;
+    }
+
+    if (!password) {
+      newErrors.password = 'Password is required';
+      isValid = false;
+    } else if (password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
-      return;
-    }
-    if (mobile && !/^[0-9]{10}$/.test(mobile)) {
-      setError('Mobile number must be 10 digits.');
+    setErrors({ name: '', email: '', mobile: '', password: '' });
+
+    if (!validate()) {
       return;
     }
 
@@ -134,6 +173,7 @@ export default function RegisterPage() {
               onChange={(e) => setName(e.target.value)}
               required 
             />
+            {errors.name && <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem' }}>{errors.name}</p>}
           </div>
 
           <div className="auth-field">
@@ -146,6 +186,7 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
+            {errors.email && <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem' }}>{errors.email}</p>}
           </div>
 
           <div className="auth-field">
@@ -157,8 +198,10 @@ export default function RegisterPage() {
               placeholder="10-digit mobile" 
               className="auth-input" 
               value={mobile}
-              onChange={(e) => setMobile(e.target.value)}
+              onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
+              maxLength={10}
             />
+            {errors.mobile && <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem' }}>{errors.mobile}</p>}
             <p className="auth-help">Either email or mobile is required.</p>
           </div>
           
@@ -189,6 +232,7 @@ export default function RegisterPage() {
                 )}
               </button>
             </div>
+            {errors.password && <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem' }}>{errors.password}</p>}
           </div>
 
           <div className="auth-field">

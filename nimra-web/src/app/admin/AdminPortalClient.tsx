@@ -1634,29 +1634,32 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
 
         /* SIDEBAR STYLING */
         .admin-sidebar {
-          width: 260px;
-          min-width: 260px;
+          width: 280px;
+          min-width: 280px;
           background: var(--bg-secondary);
           border-right: 1px solid var(--border-color);
-          padding: 1.5rem;
+          padding: 1.75rem;
           display: flex;
           flex-direction: column;
-          gap: 1.5rem;
+          gap: 1.75rem;
           z-index: 100;
+          position: sticky;
+          top: 0;
+          height: 100vh;
         }
 
         .sidebar-brand {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-          padding-bottom: 1rem;
+          gap: 0.75rem;
+          padding-bottom: 1.25rem;
           border-bottom: 1px solid var(--border-color);
         }
         .brand-text {
           font-family: var(--font-heading);
           font-weight: 800;
-          font-size: 1.25rem;
-          background: linear-gradient(135deg, var(--text-primary) 30%, var(--primary-color) 100%);
+          font-size: 1.35rem;
+          background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
@@ -1664,51 +1667,52 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         .sidebar-user {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
-          padding: 0.75rem;
-          border-radius: 12px;
-          background: rgba(0, 162, 153, 0.04);
+          gap: 0.875rem;
+          padding: 1rem;
+          border-radius: var(--radius-lg);
+          background: rgba(var(--primary-rgb), 0.06);
           border: 1px solid var(--border-color);
         }
         .user-avatar {
-          width: 40px;
-          height: 40px;
+          width: 44px;
+          height: 44px;
           border-radius: 50%;
-          background: var(--primary-color);
+          background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
           color: white;
           display: flex;
           align-items: center;
           justify-content: center;
           font-weight: 800;
-          font-size: 1.2rem;
+          font-size: 1.25rem;
+          box-shadow: var(--shadow-sm);
         }
         .user-details {
           display: flex;
           flex-direction: column;
-          gap: 0.2rem;
+          gap: 0.25rem;
         }
         .user-name {
-          font-size: 0.9rem;
-          font-weight: 800;
+          font-size: 0.95rem;
+          font-weight: 700;
         }
         .user-role {
           font-size: 0.7rem;
-          padding: 0.1rem 0.4rem;
+          padding: 0.125rem 0.5rem;
           width: fit-content;
         }
 
         .sidebar-nav {
           display: flex;
           flex-direction: column;
-          gap: 0.45rem;
+          gap: 0.5rem;
           flex: 1;
         }
         .nav-btn {
           background: transparent;
           border: none;
           text-align: left;
-          padding: 0.75rem 1rem;
-          border-radius: 8px;
+          padding: 0.875rem 1rem;
+          border-radius: var(--radius-md);
           color: var(--text-secondary);
           font-weight: 600;
           font-size: 0.9rem;
@@ -1716,26 +1720,11 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           transition: all var(--transition-fast);
           display: flex;
           align-items: center;
-          gap: 0.5rem;
+          gap: 0.75rem;
         }
         .nav-btn:hover, .nav-btn.active {
           color: var(--primary-color);
-          background: rgba(0, 162, 153, 0.08);
-        }
-
-        .btn-logout {
-          background: transparent;
-          border: 1px solid #ef4444;
-          color: #ef4444;
-          padding: 0.75rem 1rem;
-          border-radius: 8px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all var(--transition-fast);
-        }
-        .btn-logout:hover {
-          background: #ef4444;
-          color: white;
+          background: rgba(var(--primary-rgb), 0.1);
         }
 
         /* MAIN SECTION STYLING */
@@ -1753,8 +1742,10 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           justify-content: space-between;
           align-items: center;
           padding: 1.25rem 1.5rem;
-          border-radius: 12px;
+          border-radius: var(--radius-xl);
           border: 1px solid var(--border-color);
+          background: var(--glass-bg);
+          backdrop-filter: blur(12px);
           margin-bottom: 2rem;
         }
         .main-header h1 {
@@ -1763,15 +1754,15 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         .header-actions {
           display: flex;
           align-items: center;
-          gap: 1.5rem;
+          gap: 1.25rem;
         }
         .btn-refresh {
           background: var(--bg-secondary);
           border: 1px solid var(--border-color);
-          padding: 0.5rem 1rem;
-          border-radius: 6px;
+          padding: 0.625rem 1.25rem;
+          border-radius: var(--radius-md);
           font-weight: 700;
-          font-size: 0.85rem;
+          font-size: 0.875rem;
           cursor: pointer;
           color: var(--text-primary);
           transition: all var(--transition-fast);
@@ -1779,23 +1770,25 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         .btn-refresh:hover {
           border-color: var(--primary-color);
           color: var(--primary-color);
+          box-shadow: var(--shadow-sm);
         }
         .db-indicator {
           font-size: 0.8rem;
           color: var(--text-secondary);
           display: flex;
           align-items: center;
-          gap: 0.45rem;
+          gap: 0.5rem;
         }
         .dot {
-          width: 8px;
-          height: 8px;
+          width: 10px;
+          height: 10px;
           border-radius: 50%;
           display: inline-block;
         }
         .dot.active {
-          background: #10b981;
-          box-shadow: 0 0 8px #10b981;
+          background: var(--accent-color);
+          box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.4);
+          animation: pulse-glow 2s infinite;
         }
 
         .tab-viewport {
@@ -1805,16 +1798,17 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         /* TOAST NOTIFICATIONS */
         .toast {
           position: fixed;
-          top: 2rem;
+          top: 6rem;
           right: 2rem;
           padding: 1rem 1.5rem;
-          border-radius: 8px;
+          border-radius: var(--radius-md);
           z-index: 1000;
           font-weight: 700;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          box-shadow: var(--shadow-xl);
+          animation: slideUp 0.3s ease-out forwards;
         }
         .toast.success {
-          background: #10b981;
+          background: var(--accent-color);
           color: white;
         }
         .toast.error {
@@ -1826,52 +1820,60 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         .stats-grid {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
-          gap: 1.25rem;
-          margin-bottom: 2rem;
+          gap: 1.5rem;
+          margin-bottom: 2.5rem;
         }
         .stat-card {
-          padding: 1.5rem;
-          border-radius: 12px;
+          padding: 1.75rem;
+          border-radius: var(--radius-xl);
           border: 1px solid var(--border-color);
+          background: var(--bg-secondary);
           display: flex;
           flex-direction: column;
-          gap: 0.45rem;
+          gap: 0.5rem;
+          transition: all var(--transition-normal);
+        }
+        .stat-card:hover {
+          transform: translateY(-4px);
+          box-shadow: var(--shadow-lg);
+          border-color: var(--primary-color);
         }
         .stat-label {
           color: var(--text-secondary);
-          font-size: 0.85rem;
+          font-size: 0.875rem;
           font-weight: 700;
         }
         .stat-val {
-          font-size: 1.8rem;
+          font-size: 2rem;
           font-family: var(--font-heading);
-          background: linear-gradient(135deg, var(--text-primary) 50%, var(--primary-color) 100%);
+          background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
         .stat-desc {
-          color: var(--text-secondary);
-          font-size: 0.75rem;
+          color: var(--text-muted);
+          font-size: 0.8rem;
         }
 
         .charts-grid {
           display: grid;
           grid-template-columns: 1.5fr 1fr;
-          gap: 1.25rem;
-          margin-bottom: 2rem;
+          gap: 1.5rem;
+          margin-bottom: 2.5rem;
         }
         .chart-card {
-          padding: 1.5rem;
-          border-radius: 12px;
+          padding: 1.75rem;
+          border-radius: var(--radius-xl);
           border: 1px solid var(--border-color);
+          background: var(--bg-secondary);
         }
         .chart-card h3 {
           font-size: 1.1rem;
-          margin-bottom: 1.25rem;
+          margin-bottom: 1.5rem;
         }
         .chart-wrapper {
           width: 100%;
-          height: 180px;
+          height: 200px;
         }
         .svg-chart {
           width: 100%;
@@ -1881,43 +1883,48 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         .donut-chart-flex {
           display: flex;
           align-items: center;
-          gap: 2rem;
-          height: 180px;
+          gap: 2.5rem;
+          height: 200px;
           justify-content: center;
         }
         .legend-list {
           display: flex;
           flex-direction: column;
-          gap: 0.75rem;
-          font-size: 0.85rem;
+          gap: 0.875rem;
+          font-size: 0.875rem;
           font-weight: 700;
         }
         .legend-dot {
-          width: 10px;
-          height: 10px;
+          width: 12px;
+          height: 12px;
           border-radius: 50%;
           display: inline-block;
           margin-right: 0.5rem;
         }
-        .legend-dot.green { background: var(--primary-color); }
-        .legend-dot.orange { background: #f97316; }
-        .legend-dot.red { background: #ef4444; }
+        .legend-dot.green {
+          background: var(--primary-color);
+        }
+        .legend-dot.orange {
+          background: #f97316;
+        }
+        .legend-dot.red {
+          background: #ef4444;
+        }
 
         .recent-activity-grid {
           display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 1.25rem;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 1.5rem;
         }
         .activity-card {
-          padding: 1.5rem;
-          border-radius: 12px;
+          padding: 1.75rem;
+          border-radius: var(--radius-xl);
           border: 1px solid var(--border-color);
+          background: var(--bg-secondary);
         }
         .activity-card h3 {
           font-size: 1.1rem;
           margin-bottom: 1.25rem;
-          border-bottom: 1px solid var(--border-color);
-          padding-bottom: 0.5rem;
         }
         .mini-list {
           display: flex;
@@ -1925,121 +1932,68 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           gap: 1rem;
         }
         .mini-item {
-          font-size: 0.85rem;
-          border-bottom: 1px dashed var(--border-color);
-          padding-bottom: 0.75rem;
-        }
-        .mini-item:last-child {
-          border-bottom: none;
-          padding-bottom: 0;
-        }
-        .mini-item .topic {
-          color: var(--primary-color);
-          font-weight: 700;
-        }
-        .mini-item p {
-          color: var(--text-secondary);
-          margin-top: 0.25rem;
+          padding: 1rem;
+          border-radius: var(--radius-md);
+          background: var(--bg-primary);
+          border: 1px solid var(--border-light);
         }
         .mini-item.row-flex {
           display: flex;
           justify-content: space-between;
           align-items: center;
         }
-        .empty {
+        .mini-item strong {
+          font-size: 0.95rem;
+        }
+        .mini-item p {
           color: var(--text-secondary);
-          font-size: 0.85rem;
+          font-size: 0.875rem;
+          margin-top: 0.25rem;
+        }
+        .mini-item .topic {
+          color: var(--primary-color);
+        }
+        .empty {
           text-align: center;
-          padding: 1.5rem 0;
+          color: var(--text-muted);
+          padding: 2rem;
         }
 
-        /* TABLES STYLING */
-        .card {
-          padding: 1.5rem;
-          border-radius: 12px;
-          border: 1px solid var(--border-color);
-          background: var(--bg-secondary);
+        /* TAB SECTIONS */
+        .orders-tab, .products-tab, .banners-tab, .faqs-tab, .inquiries-tab, .users-tab, .notifications-tab, .settings-tab {
+          width: 100%;
         }
         .section-head-btn {
           display: flex;
           justify-content: space-between;
           align-items: center;
+          margin-bottom: 1.5rem;
         }
-        .admin-table {
-          width: 100%;
-          border-collapse: collapse;
-          text-align: left;
-          font-size: 0.85rem;
+        .section-head-btn h3 {
+          font-size: 1.25rem;
         }
-        .admin-table th {
-          background: rgba(0, 162, 153, 0.04);
-          padding: 0.85rem 1rem;
-          font-weight: 800;
-          color: var(--text-secondary);
-          border-bottom: 2px solid var(--border-color);
+        .btn-add {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
         }
-        .admin-table td {
-          padding: 1rem;
-          border-bottom: 1px solid var(--border-color);
-          vertical-align: middle;
-        }
-        .admin-table tr:hover {
-          background: rgba(0, 162, 153, 0.02);
-        }
-        .empty-td {
-          text-align: center;
-          padding: 2.5rem !important;
-          color: var(--text-secondary);
-          font-weight: 600;
-        }
-        .table-thumbnail {
-          width: 44px;
-          height: 44px;
-          border-radius: 6px;
-          object-fit: cover;
-          border: 1px solid var(--border-color);
-        }
-        .table-thumbnail.wide {
-          width: 80px;
-          height: 44px;
-        }
-        .max-cell-width {
-          max-width: 240px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-        .message-cell {
-          max-width: 320px;
-          font-size: 0.85rem;
-          color: var(--text-secondary);
-          margin-top: 0.25rem;
-        }
-
         .actions-flex {
           display: flex;
-          gap: 0.45rem;
+          gap: 0.5rem;
         }
         .actions-flex.vertical {
           flex-direction: column;
-          width: fit-content;
         }
-
         .btn-table {
-          border: none;
-          padding: 0.45rem 0.75rem;
-          border-radius: 6px;
-          font-size: 0.75rem;
-          font-weight: 800;
-          cursor: pointer;
-          transition: all var(--transition-fast);
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
+          padding: 0.5rem 1rem;
+          font-size: 0.825rem;
+          border-radius: var(--radius-md);
+          font-weight: 600;
         }
         .btn-edit {
-          background: rgba(0, 162, 153, 0.1);
+          background: rgba(var(--primary-rgb), 0.1);
           color: var(--primary-color);
+          border: 1px solid var(--primary-color);
         }
         .btn-edit:hover {
           background: var(--primary-color);
@@ -2048,6 +2002,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         .btn-delete {
           background: rgba(239, 68, 68, 0.1);
           color: #ef4444;
+          border: 1px solid #ef4444;
         }
         .btn-delete:hover {
           background: #ef4444;
@@ -2056,216 +2011,127 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         .btn-whatsapp {
           background: rgba(37, 211, 102, 0.1);
           color: #25d366;
-          border: 1px solid rgba(37, 211, 102, 0.2);
+          border: 1px solid #25d366;
         }
         .btn-whatsapp:hover {
           background: #25d366;
           color: white;
         }
-
-        /* ANNOUNCEMENTS TAB */
-        .notif-grid {
-          display: grid;
-          grid-template-columns: 1fr 1.25fr;
-          gap: 2rem;
+        .max-cell-width {
+          max-width: 300px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
-        .glass-inner {
-          background: rgba(0, 162, 153, 0.03);
-          border: 1px solid var(--border-color);
-          border-radius: 12px;
-          padding: 1.5rem;
-        }
-        .logs-list {
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-          margin-top: 1rem;
-          max-height: 400px;
-          overflow-y: auto;
-          padding-right: 0.5rem;
-        }
-        .log-item {
-          padding: 1rem;
-          border-radius: 8px;
-        }
-        .log-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-        .btn-delete-log {
-          background: transparent;
-          border: none;
-          color: #ef4444;
-          cursor: pointer;
-          font-weight: 800;
-        }
-        .log-time {
-          font-size: 0.75rem;
+        .message-cell {
+          margin: 0;
           color: var(--text-secondary);
-          display: block;
-          margin: 0.2rem 0 0.5rem;
+          font-size: 0.875rem;
         }
-        .log-item p {
-          font-size: 0.85rem;
-          color: var(--text-primary);
-        }
-
-        /* FORM INPUT STYLING */
-        .form-group {
-          display: flex;
-          flex-direction: column;
-          gap: 0.4rem;
-        }
-        .form-group label {
-          font-size: 0.8rem;
-          font-weight: 700;
-          color: var(--text-secondary);
-        }
-        .form-group input, .form-group textarea, .form-group select {
-          border: 1px solid var(--border-color);
-          border-radius: 8px;
-          padding: 0.75rem 0.9rem;
-          background: var(--bg-primary);
-          color: var(--text-primary);
-          font: inherit;
-          transition: border-color var(--transition-fast);
-        }
-        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
-          outline: none;
-          border-color: var(--primary-color);
+        .empty-td {
+          text-align: center;
+          padding: 2rem;
+          color: var(--text-muted);
         }
 
-        .settings-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 1rem;
-          margin-top: 1rem;
-        }
-
-        /* ACCESS DENIED */
+        /* ACCESS DENIED BLOCK */
         .access-denied-block {
           text-align: center;
-          padding: 4rem 2rem;
+          padding: 4rem;
         }
         .access-denied-block h2 {
-          color: #ef4444;
-          font-size: 1.5rem;
+          font-size: 1.75rem;
           margin-bottom: 0.75rem;
         }
         .access-denied-block p {
           color: var(--text-secondary);
-          font-size: 0.9rem;
         }
 
-        /* CUSTOM BADGES FOR CONSOLE */
-        :global(.badge-confirmed) {
-          background: rgba(59, 130, 246, 0.15);
-          color: #3b82f6;
-        }
-        :global(.badge-processing) {
-          background: rgba(139, 92, 246, 0.15);
-          color: #8b5cf6;
-        }
-        :global(.badge-dispatched) {
-          background: rgba(79, 70, 229, 0.15);
-          color: #4f46e5;
-        }
-        :global(.badge-out) {
-          background: rgba(236, 72, 153, 0.15);
-          color: #ec4899;
-        }
-        :global(.badge-cancelled) {
-          background: rgba(239, 68, 68, 0.15);
-          color: #ef4444;
-        }
-
-        /* MODALS DIALOGS SYSTEM */
+        /* MODALS */
         .modal-backdrop {
           position: fixed;
           top: 0;
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(15, 23, 42, 0.4);
-          z-index: 1000;
+          background: rgba(0, 0, 0, 0.5);
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 1.5rem;
+          z-index: 2000;
+          backdrop-filter: blur(4px);
         }
-        .modal-card {
-          width: 100%;
-          max-width: 550px;
+        .modal-content {
           background: var(--bg-secondary);
+          border-radius: var(--radius-xl);
+          width: 100%;
+          max-width: 520px;
+          box-shadow: var(--shadow-2xl);
+          animation: scaleIn 0.2s ease-out forwards;
           border: 1px solid var(--border-color);
-          border-radius: 16px;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-          overflow: hidden;
         }
         .modal-header {
+          padding: 1.5rem;
+          border-bottom: 1px solid var(--border-color);
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 1.25rem 1.5rem;
-          border-bottom: 1px solid var(--border-color);
         }
         .modal-header h2 {
           font-size: 1.25rem;
         }
-        .close-btn {
+        .btn-close {
           background: transparent;
           border: none;
-          font-size: 1.2rem;
-          cursor: pointer;
+          font-size: 1.5rem;
           color: var(--text-secondary);
+          cursor: pointer;
+          line-height: 1;
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+          transition: all var(--transition-fast);
+        }
+        .btn-close:hover {
+          background: var(--bg-tertiary);
+          color: var(--text-primary);
         }
         .modal-body {
           padding: 1.5rem;
-          display: flex;
-          flex-direction: column;
-          gap: 1.25rem;
-          max-height: 75vh;
-          overflow-y: auto;
         }
-        .modal-info-block {
-          font-size: 0.85rem;
-          display: flex;
-          flex-direction: column;
-          gap: 0.45rem;
-          background: rgba(0,162,153,0.02);
-          padding: 0.85rem;
-          border-radius: 8px;
-          border: 1px solid var(--border-color);
+        .form-group {
+          margin-bottom: 1.25rem;
         }
-        .instructions-callout {
-          border-top: 1px dashed var(--border-color);
-          padding-top: 0.45rem;
-          margin-top: 0.25rem;
-          color: #f97316;
-        }
-        .order-items-summary {
-          border: 1px solid var(--border-color);
-          border-radius: 8px;
-          padding: 0.85rem;
-        }
-        .order-items-summary h4 {
-          font-size: 0.85rem;
+        .form-label {
+          display: block;
           margin-bottom: 0.5rem;
+          font-weight: 700;
+          font-size: 0.9rem;
+          color: var(--text-primary);
         }
-        .order-item-row {
-          font-size: 0.85rem;
-          padding: 0.35rem 0;
-          border-bottom: 1px solid rgba(0,0,0,0.03);
-        }
-        .modal-select {
+        .form-input, .form-select, .form-textarea {
           width: 100%;
-          border: 1px solid var(--border-color);
-          border-radius: 8px;
-          padding: 0.75rem;
+          padding: 0.875rem 1rem;
+          border: 1.5px solid var(--border-color);
+          border-radius: var(--radius-md);
           background: var(--bg-primary);
           color: var(--text-primary);
-          font: inherit;
+          font-size: 0.95rem;
+          font-family: var(--font-body);
+          transition: all var(--transition-fast);
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+          outline: none;
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.12);
+          background: var(--bg-secondary);
+        }
+        .form-textarea {
+          min-height: 120px;
+          resize: vertical;
         }
         .form-row {
           display: grid;
@@ -2273,39 +2139,74 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           gap: 1rem;
         }
         .modal-footer {
-          display: flex;
-          justify-content: flex-end;
-          gap: 0.75rem;
+          padding: 1.25rem 1.5rem;
           border-top: 1px solid var(--border-color);
-          padding-top: 1rem;
-          margin-top: 0.5rem;
+          display: flex;
+          gap: 1rem;
+          justify-content: flex-end;
         }
 
+        /* MAIN LOADING OVERLAY */
         .main-loading-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(var(--secondary-rgb), 0.8);
           display: flex;
-          flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: 5rem 0;
-          gap: 1rem;
-          color: var(--text-secondary);
+          flex-direction: column;
+          gap: 1.5rem;
+          z-index: 50;
+        }
+        .spinner {
+          width: 60px;
+          height: 60px;
+          border: 4px solid var(--border-color);
+          border-top-color: var(--primary-color);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
         }
 
+        /* RESPONSIVE */
+        @media (max-width: 1200px) {
+          .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+          .charts-grid {
+            grid-template-columns: 1fr;
+          }
+        }
         @media (max-width: 900px) {
+          .admin-sidebar {
+            width: 240px;
+            min-width: 240px;
+          }
+          .recent-activity-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+        @media (max-width: 768px) {
           .admin-container {
             flex-direction: column;
           }
           .admin-sidebar {
+            position: relative;
             width: 100%;
             min-width: 100%;
             height: auto;
             border-right: none;
             border-bottom: 1px solid var(--border-color);
+            padding: 1rem;
           }
           .sidebar-nav {
             flex-direction: row;
             overflow-x: auto;
-            padding-bottom: 0.5rem;
           }
           .nav-btn {
             white-space: nowrap;
@@ -2313,7 +2214,29 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           .stats-grid {
             grid-template-columns: repeat(2, 1fr);
           }
-          .charts-grid, .recent-activity-grid, .notif-grid {
+          .admin-main {
+            padding: 1rem;
+          }
+          .main-header {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: flex-start;
+          }
+          .header-actions {
+            width: 100%;
+            justify-content: space-between;
+          }
+          .section-head-btn {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: flex-start;
+          }
+        }
+        @media (max-width: 480px) {
+          .stats-grid {
+            grid-template-columns: 1fr;
+          }
+          .form-row {
             grid-template-columns: 1fr;
           }
         }

@@ -431,6 +431,7 @@ function getUsersData(spreadsheet) {
       // Map custom headers to what frontend expects
       if (key === 'User ID' || key === 'ID') row['ID'] = val;
       else if (key === 'Full Name' || key === 'Name') row['Name'] = val;
+      else if (key === 'Mobile') row['Mobile'] = val;
       else if (key === 'Email' || key === 'Username') row['Username'] = val;
       else if (key === 'Password (hashed)' || key === 'Password') row['Password'] = val;
       else if (key === 'Role (Admin/Customer)' || key === 'Role') row['Role'] = val;
@@ -633,6 +634,7 @@ function handleCompanyInfoUpdate(spreadsheet, params) {
 }
 
 function handleUserCRUD(spreadsheet, params) {
+  Logger.log('handleUserCRUD called with params: ' + JSON.stringify(params));
   var action = params.action;
   var user = params.user;
   var sheet = spreadsheet.getSheetByName('Users');
@@ -640,6 +642,7 @@ function handleUserCRUD(spreadsheet, params) {
 
   var data = sheet.getDataRange().getValues();
   var headers = data[0];
+  Logger.log('handleUserCRUD - headers: ' + JSON.stringify(headers));
   
   // Find ID index (check both possible column names)
   var idIndex = headers.indexOf('User ID');
@@ -653,12 +656,15 @@ function handleUserCRUD(spreadsheet, params) {
     if (key === 'User ID' || key === 'ID') rowValues[j] = user.ID;
     else if (key === 'Full Name' || key === 'Name') rowValues[j] = user.Name || '';
     else if (key === 'Email' || key === 'Username') rowValues[j] = user.Username || '';
+    else if (key === 'Mobile') rowValues[j] = user.Mobile || '';
     else if (key === 'Password (hashed)' || key === 'Password') rowValues[j] = user.Password || '';
     else if (key === 'Role (Admin/Customer)' || key === 'Role') rowValues[j] = user.Role || 'Customer';
     else if (key === 'Status' || key === 'Active') rowValues[j] = (user.Active !== false) ? 'Active' : 'Inactive';
     else if (key === 'Registration Date') rowValues[j] = action === 'create' ? new Date().toISOString() : data[1] ? data[1][j] : '';
-    else rowValues[j] = ''; // Keep empty for others like Last Login or Mobile
+    else rowValues[j] = ''; // Keep empty for others like Last Login
   }
+  
+  Logger.log('handleUserCRUD - rowValues: ' + JSON.stringify(rowValues));
 
   if (action === 'create') {
     if (!user.ID) {
@@ -670,6 +676,7 @@ function handleUserCRUD(spreadsheet, params) {
       user.ID = maxId + 1;
       rowValues[idIndex] = user.ID;
     }
+    Logger.log('handleUserCRUD - appending row: ' + JSON.stringify(rowValues));
     sheet.appendRow(rowValues);
     return { success: true, message: 'User created successfully', ID: user.ID };
   }
@@ -680,11 +687,14 @@ function handleUserCRUD(spreadsheet, params) {
         sheet.deleteRow(i + 1);
         return { success: true, message: 'User deleted successfully' };
       } else if (action === 'update') {
-        // Keep existing values for unmapped columns
+        // Keep existing values for unmapped columns, only update provided values
         for (var j = 0; j < headers.length; j++) {
           var key = headers[j].toString().trim();
-          if (key === 'Mobile' || key === 'Registration Date' || key === 'Last Login') {
-             rowValues[j] = data[i][j];
+          if (key === 'Registration Date' || key === 'Last Login') {
+             rowValues[j] = data[i][j]; // Keep existing values for these
+          } else if (key === 'Mobile') {
+             // If user.Mobile is provided, use it; else keep existing
+             rowValues[j] = user.Mobile !== undefined ? user.Mobile : data[i][j];
           }
         }
         sheet.getRange(i + 1, 1, 1, rowValues.length).setValues([rowValues]);
@@ -797,12 +807,15 @@ function handleAuthLogin(spreadsheet, params) {
 }
 
 function handleAuthRegister(spreadsheet, params) {
+  Logger.log('handleAuthRegister called with params: ' + JSON.stringify(params));
   var user = params.user || {};
   var name = String(user.Name || '').trim();
   var mobile = String(user.Mobile || '').trim();
   var email = String(user.Username || '').trim();
   var password = String(user.Password || '').trim();
   var role = String(user.Role || 'Customer').trim();
+  
+  Logger.log('handleAuthRegister - name: ' + name + ', mobile: ' + mobile + ', email: ' + email);
   
   if (!name || !password || (!mobile && !email)) {
     return { success: false, message: 'Name, password, and at least one contact method (email/mobile) are required.' };
@@ -830,6 +843,8 @@ function handleAuthRegister(spreadsheet, params) {
     Role: role,
     Active: true
   };
+  
+  Logger.log('handleAuthRegister - newUser: ' + JSON.stringify(newUser));
   
   var result = handleUserCRUD(spreadsheet, { action: 'create', user: newUser });
   if (result.success) {

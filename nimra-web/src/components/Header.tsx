@@ -129,11 +129,11 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
             )}
 
             {user ? (
-              <button onClick={() => setIsLogoutModalOpen(true)} className="btn-cta bg-red-500 hover:bg-red-600 border-none">
+              <button onClick={() => setIsLogoutModalOpen(true)} className="btn btn-danger">
                 Logout
               </button>
             ) : (
-              <Link href="/login" prefetch={true} className="btn-cta">
+              <Link href="/login" prefetch={true} className="btn btn-primary">
                 Login
               </Link>
             )}
@@ -225,12 +225,12 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
         .header.scrolled {
           height: 70px;
           background: var(--nav-bg);
-          box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+          box-shadow: var(--shadow-md);
           border-bottom: 1px solid var(--border-color);
         }
         .header-container {
           width: 100%;
-          max-width: 1200px;
+          max-width: 1280px;
           margin: 0 auto;
           padding: 0 1.5rem;
           display: flex;
@@ -248,7 +248,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           color: var(--text-primary);
         }
         .logo-text {
-          background: linear-gradient(135deg, var(--text-primary) 30%, var(--primary-color) 100%);
+          background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
@@ -258,10 +258,11 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
         }
         .nav-link {
           font-size: 0.95rem;
-          font-weight: 500;
+          font-weight: 600;
           color: var(--text-secondary);
           position: relative;
           padding: 0.5rem 0;
+          transition: color var(--transition-fast);
         }
         .nav-link:hover, .nav-link.active {
           color: var(--primary-color);
@@ -282,77 +283,77 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
         .header-actions {
           display: flex;
           align-items: center;
-          gap: 1.25rem;
+          gap: 1rem;
         }
         .cart-link {
           position: relative;
-          width: 42px;
-          height: 42px;
+          width: 44px;
+          height: 44px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          border: 1px solid var(--border-color);
-          border-radius: 50%;
+          border: 1.5px solid var(--border-color);
+          border-radius: var(--radius-xl);
           color: var(--text-primary);
-          background: var(--bg-primary);
+          background: var(--bg-secondary);
+          transition: all var(--transition-fast);
+        }
+        .cart-link:hover {
+          border-color: var(--primary-color);
+          color: var(--primary-color);
+          background: rgba(6, 182, 212, 0.05);
         }
         .cart-link span {
           position: absolute;
-          top: -5px;
-          right: -5px;
-          min-width: 20px;
-          height: 20px;
-          padding: 0 5px;
+          top: -6px;
+          right: -6px;
+          min-width: 22px;
+          height: 22px;
+          padding: 0 6px;
           border-radius: 999px;
-          background: var(--primary-color);
+          background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
           color: white;
           font-size: 0.7rem;
           font-weight: 800;
           display: inline-flex;
           align-items: center;
           justify-content: center;
+          box-shadow: var(--shadow-sm);
         }
         .icon-btn {
-          background: transparent;
-          border: none;
+          background: var(--bg-secondary);
+          border: 1.5px solid var(--border-color);
           color: var(--text-primary);
           cursor: pointer;
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
+          width: 44px;
+          height: 44px;
+          border-radius: var(--radius-xl);
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: background-color var(--transition-fast);
+          transition: all var(--transition-fast);
         }
         .icon-btn:hover {
-          background: rgba(0, 162, 153, 0.08);
+          background: rgba(6, 182, 212, 0.08);
           color: var(--primary-color);
-        }
-        .btn-cta {
-          display: inline-flex;
-          align-items: center;
-          padding: 0.65rem 1.35rem;
-          font-family: var(--font-heading);
-          font-weight: 600;
-          font-size: 0.85rem;
-          border-radius: 50px;
-          background: var(--primary-color);
-          color: white;
-          box-shadow: 0 4px 10px rgba(0, 162, 153, 0.2);
-          transition: all var(--transition-normal);
-        }
-        .btn-cta:hover {
-          background: #008080;
-          transform: translateY(-1px);
-          box-shadow: 0 6px 15px rgba(0, 162, 153, 0.3);
+          border-color: var(--primary-color);
         }
         .mobile-menu-btn {
           display: none;
-          background: transparent;
-          border: none;
+          background: var(--bg-secondary);
+          border: 1.5px solid var(--border-color);
           color: var(--text-primary);
           cursor: pointer;
+          width: 44px;
+          height: 44px;
+          border-radius: var(--radius-xl);
+          display: none;
+          align-items: center;
+          justify-content: center;
+        }
+        .mobile-menu-btn:hover {
+          border-color: var(--primary-color);
+          color: var(--primary-color);
         }
         .mobile-drawer {
           position: absolute;
@@ -361,31 +362,34 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           right: 0;
           padding: 2rem 1.5rem;
           border-bottom: 1px solid var(--border-color);
-          box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+          box-shadow: var(--shadow-xl);
         }
         .mobile-nav {
           display: flex;
           flex-direction: column;
-          gap: 1.25rem;
+          gap: 1.5rem;
         }
         .mobile-nav-link {
           font-size: 1.1rem;
-          font-weight: 600;
+          font-weight: 700;
           color: var(--text-secondary);
-          padding: 0.5rem 0;
-          border-bottom: 1px solid var(--border-color);
+          padding: 0.75rem 0;
+          border-bottom: 1px solid var(--border-light);
+          transition: color var(--transition-fast);
         }
         .mobile-nav-link.active, .mobile-nav-link:hover {
           color: var(--primary-color);
-          border-bottom-color: var(--primary-color);
         }
         
         @media (max-width: 768px) {
-          .desktop-nav, .btn-cta {
+          .desktop-nav, .header-actions .btn {
             display: none;
           }
           .mobile-menu-btn {
-            display: block;
+            display: flex;
+          }
+          .header-container {
+            padding: 0 1.25rem;
           }
         }
       `}</style>

@@ -241,7 +241,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           min-height: 500px;
           position: relative;
           overflow: hidden;
-          background: #000;
+          background: var(--bg-secondary);
         }
         .hero-slide {
           position: absolute;
@@ -262,13 +262,12 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           z-index: 2;
         }
         .hero-content {
-          color: white;
+          color: var(--text-primary);
           z-index: 10;
           max-width: 650px;
         }
         .hero-title {
           font-size: 3.5rem;
-          color: white;
           font-weight: 800;
           margin-top: 1.5rem;
           margin-bottom: 1.5rem;
@@ -277,7 +276,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         .hero-subtitle {
           font-size: 1.15rem;
           line-height: 1.6;
-          color: #cbd5e1;
+          color: var(--text-muted);
           margin-bottom: 2.5rem;
         }
         .hero-actions {
@@ -297,7 +296,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           width: 12px;
           height: 12px;
           border-radius: 50%;
-          background: rgba(255, 255, 255, 0.4);
+          background: rgba(148, 163, 184, 0.4);
           border: none;
           cursor: pointer;
           transition: all var(--transition-fast);
@@ -305,7 +304,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         .dot.active {
           background: var(--primary-color);
           width: 28px;
-          border-radius: 6px;
+          border-radius: var(--radius-md);
         }
 
         /* Brand Story styling */
@@ -323,25 +322,26 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         }
         .story-img {
           width: 100%;
-          border-radius: 24px;
-          box-shadow: var(--card-hover-shadow);
+          border-radius: var(--radius-xl);
+          box-shadow: var(--shadow-xl);
         }
         .water-drop-card {
           position: absolute;
-          bottom: -1rem;
-          right: -1rem;
-          padding: 1.5rem;
-          border-radius: 16px;
+          bottom: -1.5rem;
+          right: -1.5rem;
+          padding: 1.75rem;
+          border-radius: var(--radius-xl);
           max-width: 250px;
         }
         .water-drop-card h3 {
           color: var(--primary-color);
           font-size: 1.2rem;
           margin-bottom: 0.5rem;
+          font-weight: 700;
         }
         .water-drop-card p {
           font-size: 0.85rem;
-          color: var(--text-secondary);
+          color: var(--text-muted);
         }
         .story-content h2 {
           font-size: 2.5rem;
@@ -363,12 +363,21 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         .value-item {
           display: flex;
           gap: 1rem;
+          padding: 1rem;
+          border-radius: var(--radius-lg);
+          background: var(--bg-primary);
+          border: 1px solid var(--border-color);
+          transition: all var(--transition-normal);
+        }
+        .value-item:hover {
+          border-color: var(--primary-color);
+          box-shadow: var(--shadow-md);
         }
         .value-icon {
-          width: 44px;
-          height: 44px;
-          border-radius: 10px;
-          background: rgba(0, 162, 153, 0.1);
+          width: 48px;
+          height: 48px;
+          border-radius: var(--radius-md);
+          background: rgba(var(--primary-rgb), 0.1);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -380,7 +389,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         }
         .value-item p {
           font-size: 0.85rem;
-          color: var(--text-secondary);
+          color: var(--text-muted);
           line-height: 1.4;
         }
 
@@ -404,21 +413,18 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           gap: 2rem;
         }
         .product-preview-card {
-          border-radius: 20px;
+          border-radius: var(--radius-xl);
           padding: 1.5rem;
           display: flex;
           flex-direction: column;
           align-items: center;
           text-align: center;
           transition: transform var(--transition-normal), box-shadow var(--transition-normal);
-          box-shadow: var(--card-shadow);
-        }
-        :global(html.theme-transition) .product-preview-card {
-          transition: transform var(--transition-normal), box-shadow var(--transition-normal), background-color var(--transition-normal), border-color var(--transition-normal);
+          box-shadow: var(--shadow-md);
         }
         .product-preview-card:hover {
           transform: translateY(-8px);
-          box-shadow: var(--card-hover-shadow);
+          box-shadow: var(--shadow-xl);
         }
         .prod-img-box {
           height: 200px;
@@ -431,7 +437,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           max-height: 100%;
           max-width: 100%;
           object-fit: contain;
-          border-radius: 12px;
+          border-radius: var(--radius-lg);
           transition: transform var(--transition-normal);
         }
         .product-preview-card:hover .prod-img-box img {
@@ -442,7 +448,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           font-size: 0.75rem;
           font-weight: 700;
           color: var(--primary-color);
-          background: rgba(0, 162, 153, 0.1);
+          background: rgba(var(--primary-rgb), 0.1);
           padding: 0.25rem 0.75rem;
           border-radius: 50px;
           margin-bottom: 0.5rem;
@@ -482,6 +488,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           color: white;
           padding: 6rem 0;
           z-index: 1;
+          position: relative;
         }
         .bubble-bg {
           position: absolute;
@@ -554,7 +561,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           border: 2px solid rgba(249, 115, 22, 0.3);
           border-radius: 30px;
           position: relative;
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 30px rgba(249, 115, 22, 0.15);
+          box-shadow: var(--shadow-xl), 0 0 30px rgba(249, 115, 22, 0.15);
           overflow: hidden;
           display: flex;
           flex-direction: column;
@@ -621,18 +628,16 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           gap: 1rem;
         }
         .faq-item {
-          border-radius: 12px;
+          border-radius: var(--radius-lg);
           background: var(--bg-primary);
           border: 1px solid var(--border-color);
           overflow: hidden;
           cursor: pointer;
-          transition: border-color var(--transition-normal);
-        }
-        :global(html.theme-transition) .faq-item {
-          transition: border-color var(--transition-normal), background-color var(--transition-normal), color var(--transition-normal);
+          transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
         }
         .faq-item:hover {
           border-color: var(--primary-color);
+          box-shadow: var(--shadow-md);
         }
         .faq-question {
           padding: 1.25rem 1.5rem;
@@ -646,8 +651,8 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           font-weight: 600;
         }
         .faq-icon {
-          width: 32px;
-          height: 32px;
+          width: 36px;
+          height: 36px;
           border-radius: 50%;
           background: var(--bg-secondary);
           display: flex;
@@ -702,6 +707,9 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
             grid-template-columns: 1fr;
             max-width: 400px;
             margin: 0 auto;
+          }
+          .values-grid {
+            grid-template-columns: 1fr;
           }
         }
       `}</style>

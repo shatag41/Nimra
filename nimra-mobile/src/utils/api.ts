@@ -151,7 +151,7 @@ export const normalizeAuthUser = (user: AuthResponse['user']): User | null => {
     ID: id,
     Name: user.Name,
     Username: user.Username,
-    Mobile: user.Mobile ?? '',
+    Mobile: user.Mobile,
     Role: user.Role,
     Active: user.Active,
   };
