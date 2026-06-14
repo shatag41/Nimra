@@ -15,15 +15,14 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const validate = () => {
-    if (!username.trim()) {
-      setError('Email or mobile number is required');
+    const trimmedUsername = username.trim();
+    if (!trimmedUsername) {
+      setError('Mobile number is required');
       return false;
     }
 
-    // Check if username is numeric (mobile)
-    const isNumeric = /^\d+$/.test(username.trim());
-    if (isNumeric && username.trim().length !== 10) {
-      setError('Mobile number must be exactly 10 digits');
+    if (!/^\d{10}$/.test(trimmedUsername)) {
+      setError('Please enter a valid 10-digit mobile number');
       return false;
     }
 
@@ -125,7 +124,6 @@ export default function LoginPage() {
 
         <div className="auth-card">
           <div className="auth-card-header">
-            <span className="auth-kicker">Customer Access</span>
             <h2>Login to NIMRA</h2>
             <p>Use your registered email or mobile number to continue.</p>
           </div>
@@ -134,14 +132,17 @@ export default function LoginPage() {
             {error && <div className="auth-alert error">{error}</div>}
 
           <div className="auth-field">
-            <label htmlFor="username">Email or Mobile</label>
+            <label htmlFor="username">Mobile Number</label>
             <input 
               id="username"
               type="text" 
-              placeholder="email or 10-digit mobile" 
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={10}
+              placeholder="10-digit mobile number" 
               className="auth-input" 
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => setUsername(e.target.value.replace(/[^0-9]/g, '').slice(0, 10))}
               required 
             />
           </div>

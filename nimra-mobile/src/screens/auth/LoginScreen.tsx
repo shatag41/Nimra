@@ -12,15 +12,14 @@ export default function LoginScreen({ navigation }: any) {
   const [isLoading, setIsLoading] = useState(false);
 
   const validate = () => {
-    if (!username.trim()) {
-      Alert.alert('Error', 'Email or mobile number is required');
+    const trimmedUsername = username.trim();
+    if (!trimmedUsername) {
+      Alert.alert('Error', 'Mobile number is required');
       return false;
     }
 
-    // Check if username is numeric (mobile)
-    const isNumeric = /^\d+$/.test(username.trim());
-    if (isNumeric && username.trim().length !== 10) {
-      Alert.alert('Error', 'Mobile number must be exactly 10 digits');
+    if (!/^\d{10}$/.test(trimmedUsername)) {
+      Alert.alert('Error', 'Please enter a valid 10-digit mobile number');
       return false;
     }
 
@@ -64,12 +63,14 @@ export default function LoginScreen({ navigation }: any) {
       <Text style={styles.title}>Welcome to NIMRA</Text>
       
       <View style={styles.form}>
-        <Text style={styles.label}>Email or Mobile</Text>
+        <Text style={styles.label}>Mobile Number</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter email or 10-digit mobile"
+          placeholder="Enter 10-digit mobile"
           value={username}
-          onChangeText={setUsername}
+          onChangeText={(text) => setUsername(text.replace(/[^0-9]/g, ''))}
+          maxLength={10}
+          keyboardType="numeric"
           autoCapitalize="none"
         />
 
