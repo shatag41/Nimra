@@ -1647,8 +1647,12 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           top: 0;
           left: 0;
           height: 100vh;
-          box-shadow: var(--shadow-md);
           overflow-y: auto;
+          scrollbar-width: none; /* Firefox */
+        }
+        
+        .admin-sidebar::-webkit-scrollbar {
+          display: none; /* Chrome, Safari and Opera */
         }
 
         .sidebar-brand {
@@ -2178,18 +2182,18 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
 
         /* MAIN LOADING OVERLAY */
         .main-loading-overlay {
-          position: absolute;
+          position: fixed;
           top: 0;
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(var(--secondary-rgb), 0.8);
+          background: transparent;
           display: flex;
           align-items: center;
           justify-content: center;
           flex-direction: column;
           gap: 1.5rem;
-          z-index: 50;
+          z-index: 1000;
         }
         .spinner {
           width: 60px;
