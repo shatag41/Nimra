@@ -8,22 +8,35 @@ import { sendRequest } from '../../utils/api';
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const [activeTab, setActiveTab] = useState<'mobile' | 'email'>('mobile');
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const validate = () => {
-    const trimmedUsername = username.trim();
-    if (!trimmedUsername) {
-      setError('Mobile number is required');
-      return false;
-    }
-
-    if (!/^\d{10}$/.test(trimmedUsername)) {
-      setError('Please enter a valid 10-digit mobile number');
-      return false;
+    if (activeTab === 'mobile') {
+      const trimmedUsername = username.trim();
+      if (!trimmedUsername) {
+        setError('Mobile number is required');
+        return false;
+      }
+      if (!/^\d{10}$/.test(trimmedUsername)) {
+        setError('Please enter a valid 10-digit mobile number');
+        return false;
+      }
+    } else {
+      const trimmedEmail = email.trim();
+      if (!trimmedEmail) {
+        setError('Email is required');
+        return false;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+        setError('Please enter a valid email address');
+        return false;
+      }
     }
 
     if (!password) {
@@ -45,7 +58,8 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const res = await sendRequest({ type: 'login', username: username.trim(), password });
+      const loginIdentifier = activeTab === 'mobile' ? username.trim() : email.trim();
+      const res = await sendRequest({ type: 'login', username: loginIdentifier, password });
       if (res.success && res.user) {
         login(res.user);
       } else {
@@ -129,23 +143,65 @@ export default function LoginPage() {
           </div>
 
           <form className="auth-form" onSubmit={handleSubmit}>
+            <div style={{ display: 'flex', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+              <button
+                type="button"
+                onClick={() => { setActiveTab('mobile'); setError(''); }}
+                style={{
+                  flex: 1, padding: '0.75rem', background: 'none', border: 'none',
+                  borderBottom: activeTab === 'mobile' ? '2px solid #00E5FF' : '2px solid transparent',
+                  color: activeTab === 'mobile' ? 'white' : 'rgba(255,255,255,0.6)',
+                  cursor: 'pointer', fontWeight: '500', transition: 'all 0.2s ease'
+                }}
+              >
+                Mobile Number
+              </button>
+              <button
+                type="button"
+                onClick={() => { setActiveTab('email'); setError(''); }}
+                style={{
+                  flex: 1, padding: '0.75rem', background: 'none', border: 'none',
+                  borderBottom: activeTab === 'email' ? '2px solid #00E5FF' : '2px solid transparent',
+                  color: activeTab === 'email' ? 'white' : 'rgba(255,255,255,0.6)',
+                  cursor: 'pointer', fontWeight: '500', transition: 'all 0.2s ease'
+                }}
+              >
+                Email
+              </button>
+            </div>
+
             {error && <div className="auth-alert error">{error}</div>}
 
-          <div className="auth-field">
-            <label htmlFor="username">Mobile Number</label>
-            <input 
-              id="username"
-              type="text" 
-              inputMode="numeric"
-              pattern="[0-9]*"
-              maxLength={10}
-              placeholder="10-digit mobile number" 
-              className="auth-input" 
-              value={username}
-              onChange={(e) => setUsername(e.target.value.replace(/[^0-9]/g, '').slice(0, 10))}
-              required 
-            />
-          </div>
+          {activeTab === 'mobile' ? (
+            <div className="auth-field">
+              <label htmlFor="username">Mobile Number</label>
+              <input 
+                id="username"
+                type="text" 
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={10}
+                placeholder="10-digit mobile number" 
+                className="auth-input" 
+                value={username}
+                onChange={(e) => setUsername(e.target.value.replace(/[^0-9]/g, '').slice(0, 10))}
+                required 
+              />
+            </div>
+          ) : (
+            <div className="auth-field">
+              <label htmlFor="email">Email</label>
+              <input 
+                id="email"
+                type="email" 
+                placeholder="your.email@example.com" 
+                className="auth-input" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required 
+              />
+            </div>
+          )}
           
           <div className="auth-field">
             <div className="auth-field-row">
