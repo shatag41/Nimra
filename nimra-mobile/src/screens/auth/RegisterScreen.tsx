@@ -67,7 +67,13 @@ export default function RegisterScreen({ navigation }: any) {
     try {
       const res = await sendRequest({ 
         type: 'register', 
-        user: { Name: name, Username: email, Mobile: mobile, Password: password, Role: role }
+        user: {
+          Name: name.trim(),
+          Username: email.trim(),
+          Mobile: mobile.trim(),
+          Password: password,
+          Role: role,
+        }
       });
       
       const authUser = normalizeAuthUser(res.user);

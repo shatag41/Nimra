@@ -656,7 +656,7 @@ function handleUserCRUD(spreadsheet, params) {
     if (key === 'User ID' || key === 'ID') rowValues[j] = user.ID;
     else if (key === 'Full Name' || key === 'Name') rowValues[j] = user.Name || '';
     else if (key === 'Email' || key === 'Username') rowValues[j] = user.Username || '';
-    else if (key === 'Mobile') rowValues[j] = user.Mobile || '';
+    else if (key === 'Mobile' || key === 'Mobile Number' || key === 'Phone') rowValues[j] = getUserMobile(user);
     else if (key === 'Password (hashed)' || key === 'Password') rowValues[j] = user.Password || '';
     else if (key === 'Role (Admin/Customer)' || key === 'Role') rowValues[j] = user.Role || 'Customer';
     else if (key === 'Status' || key === 'Active') rowValues[j] = (user.Active !== false) ? 'Active' : 'Inactive';
@@ -692,9 +692,9 @@ function handleUserCRUD(spreadsheet, params) {
           var key = headers[j].toString().trim();
           if (key === 'Registration Date' || key === 'Last Login') {
              rowValues[j] = data[i][j]; // Keep existing values for these
-          } else if (key === 'Mobile') {
+          } else if (key === 'Mobile' || key === 'Mobile Number' || key === 'Phone') {
              // If user.Mobile is provided, use it; else keep existing
-             rowValues[j] = user.Mobile !== undefined ? user.Mobile : data[i][j];
+             rowValues[j] = getUserMobile(user) !== '' ? getUserMobile(user) : data[i][j];
           }
         }
         sheet.getRange(i + 1, 1, 1, rowValues.length).setValues([rowValues]);
@@ -810,7 +810,7 @@ function handleAuthRegister(spreadsheet, params) {
   Logger.log('handleAuthRegister called with params: ' + JSON.stringify(params));
   var user = params.user || {};
   var name = String(user.Name || '').trim();
-  var mobile = String(user.Mobile || '').trim();
+  var mobile = getUserMobile(user);
   var email = String(user.Username || '').trim();
   var password = String(user.Password || '').trim();
   var role = String(user.Role || 'Customer').trim();
@@ -853,6 +853,20 @@ function handleAuthRegister(spreadsheet, params) {
     return { success: true, message: 'Registration successful', user: newUser };
   }
   return result;
+}
+
+function getUserMobile(user) {
+  user = user || {};
+  return String(
+    user.Mobile ||
+    user.mobile ||
+    user.MobileNumber ||
+    user.mobileNumber ||
+    user['Mobile Number'] ||
+    user.Phone ||
+    user.phone ||
+    ''
+  ).replace(/\D/g, '').trim();
 }
 
 function handleAuthGoogleSignIn(spreadsheet, params) {

@@ -74,7 +74,13 @@ export default function RegisterPage() {
     try {
       const res = await sendRequest({ 
         type: 'register', 
-        user: { Name: name, Username: email, Mobile: mobile, Password: password, Role: role }
+        user: {
+          Name: name.trim(),
+          Username: email.trim(),
+          Mobile: mobile.trim(),
+          Password: password,
+          Role: role,
+        }
       });
       if (res.success && res.user) {
         login(res.user);
