@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '../styles/theme';
 import { CompanyInfo, OrderSubmission } from '../types/cms';
 import { submitOrder } from '../utils/api';
 import { formatCurrency } from '../utils/commerce';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 
 interface CheckoutScreenProps {
   companyInfo: CompanyInfo;
@@ -26,6 +27,7 @@ const initialForm = {
 export default function CheckoutScreen({ companyInfo, isDark, onNavigate }: CheckoutScreenProps) {
   const theme = isDark ? COLORS.dark : COLORS.light;
   const cart = useCart();
+  const { user } = useAuth();
   const [form, setForm] = useState(initialForm);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null; message: string; orderId?: string }>({ type: null, message: '' });
@@ -43,6 +45,16 @@ export default function CheckoutScreen({ companyInfo, isDark, onNavigate }: Chec
     isPincodeValid &&
     cart.items.length > 0
   );
+
+  useEffect(() => {
+    if (!user) return;
+    setForm((current) => ({
+      ...current,
+      name: current.name || user.Name || '',
+      mobile: current.mobile || user.Mobile || '',
+      email: current.email || user.Username || '',
+    }));
+  }, [user]);
 
   const update = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }));
 
@@ -64,7 +76,9 @@ export default function CheckoutScreen({ companyInfo, isDark, onNavigate }: Chec
 
     const payload: OrderSubmission = {
       type: 'order',
+      userId: user?.ID,
       customer: {
+        userId: user?.ID,
         name: form.name.trim(),
         mobile: form.mobile.trim(),
         email: form.email.trim(),

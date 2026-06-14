@@ -1,25 +1,36 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '../styles/theme';
 import { OrderRecord } from '../types/cms';
 import { formatCurrency } from '../utils/commerce';
 import { trackOrder } from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 
 interface TrackOrderScreenProps {
   isDark: boolean;
+  initialOrderId?: string;
   onNavigate: (tab: string, params?: any) => void;
 }
 
 const statusSteps: OrderRecord['status'][] = ['Pending', 'Confirmed', 'Processing', 'Dispatched', 'Out for Delivery', 'Delivered', 'Cancelled'];
 
-export default function TrackOrderScreen({ isDark, onNavigate }: TrackOrderScreenProps) {
+export default function TrackOrderScreen({ isDark, initialOrderId, onNavigate }: TrackOrderScreenProps) {
   const theme = isDark ? COLORS.dark : COLORS.light;
-  const [orderId, setOrderId] = useState('');
-  const [mobile, setMobile] = useState('');
+  const { user } = useAuth();
+  const [orderId, setOrderId] = useState(initialOrderId || '');
+  const [mobile, setMobile] = useState(user?.Mobile || '');
   const [order, setOrder] = useState<OrderRecord | null>(null);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    if (initialOrderId) setOrderId(initialOrderId);
+  }, [initialOrderId]);
+
+  useEffect(() => {
+    if (user?.Mobile && !mobile) setMobile(user.Mobile);
+  }, [mobile, user?.Mobile]);
 
   const submit = async () => {
     if (!orderId.trim() && !mobile.trim()) {
@@ -30,7 +41,11 @@ export default function TrackOrderScreen({ isDark, onNavigate }: TrackOrderScree
 
     setLoading(true);
     setMessage('');
-    const result = await trackOrder(orderId.trim(), mobile.trim());
+    const result = await trackOrder(orderId.trim(), user ? '' : mobile.trim(), {
+      userId: user?.ID,
+      email: user?.Username,
+      mobile: user?.Mobile,
+    });
     setLoading(false);
 
     if (result.success && result.order) {

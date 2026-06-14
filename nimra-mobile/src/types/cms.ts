@@ -72,6 +72,7 @@ export interface CartItem {
 }
 
 export interface OrderCustomer {
+  userId?: string | number;
   name: string;
   mobile: string;
   email: string;
@@ -84,6 +85,7 @@ export interface OrderCustomer {
 
 export interface OrderSubmission {
   type: 'order';
+  userId?: string | number;
   customer: OrderCustomer;
   items: CartItem[];
   subtotal: number;

@@ -101,7 +101,7 @@ function setupNIMRASheets() {
 
   var ordersSheet = getOrCreateSheet(ss, 'Orders');
   if (ordersSheet.getLastRow() === 0) {
-    ordersSheet.getRange(1, 1, 1, 20).setValues([[
+    ordersSheet.getRange(1, 1, 1, 21).setValues([[
       'Order ID',
       'Order Date',
       'Customer Name',
@@ -121,7 +121,8 @@ function setupNIMRASheets() {
       'Order Status',
       'Source',
       'Created At',
-      'Updated At'
+      'Updated At',
+      'Customer User ID'
     ]]);
   }
 

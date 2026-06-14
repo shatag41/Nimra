@@ -317,7 +317,8 @@ export const submitOrder = async (order: OrderSubmission): Promise<{ success: bo
 
 export const trackOrder = async (
   orderId: string,
-  mobile: string
+  mobile: string,
+  scope?: { userId?: string | number; email?: string; mobile?: string }
 ): Promise<{ success: boolean; message?: string; order?: OrderRecord }> => {
   const url = getAPIUrl();
   if (!url) {
@@ -328,6 +329,9 @@ export const trackOrder = async (
     const params = new URLSearchParams({ action: 'trackOrder' });
     if (orderId.trim()) params.set('orderId', orderId.trim());
     if (mobile.trim()) params.set('mobile', mobile.trim());
+    if (scope?.userId !== undefined && scope.userId !== null) params.set('userId', String(scope.userId));
+    if (scope?.email) params.set('email', scope.email);
+    if (!mobile.trim() && scope?.mobile) params.set('mobile', scope.mobile);
 
     const res = await fetch(`${url}?${params.toString()}`);
     const result = await res.json();

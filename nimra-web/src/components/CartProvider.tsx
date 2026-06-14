@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { CartItem, Product } from '../types/cms';
+import { useAuth } from '../context/AuthContext';
 import { cartSubtotal, deliveryChargeFor, productToCartItem } from '../utils/commerce';
 
 interface CartContextValue {
@@ -17,40 +18,68 @@ interface CartContextValue {
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
-const STORAGE_KEY = 'nimra-cart-v1';
+const STORAGE_KEY_PREFIX = 'nimra-cart-v2';
+
+const getCartOwnerKey = (user: ReturnType<typeof useAuth>['user']) => {
+  if (!user) return 'guest';
+  return String(user.ID || user.Username || user.Mobile || 'guest').trim() || 'guest';
+};
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth();
+  const storageKey = `${STORAGE_KEY_PREFIX}:${getCartOwnerKey(user)}`;
   const [items, setItems] = useState<CartItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
+  const [activeStorageKey, setActiveStorageKey] = useState('');
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) setItems(JSON.parse(saved));
-    } catch (err) {
-      // Ignore cart restore errors
-    } finally {
-      setHydrated(true);
+    if (isLoading) return;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setHydrated(false);
+      try {
+        const saved = localStorage.getItem(storageKey);
+        setItems(saved ? JSON.parse(saved) : []);
+      } catch {
+        setItems([]);
+        // Ignore cart restore errors
+      } finally {
+        setActiveStorageKey(storageKey);
+        setHydrated(true);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoading, storageKey]);
+
+  useEffect(() => {
+    if (hydrated && activeStorageKey === storageKey) {
+      localStorage.setItem(storageKey, JSON.stringify(items));
     }
-  }, []);
-
-  useEffect(() => {
-    if (hydrated) localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  }, [hydrated, items]);
+  }, [activeStorageKey, hydrated, items, storageKey]);
 
   const value = useMemo<CartContextValue>(() => {
-    const subtotal = cartSubtotal(items);
+    const visibleItems = hydrated && activeStorageKey === storageKey ? items : [];
+    const subtotal = cartSubtotal(visibleItems);
     const deliveryCharge = deliveryChargeFor(subtotal);
+    const updateCartItems = (updater: (current: CartItem[]) => CartItem[]) => {
+      setActiveStorageKey(storageKey);
+      setHydrated(true);
+      setItems((current) => updater(activeStorageKey === storageKey ? current : []));
+    };
 
     return {
-      items,
-      totalItems: items.reduce((total, item) => total + item.quantity, 0),
+      items: visibleItems,
+      totalItems: visibleItems.reduce((total, item) => total + item.quantity, 0),
       subtotal,
       deliveryCharge,
       grandTotal: subtotal + deliveryCharge,
       addProduct(product, quantity = 1) {
         const nextItem = productToCartItem(product, quantity);
-        setItems((current) => {
+        updateCartItems((current) => {
           const existing = current.find((item) => item.productId === nextItem.productId);
           if (!existing) return [...current, nextItem];
           return current.map((item) =>
@@ -61,20 +90,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         });
       },
       updateQuantity(productId, quantity) {
-        setItems((current) =>
+        updateCartItems((current) =>
           quantity <= 0
             ? current.filter((item) => item.productId !== productId)
             : current.map((item) => item.productId === productId ? { ...item, quantity } : item)
         );
       },
       removeItem(productId) {
-        setItems((current) => current.filter((item) => item.productId !== productId));
+        updateCartItems((current) => current.filter((item) => item.productId !== productId));
       },
       clearCart() {
+        setActiveStorageKey(storageKey);
+        setHydrated(true);
         setItems([]);
       },
     };
-  }, [items]);
+  }, [activeStorageKey, hydrated, items, storageKey]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

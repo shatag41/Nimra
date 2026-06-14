@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { FormEvent, useState } from 'react';
 import { useCart } from '../../components/CartProvider';
+import { useAuth } from '../../context/AuthContext';
 import { submitOrder } from '../../utils/api';
 import { formatCurrency } from '../../utils/commerce';
 
@@ -19,18 +20,26 @@ const initialForm = {
 
 export default function CheckoutClient() {
   const cart = useCart();
+  const { user } = useAuth();
   const [form, setForm] = useState(initialForm);
   const [status, setStatus] = useState<{ kind: 'idle' | 'loading' | 'success' | 'error'; message: string; orderId?: string }>({ kind: 'idle', message: '' });
+
+  const formValues = {
+    ...form,
+    name: form.name || user?.Name || '',
+    mobile: form.mobile || user?.Mobile || '',
+    email: form.email || user?.Username || '',
+  };
 
   const update = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }));
 
   const placeOrder = async (event: FormEvent) => {
     event.preventDefault();
-    if (!/^\d{10}$/.test(form.mobile)) {
+    if (!/^\d{10}$/.test(formValues.mobile)) {
       setStatus({ kind: 'error', message: 'Enter a valid 10-digit mobile number.' });
       return;
     }
-    if (!/^\d{6}$/.test(form.pincode)) {
+    if (!/^\d{6}$/.test(formValues.pincode)) {
       setStatus({ kind: 'error', message: 'Enter a valid 6-digit pincode.' });
       return;
     }
@@ -42,7 +51,14 @@ export default function CheckoutClient() {
     setStatus({ kind: 'loading', message: 'Placing your order...' });
     const orderData = {
       type: 'order' as const,
-      customer: form,
+      userId: user?.ID,
+      customer: {
+        ...form,
+        userId: user?.ID,
+        name: formValues.name.trim(),
+        mobile: formValues.mobile.trim(),
+        email: formValues.email.trim(),
+      },
       items: cart.items,
       subtotal: cart.subtotal,
       deliveryCharge: cart.deliveryCharge,
@@ -88,16 +104,16 @@ export default function CheckoutClient() {
         ) : (
           <form className="checkout-grid" onSubmit={placeOrder}>
             <div className="form-card glass">
-              <label>Customer Name<input required value={form.name} onChange={(e) => update('name', e.target.value)} /></label>
-              <label>Mobile Number<input required inputMode="numeric" maxLength={10} value={form.mobile} onChange={(e) => update('mobile', e.target.value.replace(/\D/g, ''))} /></label>
-              <label>Email<input type="email" value={form.email} onChange={(e) => update('email', e.target.value)} /></label>
-              <label>Delivery Address<textarea required rows={4} value={form.address} onChange={(e) => update('address', e.target.value)} /></label>
+              <label>Customer Name<input required value={formValues.name} onChange={(e) => update('name', e.target.value)} /></label>
+              <label>Mobile Number<input required inputMode="numeric" maxLength={10} value={formValues.mobile} onChange={(e) => update('mobile', e.target.value.replace(/\D/g, ''))} /></label>
+              <label>Email<input type="email" value={formValues.email} onChange={(e) => update('email', e.target.value)} /></label>
+              <label>Delivery Address<textarea required rows={4} value={formValues.address} onChange={(e) => update('address', e.target.value)} /></label>
               <div className="split">
-                <label>City<input required value={form.city} onChange={(e) => update('city', e.target.value)} /></label>
-                <label>State<input required value={form.state} onChange={(e) => update('state', e.target.value)} /></label>
+                <label>City<input required value={formValues.city} onChange={(e) => update('city', e.target.value)} /></label>
+                <label>State<input required value={formValues.state} onChange={(e) => update('state', e.target.value)} /></label>
               </div>
-              <label>Pincode<input required inputMode="numeric" maxLength={6} value={form.pincode} onChange={(e) => update('pincode', e.target.value.replace(/\D/g, ''))} /></label>
-              <label>Special Instructions<textarea rows={3} value={form.instructions} onChange={(e) => update('instructions', e.target.value)} /></label>
+              <label>Pincode<input required inputMode="numeric" maxLength={6} value={formValues.pincode} onChange={(e) => update('pincode', e.target.value.replace(/\D/g, ''))} /></label>
+              <label>Special Instructions<textarea rows={3} value={formValues.instructions} onChange={(e) => update('instructions', e.target.value)} /></label>
             </div>
 
             <aside className="summary glass">

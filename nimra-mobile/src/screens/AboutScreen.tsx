@@ -34,8 +34,8 @@ export default function AboutScreen({ companyInfo, isDark }: AboutScreenProps) {
 
   const handleOpenMap = (type: 'office' | 'plant') => {
     const query = type === 'office' 
-      ? companyInfo.OfficeAddress 
-      : companyInfo.PlantAddress;
+      ? companyInfo.OfficeAddress || ''
+      : companyInfo.PlantAddress || '';
     const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
     Linking.openURL(url).catch((err) => console.error("Error opening maps:", err));
   };

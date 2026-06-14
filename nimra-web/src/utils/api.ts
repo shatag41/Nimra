@@ -327,10 +327,16 @@ export const submitOrder = async (order: OrderSubmission): Promise<{ success: bo
 
 export const trackOrder = async (
   orderId: string,
-  mobile: string
+  mobile: string,
+  scope?: { userId?: string | number; email?: string; mobile?: string }
 ): Promise<{ success: boolean; message?: string; order?: OrderRecord }> => {
   try {
-    const params = new URLSearchParams({ action: 'trackOrder', orderId, mobile });
+    const params = new URLSearchParams({ action: 'trackOrder' });
+    if (orderId.trim()) params.set('orderId', orderId.trim());
+    if (mobile.trim()) params.set('mobile', mobile.trim());
+    if (scope?.userId !== undefined && scope.userId !== null) params.set('userId', String(scope.userId));
+    if (scope?.email) params.set('email', scope.email);
+    if (!mobile.trim() && scope?.mobile) params.set('mobile', scope.mobile);
     const res = await fetch(`/api/cms?${params.toString()}`, { method: 'GET' });
     const result = await res.json();
     if (!res.ok || !result.success) {

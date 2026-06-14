@@ -51,7 +51,7 @@ function AppShell() {
     companyInfo: {},
   });
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [prefillParams, setPrefillParams] = useState<{ product?: string; subject?: string } | null>(null);
+  const [prefillParams, setPrefillParams] = useState<{ product?: string; subject?: string; orderId?: string } | null>(null);
   
   const { user, logout } = useAuth();
 
@@ -182,6 +182,7 @@ function AppShell() {
         return (
           <TrackOrderScreen
             isDark={isDark}
+            initialOrderId={prefillParams?.orderId}
             onNavigate={handleNavigate}
           />
         );

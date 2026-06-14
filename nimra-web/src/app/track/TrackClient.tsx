@@ -3,6 +3,7 @@
 import { FormEvent, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { OrderRecord } from '../../types/cms';
+import { useAuth } from '../../context/AuthContext';
 import { trackOrder } from '../../utils/api';
 import { formatCurrency } from '../../utils/commerce';
 
@@ -10,18 +11,24 @@ const steps = ['Pending', 'Confirmed', 'Processing', 'Dispatched', 'Out for Deli
 
 export default function TrackClient() {
   const params = useSearchParams();
+  const { user } = useAuth();
   const [orderId, setOrderId] = useState(params.get('orderId') || '');
-  const [mobile, setMobile] = useState('');
+  const [mobile, setMobile] = useState(user?.Mobile || '');
   const [order, setOrder] = useState<OrderRecord | null>(null);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const mobileValue = mobile || user?.Mobile || '';
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setLoading(true);
     setMessage('');
     setOrder(null);
-    const result = await trackOrder(orderId.trim(), mobile.trim());
+    const result = await trackOrder(orderId.trim(), user ? '' : mobileValue.trim(), {
+      userId: user?.ID,
+      email: user?.Username,
+      mobile: user?.Mobile,
+    });
     setLoading(false);
     if (result.success && result.order) setOrder(result.order);
     else setMessage(result.message || 'Order not found.');
@@ -39,7 +46,7 @@ export default function TrackClient() {
 
         <form className="track-form glass" onSubmit={submit}>
           <label>Order ID<input required value={orderId} onChange={(e) => setOrderId(e.target.value)} placeholder="NIMRA-..." /></label>
-          <label>Mobile Number<input required inputMode="numeric" maxLength={10} value={mobile} onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))} /></label>
+          <label>Mobile Number<input inputMode="numeric" maxLength={10} value={mobileValue} onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))} /></label>
           <button className="btn btn-primary" disabled={loading}>{loading ? 'Checking...' : 'Track Order'}</button>
         </form>
 

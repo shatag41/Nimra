@@ -146,13 +146,14 @@ export default function AdminPortalScreen({ isDark, companyInfo, onRefresh, onNa
         (u) =>
           u.Username.toLowerCase() === loginUsername.trim().toLowerCase() &&
           u.Password === loginPassword.trim() &&
+          (u.Role === 'Admin' || u.Role === 'Manager') &&
           (u.Active === true || u.Active === 'true')
       );
 
       if (matched) {
         const sessionData = {
           username: matched.Username,
-          role: matched.Role,
+          role: matched.Role === 'Admin' ? 'Admin' as const : 'Manager' as const,
           name: matched.Name,
         };
         await AsyncStorage.setItem('nimra_admin_user', JSON.stringify(sessionData));

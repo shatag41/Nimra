@@ -17,9 +17,9 @@ function doGet(e) {
   } else if (action === 'getCompanyInfo') {
     return jsonResponse(getCompanyInfoData(spreadsheet.getSheetByName('CompanyInfo')));
   } else if (action === 'trackOrder') {
-    return jsonResponse(trackOrder(spreadsheet, e.parameter.orderId, e.parameter.mobile));
+    return jsonResponse(trackOrder(spreadsheet, e.parameter.orderId, e.parameter.mobile, e.parameter.userId, e.parameter.email));
   } else if (action === 'getOrders') {
-    return jsonResponse(getAllOrders(spreadsheet));
+    return jsonResponse(getAllOrders(spreadsheet, e.parameter.userId, e.parameter.mobile, e.parameter.email));
   } else if (action === 'getInquiries') {
     return jsonResponse(getSheetData(spreadsheet.getSheetByName('Inquiries')));
   } else if (action === 'getUsers') {
@@ -152,6 +152,7 @@ function saveOrder(spreadsheet, params) {
   var pincode = String(customer.pincode || '').trim();
   var instructions = String(customer.instructions || '').trim();
   var totalAmount = Number(params.total || 0);
+  var userId = String(params.userId || customer.userId || customer.userID || customer.ID || '').trim();
 
   // Validate required fields: Name, Mobile (10 digits), Address, City, State, Pincode (6 digits), items, and totalAmount
   if (!name || !/^[0-9]{10}$/.test(mobile) || !address || !city || !state || !/^[0-9]{6}$/.test(pincode) || !items.length || totalAmount <= 0) {
@@ -198,7 +199,8 @@ function saveOrder(spreadsheet, params) {
     'Pending',
     source,
     createdAt,
-    updatedAt
+    updatedAt,
+    userId
   ];
   Logger.log("Appended Values: Appending row data to " + sheet.getName() + " sheet: " + JSON.stringify(rowData));
   sheet.appendRow(rowData);
@@ -206,7 +208,7 @@ function saveOrder(spreadsheet, params) {
   return { success: true, orderId: orderId, message: 'Order placed successfully' };
 }
 
-function getAllOrders(spreadsheet) {
+function getAllOrders(spreadsheet, userId, mobile, email) {
   var sheet = spreadsheet.getSheetByName('Orders');
   if (!sheet) return [];
   var data = sheet.getDataRange().getValues();
@@ -214,14 +216,16 @@ function getAllOrders(spreadsheet) {
   var headers = data[0];
   var orders = [];
   for (var i = 1; i < data.length; i++) {
-    orders.push(rowToOrder(headers, data[i]));
+    if (!userId && !mobile && !email || orderBelongsToUser(headers, data[i], userId, mobile, email)) {
+      orders.push(rowToOrder(headers, data[i]));
+    }
   }
   return orders;
 }
 
-function trackOrder(spreadsheet, orderId, mobile) {
+function trackOrder(spreadsheet, orderId, mobile, userId, email) {
   var sheet = spreadsheet.getSheetByName('Orders');
-  if (!sheet || (!orderId && !mobile)) {
+  if (!sheet || (!orderId && !mobile && !userId && !email)) {
     return { success: false, message: 'Order not found.' };
   }
 
@@ -229,11 +233,17 @@ function trackOrder(spreadsheet, orderId, mobile) {
   var headers = data[0] || [];
   var orderIdIndex = headers.indexOf('Order ID');
   var mobileIndex = headers.indexOf('Mobile Number');
+  var emailIndex = headers.indexOf('Email');
+  var userIdIndex = headers.indexOf('Customer User ID');
 
   for (var i = 1; i < data.length; i++) {
     var matchesOrderId = orderId && String(data[i][orderIdIndex]).trim() === String(orderId).trim();
-    var matchesMobile = mobile && String(data[i][mobileIndex]).trim() === String(mobile).trim();
-    if ((orderId && matchesOrderId) || (mobile && matchesMobile)) {
+    var matchesMobile = mobile && mobileIndex >= 0 && normalizeDigits(data[i][mobileIndex]) === normalizeDigits(mobile);
+    var matchesEmail = email && emailIndex >= 0 && normalizeEmail(data[i][emailIndex]) === normalizeEmail(email);
+    var matchesUserId = userId && userIdIndex >= 0 && String(data[i][userIdIndex]).trim() === String(userId).trim();
+    var hasUserScope = Boolean(userId || mobile || email);
+    var matchesUserScope = matchesUserId || matchesMobile || matchesEmail;
+    if ((!orderId || matchesOrderId) && (!hasUserScope || matchesUserScope)) {
       return {
         success: true,
         order: rowToOrder(headers, data[i])
@@ -302,6 +312,7 @@ function rowToOrder(headers, row) {
     createdAt: toISOString(value('Order Date')),
     updatedAt: toISOString(value('Updated At')) || toISOString(value('Order Date')),
     customer: {
+      userId: value('Customer User ID'),
       name: value('Customer Name'),
       mobile: value('Mobile Number'),
       email: value('Email'),
@@ -341,7 +352,8 @@ function ensureOrdersSheet(spreadsheet) {
     'Order Status',
     'Source',
     'Created At',
-    'Updated At'
+    'Updated At',
+    'Customer User ID'
   ];
 
   var sheet = spreadsheet.getSheetByName('Orders');
@@ -358,6 +370,24 @@ function ensureOrdersSheet(spreadsheet) {
   }
 
   return sheet;
+}
+
+function normalizeDigits(value) {
+  return String(value || '').replace(/\D/g, '').trim();
+}
+
+function orderBelongsToUser(headers, row, userId, mobile, email) {
+  var userIdIndex = headers.indexOf('Customer User ID');
+  var mobileIndex = headers.indexOf('Mobile Number');
+  var emailIndex = headers.indexOf('Email');
+  var requestedUserId = String(userId || '').trim();
+  var requestedMobile = normalizeDigits(mobile);
+  var requestedEmail = normalizeEmail(email);
+
+  if (requestedUserId && userIdIndex >= 0 && String(row[userIdIndex]).trim() === requestedUserId) return true;
+  if (requestedMobile && mobileIndex >= 0 && normalizeDigits(row[mobileIndex]) === requestedMobile) return true;
+  if (requestedEmail && emailIndex >= 0 && normalizeEmail(row[emailIndex]) === requestedEmail) return true;
+  return false;
 }
 
 function getSheetData(sheet) {

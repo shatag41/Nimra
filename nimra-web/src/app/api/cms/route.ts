@@ -6,6 +6,9 @@ const APPS_SCRIPT_URL = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || process.env.E
 export async function GET(req: Request) {
   const requestUrl = new URL(req.url);
   const action = requestUrl.searchParams.get('action');
+  const userId = requestUrl.searchParams.get('userId') || '';
+  const mobile = requestUrl.searchParams.get('mobile') || '';
+  const email = requestUrl.searchParams.get('email') || '';
   
   // Sample fallback data if Google Sheets not available
   const fallbackData = {
@@ -104,7 +107,13 @@ export async function GET(req: Request) {
   } else if (action === 'trackOrder') {
     return NextResponse.json({ success: false, message: 'No matching order found.' });
   } else if (action === 'getOrders') {
-    return NextResponse.json(fallbackData.orders);
+    if (!userId && !mobile && !email) return NextResponse.json(fallbackData.orders);
+    return NextResponse.json(
+      fallbackData.orders.filter((order) =>
+        (mobile && order.customer.mobile.replace(/\D/g, '') === mobile.replace(/\D/g, '')) ||
+        (email && order.customer.email.toLowerCase() === email.toLowerCase())
+      )
+    );
   } else if (action === 'getInquiries') {
     return NextResponse.json(fallbackData.inquiries);
   } else if (action === 'getUsers') {
@@ -128,8 +137,6 @@ export async function POST(req: Request) {
     const body = await req.json();
     const payload = { ...body };
 
-    let useFallback = true;
-    
     if (APPS_SCRIPT_URL) {
       try {
         const res = await fetch(APPS_SCRIPT_URL, {
