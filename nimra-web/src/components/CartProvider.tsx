@@ -4,6 +4,8 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import { CartItem, Product } from '../types/cms';
 import { useAuth } from '../context/AuthContext';
 import { cartSubtotal, deliveryChargeFor, productToCartItem } from '../utils/commerce';
+import { syncCart, fetchCart } from '../utils/api';
+import { toast } from 'sonner';
 
 interface CartContextValue {
   items: CartItem[];
@@ -35,31 +37,48 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isLoading) return;
     let cancelled = false;
-    queueMicrotask(() => {
+    queueMicrotask(async () => {
       if (cancelled) return;
       setHydrated(false);
       try {
         const saved = localStorage.getItem(storageKey);
-        setItems(saved ? JSON.parse(saved) : []);
+        let localItems = saved ? JSON.parse(saved) : [];
+        
+        if (user && user.ID) {
+          const cloudItems = await fetchCart(user.ID);
+          if (cloudItems && cloudItems.length > 0) {
+            localItems = cloudItems;
+            localStorage.setItem(storageKey, JSON.stringify(localItems));
+          }
+        }
+        
+        if (!cancelled) {
+          setItems(localItems);
+          setActiveStorageKey(storageKey);
+          setHydrated(true);
+        }
       } catch {
-        setItems([]);
-        // Ignore cart restore errors
-      } finally {
-        setActiveStorageKey(storageKey);
-        setHydrated(true);
+        if (!cancelled) {
+          setItems([]);
+          setActiveStorageKey(storageKey);
+          setHydrated(true);
+        }
       }
     });
 
     return () => {
       cancelled = true;
     };
-  }, [isLoading, storageKey]);
+  }, [isLoading, storageKey, user]);
 
   useEffect(() => {
     if (hydrated && activeStorageKey === storageKey) {
       localStorage.setItem(storageKey, JSON.stringify(items));
+      if (user && user.ID) {
+        syncCart(user.ID, items);
+      }
     }
-  }, [activeStorageKey, hydrated, items, storageKey]);
+  }, [activeStorageKey, hydrated, items, storageKey, user]);
 
   const value = useMemo<CartContextValue>(() => {
     const visibleItems = hydrated && activeStorageKey === storageKey ? items : [];
@@ -88,6 +107,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               : item
           );
         });
+        toast.success(`Added ${product.Name} to cart`);
       },
       updateQuantity(productId, quantity) {
         updateCartItems((current) =>
@@ -98,6 +118,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       },
       removeItem(productId) {
         updateCartItems((current) => current.filter((item) => item.productId !== productId));
+        toast.info('Item removed from cart');
       },
       clearCart() {
         setActiveStorageKey(storageKey);

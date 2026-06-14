@@ -454,42 +454,50 @@ section {
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  background: var(--bg-primary);
 }
 
 .admin-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 
 .admin-table thead {
-  background: var(--bg-tertiary);
+  background: rgba(var(--primary-rgb), 0.05);
 }
 
 .admin-table th {
-  padding: 1rem;
+  padding: 1.25rem 1.5rem;
   text-align: left;
   font-family: var(--font-heading);
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-secondary);
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 2px solid var(--border-color);
 }
 
 .admin-table td {
-  padding: 1rem;
+  padding: 1.25rem 1.5rem;
   border-bottom: 1px solid var(--border-light);
+  color: var(--text-primary);
 }
 
 .admin-table tbody tr {
-  transition: background-color var(--transition-fast);
+  transition: all var(--transition-normal);
 }
 
 .admin-table tbody tr:hover {
-  background: var(--bg-tertiary);
+  background: rgba(var(--primary-rgb), 0.03);
+  transform: scale(1.002);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  z-index: 10;
 }
 
 .table-thumbnail {

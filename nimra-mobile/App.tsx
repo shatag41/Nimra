@@ -13,6 +13,7 @@ import { COLORS } from './src/styles/theme';
 import { fetchCMSData } from './src/utils/api';
 import { CMSData, Product } from './src/types/cms';
 import { CartProvider, useCart } from './src/context/CartContext';
+import Toast from 'react-native-toast-message';
 
 // Import Screens
 import HomeScreen from './src/screens/HomeScreen';
@@ -368,6 +369,7 @@ export default function App() {
           <RootNavigator />
         </CartProvider>
       </AuthProvider>
+      <Toast />
     </SafeAreaProvider>
   );
 }

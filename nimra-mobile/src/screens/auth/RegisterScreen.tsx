@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { normalizeAuthUser, sendRequest } from '../../utils/api';
 import { Ionicons } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
 
 export default function RegisterScreen({ navigation }: any) {
   const { login } = useAuth();
@@ -79,18 +80,19 @@ export default function RegisterScreen({ navigation }: any) {
       const authUser = normalizeAuthUser(res.user);
       if (res.success && authUser) {
         await login(authUser);
+        Toast.show({ type: 'success', text1: 'Registration Successful!', text2: `Welcome to NIMRA, ${authUser.Name}!`, visibilityTime: 3000 });
       } else {
-        Alert.alert('Registration Failed', res.message ?? 'An unexpected error occurred.');
+        Toast.show({ type: 'error', text1: 'Registration Failed', text2: res.message ?? 'An unexpected error occurred.', visibilityTime: 3000 });
       }
     } catch (err) {
-      Alert.alert('Error', 'Network error or server unavailable');
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Network error or server unavailable', visibilityTime: 3000 });
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleGoogleRegister = async () => {
-    Alert.alert('Info', 'Google Sign-In will be implemented here once the client library is fully configured.');
+    Toast.show({ type: 'info', text1: 'Coming Soon', text2: 'Google Sign-In will be available soon.', visibilityTime: 2500 });
   };
 
   return (

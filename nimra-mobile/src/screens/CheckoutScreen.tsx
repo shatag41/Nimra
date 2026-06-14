@@ -6,6 +6,7 @@ import { submitOrder } from '../utils/api';
 import { formatCurrency } from '../utils/commerce';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import Toast from 'react-native-toast-message';
 
 interface CheckoutScreenProps {
   companyInfo: CompanyInfo;
@@ -68,6 +69,7 @@ export default function CheckoutScreen({ companyInfo, isDark, onNavigate }: Chec
         type: 'error',
         message: 'Please complete every required field with valid details before placing the order.',
       });
+      Toast.show({ type: 'error', text1: 'Incomplete Form', text2: 'Please fill all required fields.', visibilityTime: 3000 });
       return;
     }
 
@@ -102,8 +104,10 @@ export default function CheckoutScreen({ companyInfo, isDark, onNavigate }: Chec
       cart.clearCart();
       setForm(initialForm);
       setStatus({ type: 'success', message: result.message, orderId: result.orderId });
+      Toast.show({ type: 'success', text1: 'Order Placed! 🎉', text2: result.orderId ? `Order ID: ${result.orderId}` : result.message, visibilityTime: 3000 });
     } else {
       setStatus({ type: 'error', message: result.message });
+      Toast.show({ type: 'error', text1: 'Order Failed', text2: result.message, visibilityTime: 3000 });
     }
 
     setLoading(false);

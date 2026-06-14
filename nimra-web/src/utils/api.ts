@@ -1,4 +1,4 @@
-import { CMSData, InquirySubmission, OrderRecord, OrderSubmission, AdminUser, Notification, Inquiry, Product, Banner, FAQ, CompanyInfo } from '../types/cms';
+import { CMSData, InquirySubmission, OrderRecord, OrderSubmission, AdminUser, Notification, Inquiry, Product, Banner, FAQ, CompanyInfo, CartItem } from '../types/cms';
 import type { User } from '../context/AuthContext';
 
 export type AuthRequest =
@@ -504,3 +504,35 @@ export const saveCompanyInfo = async (companyInfo: CompanyInfo): Promise<{ succe
   }
 };
 
+export const syncCart = async (userId: string | number, items: CartItem[]): Promise<{ success: boolean; message: string }> => {
+  try {
+    const res = await fetch('/api/cms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'cartSync', userId, items }),
+    });
+    const data = await res.json();
+    return { success: data.success, message: data.message || 'Cart synced' };
+  } catch (err) {
+    console.error('Error syncing cart:', err);
+    return { success: false, message: 'Failed to sync cart' };
+  }
+};
+
+export const fetchCart = async (userId: string | number): Promise<CartItem[]> => {
+  try {
+    const res = await fetch('/api/cms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'getCart', userId }),
+    });
+    const data = await res.json();
+    if (data.success && Array.isArray(data.items)) {
+      return data.items;
+    }
+    return [];
+  } catch (err) {
+    console.error('Error fetching cart:', err);
+    return [];
+  }
+};

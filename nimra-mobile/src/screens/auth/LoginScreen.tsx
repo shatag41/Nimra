@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator,
 import { useAuth } from '../../context/AuthContext';
 import { normalizeAuthUser, sendRequest } from '../../utils/api';
 import { Ionicons } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
 
 export default function LoginScreen({ navigation }: any) {
   const { login } = useAuth();
@@ -42,12 +43,13 @@ export default function LoginScreen({ navigation }: any) {
       const authUser = normalizeAuthUser(res.user);
       if (res.success && authUser) {
         await login(authUser);
+        Toast.show({ type: 'success', text1: `Welcome back, ${authUser.Name}!`, visibilityTime: 2500 });
       } else {
-        Alert.alert('Login Failed', res.message ?? 'An unexpected error occurred.');
+        Toast.show({ type: 'error', text1: 'Login Failed', text2: res.message ?? 'An unexpected error occurred.', visibilityTime: 3000 });
       }
     } catch (err) {
       console.error('Login error:', err);
-      Alert.alert('Error', 'Network error or server unavailable');
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Network error or server unavailable', visibilityTime: 3000 });
     } finally {
       setIsLoading(false);
     }

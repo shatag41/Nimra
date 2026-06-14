@@ -6,6 +6,7 @@ import { useCart } from '../../components/CartProvider';
 import { useAuth } from '../../context/AuthContext';
 import { submitOrder } from '../../utils/api';
 import { formatCurrency } from '../../utils/commerce';
+import { toast } from 'sonner';
 
 const initialForm = {
   name: '',
@@ -37,14 +38,17 @@ export default function CheckoutClient() {
     event.preventDefault();
     if (!/^\d{10}$/.test(formValues.mobile)) {
       setStatus({ kind: 'error', message: 'Enter a valid 10-digit mobile number.' });
+      toast.error('Enter a valid 10-digit mobile number.');
       return;
     }
     if (!/^\d{6}$/.test(formValues.pincode)) {
       setStatus({ kind: 'error', message: 'Enter a valid 6-digit pincode.' });
+      toast.error('Enter a valid 6-digit pincode.');
       return;
     }
     if (cart.items.length === 0) {
       setStatus({ kind: 'error', message: 'Your cart is empty.' });
+      toast.error('Your cart is empty.');
       return;
     }
 
@@ -72,8 +76,10 @@ export default function CheckoutClient() {
       cart.clearCart();
       setForm(initialForm);
       setStatus({ kind: 'success', message: result.message, orderId: result.orderId });
+      toast.success('Order placed successfully! 🎉');
     } else {
       setStatus({ kind: 'error', message: result.message });
+      toast.error(result.message || 'Failed to place order.');
     }
   };
 

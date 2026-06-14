@@ -92,6 +92,12 @@ function doPost(e) {
     } else if (params.type === 'resetPassword') {
       Logger.log("doPost: Routing to handleAuthResetPassword()");
       return jsonResponse(handleAuthResetPassword(spreadsheet, params));
+    } else if (params.type === 'getCart') {
+      Logger.log("doPost: Routing to getCart()");
+      return jsonResponse(getCart(spreadsheet, params));
+    } else if (params.type === 'cartSync') {
+      Logger.log("doPost: Routing to handleCartSync()");
+      return jsonResponse(handleCartSync(spreadsheet, params));
     } else {
       // Fallback structural check to identify request type
       if (params.customer && params.items) {
@@ -204,6 +210,14 @@ function saveOrder(spreadsheet, params) {
   ];
   Logger.log("Appended Values: Appending row data to " + sheet.getName() + " sheet: " + JSON.stringify(rowData));
   sheet.appendRow(rowData);
+
+  try {
+    if (email) {
+      sendOrderConfirmationEmail(email, name, orderId, products, totalAmount);
+    }
+  } catch (err) {
+    Logger.log("Error sending order confirmation email: " + err);
+  }
 
   return { success: true, orderId: orderId, message: 'Order placed successfully' };
 }
@@ -880,6 +894,11 @@ function handleAuthRegister(spreadsheet, params) {
   if (result.success) {
     newUser.ID = result.ID;
     delete newUser.Password;
+    try {
+      if (email) sendWelcomeEmail(email, name);
+    } catch (e) {
+      Logger.log("Error sending welcome email: " + e);
+    }
     return { success: true, message: 'Registration successful', user: newUser };
   }
   return result;
@@ -939,6 +958,11 @@ function handleAuthGoogleSignIn(spreadsheet, params) {
   if (result.success) {
     newUser.ID = result.ID;
     delete newUser.Password;
+    try {
+      if (email) sendWelcomeEmail(email, name);
+    } catch (e) {
+      Logger.log("Error sending welcome email: " + e);
+    }
     return { success: true, message: 'Registration successful', user: newUser };
   }
   return result;
@@ -1161,4 +1185,141 @@ function updateUserLastLogin(spreadsheet, userId) {
       break;
     }
   }
+}
+
+function handleCartSync(spreadsheet, params) {
+  var userId = String(params.userId || '').trim();
+  var items = params.items || [];
+  
+  if (!userId) {
+    return { success: false, message: 'userId is required for cart sync' };
+  }
+  
+  var sheet = spreadsheet.getSheetByName('Carts');
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet('Carts');
+    sheet.getRange(1, 1, 1, 3).setValues([['User ID', 'Cart Data', 'Updated At']]);
+  }
+  
+  var data = sheet.getDataRange().getValues();
+  var rowIndex = -1;
+  
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][0]).trim() === userId) {
+      rowIndex = i + 1;
+      break;
+    }
+  }
+  
+  var cartJson = JSON.stringify(items);
+  var now = new Date().toISOString();
+  
+  if (rowIndex !== -1) {
+    sheet.getRange(rowIndex, 2, 1, 2).setValues([[cartJson, now]]);
+  } else {
+    sheet.appendRow([userId, cartJson, now]);
+  }
+  
+  return { success: true, message: 'Cart synced successfully' };
+}
+
+function getCart(spreadsheet, params) {
+  var userId = String(params.userId || '').trim();
+  
+  if (!userId) {
+    return { success: false, message: 'userId is required to get cart' };
+  }
+  
+  var sheet = spreadsheet.getSheetByName('Carts');
+  if (!sheet) {
+    return { success: true, items: [] };
+  }
+  
+  var data = sheet.getDataRange().getValues();
+  
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][0]).trim() === userId) {
+      try {
+        var items = JSON.parse(data[i][1]);
+        return { success: true, items: items };
+      } catch (e) {
+        return { success: true, items: [] };
+      }
+    }
+  }
+  
+  return { success: true, items: [] };
+}
+
+function sendWelcomeEmail(email, name) {
+  var displayName = String(name || 'Customer').trim();
+  var subject = 'Welcome to NIMRA!';
+  var plainBody = 'Hello ' + displayName + ',\n\n' +
+    'Welcome to NIMRA Beverage Company! We are thrilled to have you on board.\n\n' +
+    'Explore our wide range of premium beverages. If you have any questions, feel free to reply to this email.\n\n' +
+    'Cheers,\nThe NIMRA Team';
+  var htmlBody = '<p>Hello ' + escapeHtml(displayName) + ',</p>' +
+    '<p>Welcome to <strong>NIMRA Beverage Company</strong>! We are thrilled to have you on board.</p>' +
+    '<p>Explore our wide range of premium beverages. If you have any questions, feel free to reply to this email.</p>' +
+    '<p>Cheers,<br>The NIMRA Team</p>';
+
+  var message = {
+    to: email,
+    subject: subject,
+    body: plainBody,
+    htmlBody: htmlBody,
+    name: 'NIMRA Team'
+  };
+
+  try {
+    MailApp.sendEmail(message);
+  } catch (mailError) {
+    GmailApp.sendEmail(email, subject, plainBody, {
+      htmlBody: htmlBody,
+      name: 'NIMRA Team'
+    });
+  }
+}
+
+function sendOrderConfirmationEmail(email, name, orderId, products, totalAmount) {
+  var displayName = String(name || 'Customer').trim();
+  var subject = 'NIMRA Order Confirmation - ' + orderId;
+  var plainBody = 'Hello ' + displayName + ',\n\n' +
+    'Thank you for your order! Your order ' + orderId + ' has been placed successfully.\n\n' +
+    'Items:\n' + products + '\n\n' +
+    'Total: ₹' + totalAmount + '\n\n' +
+    'We will notify you once it is dispatched.\n\n' +
+    'NIMRA Support';
+  var htmlBody = '<p>Hello ' + escapeHtml(displayName) + ',</p>' +
+    '<p>Thank you for your order! Your order <strong>' + orderId + '</strong> has been placed successfully.</p>' +
+    '<p><strong>Items:</strong><br/>' + escapeHtml(products) + '</p>' +
+    '<p><strong>Total:</strong> ₹' + totalAmount + '</p>' +
+    '<p>We will notify you once it is dispatched.</p>' +
+    '<p>NIMRA Support</p>';
+
+  var message = {
+    to: email,
+    subject: subject,
+    body: plainBody,
+    htmlBody: htmlBody,
+    name: 'NIMRA Support'
+  };
+
+  try {
+    MailApp.sendEmail(message);
+  } catch (mailError) {
+    GmailApp.sendEmail(email, subject, plainBody, {
+      htmlBody: htmlBody,
+      name: 'NIMRA Support'
+    });
+  }
+}
+
+function testEmailTemplates() {
+  var testEmail = Session.getEffectiveUser().getEmail();
+  Logger.log("Testing welcome email to: " + testEmail);
+  sendWelcomeEmail(testEmail, "Test User");
+  Logger.log("Testing order confirmation email to: " + testEmail);
+  sendOrderConfirmationEmail(testEmail, "Test User", "NIMRA-TEST-12345", "NIMRA 1 Litre Bottle (1L) x 2 | NIMRA 5 Litre Can (5L) x 1", 95);
+  Logger.log("Email tests complete. Check your inbox!");
 }

@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useGoogleLogin } from '@react-oauth/google';
 import Link from 'next/link';
 import { sendRequest } from '../../utils/api';
+import { toast } from 'sonner';
 
 export default function RegisterPage() {
   const { login } = useAuth();
@@ -72,8 +73,8 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      const res = await sendRequest({ 
-        type: 'register', 
+      const res = await sendRequest({
+        type: 'register',
         user: {
           Name: name.trim(),
           Username: email.trim(),
@@ -84,11 +85,14 @@ export default function RegisterPage() {
       });
       if (res.success && res.user) {
         login(res.user);
+        toast.success('Registration successful! Welcome to NIMRA.');
       } else {
         setError(res.message ?? 'Registration failed. Please try again.');
+        toast.error(res.message ?? 'Registration failed.');
       }
     } catch {
       setError('Registration failed. Please try again.');
+      toast.error('Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -107,20 +111,23 @@ export default function RegisterPage() {
 
       const payload = await profileRes.json();
 
-      const res = await sendRequest({ 
-        type: 'googleSignIn', 
-        email: payload.email, 
+      const res = await sendRequest({
+        type: 'googleSignIn',
+        email: payload.email,
         name: payload.name,
-        role: role // Pass selected role
+        role: role
       });
 
       if (res.success && res.user) {
         login(res.user);
+        toast.success('Registration successful! Welcome to NIMRA.');
       } else {
         setError(res.message ?? 'Google Sign-In failed.');
+        toast.error(res.message ?? 'Google Sign-In failed.');
       }
     } catch {
       setError('Google Sign-In failed.');
+      toast.error('Google Sign-In failed.');
     }
   };
 
@@ -170,25 +177,25 @@ export default function RegisterPage() {
 
           <div className="auth-field">
             <label htmlFor="name">Full Name</label>
-            <input 
+            <input
               id="name"
-              type="text" 
-              placeholder="John Doe" 
-              className="auth-input" 
+              type="text"
+              placeholder="John Doe"
+              className="auth-input"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              required 
+              required
             />
             {errors.name && <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem' }}>{errors.name}</p>}
           </div>
 
           <div className="auth-field">
             <label htmlFor="email">Email Address</label>
-            <input 
+            <input
               id="email"
-              type="email" 
-              placeholder="john@example.com" 
-              className="auth-input" 
+              type="email"
+              placeholder="john@example.com"
+              className="auth-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -197,12 +204,12 @@ export default function RegisterPage() {
 
           <div className="auth-field">
             <label htmlFor="mobile">Mobile Number</label>
-            <input 
+            <input
               id="mobile"
-              type="tel" 
+              type="tel"
               pattern="[0-9]{10}"
-              placeholder="10-digit mobile" 
-              className="auth-input" 
+              placeholder="10-digit mobile"
+              className="auth-input"
               value={mobile}
               onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
               maxLength={10}
@@ -210,21 +217,21 @@ export default function RegisterPage() {
             {errors.mobile && <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem' }}>{errors.mobile}</p>}
             <p className="auth-help">Either email or mobile is required.</p>
           </div>
-          
+
           <div className="auth-field">
             <label htmlFor="password">Password</label>
             <div className="auth-input-wrapper" style={{ position: 'relative' }}>
-              <input 
+              <input
                 id="password"
-                type={showPassword ? "text" : "password"} 
-                placeholder="Secure password" 
-                className="auth-input" 
+                type={showPassword ? "text" : "password"}
+                placeholder="Secure password"
+                className="auth-input"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required 
+                required
                 style={{ paddingRight: '2.5rem' }}
               />
-              <button 
+              <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="password-toggle-btn"
@@ -243,7 +250,7 @@ export default function RegisterPage() {
 
           <div className="auth-field">
             <label htmlFor="role">Register As</label>
-            <select 
+            <select
               id="role"
               className="auth-select"
               value={role}
@@ -253,7 +260,7 @@ export default function RegisterPage() {
               <option value="Admin">Admin</option>
             </select>
           </div>
-          
+
           <div>
             <button className="btn btn-primary auth-submit" type="submit" disabled={isLoading}>
               {isLoading ? 'Registering...' : 'Register'}

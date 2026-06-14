@@ -458,7 +458,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
   if (!currentUser) return null;
 
   return (
-    <div className="admin-container animate-fade-in">
+    <div className="admin-container">
       {/* SIDEBAR */}
       <aside className="admin-sidebar glass">
         <div className="sidebar-brand">
@@ -514,7 +514,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
       </aside>
 
       {/* MAIN VIEW */}
-      <main className="admin-main">
+      <main className="admin-main animate-fade-in">
         {/* TOP BAR */}
         <header className="main-header glass">
           <h1>
@@ -1634,18 +1634,21 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
 
         /* SIDEBAR STYLING */
         .admin-sidebar {
-          width: 280px;
-          min-width: 280px;
-          background: var(--bg-secondary);
+          width: 260px;
+          min-width: 260px;
+          background: linear-gradient(180deg, var(--bg-secondary), var(--bg-tertiary));
           border-right: 1px solid var(--border-color);
-          padding: 1.75rem;
+          padding: 1.5rem 1.25rem;
           display: flex;
           flex-direction: column;
-          gap: 1.75rem;
+          gap: 1.25rem;
           z-index: 100;
-          position: sticky;
+          position: fixed;
           top: 0;
+          left: 0;
           height: 100vh;
+          box-shadow: var(--shadow-md);
+          overflow-y: auto;
         }
 
         .sidebar-brand {
@@ -1715,16 +1718,25 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           border-radius: var(--radius-md);
           color: var(--text-secondary);
           font-weight: 600;
-          font-size: 0.9rem;
+          font-size: 0.95rem;
           cursor: pointer;
-          transition: all var(--transition-fast);
+          transition: all var(--transition-normal);
           display: flex;
           align-items: center;
           gap: 0.75rem;
+          position: relative;
+          overflow: hidden;
         }
-        .nav-btn:hover, .nav-btn.active {
+        .nav-btn:hover {
           color: var(--primary-color);
-          background: rgba(var(--primary-rgb), 0.1);
+          background: rgba(var(--primary-rgb), 0.08);
+          transform: translateX(4px);
+        }
+        .nav-btn.active {
+          color: white;
+          background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+          box-shadow: 0 4px 14px rgba(var(--primary-rgb), 0.3);
+          transform: translateX(4px);
         }
 
         /* MAIN SECTION STYLING */
@@ -1733,6 +1745,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           display: flex;
           flex-direction: column;
           padding: 2rem;
+          margin-left: 260px;
           overflow-y: auto;
           position: relative;
         }
@@ -1741,12 +1754,13 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 1.25rem 1.5rem;
+          padding: 1.5rem 2rem;
           border-radius: var(--radius-xl);
-          border: 1px solid var(--border-color);
+          border: 1px solid var(--glass-border);
           background: var(--glass-bg);
-          backdrop-filter: blur(12px);
+          backdrop-filter: blur(16px);
           margin-bottom: 2rem;
+          box-shadow: var(--shadow-md);
         }
         .main-header h1 {
           font-size: 1.6rem;
@@ -1757,20 +1771,22 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           gap: 1.25rem;
         }
         .btn-refresh {
-          background: var(--bg-secondary);
+          background: var(--bg-primary);
           border: 1px solid var(--border-color);
           padding: 0.625rem 1.25rem;
-          border-radius: var(--radius-md);
+          border-radius: var(--radius-xl);
           font-weight: 700;
           font-size: 0.875rem;
           cursor: pointer;
           color: var(--text-primary);
-          transition: all var(--transition-fast);
+          transition: all var(--transition-normal);
+          box-shadow: var(--shadow-sm);
         }
         .btn-refresh:hover {
           border-color: var(--primary-color);
           color: var(--primary-color);
-          box-shadow: var(--shadow-sm);
+          box-shadow: var(--shadow-md);
+          transform: translateY(-2px);
         }
         .db-indicator {
           font-size: 0.8rem;
@@ -1832,11 +1848,12 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           flex-direction: column;
           gap: 0.5rem;
           transition: all var(--transition-normal);
+          box-shadow: var(--shadow-sm);
         }
         .stat-card:hover {
-          transform: translateY(-4px);
-          box-shadow: var(--shadow-lg);
-          border-color: var(--primary-color);
+          transform: translateY(-5px);
+          box-shadow: var(--shadow-xl);
+          border-color: rgba(var(--primary-rgb), 0.3);
         }
         .stat-label {
           color: var(--text-secondary);
@@ -1866,6 +1883,12 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           border-radius: var(--radius-xl);
           border: 1px solid var(--border-color);
           background: var(--bg-secondary);
+          box-shadow: var(--shadow-sm);
+          transition: all var(--transition-normal);
+        }
+        .chart-card:hover {
+          box-shadow: var(--shadow-lg);
+          border-color: rgba(var(--primary-rgb), 0.2);
         }
         .chart-card h3 {
           font-size: 1.1rem;
@@ -1921,6 +1944,12 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           border-radius: var(--radius-xl);
           border: 1px solid var(--border-color);
           background: var(--bg-secondary);
+          box-shadow: var(--shadow-sm);
+          transition: all var(--transition-normal);
+        }
+        .activity-card:hover {
+          box-shadow: var(--shadow-lg);
+          border-color: rgba(var(--primary-rgb), 0.2);
         }
         .activity-card h3 {
           font-size: 1.1rem;
@@ -1962,6 +1991,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         /* TAB SECTIONS */
         .orders-tab, .products-tab, .banners-tab, .faqs-tab, .inquiries-tab, .users-tab, .notifications-tab, .settings-tab {
           width: 100%;
+          padding: 2rem;
         }
         .section-head-btn {
           display: flex;
@@ -2105,14 +2135,14 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         .form-group {
           margin-bottom: 1.25rem;
         }
-        .form-label {
+        .form-label, .form-group label {
           display: block;
           margin-bottom: 0.5rem;
           font-weight: 700;
           font-size: 0.9rem;
           color: var(--text-primary);
         }
-        .form-input, .form-select, .form-textarea {
+        .form-input, .form-select, .form-textarea, .form-group input, .form-group select, .form-group textarea {
           width: 100%;
           padding: 0.875rem 1rem;
           border: 1.5px solid var(--border-color);
@@ -2123,13 +2153,13 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           font-family: var(--font-body);
           transition: all var(--transition-fast);
         }
-        .form-input:focus, .form-select:focus, .form-textarea:focus {
+        .form-input:focus, .form-select:focus, .form-textarea:focus, .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
           outline: none;
           border-color: var(--primary-color);
           box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.12);
           background: var(--bg-secondary);
         }
-        .form-textarea {
+        .form-textarea, .form-group textarea {
           min-height: 120px;
           resize: vertical;
         }
@@ -2184,8 +2214,12 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         }
         @media (max-width: 900px) {
           .admin-sidebar {
-            width: 240px;
-            min-width: 240px;
+            width: 220px;
+            min-width: 220px;
+            padding: 1.25rem 1rem;
+          }
+          .admin-main {
+            margin-left: 220px;
           }
           .recent-activity-grid {
             grid-template-columns: 1fr;
@@ -2202,6 +2236,11 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             height: auto;
             border-right: none;
             border-bottom: 1px solid var(--border-color);
+            padding: 1rem;
+            z-index: 10;
+          }
+          .admin-main {
+            margin-left: 0;
             padding: 1rem;
           }
           .sidebar-nav {

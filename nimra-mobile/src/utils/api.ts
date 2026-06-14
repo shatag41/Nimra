@@ -1,4 +1,4 @@
-import { CMSData, InquirySubmission, OrderRecord, OrderSubmission, AdminUser, Notification, Inquiry, Product, Banner, FAQ, CompanyInfo } from '../types/cms';
+import { CMSData, InquirySubmission, OrderRecord, OrderSubmission, AdminUser, Notification, Inquiry, Product, Banner, FAQ, CompanyInfo, CartItem } from '../types/cms';
 import type { User } from '../context/AuthContext';
 
 export const mockCMSData: CMSData = {
@@ -515,3 +515,38 @@ export const saveCompanyInfo = async (companyInfo: CompanyInfo): Promise<{ succe
   }
 };
 
+export const syncCart = async (userId: string | number, items: CartItem[]): Promise<{ success: boolean; message: string }> => {
+  const url = getAPIUrl();
+  if (!url) return { success: true, message: 'Mock synced' };
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'cartSync', userId, items }),
+    });
+    return await res.json();
+  } catch (err) {
+    console.error(err);
+    return { success: false, message: 'Connection error' };
+  }
+};
+
+export const fetchCart = async (userId: string | number): Promise<CartItem[]> => {
+  const url = getAPIUrl();
+  if (!url) return [];
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'getCart', userId }),
+    });
+    const data = await res.json();
+    if (data.success && Array.isArray(data.items)) {
+      return data.items;
+    }
+    return [];
+  } catch (err) {
+    console.error(err);
+    return [];
+  }
+};

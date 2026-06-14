@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useGoogleLogin } from '@react-oauth/google';
 import Link from 'next/link';
 import { sendRequest } from '../../utils/api';
+import { toast } from 'sonner';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -62,12 +63,15 @@ export default function LoginPage() {
       const res = await sendRequest({ type: 'login', username: loginIdentifier, password });
       if (res.success && res.user) {
         login(res.user);
+        toast.success(`Welcome back, ${res.user.Name}!`);
       } else {
         setError(res.message ?? 'Login failed. Please try again.');
+        toast.error(res.message ?? 'Login failed.');
       }
     } catch (err) {
       console.error('Login error:', err);
       setError('Login failed. Please try again.');
+      toast.error('Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -94,11 +98,14 @@ export default function LoginPage() {
 
       if (res.success && res.user) {
         login(res.user);
+        toast.success(`Welcome back, ${res.user.Name}!`);
       } else {
         setError(res.message ?? 'Google Sign-In failed.');
+        toast.error(res.message ?? 'Google Sign-In failed.');
       }
     } catch {
       setError('Google Sign-In failed.');
+      toast.error('Google Sign-In failed.');
     }
   };
 
@@ -143,15 +150,15 @@ export default function LoginPage() {
           </div>
 
           <form className="auth-form" onSubmit={handleSubmit}>
-            <div style={{ display: 'flex', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+            <div style={{ display: 'flex', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
               <button
                 type="button"
                 onClick={() => { setActiveTab('mobile'); setError(''); }}
                 style={{
                   flex: 1, padding: '0.75rem', background: 'none', border: 'none',
-                  borderBottom: activeTab === 'mobile' ? '2px solid #00E5FF' : '2px solid transparent',
-                  color: activeTab === 'mobile' ? 'white' : 'rgba(255,255,255,0.6)',
-                  cursor: 'pointer', fontWeight: '500', transition: 'all 0.2s ease'
+                  borderBottom: activeTab === 'mobile' ? '2px solid var(--primary-color)' : '2px solid transparent',
+                  color: activeTab === 'mobile' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  cursor: 'pointer', fontWeight: '700', transition: 'all 0.2s ease'
                 }}
               >
                 Mobile Number
@@ -161,9 +168,9 @@ export default function LoginPage() {
                 onClick={() => { setActiveTab('email'); setError(''); }}
                 style={{
                   flex: 1, padding: '0.75rem', background: 'none', border: 'none',
-                  borderBottom: activeTab === 'email' ? '2px solid #00E5FF' : '2px solid transparent',
-                  color: activeTab === 'email' ? 'white' : 'rgba(255,255,255,0.6)',
-                  cursor: 'pointer', fontWeight: '500', transition: 'all 0.2s ease'
+                  borderBottom: activeTab === 'email' ? '2px solid var(--primary-color)' : '2px solid transparent',
+                  color: activeTab === 'email' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  cursor: 'pointer', fontWeight: '700', transition: 'all 0.2s ease'
                 }}
               >
                 Email

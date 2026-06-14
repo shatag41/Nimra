@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { sendRequest } from '../../utils/api';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -11,27 +12,23 @@ export default function ForgotPasswordPage() {
   const [newPassword, setNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [step, setStep] = useState(1); // 1: Request OTP, 2: Reset Password
-  const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleRequestOTP = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setMessage('');
     setIsLoading(true);
 
     try {
       const res = await sendRequest({ type: 'requestOTP', email });
       if (res.success) {
-        setMessage(res.message ?? 'OTP sent successfully.');
+        toast.success(res.message ?? 'OTP sent successfully.');
         setStep(2);
       } else {
-        setError(res.message ?? 'Failed to request OTP.');
+        toast.error(res.message ?? 'Failed to request OTP.');
       }
     } catch {
-      setError('Failed to request OTP.');
+      toast.error('Failed to request OTP.');
     } finally {
       setIsLoading(false);
     }
@@ -39,20 +36,18 @@ export default function ForgotPasswordPage() {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setMessage('');
     setIsLoading(true);
 
     try {
       const res = await sendRequest({ type: 'resetPassword', email, otp, newPassword });
       if (res.success) {
-        setMessage('Password reset successful. Redirecting to login...');
+        toast.success('Password reset successful! Redirecting to login...');
         setTimeout(() => router.push('/login'), 2000);
       } else {
-        setError(res.message ?? 'Failed to reset password.');
+        toast.error(res.message ?? 'Failed to reset password.');
       }
     } catch {
-      setError('Failed to reset password.');
+      toast.error('Failed to reset password.');
     } finally {
       setIsLoading(false);
     }
@@ -93,9 +88,6 @@ export default function ForgotPasswordPage() {
             <h2>Forgot Password</h2>
             <p>{step === 1 ? 'Enter your registered email to receive an OTP.' : 'Enter the OTP and set your new password.'}</p>
           </div>
-          
-          {error && <div className="auth-alert error">{error}</div>}
-          {message && <div className="auth-alert success">{message}</div>}
 
           {step === 1 ? (
             <form className="auth-form" onSubmit={handleRequestOTP}>

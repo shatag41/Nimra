@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { sendRequest } from '../../utils/api';
 
 export default function ForgotPasswordScreen({ navigation }: any) {
@@ -11,7 +12,11 @@ export default function ForgotPasswordScreen({ navigation }: any) {
 
   const handleRequestOTP = async () => {
     if (!email) {
-      Alert.alert('Error', 'Please enter your registered email address.');
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Please enter your registered email address.'
+      });
       return;
     }
 
@@ -19,13 +24,25 @@ export default function ForgotPasswordScreen({ navigation }: any) {
     try {
       const res = await sendRequest({ type: 'requestOTP', email });
       if (res.success) {
-        Alert.alert('Success', res.message);
+        Toast.show({
+          type: 'success',
+          text1: 'OTP Sent',
+          text2: res.message || 'Verification code sent to your email.'
+        });
         setStep(2);
       } else {
-        Alert.alert('Error', res.message);
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: res.message || 'Failed to request OTP.'
+        });
       }
     } catch (err) {
-      Alert.alert('Error', 'Network error or server unavailable');
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Network error or server unavailable'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -33,7 +50,11 @@ export default function ForgotPasswordScreen({ navigation }: any) {
 
   const handleResetPassword = async () => {
     if (!otp || !newPassword) {
-      Alert.alert('Error', 'Please enter the OTP and your new password.');
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Please enter the OTP and your new password.'
+      });
       return;
     }
 
@@ -41,13 +62,25 @@ export default function ForgotPasswordScreen({ navigation }: any) {
     try {
       const res = await sendRequest({ type: 'resetPassword', email, otp, newPassword });
       if (res.success) {
-        Alert.alert('Success', 'Password reset successful. You can now login.');
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: 'Password reset successful. You can now login.'
+        });
         navigation.navigate('Login');
       } else {
-        Alert.alert('Error', res.message);
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: res.message || 'Failed to reset password.'
+        });
       }
     } catch (err) {
-      Alert.alert('Error', 'Network error or server unavailable');
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Network error or server unavailable'
+      });
     } finally {
       setIsLoading(false);
     }

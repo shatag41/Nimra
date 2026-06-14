@@ -3,6 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CartItem, Product } from '../types/cms';
 import { useAuth } from './AuthContext';
 import { cartSubtotal, deliveryChargeFor, productToCartItem } from '../utils/commerce';
+import { syncCart, fetchCart } from '../utils/api';
+import Toast from 'react-native-toast-message';
 
 interface CartContextValue {
   items: CartItem[];
@@ -62,14 +64,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const restoreCart = async () => {
       try {
         const saved = await AsyncStorage.getItem(storageKey);
-        if (saved && mounted) {
+        let localItems: CartItem[] = [];
+        if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed)) {
-            setItems(mergeItemsByProductId(parsed));
+            localItems = mergeItemsByProductId(parsed);
           }
-        } else if (mounted) {
-          setItems([]);
         }
+        // Fetch from cloud and prefer cloud data if user is logged in
+        if (user && user.ID) {
+          const cloudItems = await fetchCart(user.ID);
+          if (cloudItems && cloudItems.length > 0) {
+            localItems = cloudItems;
+            await AsyncStorage.setItem(storageKey, JSON.stringify(localItems));
+          }
+        }
+        if (mounted) setItems(localItems);
       } catch (error) {
         if (mounted) setItems([]);
         console.warn('Unable to restore mobile cart', error);
@@ -86,14 +96,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     return () => {
       mounted = false;
     };
-  }, [isLoading, storageKey]);
+  }, [isLoading, storageKey, user]);
 
   useEffect(() => {
     if (!hydrated || activeStorageKey !== storageKey) return;
     AsyncStorage.setItem(storageKey, JSON.stringify(items)).catch((error: any) => {
       console.warn('Unable to persist mobile cart', error);
     });
-  }, [activeStorageKey, hydrated, items, storageKey]);
+    // Cloud sync for logged-in users
+    if (user && user.ID) {
+      syncCart(user.ID, items);
+    }
+  }, [activeStorageKey, hydrated, items, storageKey, user]);
 
   const value = useMemo<CartContextValue>(() => {
     const visibleItems = hydrated && activeStorageKey === storageKey ? items : [];
@@ -127,6 +141,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         updateCartItems((current) => {
           return mergeItemsByProductId([...current, nextItem]);
         });
+        Toast.show({ type: 'success', text1: 'Added to Cart', text2: product.Name, visibilityTime: 2000 });
       },
       updateQuantity: updateItemQuantity,
       increment(productId) {
@@ -141,6 +156,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       },
       removeItem(productId) {
         updateCartItems((current) => current.filter((item) => item.productId !== productId));
+        Toast.show({ type: 'info', text1: 'Item Removed', visibilityTime: 1500 });
       },
       clearCart() {
         setActiveStorageKey(storageKey);

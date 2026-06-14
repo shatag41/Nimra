@@ -6,6 +6,7 @@ import LayoutWrapper from '../components/LayoutWrapper';
 import { CartProvider } from '../components/CartProvider';
 import { fetchCMSData } from '../utils/api';
 import StyledJsxRegistry from './registry';
+import { Toaster } from 'sonner';
 
 export async function generateMetadata(): Promise<Metadata> {
   const data = await fetchCMSData();
@@ -73,6 +74,7 @@ export default async function RootLayout({
             </StyledJsxRegistry>
           </AuthProvider>
         </GoogleOAuthProvider>
+        <Toaster richColors position="top-right" />
       </body>
     </html>
   );
