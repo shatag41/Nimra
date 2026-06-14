@@ -160,6 +160,16 @@ function saveOrder(spreadsheet, params) {
   var totalAmount = Number(params.total || 0);
   var userId = String(params.userId || customer.userId || customer.userID || customer.ID || '').trim();
 
+  if ((!email || !isValidEmail(email)) && userId) {
+    var users = getUsersData(spreadsheet);
+    for (var i = 0; i < users.length; i++) {
+      if (String(users[i].ID).trim() === userId && isValidEmail(users[i].Username)) {
+        email = normalizeEmail(users[i].Username);
+        break;
+      }
+    }
+  }
+
   // Validate required fields: Name, Mobile (10 digits), Address, City, State, Pincode (6 digits), items, and totalAmount
   if (!name || !/^[0-9]{10}$/.test(mobile) || !address || !city || !state || !/^[0-9]{6}$/.test(pincode) || !items.length || totalAmount <= 0) {
     Logger.log("saveOrder Validation Failure. Name=" + name + ", Mobile=" + mobile + ", Address=" + address + ", ItemsCount=" + items.length + ", Total=" + totalAmount);
@@ -1252,6 +1262,11 @@ function getCart(spreadsheet, params) {
 }
 
 function sendWelcomeEmail(email, name) {
+  email = normalizeEmail(email);
+  if (!email || !isValidEmail(email)) {
+    Logger.log("sendWelcomeEmail skipped: invalid email address provided.");
+    return;
+  }
   var displayName = String(name || 'Customer').trim();
   var subject = 'Welcome to NIMRA!';
   var plainBody = 'Hello ' + displayName + ',\n\n' +
@@ -1282,6 +1297,11 @@ function sendWelcomeEmail(email, name) {
 }
 
 function sendOrderConfirmationEmail(email, name, orderId, products, totalAmount) {
+  email = normalizeEmail(email);
+  if (!email || !isValidEmail(email)) {
+    Logger.log("sendOrderConfirmationEmail skipped: invalid email address provided.");
+    return;
+  }
   var displayName = String(name || 'Customer').trim();
   var subject = 'NIMRA Order Confirmation - ' + orderId;
   var plainBody = 'Hello ' + displayName + ',\n\n' +

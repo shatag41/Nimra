@@ -62,11 +62,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           name: userData.Name,
         })
       );
-      router.replace('/admin');
     } else {
       localStorage.removeItem('nimra_admin_user');
-      router.replace('/products');
     }
+    router.replace('/landing');
   };
 
   const logout = () => {

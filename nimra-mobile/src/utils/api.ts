@@ -362,6 +362,24 @@ export const fetchOrders = async (): Promise<OrderRecord[]> => {
   }
 };
 
+export const fetchCustomerOrders = async (userId: string | number, email: string): Promise<OrderRecord[]> => {
+  const url = getAPIUrl();
+  if (!url) return [];
+  try {
+    const params = new URLSearchParams({ action: 'getOrders' });
+    if (userId) params.set('userId', String(userId));
+    if (email) params.set('email', email);
+    
+    const res = await fetch(`${url}?${params.toString()}`);
+    if (!res.ok) throw new Error('Fetch failed');
+    const result = await res.json();
+    return Array.isArray(result) ? result : (result.orders || []);
+  } catch (err) {
+    console.error(err);
+    return [];
+  }
+};
+
 export const updateOrderStatus = async (orderId: string, status: string): Promise<{ success: boolean; message: string }> => {
   const url = getAPIUrl();
   if (!url) return { success: true, message: 'Mock update success' };

@@ -24,9 +24,6 @@ export function proxy(request: NextRequest) {
   const isAdminUser = user?.Role === 'Admin';
 
   if (pathname === '/') {
-    if (user) {
-      return NextResponse.redirect(new URL(isAdminUser ? '/admin' : '/products', request.url));
-    }
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
@@ -35,11 +32,11 @@ export function proxy(request: NextRequest) {
   }
 
   if (user && isPublicPath) {
-    return NextResponse.redirect(new URL(isAdminUser ? '/admin' : '/products', request.url));
+    return NextResponse.next(); // Don't redirect when already at an auth page if logged in
   }
 
   if (user && pathname.startsWith('/admin') && !isAdminUser) {
-    return NextResponse.redirect(new URL('/products', request.url));
+    return NextResponse.next();
   }
 
   return NextResponse.next();

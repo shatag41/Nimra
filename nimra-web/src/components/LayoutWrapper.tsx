@@ -1,10 +1,11 @@
 'use client';
 
-import React from 'react';
-import { usePathname } from 'next/navigation';
+import React, { useEffect } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import Header from './Header';
 import Footer from './Footer';
 import { CompanyInfo } from '../types/cms';
+import { useAuth } from '../context/AuthContext';
 
 interface LayoutWrapperProps {
   children: React.ReactNode;
@@ -13,10 +14,32 @@ interface LayoutWrapperProps {
 
 export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { isAuthenticated, user, isLoading } = useAuth();
+
   const isAdmin = pathname?.startsWith('/admin');
   const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password';
+  const isLanding = pathname === '/landing';
 
-  if (isAdmin || isAuthPage) {
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (pathname === '/') {
+      router.replace('/login');
+    } else if (!isAuthenticated && !isAuthPage) {
+      router.replace('/login');
+    }
+  }, [isAuthenticated, isLoading, pathname, router]);
+
+  if (isLoading) {
+    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyItems: 'center', backgroundColor: '#0a0a0a' }}></div>;
+  }
+
+  if (!isAuthenticated && !isAuthPage) {
+    return null;
+  }
+
+  if (isAdmin || isAuthPage || isLanding) {
     return (
       <main style={{ flex: '1' }}>
         {children}

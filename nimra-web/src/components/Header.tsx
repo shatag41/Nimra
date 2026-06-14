@@ -61,7 +61,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
       ];
     } else if (user?.Role === 'Customer') {
       return [
-        { name: 'Home', href: '/' },
+        { name: 'Portal', href: '/customer-portal' },
         { name: 'Products', href: '/products' },
         { name: 'Track Order', href: '/track' },
         { name: 'About Us', href: '/about' },

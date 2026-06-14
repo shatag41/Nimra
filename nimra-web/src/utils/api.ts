@@ -363,6 +363,23 @@ export const fetchOrders = async (): Promise<OrderRecord[]> => {
   return Array.isArray(data) ? data : (data.orders || []);
 };
 
+export const fetchCustomerOrders = async (userId: string | number, email: string): Promise<OrderRecord[]> => {
+  const params = new URLSearchParams({ action: 'getOrders' });
+  if (userId) params.set('userId', String(userId));
+  if (email) params.set('email', email);
+  params.set('_t', String(Date.now()));
+
+  const res = await fetch(`/api/cms?${params.toString()}`, { 
+    method: 'GET', 
+    cache: 'no-store',
+    headers: {
+      'Accept': 'application/json',
+    },
+  });
+  const data = await readJsonResponse<{ orders?: OrderRecord[] } | OrderRecord[]>(res, []);
+  return Array.isArray(data) ? data : (data.orders || []);
+};
+
 export const updateOrderStatus = async (orderId: string, status: string): Promise<{ success: boolean; message: string }> => {
   try {
     const res = await fetch('/api/cms', {

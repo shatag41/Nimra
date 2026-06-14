@@ -25,6 +25,7 @@ import CartScreen from './src/screens/CartScreen';
 import CheckoutScreen from './src/screens/CheckoutScreen';
 import TrackOrderScreen from './src/screens/TrackOrderScreen';
 import AdminPortalScreen from './src/screens/AdminPortalScreen';
+import CustomerPortalScreen from './src/screens/CustomerPortalScreen';
 
 // Auth
 import { AuthProvider, useAuth } from './src/context/AuthContext';
@@ -37,7 +38,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 const Stack = createNativeStackNavigator();
 
-type ScreenName = 'Home' | 'Products' | 'ProductDetail' | 'Cart' | 'Checkout' | 'Track' | 'Inquiry' | 'About' | 'AdminPortal';
+type ScreenName = 'Home' | 'Products' | 'ProductDetail' | 'Cart' | 'Checkout' | 'Track' | 'Inquiry' | 'About' | 'AdminPortal' | 'CustomerPortal';
 
 function AppShell() {
   const cart = useCart();
@@ -45,6 +46,7 @@ function AppShell() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [currentTab, setCurrentTab] = useState<ScreenName>('Home');
+  const [showLanding, setShowLanding] = useState(false);
   const [cmsData, setCmsData] = useState<CMSData>({
     banners: [],
     products: [],
@@ -88,13 +90,20 @@ function AppShell() {
     setCurrentTab(tab as ScreenName);
   };
 
-  // Enforce role-based initial tab
+  // Enforce role-based initial tab with landing delay
   useEffect(() => {
-    if (user && user.Role === 'Admin') {
-      setCurrentTab('AdminPortal');
-    } else {
-      setCurrentTab('Home');
-    }
+    setShowLanding(true);
+    const timer = setTimeout(() => {
+      setShowLanding(false);
+      if (user && user.Role === 'Admin') {
+        setCurrentTab('AdminPortal');
+      } else if (user && user.Role === 'Customer') {
+        setCurrentTab('CustomerPortal');
+      } else {
+        setCurrentTab('Home');
+      }
+    }, 1500);
+    return () => clearTimeout(timer);
   }, [user]);
 
   const handleCall = () => {
@@ -211,6 +220,13 @@ function AppShell() {
             onNavigate={handleNavigate}
           />
         );
+      case 'CustomerPortal':
+        return (
+          <CustomerPortalScreen
+            isDark={isDark}
+            onNavigate={handleNavigate}
+          />
+        );
       default:
         return null;
     }
@@ -278,7 +294,19 @@ function AppShell() {
 
       {/* SCREEN CONTAINER */}
       <View style={{ flex: 1 }}>
-        {renderScreen()}
+        {showLanding ? (
+          <View style={[styles.loadingContainer, { backgroundColor: theme.card }]}>
+            <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.text, marginBottom: 8 }}>
+              Welcome, {user?.Name || 'Guest'}!
+            </Text>
+            <Text style={{ fontSize: 16, color: theme.textMuted, marginBottom: 24 }}>
+              Preparing your workspace...
+            </Text>
+            <ActivityIndicator size="large" color={COLORS.primary} />
+          </View>
+        ) : (
+          renderScreen()
+        )}
       </View>
 
       {/* FLOATING ACTION PANELS */}
@@ -296,13 +324,25 @@ function AppShell() {
       {/* BOTTOM NAVIGATION BAR (Hide for Admin Portal) */}
       {currentTab !== 'AdminPortal' && (
         <View style={[styles.tabBar, { backgroundColor: theme.card, borderTopColor: theme.border }]}>
-          <TouchableOpacity 
-            style={styles.tabItem}
-            onPress={() => handleNavigate('Home')}
-          >
-            <Text style={[styles.tabIcon, { color: currentTab === 'Home' ? COLORS.primary : theme.textMuted }]}>🏠</Text>
-            <Text style={[styles.tabLabel, { color: currentTab === 'Home' ? COLORS.primary : theme.textMuted }]}>Home</Text>
-          </TouchableOpacity>
+          {(!user || user.Role !== 'Customer') && (
+            <TouchableOpacity 
+              style={styles.tabItem}
+              onPress={() => handleNavigate('Home')}
+            >
+              <Text style={[styles.tabIcon, { color: currentTab === 'Home' ? COLORS.primary : theme.textMuted }]}>🏠</Text>
+              <Text style={[styles.tabLabel, { color: currentTab === 'Home' ? COLORS.primary : theme.textMuted }]}>Home</Text>
+            </TouchableOpacity>
+          )}
+
+          {user?.Role === 'Customer' && (
+            <TouchableOpacity 
+              style={styles.tabItem}
+              onPress={() => handleNavigate('CustomerPortal')}
+            >
+              <Text style={[styles.tabIcon, { color: currentTab === 'CustomerPortal' ? COLORS.primary : theme.textMuted }]}>👤</Text>
+              <Text style={[styles.tabLabel, { color: currentTab === 'CustomerPortal' ? COLORS.primary : theme.textMuted }]}>Portal</Text>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity 
             style={styles.tabItem}
