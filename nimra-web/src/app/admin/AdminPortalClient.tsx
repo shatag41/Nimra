@@ -1014,9 +1014,9 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                         <th>Order ID</th>
                         <th>Date</th>
                         <th>Customer</th>
-                        <th>Total</th>
-                        <th>Method</th>
                         <th>Status</th>
+                        <th>Method</th>
+                        <th>Total</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
@@ -1029,11 +1029,11 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                             <div>{o.customer?.name || 'N/A'}</div>
                             <small>{o.customer?.mobile || 'N/A'}</small>
                           </td>
-                          <td><strong>{formatCurrency(o.total)}</strong></td>
-                          <td>{o.paymentMethod}</td>
                           <td>
                             <span className={`badge ${getStatusBadge(o.status)}`}>{o.status}</span>
                           </td>
+                          <td>{o.paymentMethod}</td>
+                          <td><strong>{formatCurrency(o.total)}</strong></td>
                           <td>
                             <button className="btn-table btn-edit" onClick={() => {
                               setSelectedOrder(o);
