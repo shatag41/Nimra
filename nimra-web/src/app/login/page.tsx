@@ -6,6 +6,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 import Link from 'next/link';
 import { sendRequest } from '../../utils/api';
 import { toast } from 'sonner';
+import ThemeToggle from '../../components/ThemeToggle';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -117,6 +118,9 @@ export default function LoginPage() {
   return (
     <section className="auth-page">
       <div className="auth-shell glass">
+        <div className="theme-toggle-wrapper">
+          <ThemeToggle />
+        </div>
         <aside className="auth-brand-panel">
           <div className="auth-brand-content">
             <div className="auth-logo">

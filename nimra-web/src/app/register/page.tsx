@@ -6,6 +6,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 import Link from 'next/link';
 import { sendRequest } from '../../utils/api';
 import { toast } from 'sonner';
+import ThemeToggle from '../../components/ThemeToggle';
 
 export default function RegisterPage() {
   const { login } = useAuth();
@@ -139,6 +140,9 @@ export default function RegisterPage() {
   return (
     <section className="auth-page">
       <div className="auth-shell glass">
+        <div className="theme-toggle-wrapper">
+          <ThemeToggle />
+        </div>
         <aside className="auth-brand-panel">
           <div className="auth-brand-content">
             <div className="auth-logo">
@@ -175,48 +179,64 @@ export default function RegisterPage() {
         <form className="auth-form" onSubmit={handleSubmit}>
           {error && <div className="auth-alert error">{error}</div>}
 
-          <div className="auth-field">
-            <label htmlFor="name">Full Name</label>
-            <input
-              id="name"
-              type="text"
-              placeholder="John Doe"
-              className="auth-input"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-            {errors.name && <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem' }}>{errors.name}</p>}
-          </div>
+          <div className="auth-form-grid">
+            <div className="auth-field">
+              <label htmlFor="name">Full Name</label>
+              <input
+                id="name"
+                type="text"
+                placeholder="John Doe"
+                className="auth-input"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+              {errors.name && <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem' }}>{errors.name}</p>}
+            </div>
 
-          <div className="auth-field">
-            <label htmlFor="email">Email Address</label>
-            <input
-              id="email"
-              type="email"
-              placeholder="john@example.com"
-              className="auth-input"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            {errors.email && <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem' }}>{errors.email}</p>}
-          </div>
+            <div className="auth-field">
+              <label htmlFor="email">Email Address</label>
+              <input
+                id="email"
+                type="email"
+                placeholder="john@example.com"
+                className="auth-input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              {errors.email && <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem' }}>{errors.email}</p>}
+            </div>
 
-          <div className="auth-field">
-            <label htmlFor="mobile">Mobile Number</label>
-            <input
-              id="mobile"
-              type="tel"
-              pattern="[0-9]{10}"
-              placeholder="10-digit mobile"
-              className="auth-input"
-              value={mobile}
-              onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
-              maxLength={10}
-            />
-            {errors.mobile && <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem' }}>{errors.mobile}</p>}
-            <p className="auth-help">Either email or mobile is required.</p>
+            <div className="auth-field">
+              <label htmlFor="mobile">Mobile Number</label>
+              <input
+                id="mobile"
+                type="tel"
+                pattern="[0-9]{10}"
+                placeholder="10-digit mobile"
+                className="auth-input"
+                value={mobile}
+                onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
+                maxLength={10}
+              />
+              {errors.mobile && <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem' }}>{errors.mobile}</p>}
+            </div>
+
+            <div className="auth-field">
+              <label htmlFor="role">Register As</label>
+              <select
+                id="role"
+                className="auth-select"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+              >
+                <option value="Customer">Customer</option>
+                <option value="Admin">Admin</option>
+              </select>
+            </div>
           </div>
+          
+          <p className="auth-help" style={{ marginTop: '0.25rem' }}>Either email or mobile is required.</p>
 
           <div className="auth-field">
             <label htmlFor="password">Password</label>
@@ -246,19 +266,6 @@ export default function RegisterPage() {
               </button>
             </div>
             {errors.password && <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem' }}>{errors.password}</p>}
-          </div>
-
-          <div className="auth-field">
-            <label htmlFor="role">Register As</label>
-            <select
-              id="role"
-              className="auth-select"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-            >
-              <option value="Customer">Customer</option>
-              <option value="Admin">Admin</option>
-            </select>
           </div>
 
           <div>

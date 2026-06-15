@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
 import {
@@ -29,6 +29,7 @@ import {
 } from '../../utils/api';
 import { formatCurrency } from '../../utils/commerce';
 import LogoutConfirmationModal from '../../components/LogoutConfirmationModal';
+import ThemeToggle from '../../components/ThemeToggle';
 
 interface AdminPortalClientProps {
   initialCMSData: CMSData;
@@ -40,7 +41,14 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
   const router = useRouter();
   
   // Auth state
-  const [currentUser, setCurrentUser] = useState<{ username: string; role: 'Admin' | 'Manager'; name: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{
+    id?: string | number;
+    username: string;
+    role: 'Admin' | 'Manager';
+    name: string;
+    email?: string;
+    phone?: string;
+  } | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
 
   // Tab State
@@ -65,6 +73,20 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
   const [orderStatusVal, setOrderStatusVal] = useState('');
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [isProfilePanelOpen, setIsProfilePanelOpen] = useState(false);
+  
+  // Profile editing state
+  const [profileForm, setProfileForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+  });
+  const [profileFeedback, setProfileFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [profileValidationErrors, setProfileValidationErrors] = useState<{ [key: string]: string }>({});
+  const [isProfileSaving, setIsProfileSaving] = useState(false);
+  
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
   
   // Product Edit Form state
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
@@ -91,7 +113,18 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
     const session = localStorage.getItem('nimra_admin_user');
     if (session) {
       try {
-        setCurrentUser(JSON.parse(session));
+        const parsedSession = JSON.parse(session);
+        const appSession = Cookies.get('nimra_user');
+        const parsedCookieUser = appSession ? JSON.parse(appSession) : null;
+        const adminSession = {
+          id: parsedSession.id || parsedSession.ID || parsedCookieUser?.ID || '',
+          username: parsedSession.username || parsedSession.email || parsedCookieUser?.Username || '',
+          role: parsedSession.role || parsedCookieUser?.Role || 'Admin',
+          name: parsedSession.name || parsedCookieUser?.Name || '',
+          email: parsedSession.email || parsedSession.username || parsedCookieUser?.Username || '',
+          phone: parsedSession.phone || parsedCookieUser?.Mobile || '',
+        };
+        setCurrentUser(adminSession);
         setAuthChecked(true);
         return;
       } catch {
@@ -105,9 +138,12 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         const user = JSON.parse(appSession);
         if (user?.Role === 'Admin') {
           const adminSession = {
+            id: user.ID,
             username: user.Username,
             role: user.Role,
             name: user.Name,
+            email: user.Username,
+            phone: user.Mobile || '',
           };
           localStorage.setItem('nimra_admin_user', JSON.stringify(adminSession));
           setCurrentUser(adminSession);
@@ -149,6 +185,45 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
     }
   }, [authChecked]);
 
+  useEffect(() => {
+    if (currentUser) {
+      setProfileForm({
+        name: currentUser.name || '',
+        email: currentUser.email || currentUser.username || '',
+        phone: currentUser.phone || '',
+      });
+      setProfileFeedback(null);
+    }
+  }, [currentUser]);
+  
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) {
+        setIsProfileDropdownOpen(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+  
+  // Disable body scroll when profile panel is open
+  useEffect(() => {
+    if (isProfilePanelOpen) {
+      document.body.style.overflow = 'hidden';
+      setProfileValidationErrors({});
+      setProfileFeedback(null);
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isProfilePanelOpen]);
+
   const showAlert = (text: string, type: 'success' | 'error' = 'success') => {
     setAlertMsg({ text, type });
     setTimeout(() => setAlertMsg({ text: '', type: 'success' }), 4000);
@@ -162,6 +237,96 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
 
   const handleLogout = () => {
     setIsLogoutModalOpen(true);
+  };
+
+  const handleProfileSave = async () => {
+    const trimmedName = (profileForm.name || '').trim();
+    const trimmedEmail = (profileForm.email || '').trim();
+    const trimmedPhone = (profileForm.phone || '').toString().trim();
+    const errors: { [key: string]: string } = {};
+
+    // Name validation
+    if (!trimmedName) {
+      errors.name = 'Please enter your full name';
+    }
+
+    // Email validation regex (simple but effective)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!trimmedEmail) {
+      errors.email = 'Please enter your email address';
+    } else if (!emailRegex.test(trimmedEmail)) {
+      errors.email = 'Please enter a valid email address (e.g., name@example.com)';
+    }
+
+    // Phone number validation (Indian format - 10 digits)
+    const phoneRegex = /^[0-9]{10}$/;
+    const cleanedPhone = trimmedPhone.replace(/\D/g, '');
+    if (trimmedPhone && !phoneRegex.test(cleanedPhone)) {
+      errors.phone = 'Please enter a valid 10-digit phone number';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setProfileValidationErrors(errors);
+      setProfileFeedback({ type: 'error', text: 'Please fix the errors below before saving.' });
+      return;
+    }
+
+    setProfileValidationErrors({});
+    setIsProfileSaving(true);
+    setProfileFeedback(null);
+
+    try {
+      const existingCookie = Cookies.get('nimra_user');
+      const parsedCookieUser = existingCookie ? JSON.parse(existingCookie) : null;
+      const updatedSession = {
+        ...(parsedCookieUser || {}),
+        ID: currentUser?.id || parsedCookieUser?.ID || 0,
+        Name: trimmedName,
+        Username: trimmedEmail,
+        Mobile: cleanedPhone,
+        Role: currentUser?.role || parsedCookieUser?.Role || 'Admin',
+        Active: true,
+      };
+
+      const saveResult = await saveUser(
+        {
+          ID: currentUser?.id || parsedCookieUser?.ID || 0,
+          Name: trimmedName,
+          Username: trimmedEmail,
+          Mobile: cleanedPhone,
+        },
+        'update'
+      );
+
+      if (!saveResult.success) {
+        throw new Error(saveResult.message || 'Unable to update profile');
+      }
+
+      Cookies.set('nimra_user', JSON.stringify(updatedSession), { expires: 7 });
+
+      const updatedAdminSession = {
+        id: currentUser?.id || parsedCookieUser?.ID || 0,
+        username: trimmedEmail,
+        role: currentUser?.role || parsedCookieUser?.Role || 'Admin',
+        name: trimmedName,
+        email: trimmedEmail,
+        phone: cleanedPhone,
+      };
+
+      localStorage.setItem('nimra_admin_user', JSON.stringify(updatedAdminSession));
+      setCurrentUser(updatedAdminSession);
+      setProfileFeedback({ type: 'success', text: 'Profile updated successfully. Your admin details are now saved.' });
+      showAlert('Profile updated successfully!', 'success');
+      window.setTimeout(() => {
+        setIsProfilePanelOpen(false);
+        setProfileFeedback(null);
+      }, 800);
+    } catch (error) {
+      console.error('Failed to save admin profile', error);
+      setProfileFeedback({ type: 'error', text: 'Unable to save your profile right now. Please try again.' });
+    } finally {
+      setIsProfileSaving(false);
+    }
   };
 
   // Dashboard Stats Calculations
@@ -458,9 +623,10 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
   if (!currentUser) return null;
 
   return (
-    <div className="admin-container">
+    <>
+      <div className="admin-container">
       {/* SIDEBAR */}
-      <aside className="admin-sidebar glass">
+      <aside className={`admin-sidebar glass ${isProfilePanelOpen ? 'blur-background' : ''}`}>
         <div className="sidebar-brand">
           <svg width="28" height="28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M50 5C50 5 15 45 15 65C15 84.33 30.67 100 50 100C69.33 100 85 84.33 85 65C85 45 50 5 50 5Z" fill="url(#sidebarWaterGrad)"/>
@@ -514,7 +680,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
       </aside>
 
       {/* MAIN VIEW */}
-      <main className="admin-main animate-fade-in">
+      <main className={`admin-main animate-fade-in ${isProfilePanelOpen ? 'blur-background' : ''}`}>
         {/* TOP BAR */}
         <header className="main-header glass">
           <h1>
@@ -528,9 +694,77 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
               <span className="dot active"></span>
               {process.env.NEXT_PUBLIC_APPS_SCRIPT_URL ? 'Connected to Google Sheets' : 'Local Fallback Mode'}
             </span>
-            <button onClick={handleLogout} className="btn btn-secondary" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>
-              Logout
-            </button>
+            
+            {/* Profile Dropdown */}
+            <div className="profile-dropdown" ref={profileDropdownRef}>
+              <button 
+                onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                className="profile-btn"
+              >
+                <div className="profile-avatar">{currentUser.name[0]}</div>
+              </button>
+              
+              {isProfileDropdownOpen && (
+                <div className="profile-menu">
+                  <div className="profile-header">
+                    <div className="menu-avatar">{currentUser.name[0]}</div>
+                    <div>
+                      <div className="menu-name">{currentUser.name}</div>
+                      <div className="menu-role">{currentUser.role}</div>
+                    </div>
+                  </div>
+                  <div className="menu-divider"></div>
+                  <button 
+                    onClick={() => {
+                      setIsProfileDropdownOpen(false);
+                      setIsProfilePanelOpen(true);
+                    }}
+                    className="menu-item"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    <span className="menu-label">Edit Profile</span>
+                  </button>
+                  <div
+                    className="menu-item"
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const themeToggle = document.querySelector<HTMLElement>('.theme-toggle-btn');
+                      themeToggle?.click();
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const themeToggle = document.querySelector<HTMLElement>('.theme-toggle-btn');
+                        themeToggle?.click();
+                      }
+                    }}
+                  >
+                    <ThemeToggle />
+                    <span className="menu-label">Theme</span>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setIsProfileDropdownOpen(false);
+                      handleLogout();
+                    }}
+                    className="menu-item menu-logout"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                      <polyline points="16 17 21 12 16 7"></polyline>
+                      <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    <span className="menu-label">Logout</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
@@ -1620,6 +1854,130 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           performLogout();
         }}
       />
+      
+      {/* PROFILE EDIT PANEL - OUTSIDE ADMIN CONTAINER */}
+      {isProfilePanelOpen && (
+        <div className="profile-panel-overlay" onClick={() => setIsProfilePanelOpen(false)}>
+          <div className="profile-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="profile-panel-header">
+              <div>
+                <h2>Edit Profile</h2>
+                <p>Update your profile information</p>
+              </div>
+              <button 
+                onClick={() => setIsProfilePanelOpen(false)}
+                className="close-btn"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+            
+            <div className="profile-panel-content">
+              <div className="profile-avatar-section">
+                <div className="profile-panel-avatar">
+                  {currentUser?.name?.[0] || 'A'}
+                </div>
+              </div>
+              
+              <form className="profile-form" onSubmit={(e) => { e.preventDefault(); void handleProfileSave(); }}>
+                <div className="form-group">
+                  <label htmlFor="profile-name">Full Name</label>
+                  <input 
+                    id="profile-name"
+                    type="text" 
+                    value={profileForm.name}
+                    onChange={(e) => {
+                      setProfileForm((prev) => ({ ...prev, name: e.target.value }));
+                      if (profileValidationErrors.name) {
+                        setProfileValidationErrors((prev) => ({ ...prev, name: '' }));
+                      }
+                    }}
+                    className={`form-input ${profileValidationErrors.name ? 'form-input-error' : ''}`}
+                  />
+                  {profileValidationErrors.name && (
+                    <div className="form-input-error-message">
+                      {profileValidationErrors.name}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="profile-email">Email Address</label>
+                  <input 
+                    id="profile-email"
+                    type="email" 
+                    value={profileForm.email}
+                    onChange={(e) => {
+                      setProfileForm((prev) => ({ ...prev, email: e.target.value }));
+                      if (profileValidationErrors.email) {
+                        setProfileValidationErrors((prev) => ({ ...prev, email: '' }));
+                      }
+                    }}
+                    className={`form-input ${profileValidationErrors.email ? 'form-input-error' : ''}`}
+                    placeholder="your@email.com"
+                  />
+                  {profileValidationErrors.email && (
+                    <div className="form-input-error-message">
+                      {profileValidationErrors.email}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="profile-phone">Phone Number</label>
+                  <input 
+                    id="profile-phone"
+                    type="tel" 
+                    value={profileForm.phone}
+                    onChange={(e) => {
+                      setProfileForm((prev) => ({ ...prev, phone: e.target.value }));
+                      if (profileValidationErrors.phone) {
+                        setProfileValidationErrors((prev) => ({ ...prev, phone: '' }));
+                      }
+                    }}
+                    className={`form-input ${profileValidationErrors.phone ? 'form-input-error' : ''}`}
+                    placeholder="+91 99999 99999"
+                  />
+                  {profileValidationErrors.phone && (
+                    <div className="form-input-error-message">
+                      {profileValidationErrors.phone}
+                    </div>
+                  )}
+                </div>
+
+                {profileFeedback && (
+                  <div className={`profile-feedback ${profileFeedback.type}`}>
+                    {profileFeedback.text}
+                  </div>
+                )}
+                
+                <div className="profile-actions">
+                  <button 
+                    onClick={() => {
+                      setProfileFeedback(null);
+                      setIsProfilePanelOpen(false);
+                    }}
+                    className="btn btn-secondary"
+                    type="button"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    className="btn btn-primary"
+                    type="submit"
+                    disabled={isProfileSaving}
+                  >
+                    {isProfileSaving ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ==================================================== */}
       {/* DESIGN SYSTEM CSS */}
@@ -1765,6 +2123,8 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           backdrop-filter: blur(16px);
           margin-bottom: 2rem;
           box-shadow: var(--shadow-md);
+          position: relative;
+          z-index: 100;
         }
         .main-header h1 {
           font-size: 1.6rem;
@@ -1773,6 +2133,8 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           display: flex;
           align-items: center;
           gap: 1.25rem;
+          position: relative;
+          z-index: 1000;
         }
         .btn-refresh {
           background: var(--bg-primary);
@@ -1809,6 +2171,119 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           background: var(--accent-color);
           box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.4);
           animation: pulse-glow 2s infinite;
+        }
+
+        /* PROFILE DROPDOWN */
+        .profile-dropdown {
+          position: relative;
+        }
+        .profile-btn {
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          border: 2px solid var(--border-color);
+          background: var(--bg-secondary);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all var(--transition-normal);
+          box-shadow: var(--shadow-sm);
+        }
+        .profile-btn:hover {
+          border-color: var(--primary-color);
+          box-shadow: var(--shadow-md);
+          transform: scale(1.05);
+        }
+        .profile-avatar {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-weight: 800;
+          font-size: 1.1rem;
+          font-family: var(--font-heading);
+        }
+        .profile-menu {
+          position: absolute;
+          top: 100%;
+          right: 0;
+          margin-top: 0.75rem;
+          width: 260px;
+          background: var(--bg-secondary);
+          border-radius: var(--radius-xl);
+          box-shadow: var(--shadow-2xl);
+          border: 1px solid var(--border-color);
+          padding: 0.75rem;
+          z-index: 99999;
+          animation: scaleIn 0.2s ease-out forwards;
+        }
+        .profile-header {
+          display: flex;
+          align-items: center;
+          gap: 0.875rem;
+          padding: 0.75rem;
+          margin-bottom: 0.25rem;
+        }
+        .menu-avatar {
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-weight: 800;
+          font-size: 1.3rem;
+          font-family: var(--font-heading);
+        }
+        .menu-name {
+          font-weight: 700;
+          color: var(--text-primary);
+          font-size: 1rem;
+          font-family: var(--font-heading);
+        }
+        .menu-role {
+          font-size: 0.8rem;
+          color: var(--text-secondary);
+          font-weight: 600;
+        }
+        .menu-divider {
+          height: 1px;
+          background: var(--border-color);
+          margin: 0.5rem 0;
+        }
+        .menu-item {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          gap: 0.875rem;
+          padding: 0.75rem;
+          border-radius: var(--radius-lg);
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          transition: all var(--transition-fast);
+          color: var(--text-primary);
+          text-align: left;
+        }
+        .menu-item:hover {
+          background: var(--bg-tertiary);
+        }
+        .menu-item.menu-logout {
+          color: #ef4444;
+        }
+        .menu-item.menu-logout:hover {
+          background: rgba(239, 68, 68, 0.1);
+        }
+        .menu-label {
+          font-weight: 600;
+          font-size: 0.9rem;
         }
 
         .tab-viewport {
@@ -2206,6 +2681,149 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         @keyframes spin {
           to { transform: rotate(360deg); }
         }
+        
+        /* PROFILE EDIT PANEL */
+        .blur-background {
+          filter: blur(6px);
+          transition: filter 0.2s ease-out;
+        }
+        .profile-panel-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0,0,0,0.55);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 100000;
+          animation: fadeIn 0.2s ease-out forwards;
+          padding: 20px;
+          box-sizing: border-box;
+        }
+        .profile-panel {
+          width: 100%;
+          max-width: 560px;
+          min-width: min(560px, calc(100vw - 32px));
+          background: var(--bg-secondary);
+          border-radius: var(--radius-xl);
+          box-shadow: var(--shadow-2xl);
+          overflow: hidden;
+          max-height: 95vh;
+          overflow-y: auto;
+          animation: scaleIn 0.3s ease-out forwards;
+        }
+        .profile-panel-header {
+          padding: 1.25rem 1.5rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 1px solid var(--border-color);
+        }
+        .profile-panel-header h2 {
+          font-size: 1.25rem;
+          font-family: var(--font-heading);
+          margin-bottom: 0.2rem;
+        }
+        .profile-panel-header p {
+          color: var(--text-secondary);
+          font-size: 0.85rem;
+        }
+        .close-btn {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          border: none;
+          background: var(--bg-tertiary);
+          color: var(--text-primary);
+          cursor: pointer;
+          transition: all var(--transition-fast);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .close-btn:hover {
+          background: var(--primary-color);
+          color: white;
+          transform: rotate(90deg);
+        }
+        .profile-panel-content {
+          padding: 1.5rem;
+        }
+        .profile-avatar-section {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.75rem;
+          margin-bottom: 1.5rem;
+        }
+        .profile-panel-avatar {
+          width: 90px;
+          height: 90px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-size: 2.2rem;
+          font-weight: 800;
+          font-family: var(--font-heading);
+          box-shadow: var(--shadow-lg);
+        }
+        .profile-form {
+          display: flex;
+          flex-direction: column;
+          gap: 1.25rem;
+        }
+        .profile-form .form-group {
+          margin-bottom: 0;
+        }
+        .profile-actions {
+          display: flex;
+          gap: 0.875rem;
+          margin-top: 0.875rem;
+        }
+        .profile-actions .btn {
+          flex: 1;
+          padding: 0.75rem 1rem;
+          font-size: 0.9rem;
+        }
+        .profile-feedback {
+          padding: 0.8rem 0.95rem;
+          border-radius: var(--radius-lg);
+          font-size: 0.9rem;
+          font-weight: 600;
+          border: 1px solid transparent;
+        }
+        .profile-feedback.success {
+          background: rgba(16, 185, 129, 0.12);
+          color: #059669;
+          border-color: rgba(16, 185, 129, 0.24);
+        }
+        .profile-feedback.error {
+          background: rgba(239, 68, 68, 0.12);
+          color: #dc2626;
+          border-color: rgba(239, 68, 68, 0.24);
+        }
+
+        /* Validation Error Styles */
+        .form-input-error {
+          border-color: #ef4444 !important;
+          box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+          background: rgba(239, 68, 68, 0.04);
+        }
+        .form-input-error:focus {
+          border-color: #ef4444 !important;
+          box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+        }
+        .form-input-error-message {
+          margin-top: 0.5rem;
+          font-size: 0.85rem;
+          color: #ef4444;
+          font-weight: 500;
+        }
 
         /* RESPONSIVE */
         @media (max-width: 1200px) {
@@ -2285,5 +2903,6 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         }
       `}</style>
     </div>
+    </>
   );
 }

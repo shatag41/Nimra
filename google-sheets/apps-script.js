@@ -741,17 +741,35 @@ function handleUserCRUD(spreadsheet, params) {
         sheet.deleteRow(i + 1);
         return { success: true, message: 'User deleted successfully' };
       } else if (action === 'update') {
-        // Keep existing values for unmapped columns, only update provided values
+        var existingRow = data[i] || [];
+        var updatedRowValues = new Array(headers.length);
+
         for (var j = 0; j < headers.length; j++) {
           var key = headers[j].toString().trim();
-          if (key === 'Registration Date' || key === 'Last Login') {
-             rowValues[j] = data[i][j]; // Keep existing values for these
+          var existingValue = existingRow[j];
+
+          if (key === 'User ID' || key === 'ID') {
+            updatedRowValues[j] = user.ID !== undefined && user.ID !== null ? user.ID : existingValue;
+          } else if (key === 'Full Name' || key === 'Name') {
+            updatedRowValues[j] = user.Name !== undefined && user.Name !== null ? user.Name : existingValue;
+          } else if (key === 'Email' || key === 'Username') {
+            updatedRowValues[j] = user.Username !== undefined && user.Username !== null ? user.Username : existingValue;
           } else if (key === 'Mobile' || key === 'Mobile Number' || key === 'Phone') {
-             // If user.Mobile is provided, use it; else keep existing
-             rowValues[j] = getUserMobile(user) !== '' ? getUserMobile(user) : data[i][j];
+            updatedRowValues[j] = getUserMobile(user) !== '' ? getUserMobile(user) : existingValue;
+          } else if (key === 'Password (hashed)' || key === 'Password') {
+            updatedRowValues[j] = user.Password !== undefined && user.Password !== null ? user.Password : existingValue;
+          } else if (key === 'Role (Admin/Customer)' || key === 'Role') {
+            updatedRowValues[j] = user.Role !== undefined && user.Role !== null ? user.Role : existingValue;
+          } else if (key === 'Status' || key === 'Active') {
+            updatedRowValues[j] = user.Active !== undefined && user.Active !== null ? ((user.Active !== false) ? 'Active' : 'Inactive') : existingValue;
+          } else if (key === 'Registration Date' || key === 'Last Login') {
+            updatedRowValues[j] = existingValue;
+          } else {
+            updatedRowValues[j] = existingValue;
           }
         }
-        sheet.getRange(i + 1, 1, 1, rowValues.length).setValues([rowValues]);
+
+        sheet.getRange(i + 1, 1, 1, updatedRowValues.length).setValues([updatedRowValues]);
         return { success: true, message: 'User updated successfully' };
       }
     }
