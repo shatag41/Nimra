@@ -53,6 +53,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
 
   // Tab State
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
+  const [globalSearch, setGlobalSearch] = useState('');
 
   // DB States
   const [orders, setOrders] = useState<OrderRecord[]>([]);
@@ -333,8 +334,61 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
   const deliveredOrders = orders.filter(o => o.status === 'Delivered');
   const totalRevenue = deliveredOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
   const avgOrderValue = deliveredOrders.length > 0 ? totalRevenue / deliveredOrders.length : 0;
-  const uniqueMobiles = new Set(orders.map(o => o.customer.mobile));
+  const uniqueMobiles = new Set(orders.map(o => o.customer?.mobile).filter(Boolean));
   const totalCustomers = uniqueMobiles.size;
+
+  // Sorting and Filtering
+  const searchLower = globalSearch.toLowerCase();
+  
+  // Sort orders by newest first (created descending or orderId descending)
+  const sortedOrders = [...orders].sort((a, b) => {
+    const dateA = new Date(a.createdAt || 0).getTime();
+    const dateB = new Date(b.createdAt || 0).getTime();
+    if (dateA !== dateB) return dateB - dateA;
+    return (b.orderId || '').localeCompare(a.orderId || '');
+  });
+
+  const filteredOrders = sortedOrders.filter(o => 
+    String(o.orderId || '').toLowerCase().includes(searchLower) ||
+    String(o.customer?.name || '').toLowerCase().includes(searchLower) ||
+    String(o.customer?.mobile || '').toLowerCase().includes(searchLower) ||
+    String(o.status || '').toLowerCase().includes(searchLower)
+  );
+
+  const filteredProducts = products.filter(p => 
+    String(p.Name || '').toLowerCase().includes(searchLower) || 
+    String(p.Category || '').toLowerCase().includes(searchLower) ||
+    String(p.Description || '').toLowerCase().includes(searchLower)
+  );
+
+  const filteredBanners = banners.filter(b => 
+    String(b.Title || '').toLowerCase().includes(searchLower) || 
+    String(b.Subtitle || '').toLowerCase().includes(searchLower)
+  );
+
+  const filteredFaqs = faqs.filter(f => 
+    String(f.Question || '').toLowerCase().includes(searchLower) || 
+    String(f.Answer || '').toLowerCase().includes(searchLower)
+  );
+
+  const filteredInquiries = inquiries.filter(i => 
+    String(i.Name || '').toLowerCase().includes(searchLower) || 
+    String(i.Subject || '').toLowerCase().includes(searchLower) || 
+    String(i.Message || '').toLowerCase().includes(searchLower) ||
+    String(i.Email || '').toLowerCase().includes(searchLower) ||
+    String(i.Phone || '').toLowerCase().includes(searchLower)
+  );
+
+  const filteredUsers = users.filter(u => 
+    String(u.Name || '').toLowerCase().includes(searchLower) || 
+    String(u.Username || '').toLowerCase().includes(searchLower) || 
+    String(u.Role || '').toLowerCase().includes(searchLower)
+  );
+
+  const filteredNotifications = notifications.filter(n => 
+    String(n.Title || '').toLowerCase().includes(searchLower) || 
+    String(n.Message || '').toLowerCase().includes(searchLower)
+  );
 
   // Order status helper styling
   const getStatusBadge = (status: string) => {
@@ -687,6 +741,27 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Panel
           </h1>
           <div className="header-actions">
+            {activeTab !== 'dashboard' && activeTab !== 'notifications' && (
+              <div className="search-container" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <span style={{ position: 'absolute', left: '12px', color: 'var(--text-secondary)' }}>🔍</span>
+                <input
+                  type="text"
+                  placeholder={`Search ${activeTab}...`}
+                  value={globalSearch}
+                  onChange={(e) => setGlobalSearch(e.target.value)}
+                  style={{
+                    padding: '8px 12px 8px 36px',
+                    borderRadius: '20px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--glass-bg)',
+                    color: 'var(--text-primary)',
+                    outline: 'none',
+                    fontSize: '0.9rem',
+                    minWidth: '240px'
+                  }}
+                />
+              </div>
+            )}
             <button onClick={refreshData} disabled={loading} className="btn-refresh">
               {loading ? 'Syncing...' : '🔄 Sync Live Sheets'}
             </button>
@@ -898,31 +973,31 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                   <div className="activity-card glass">
                     <h3>Recent Inquiries</h3>
                     <div className="mini-list">
-                      {inquiries.slice(0, 3).map((inq, i) => (
+                      {filteredInquiries.slice(0, 3).map((inq, i) => (
                         <div key={i} className="mini-item">
                           <div>
                             <strong>{inq.Name}</strong> - <span className="topic">{inq.Subject}</span>
                           </div>
-                          <p>{inq.Message.slice(0, 80)}...</p>
+                          <p>{String(inq.Message || '').slice(0, 80)}...</p>
                         </div>
                       ))}
-                      {inquiries.length === 0 && <p className="empty">No inquiries logged.</p>}
+                      {filteredInquiries.length === 0 && <p className="empty">No inquiries found.</p>}
                     </div>
                   </div>
 
                   <div className="activity-card glass">
                     <h3>Pending Deliveries</h3>
                     <div className="mini-list">
-                      {orders.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled').slice(0, 3).map((o) => (
+                      {filteredOrders.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled').slice(0, 3).map((o) => (
                         <div key={o.orderId} className="mini-item row-flex">
                           <div>
-                            <strong>{o.customer.name}</strong> ({o.orderId.slice(-6)})
+                            <strong>{o.customer.name}</strong> ({String(o.orderId || '').slice(-6)})
                             <span className={`badge ${getStatusBadge(o.status)}`} style={{ marginLeft: '8px', scale: '0.85' }}>{o.status}</span>
                           </div>
                           <strong>{formatCurrency(o.total)}</strong>
                         </div>
                       ))}
-                      {orders.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled').length === 0 && <p className="empty">All orders completed!</p>}
+                      {filteredOrders.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled').length === 0 && <p className="empty">All orders completed!</p>}
                     </div>
                   </div>
                 </div>
@@ -946,7 +1021,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                       </tr>
                     </thead>
                     <tbody>
-                      {orders.map((o, idx) => (
+                      {filteredOrders.map((o, idx) => (
                         <tr key={o.orderId || idx}>
                           <td><strong>{o.orderId}</strong></td>
                           <td>{o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'N/A'}</td>
@@ -969,9 +1044,9 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                           </td>
                         </tr>
                       ))}
-                      {orders.length === 0 && (
+                      {filteredOrders.length === 0 && (
                         <tr>
-                          <td colSpan={7} className="empty-td">No orders logged in store database.</td>
+                          <td colSpan={7} className="empty-td">No orders found.</td>
                         </tr>
                       )}
                     </tbody>
@@ -1007,7 +1082,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                       </tr>
                     </thead>
                     <tbody>
-                      {products.map((p) => (
+                      {filteredProducts.map((p) => (
                         <tr key={p.ID}>
                           <td>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1037,7 +1112,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                           </td>
                         </tr>
                       ))}
-                      {products.length === 0 && (
+                      {filteredProducts.length === 0 && (
                         <tr>
                           <td colSpan={7} className="empty-td">No products found.</td>
                         </tr>
@@ -1075,7 +1150,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                       </tr>
                     </thead>
                     <tbody>
-                      {banners.map((b) => (
+                      {filteredBanners.map((b) => (
                         <tr key={b.ID}>
                           <td>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1136,7 +1211,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                       </tr>
                     </thead>
                     <tbody>
-                      {faqs.map((f) => (
+                      {filteredFaqs.map((f) => (
                         <tr key={f.ID}>
                           <td>{f.ID}</td>
                           <td><strong>{f.Question}</strong></td>
@@ -1181,7 +1256,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                       </tr>
                     </thead>
                     <tbody>
-                      {inquiries.map((inq, index) => (
+                      {filteredInquiries.map((inq, index) => (
                         <tr key={index}>
                           <td>{new Date(inq.Timestamp).toLocaleString()}</td>
                           <td>
@@ -1210,9 +1285,9 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                           </td>
                         </tr>
                       ))}
-                      {inquiries.length === 0 && (
+                      {filteredInquiries.length === 0 && (
                         <tr>
-                          <td colSpan={4} className="empty-td">No inquiries registered in databases.</td>
+                          <td colSpan={4} className="empty-td">No inquiries found.</td>
                         </tr>
                       )}
                     </tbody>
@@ -1254,7 +1329,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                           </tr>
                         </thead>
                         <tbody>
-                          {users.map((u) => (
+                          {filteredUsers.map((u) => (
                             <tr key={u.ID}>
                               <td>{u.ID}</td>
                               <td><strong>{u.Name}</strong></td>
@@ -1328,7 +1403,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                   <div className="notif-logs-panel">
                     <h3>Sent Announcements Log</h3>
                     <div className="logs-list">
-                      {notifications.map((n) => (
+                      {filteredNotifications.map((n) => (
                         <div key={n.ID} className="log-item glass-inner">
                           <div className="log-header">
                             <strong>{n.Title}</strong>
@@ -1338,8 +1413,8 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                           <p>{n.Message}</p>
                         </div>
                       ))}
-                      {notifications.length === 0 && (
-                        <p className="empty">No system announcements sent.</p>
+                      {filteredNotifications.length === 0 && (
+                        <p className="empty">No announcements found.</p>
                       )}
                     </div>
                   </div>
@@ -1460,7 +1535,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         <div className="modal-backdrop glass">
           <div className="modal-card animate-fade-in">
             <div className="modal-header">
-              <h2>Manage Order #{selectedOrder.orderId.slice(-6)}</h2>
+              <h2>Manage Order #{String(selectedOrder.orderId || '').slice(-6)}</h2>
               <button className="close-btn" onClick={() => setSelectedOrder(null)}>✕</button>
             </div>
             
