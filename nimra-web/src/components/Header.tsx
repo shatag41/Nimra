@@ -20,6 +20,8 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
   const pathname = usePathname();
   const { totalItems } = useCart();
   const { user, logout } = useAuth();
+  const dashboardHref = user?.Role === 'Admin' ? '/admin' : '/customer-portal';
+  const logoHref = user ? dashboardHref : '/';
 
   // Load theme from localStorage and handle scroll effects
   useEffect(() => {
@@ -82,7 +84,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
     <>
       <header className={`header ${isScrolled ? 'scrolled glass' : ''}`}>
         <div className="header-container">
-          <Link href="/" className="logo">
+          <Link href={logoHref} className="logo">
             <svg width="34" height="34" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M50 5C50 5 15 45 15 65C15 84.33 30.67 100 50 100C69.33 100 85 84.33 85 65C85 45 50 5 50 5Z" fill="url(#waterGrad)"/>
               <path d="M43 75C37 75 32 70 32 64C32 63.45 32.45 63 33 63C33.55 63 34 63.45 34 64C34 68.97 38.03 73 43 73C43.55 73 44 73.45 44 74C44 74.55 43.55 75 43 75Z" fill="white" fillOpacity="0.6"/>

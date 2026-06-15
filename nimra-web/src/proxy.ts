@@ -17,14 +17,19 @@ export function proxy(request: NextRequest) {
     try {
       user = JSON.parse(userCookie);
     } catch {
-      // Ignore parse error and treat as unauthenticated.
+      try {
+        user = JSON.parse(decodeURIComponent(userCookie));
+      } catch {
+        // Ignore parse error and treat as unauthenticated.
+      }
     }
   }
 
   const isAdminUser = user?.Role === 'Admin';
+  const dashboardPath = isAdminUser ? '/admin' : '/customer-portal';
 
-  if (pathname === '/') {
-    return NextResponse.redirect(new URL('/login', request.url));
+  if (pathname === '/' || pathname === '/portal') {
+    return NextResponse.redirect(new URL(user ? dashboardPath : '/login', request.url));
   }
 
   if (!user && !isPublicPath) {
@@ -32,11 +37,11 @@ export function proxy(request: NextRequest) {
   }
 
   if (user && isPublicPath) {
-    return NextResponse.next(); // Don't redirect when already at an auth page if logged in
+    return NextResponse.redirect(new URL(dashboardPath, request.url));
   }
 
   if (user && pathname.startsWith('/admin') && !isAdminUser) {
-    return NextResponse.next();
+    return NextResponse.redirect(new URL('/customer-portal', request.url));
   }
 
   return NextResponse.next();

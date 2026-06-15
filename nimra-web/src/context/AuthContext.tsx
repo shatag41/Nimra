@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(JSON.parse(storedUser));
       } catch (e) {
         console.error('Failed to parse user session');
-        Cookies.remove('nimra_user');
+        Cookies.remove('nimra_user', { path: '/' });
       }
     }
     setIsLoading(false);
@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const isAdminUser = userData.Role === 'Admin';
     setUser(userData);
     // Session cookie: removed { expires: 7 } so it expires on window close
-    Cookies.set('nimra_user', JSON.stringify(userData)); 
+    Cookies.set('nimra_user', JSON.stringify(userData), { path: '/', sameSite: 'lax' }); 
     if (isAdminUser) {
       localStorage.setItem(
         'nimra_admin_user',
@@ -70,7 +70,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = () => {
     setUser(null);
-    Cookies.remove('nimra_user');
+    Cookies.remove('nimra_user', { path: '/' });
     localStorage.removeItem('nimra_admin_user');
     router.replace('/login');
   };

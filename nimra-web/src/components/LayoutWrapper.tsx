@@ -20,23 +20,29 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
   const isAdmin = pathname?.startsWith('/admin');
   const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password';
   const isLanding = pathname === '/landing';
-  const isCustomerPortal = pathname === '/customer-portal';
+  const dashboardPath = user?.Role === 'Admin' ? '/admin' : '/customer-portal';
 
   useEffect(() => {
     if (isLoading) return;
 
-    if (pathname === '/') {
+    if (isAuthenticated && (pathname === '/' || isAuthPage)) {
+      router.replace(dashboardPath);
+    } else if (pathname === '/') {
       router.replace('/login');
     } else if (!isAuthenticated && !isAuthPage) {
       router.replace('/login');
     }
-  }, [isAuthenticated, isLoading, pathname, router]);
+  }, [dashboardPath, isAuthPage, isAuthenticated, isLoading, pathname, router]);
 
   if (isLoading) {
     return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyItems: 'center', backgroundColor: '#0a0a0a' }}></div>;
   }
 
   if (!isAuthenticated && !isAuthPage) {
+    return null;
+  }
+
+  if (isAuthenticated && (pathname === '/' || isAuthPage)) {
     return null;
   }
 
