@@ -80,7 +80,12 @@ export default function RegisterScreen({ navigation }: any) {
       const authUser = normalizeAuthUser(res.user);
       if (res.success && authUser) {
         await login(authUser);
-        Toast.show({ type: 'success', text1: 'Registration Successful!', text2: `Welcome to NIMRA, ${authUser.Name}!`, visibilityTime: 3000 });
+        Toast.show({
+          type: res.emailError ? 'info' : 'success',
+          text1: res.emailError ? 'Account Created' : 'Registration Successful!',
+          text2: res.emailError ? `Welcome email failed: ${String(res.emailError)}` : `Welcome to NIMRA, ${authUser.Name}!`,
+          visibilityTime: 3000
+        });
       } else {
         Toast.show({ type: 'error', text1: 'Registration Failed', text2: res.message ?? 'An unexpected error occurred.', visibilityTime: 3000 });
       }

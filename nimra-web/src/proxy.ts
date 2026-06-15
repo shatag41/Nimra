@@ -26,18 +26,12 @@ export function proxy(request: NextRequest) {
   }
 
   const isAdminUser = user?.Role === 'Admin';
-  const dashboardPath = isAdminUser ? '/admin' : '/customer-portal';
-
   if (pathname === '/' || pathname === '/portal') {
-    return NextResponse.redirect(new URL(user ? dashboardPath : '/login', request.url));
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   if (!user && !isPublicPath) {
     return NextResponse.redirect(new URL('/login', request.url));
-  }
-
-  if (user && isPublicPath) {
-    return NextResponse.redirect(new URL(dashboardPath, request.url));
   }
 
   if (user && pathname.startsWith('/admin') && !isAdminUser) {

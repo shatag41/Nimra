@@ -86,7 +86,11 @@ export default function RegisterPage() {
       });
       if (res.success && res.user) {
         login(res.user);
-        toast.success('Registration successful! Welcome to NIMRA.');
+        if (res.emailError) {
+          toast.warning(`Account created, but welcome email failed: ${res.emailError}`);
+        } else {
+          toast.success('Registration successful! Welcome to NIMRA.');
+        }
       } else {
         setError(res.message ?? 'Registration failed. Please try again.');
         toast.error(res.message ?? 'Registration failed.');
@@ -121,7 +125,11 @@ export default function RegisterPage() {
 
       if (res.success && res.user) {
         login(res.user);
-        toast.success('Registration successful! Welcome to NIMRA.');
+        if (res.emailError) {
+          toast.warning(`Account created, but welcome email failed: ${res.emailError}`);
+        } else {
+          toast.success('Registration successful! Welcome to NIMRA.');
+        }
       } else {
         setError(res.message ?? 'Google Sign-In failed.');
         toast.error(res.message ?? 'Google Sign-In failed.');

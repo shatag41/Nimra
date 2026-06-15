@@ -104,7 +104,12 @@ export default function CheckoutScreen({ companyInfo, isDark, onNavigate }: Chec
       cart.clearCart();
       setForm(initialForm);
       setStatus({ type: 'success', message: result.message, orderId: result.orderId });
-      Toast.show({ type: 'success', text1: 'Order Placed! 🎉', text2: result.orderId ? `Order ID: ${result.orderId}` : result.message, visibilityTime: 3000 });
+      Toast.show({
+        type: result.emailError ? 'info' : 'success',
+        text1: result.emailError ? 'Order Placed' : 'Order Placed!',
+        text2: result.emailError ? `Email failed: ${result.emailError}` : (result.orderId ? `Order ID: ${result.orderId}` : result.message),
+        visibilityTime: 3000
+      });
     } else {
       setStatus({ type: 'error', message: result.message });
       Toast.show({ type: 'error', text1: 'Order Failed', text2: result.message, visibilityTime: 3000 });

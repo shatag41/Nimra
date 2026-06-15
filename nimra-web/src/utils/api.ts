@@ -216,9 +216,14 @@ export const sendRequest = async (payload: AuthRequest): Promise<AuthResponse> =
 // Fetch CMS Data via internal proxy
 export const fetchCMSData = async (): Promise<CMSData> => {
   try {
+    const fetchOptions: RequestInit & { next?: { revalidate: number } } =
+      typeof window === 'undefined'
+        ? { next: { revalidate: 60 } }
+        : { cache: 'default' };
+
     const res = await fetch(getProxyUrl(), {
       method: 'GET',
-      cache: 'no-store', // Always fetch fresh data so new products display instantly
+      ...fetchOptions,
     });
     if (!res.ok) throw new Error(`CMS proxy returned ${res.status}`);
     const data = await res.json();
@@ -280,7 +285,7 @@ export const submitInquiry = async (inquiry: InquirySubmission): Promise<{ succe
   }
 };
 
-export const submitOrder = async (order: OrderSubmission): Promise<{ success: boolean; message: string; orderId?: string }> => {
+export const submitOrder = async (order: OrderSubmission): Promise<{ success: boolean; message: string; orderId?: string; emailSent?: boolean; emailError?: string; emailHint?: string }> => {
   const payload: OrderSubmission = {
     ...order,
     paymentMethod: order.paymentMethod || 'Cash on Delivery',
@@ -318,6 +323,9 @@ export const submitOrder = async (order: OrderSubmission): Promise<{ success: bo
       success: true,
       message: result.message || 'Order placed successfully',
       orderId: result.orderId,
+      emailSent: result.emailSent,
+      emailError: result.emailError,
+      emailHint: result.emailHint,
     };
   } catch (err) {
     console.error('Error placing order:', err);

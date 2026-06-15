@@ -69,6 +69,11 @@ export async function GET(req: Request) {
   const userId = requestUrl.searchParams.get('userId') || '';
   const mobile = requestUrl.searchParams.get('mobile') || '';
   const email = requestUrl.searchParams.get('email') || '';
+  const liveActions = new Set(['trackOrder', 'getOrders', 'getInquiries', 'getUsers', 'getNotifications']);
+  const shouldUseLiveData = Boolean(action && liveActions.has(action));
+  const cacheHeaders = shouldUseLiveData
+    ? { 'Cache-Control': 'no-store' }
+    : { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' };
   
   if (APPS_SCRIPT_URL) {
     try {
@@ -81,13 +86,13 @@ export async function GET(req: Request) {
         headers: {
           'Accept': 'application/json',
         },
-        next: { revalidate: 0 }, // Do not cache for admin operations to get live sync
+        next: { revalidate: shouldUseLiveData ? 0 : 60 },
       });
 
       const text = await res.text();
       if (!text.trim().startsWith('<')) {
         const data = JSON.parse(text);
-        return NextResponse.json(data);
+        return NextResponse.json(data, { headers: cacheHeaders });
       }
     } catch (err) {
       console.error('Google Sheets GET fetch failed, using local fallback:', err);
@@ -96,29 +101,30 @@ export async function GET(req: Request) {
 
   // Use fallback data
   if (action === 'getBanners') {
-    return NextResponse.json(fallbackData.banners);
+    return NextResponse.json(fallbackData.banners, { headers: cacheHeaders });
   } else if (action === 'getProducts') {
-    return NextResponse.json(fallbackData.products);
+    return NextResponse.json(fallbackData.products, { headers: cacheHeaders });
   } else if (action === 'getFAQs') {
-    return NextResponse.json(fallbackData.faqs);
+    return NextResponse.json(fallbackData.faqs, { headers: cacheHeaders });
   } else if (action === 'getCompanyInfo') {
-    return NextResponse.json(fallbackData.companyInfo);
+    return NextResponse.json(fallbackData.companyInfo, { headers: cacheHeaders });
   } else if (action === 'trackOrder') {
-    return NextResponse.json({ success: false, message: 'No matching order found.' });
+    return NextResponse.json({ success: false, message: 'No matching order found.' }, { headers: cacheHeaders });
   } else if (action === 'getOrders') {
-    if (!userId && !mobile && !email) return NextResponse.json(fallbackData.orders);
+    if (!userId && !mobile && !email) return NextResponse.json(fallbackData.orders, { headers: cacheHeaders });
     return NextResponse.json(
       fallbackData.orders.filter((order) =>
         (mobile && order.customer.mobile.replace(/\D/g, '') === mobile.replace(/\D/g, '')) ||
         (email && order.customer.email.toLowerCase() === email.toLowerCase())
-      )
+      ),
+      { headers: cacheHeaders }
     );
   } else if (action === 'getInquiries') {
-    return NextResponse.json(fallbackData.inquiries);
+    return NextResponse.json(fallbackData.inquiries, { headers: cacheHeaders });
   } else if (action === 'getUsers') {
-    return NextResponse.json(fallbackData.users);
+    return NextResponse.json(fallbackData.users, { headers: cacheHeaders });
   } else if (action === 'getNotifications') {
-    return NextResponse.json(fallbackData.notifications);
+    return NextResponse.json(fallbackData.notifications, { headers: cacheHeaders });
   } else {
     // Return all customer CMS collections
     return NextResponse.json({
@@ -126,7 +132,7 @@ export async function GET(req: Request) {
       products: fallbackData.products,
       faqs: fallbackData.faqs,
       companyInfo: fallbackData.companyInfo
-    });
+    }, { headers: cacheHeaders });
   }
 }
 
@@ -135,6 +141,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const payload = { ...body };
+    let backendError = '';
 
     if (APPS_SCRIPT_URL) {
       try {
@@ -153,12 +160,23 @@ export async function POST(req: Request) {
           const data = JSON.parse(text);
           return NextResponse.json(data);
         }
+        backendError = 'Apps Script returned a non-JSON response. Check the Web App deployment URL and access settings.';
       } catch (err) {
-        console.error('Google Sheets POST failed, using local fallback:', err);
+        backendError = err instanceof Error ? err.message : 'Google Sheets POST failed.';
+        console.error('Google Sheets POST failed:', err);
       }
+
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Google Sheets backend failed to process this request. No order/account email was sent.',
+          error: backendError,
+        },
+        { status: 502 }
+      );
     }
 
-    // Local fallback if Google Sheets not available
+    // Local fallback only when Google Sheets is not configured.
     
     if (payload.type === 'order') {
       const orderId = `NIMRA-${Date.now()}-${Math.floor(Math.random() * 1000)}`;

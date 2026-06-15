@@ -279,7 +279,7 @@ export const submitInquiry = async (inquiry: InquirySubmission): Promise<{ succe
   }
 };
 
-export const submitOrder = async (order: OrderSubmission): Promise<{ success: boolean; message: string; orderId?: string }> => {
+export const submitOrder = async (order: OrderSubmission): Promise<{ success: boolean; message: string; orderId?: string; emailSent?: boolean; emailError?: string; emailHint?: string }> => {
   const url = getAPIUrl();
   const payload: OrderSubmission = {
     ...order,
@@ -308,7 +308,14 @@ export const submitOrder = async (order: OrderSubmission): Promise<{ success: bo
     if (!res.ok || !result.success) {
       return { success: false, message: result.message || result.error || 'Failed to place order.' };
     }
-    return { success: true, message: 'Order placed successfully', orderId: result.orderId };
+    return {
+      success: true,
+      message: 'Order placed successfully',
+      orderId: result.orderId,
+      emailSent: result.emailSent,
+      emailError: result.emailError,
+      emailHint: result.emailHint,
+    };
   } catch (err) {
     console.error('Error submitting order:', err);
     return { success: false, message: 'Failed to submit order. Please check your network connection.' };

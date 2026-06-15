@@ -1,10 +1,20 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
 import { fetchCustomerOrders } from '../../utils/api';
 import { OrderRecord } from '../../types/cms';
+import { formatCurrency } from '../../utils/commerce';
+
+const statusClass = (status: string) => status.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+const formatDate = (value?: string) => {
+  if (!value) return 'Not available';
+  var date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Not available';
+  return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+};
 
 export default function CustomerPortal() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -29,53 +39,85 @@ export default function CustomerPortal() {
     }
   };
 
+  const metrics = useMemo(() => {
+    const totalSpend = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
+    const activeOrders = orders.filter((order) => !/delivered|cancelled/i.test(order.status)).length;
+    const deliveredOrders = orders.filter((order) => /delivered/i.test(order.status)).length;
+    const latestOrder = orders[0];
+
+    return {
+      totalSpend,
+      activeOrders,
+      deliveredOrders,
+      latestOrder,
+    };
+  }, [orders]);
+
+  const profileFields = [
+    { label: 'Email', value: user?.Username },
+    { label: 'Mobile', value: user?.Mobile },
+    { label: 'Role', value: user?.Role },
+  ];
+  const completedProfileFields = profileFields.filter((field) => Boolean(field.value)).length;
+  const profilePercent = Math.round((completedProfileFields / profileFields.length) * 100);
+
   if (isLoading || !isAuthenticated) {
-    return <div className="loading-state">Loading...</div>;
+    return <div className="loading-state">Loading your portal...</div>;
   }
 
   return (
-    <div className="portal-container">
-      <div className="portal-header">
-        <h1 className="portal-title">Hello, <span className="highlight-text">{user?.Name}</span>!</h1>
-        <div className="profile-info">
-          <p><strong>Email:</strong> {user?.Username}</p>
-          <p><strong>Mobile:</strong> {user?.Mobile || 'Not provided'}</p>
+    <div className="portal-page">
+      <section className="portal-hero">
+        <div>
+          <span className="eyebrow">Customer Portal</span>
+          <h1>Welcome back, {user?.Name || 'Customer'}</h1>
+          <p>Manage orders, track deliveries, and reach NIMRA support from one clean workspace.</p>
         </div>
-      </div>
+        <div className="hero-actions">
+          <Link href="/products" className="btn btn-primary">Order Water</Link>
+          <Link href="/track" className="btn btn-secondary">Track Order</Link>
+        </div>
+      </section>
 
-      <div className="quick-actions">
-        <Link href="/products" className="action-card">
-          <span className="action-icon">💧</span>
-          <h3>Browse Products</h3>
-          <p>Explore our pure hydration range</p>
-        </Link>
-        <Link href="/track" className="action-card">
-          <span className="action-icon">📦</span>
-          <h3>Track Orders</h3>
-          <p>Check your order status</p>
-        </Link>
-        <Link href="/contact" className="action-card">
-          <span className="action-icon">✉️</span>
-          <h3>Support & Inquiry</h3>
-          <p>Get in touch with us</p>
-        </Link>
-        <Link href="/about" className="action-card">
-          <span className="action-icon">ℹ️</span>
-          <h3>About NIMRA</h3>
-          <p>Learn about our purity process</p>
-        </Link>
-      </div>
+      <section className="metric-grid" aria-label="Account summary">
+        <div className="metric-card">
+          <span>Total Orders</span>
+          <strong>{orders.length}</strong>
+          <small>{loadingOrders ? 'Refreshing' : 'Synced from your account'}</small>
+        </div>
+        <div className="metric-card">
+          <span>Active Orders</span>
+          <strong>{metrics.activeOrders}</strong>
+          <small>Pending, confirmed, or in transit</small>
+        </div>
+        <div className="metric-card">
+          <span>Delivered</span>
+          <strong>{metrics.deliveredOrders}</strong>
+          <small>Completed deliveries</small>
+        </div>
+        <div className="metric-card">
+          <span>Total Spend</span>
+          <strong>{formatCurrency(metrics.totalSpend)}</strong>
+          <small>Cash on delivery purchases</small>
+        </div>
+      </section>
 
-      <div className="orders-section">
-        <div className="orders-content">
-          <div className="section-header">
-            <h2>Your Recent Orders</h2>
+      <section className="portal-grid">
+        <div className="panel orders-panel">
+          <div className="panel-head">
+            <div>
+              <span className="eyebrow">Orders</span>
+              <h2>Recent Activity</h2>
+            </div>
+            <button className="refresh-btn" type="button" onClick={loadOrders} disabled={loadingOrders}>
+              {loadingOrders ? 'Refreshing' : 'Refresh'}
+            </button>
           </div>
-          
+
           {loadingOrders ? (
-            <div className="orders-loading">Loading your orders...</div>
+            <div className="empty-state">Loading your orders...</div>
           ) : orders.length > 0 ? (
-            <div className="table-responsive">
+            <div className="table-wrap">
               <table className="orders-table">
                 <thead>
                   <tr>
@@ -83,280 +125,426 @@ export default function CustomerPortal() {
                     <th>Date</th>
                     <th>Status</th>
                     <th>Total</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.map((order, i) => (
-                    <tr key={i}>
-                      <td>{order.orderId}</td>
-                      <td>{new Date(order.createdAt).toLocaleDateString()}</td>
-                      <td>
-                        <span className={`status-badge ${order.status.toLowerCase().replace(' ', '-')}`}>
-                          {order.status}
-                        </span>
-                      </td>
-                      <td>₹{order.total.toFixed(2)}</td>
+                  {orders.slice(0, 6).map((order) => (
+                    <tr key={order.orderId}>
+                      <td className="order-id">{order.orderId}</td>
+                      <td>{formatDate(order.createdAt)}</td>
+                      <td><span className={`status-badge ${statusClass(order.status)}`}>{order.status}</span></td>
+                      <td>{formatCurrency(Number(order.total || 0))}</td>
+                      <td><Link href={`/track?orderId=${order.orderId}`} className="table-link">Track</Link></td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           ) : (
-            <div className="empty-orders">
-              <p>You haven't placed any orders yet.</p>
-              <Link href="/products" className="btn btn-primary" style={{ marginTop: '1rem' }}>
-                Shop Now
-              </Link>
+            <div className="empty-state">
+              <h3>No orders yet</h3>
+              <p>Your NIMRA order history will appear here after checkout.</p>
+              <Link href="/products" className="btn btn-primary">Browse Products</Link>
             </div>
           )}
         </div>
-      </div>
+
+        <aside className="side-stack">
+          <div className="panel profile-card">
+            <div className="panel-head compact">
+              <div>
+                <span className="eyebrow">Profile</span>
+                <h2>Account Details</h2>
+              </div>
+              <span className="completion">{profilePercent}%</span>
+            </div>
+            <div className="progress-track"><span style={{ width: `${profilePercent}%` }} /></div>
+            <dl className="profile-list">
+              {profileFields.map((field) => (
+                <div key={field.label}>
+                  <dt>{field.label}</dt>
+                  <dd>{field.value || 'Not provided'}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+
+          <div className="panel next-card">
+            <span className="eyebrow">Next Step</span>
+            <h2>{metrics.latestOrder ? 'Continue Tracking' : 'Start Your First Order'}</h2>
+            <p>
+              {metrics.latestOrder
+                ? `Latest order ${metrics.latestOrder.orderId} is currently ${metrics.latestOrder.status}.`
+                : 'Choose bottles, cans, or bulk jars and place a delivery request in minutes.'}
+            </p>
+            <Link
+              href={metrics.latestOrder ? `/track?orderId=${metrics.latestOrder.orderId}` : '/products'}
+              className="btn btn-primary"
+            >
+              {metrics.latestOrder ? 'Open Tracker' : 'Shop Products'}
+            </Link>
+          </div>
+        </aside>
+      </section>
+
+      <section className="quick-section">
+        <Link href="/products" className="quick-card">
+          <span className="quick-icon">W</span>
+          <h3>Product Range</h3>
+          <p>Order packaged water bottles, cans, and office jars.</p>
+        </Link>
+        <Link href="/cart" className="quick-card">
+          <span className="quick-icon">C</span>
+          <h3>Cart</h3>
+          <p>Review quantities and prepare your checkout details.</p>
+        </Link>
+        <Link href="/contact" className="quick-card">
+          <span className="quick-icon">S</span>
+          <h3>Support</h3>
+          <p>Ask about bulk delivery, invoices, or scheduled supply.</p>
+        </Link>
+        <Link href="/about#quality" className="quick-card">
+          <span className="quick-icon">Q</span>
+          <h3>Quality</h3>
+          <p>View the purification process and NIMRA standards.</p>
+        </Link>
+      </section>
 
       <style jsx>{`
-        .portal-container {
-          width: 100%;
-          margin: 0;
-          padding: 0;
-          background: var(--bg-primary);
+        .portal-page {
           min-height: 100vh;
+          background: var(--bg-primary);
+          padding-bottom: 3rem;
         }
 
-        .portal-header {
-          padding: 3rem 4rem;
-          background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-          position: relative;
-          overflow: hidden;
-          color: white;
-        }
-        
-        .portal-header::before {
-          content: '';
-          position: absolute;
-          top: -50%;
-          right: -20%;
-          width: 600px;
-          height: 600px;
-          background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
-          border-radius: 50%;
-        }
-        
-        .portal-header::after {
-          content: '';
-          position: absolute;
-          bottom: -30%;
-          left: -10%;
-          width: 500px;
-          height: 500px;
-          background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-          border-radius: 50%;
-        }
-
-        .portal-title {
-          font-size: 2.75rem;
-          font-weight: 800;
-          color: white;
-          margin-bottom: 0.75rem;
-          letter-spacing: -0.03em;
-          position: relative;
-          z-index: 1;
-        }
-
-        .highlight-text {
-          color: white;
-          font-weight: 900;
-        }
-
-        .profile-info {
-          display: flex;
-          gap: 2.5rem;
-          color: rgba(255,255,255,0.9);
-          flex-wrap: wrap;
-          position: relative;
-          z-index: 1;
-        }
-        
-        .profile-info p {
-          font-size: 1rem;
-          font-weight: 600;
-        }
-        
-        .profile-info strong {
-          color: white;
-          font-weight: 700;
-        }
-
-        .quick-actions {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 2rem;
-          padding: 3rem 4rem;
-          max-width: 1600px;
-          margin: 0 auto;
-        }
-
-        .action-card {
-          padding: 2.5rem 2rem;
-          border-radius: 1.5rem;
-          border: 1px solid var(--border-color);
-          text-align: center;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          background: var(--bg-secondary);
-          color: var(--text-primary);
-          text-decoration: none;
-          box-shadow: var(--shadow-sm);
-          position: relative;
-          overflow: hidden;
-        }
-        
-        .action-card::before {
-          content: '';
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 100%;
-          height: 4px;
-          background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-          transform: scaleX(0);
-          transform-origin: center;
-          transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .action-card:hover {
-          transform: translateY(-8px);
-          box-shadow: var(--shadow-xl);
-          border-color: var(--primary-color);
-        }
-        
-        .action-card:hover::before {
-          transform: scaleX(1);
-        }
-
-        .action-icon {
-          font-size: 3.5rem;
-          display: block;
-          margin-bottom: 1.25rem;
-          filter: drop-shadow(0 4px 8px rgba(14, 165, 233, 0.2));
-        }
-
-        .action-card h3 {
-          font-size: 1.35rem;
-          color: var(--text-primary);
-          margin-bottom: 0.5rem;
-          font-weight: 800;
-          letter-spacing: -0.01em;
-        }
-
-        .action-card p {
-          color: var(--text-secondary);
-          font-size: 0.95rem;
-          line-height: 1.6;
-        }
-
-        .orders-section {
-          padding: 3rem 4rem;
-          background: var(--bg-secondary);
-          box-shadow: 0 -1px 0 var(--border-color);
-        }
-        
-        .orders-content {
-          max-width: 1600px;
-          margin: 0 auto;
-        }
-
-        .section-header {
+        .portal-hero {
           display: flex;
           justify-content: space-between;
-          align-items: center;
-          margin-bottom: 2rem;
+          align-items: flex-end;
+          gap: 2rem;
+          padding: 3rem 4rem;
+          background: linear-gradient(135deg, #0f5ea8 0%, #0b3f72 58%, #2bb673 100%);
+          color: white;
         }
-        
-        .section-header h2 {
-          font-size: 1.75rem;
-          color: var(--text-primary);
-          margin: 0;
+
+        .portal-hero h1 {
+          max-width: 820px;
+          color: white;
+          font-size: clamp(2rem, 4vw, 3.4rem);
+          font-weight: 850;
+          letter-spacing: 0;
+          margin: 0.5rem 0 0.75rem;
+        }
+
+        .portal-hero p {
+          max-width: 700px;
+          color: rgba(255, 255, 255, 0.88);
+          font-size: 1.05rem;
+        }
+
+        .eyebrow {
+          display: inline-flex;
+          color: inherit;
+          opacity: 0.72;
+          font-size: 0.78rem;
           font-weight: 800;
-          letter-spacing: -0.02em;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
         }
 
-        .orders-loading, .empty-orders {
-          text-align: center;
-          padding: 4rem 2rem;
-          color: var(--text-secondary);
-        }
-        
-        .empty-orders p {
-          font-size: 1.1rem;
-          margin-bottom: 1.5rem;
+        .hero-actions {
+          display: flex;
+          gap: 0.8rem;
+          flex-wrap: wrap;
         }
 
-        .table-responsive {
-          overflow-x: auto;
-          border-radius: 1rem;
-          background: var(--bg-primary);
+        .hero-actions .btn-secondary {
+          color: white;
+          border-color: rgba(255, 255, 255, 0.72);
+          background: rgba(255, 255, 255, 0.08);
+        }
+
+        .metric-grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 1rem;
+          max-width: 1280px;
+          margin: -2rem auto 0;
+          padding: 0 2rem;
+          position: relative;
+          z-index: 2;
+        }
+
+        .metric-card, .panel, .quick-card {
+          background: var(--bg-secondary);
           border: 1px solid var(--border-color);
+          border-radius: 8px;
+          box-shadow: var(--shadow-md);
+        }
+
+        .metric-card {
+          padding: 1.25rem;
+          display: grid;
+          gap: 0.25rem;
+        }
+
+        .metric-card span, .metric-card small {
+          color: var(--text-secondary);
+          font-size: 0.85rem;
+        }
+
+        .metric-card strong {
+          color: var(--text-primary);
+          font-size: 1.85rem;
+          font-weight: 850;
+          line-height: 1.1;
+        }
+
+        .portal-grid {
+          max-width: 1280px;
+          margin: 1.5rem auto 0;
+          padding: 0 2rem;
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 360px;
+          gap: 1.25rem;
+          align-items: start;
+        }
+
+        .panel {
+          padding: 1.35rem;
+        }
+
+        .panel-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+          margin-bottom: 1.2rem;
+        }
+
+        .panel-head.compact {
+          margin-bottom: 0.8rem;
+        }
+
+        .panel h2 {
+          margin: 0.25rem 0 0;
+          font-size: 1.35rem;
+          letter-spacing: 0;
+        }
+
+        .refresh-btn, .table-link {
+          border: 1px solid var(--border-color);
+          background: var(--bg-primary);
+          color: var(--primary-color);
+          border-radius: 8px;
+          padding: 0.55rem 0.8rem;
+          font: inherit;
+          font-weight: 800;
+          cursor: pointer;
+        }
+
+        .refresh-btn:disabled {
+          opacity: 0.65;
+          cursor: progress;
+        }
+
+        .table-wrap {
+          overflow-x: auto;
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
         }
 
         .orders-table {
           width: 100%;
           border-collapse: collapse;
-          text-align: left;
-          border-radius: 1rem;
-          overflow: hidden;
+          min-width: 720px;
         }
 
         .orders-table th, .orders-table td {
-          padding: 1.25rem 1.5rem;
+          padding: 1rem;
           border-bottom: 1px solid var(--border-color);
-        }
-        
-        .orders-table tr:last-child td {
-          border-bottom: none;
+          text-align: left;
+          white-space: nowrap;
         }
 
         .orders-table th {
-          color: var(--text-secondary);
-          font-weight: 700;
           background: var(--bg-tertiary);
-          font-size: 0.85rem;
-          letter-spacing: 0.05em;
+          color: var(--text-secondary);
+          font-size: 0.78rem;
+          font-weight: 850;
+          letter-spacing: 0.06em;
           text-transform: uppercase;
         }
-        
-        .orders-table td {
-          font-size: 0.95rem;
+
+        .orders-table tr:last-child td {
+          border-bottom: 0;
+        }
+
+        .order-id {
+          font-weight: 850;
           color: var(--text-primary);
         }
 
         .status-badge {
           display: inline-flex;
           align-items: center;
-          padding: 0.375rem 0.875rem;
+          min-height: 28px;
+          padding: 0.25rem 0.65rem;
           border-radius: 999px;
-          font-size: 0.75rem;
-          font-weight: 700;
-          letter-spacing: 0.05em;
+          font-size: 0.72rem;
+          font-weight: 850;
           text-transform: uppercase;
+          letter-spacing: 0.04em;
+          background: rgba(var(--primary-rgb), 0.1);
+          color: var(--primary-color);
         }
 
-        .status-badge.pending { 
-          background: rgba(249, 115, 22, 0.12); 
-          color: #f97316; 
+        .status-badge.pending {
+          background: rgba(249, 115, 22, 0.12);
+          color: #c2410c;
         }
-        .status-badge.processing { 
-          background: rgba(59, 130, 246, 0.12); 
-          color: #3b82f6; 
+
+        .status-badge.delivered {
+          background: rgba(43, 182, 115, 0.14);
+          color: #047857;
         }
-        .status-badge.shipped { 
-          background: rgba(168, 85, 247, 0.12); 
-          color: #a855f7; 
+
+        .status-badge.cancelled {
+          background: rgba(220, 38, 38, 0.12);
+          color: #b91c1c;
         }
-        .status-badge.delivered { 
-          background: rgba(16, 185, 129, 0.12); 
-          color: #047857; 
+
+        .side-stack {
+          display: grid;
+          gap: 1.25rem;
         }
-        .status-badge.cancelled { 
-          background: rgba(239, 68, 68, 0.12); 
-          color: #dc2626; 
+
+        .completion {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 54px;
+          height: 36px;
+          border-radius: 999px;
+          background: rgba(var(--accent-rgb), 0.13);
+          color: var(--accent-color);
+          font-weight: 850;
+        }
+
+        .progress-track {
+          width: 100%;
+          height: 8px;
+          overflow: hidden;
+          border-radius: 999px;
+          background: var(--bg-tertiary);
+          margin-bottom: 1rem;
+        }
+
+        .progress-track span {
+          display: block;
+          height: 100%;
+          border-radius: inherit;
+          background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        }
+
+        .profile-list {
+          display: grid;
+          gap: 0.8rem;
+        }
+
+        .profile-list div {
+          display: flex;
+          justify-content: space-between;
+          gap: 1rem;
+          padding-bottom: 0.75rem;
+          border-bottom: 1px solid var(--border-color);
+        }
+
+        .profile-list div:last-child {
+          border-bottom: 0;
+          padding-bottom: 0;
+        }
+
+        .profile-list dt {
+          color: var(--text-secondary);
+          font-weight: 800;
+        }
+
+        .profile-list dd {
+          color: var(--text-primary);
+          font-weight: 750;
+          text-align: right;
+          overflow-wrap: anywhere;
+        }
+
+        .next-card p {
+          color: var(--text-secondary);
+          margin: 0.65rem 0 1rem;
+        }
+
+        .empty-state {
+          min-height: 230px;
+          display: grid;
+          place-items: center;
+          align-content: center;
+          gap: 0.75rem;
+          color: var(--text-secondary);
+          text-align: center;
+          border: 1px dashed var(--border-color);
+          border-radius: 8px;
+          background: var(--bg-primary);
+          padding: 2rem;
+        }
+
+        .empty-state h3 {
+          margin: 0;
+          color: var(--text-primary);
+        }
+
+        .quick-section {
+          max-width: 1280px;
+          margin: 1.5rem auto 0;
+          padding: 0 2rem;
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 1rem;
+        }
+
+        .quick-card {
+          padding: 1.2rem;
+          color: var(--text-primary);
+          transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+        }
+
+        .quick-card:hover {
+          transform: translateY(-3px);
+          border-color: var(--primary-color);
+          box-shadow: var(--shadow-lg);
+        }
+
+        .quick-icon {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 36px;
+          height: 36px;
+          border-radius: 8px;
+          margin-bottom: 0.8rem;
+          background: var(--bg-tertiary);
+          color: var(--primary-color);
+          font-weight: 900;
+        }
+
+        .quick-card h3 {
+          margin: 0 0 0.35rem;
+          font-size: 1.05rem;
+        }
+
+        .quick-card p {
+          color: var(--text-secondary);
+          font-size: 0.92rem;
+          line-height: 1.55;
         }
 
         .loading-state {
@@ -365,39 +553,45 @@ export default function CustomerPortal() {
           align-items: center;
           justify-content: center;
           color: var(--text-secondary);
-          font-size: 1.05rem;
           background: var(--bg-primary);
         }
-        
-        @media (max-width: 1200px) {
-          .quick-actions {
-            grid-template-columns: repeat(2, 1fr);
-            padding: 2.5rem 2rem;
+
+        @media (max-width: 1100px) {
+          .metric-grid, .quick-section {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
           }
-          .portal-header {
-            padding: 2.5rem 2rem;
+
+          .portal-grid {
+            grid-template-columns: 1fr;
           }
-          .orders-section {
-            padding: 2.5rem 2rem;
+
+          .portal-hero {
+            align-items: flex-start;
+            flex-direction: column;
           }
         }
-        
-        @media (max-width: 768px) {
-          .quick-actions {
+
+        @media (max-width: 700px) {
+          .portal-hero {
+            padding: 2rem 1.25rem;
+          }
+
+          .metric-grid, .portal-grid, .quick-section {
             grid-template-columns: 1fr;
-            padding: 2rem 1.5rem;
+            padding: 0 1rem;
           }
-          .portal-header {
-            padding: 2rem 1.5rem;
+
+          .metric-grid {
+            margin-top: 1rem;
           }
-          .orders-section {
-            padding: 2rem 1.5rem;
+
+          .hero-actions, .hero-actions .btn {
+            width: 100%;
           }
-          .portal-title {
-            font-size: 2.25rem;
-          }
-          .profile-info {
-            gap: 1.5rem;
+
+          .panel-head {
+            align-items: flex-start;
+            flex-direction: column;
           }
         }
       `}</style>

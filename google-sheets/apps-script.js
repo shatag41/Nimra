@@ -151,7 +151,7 @@ function saveOrder(spreadsheet, params) {
   
   var name = String(customer.name || '').trim();
   var mobile = String(customer.mobile || '').trim();
-  var email = String(customer.email || '').trim();
+  var email = normalizeEmail(customer.email);
   var address = String(customer.address || '').trim();
   var city = String(customer.city || '').trim();
   var state = String(customer.state || '').trim();
@@ -221,15 +221,13 @@ function saveOrder(spreadsheet, params) {
   Logger.log("Appended Values: Appending row data to " + sheet.getName() + " sheet: " + JSON.stringify(rowData));
   sheet.appendRow(rowData);
 
-  try {
-    if (email) {
-      sendOrderConfirmationEmail(email, name, orderId, products, totalAmount);
-    }
-  } catch (err) {
-    Logger.log("Error sending order confirmation email: " + err);
+  var emailResult = sendOrderConfirmationEmail(email, name, orderId, products, totalAmount);
+  var response = { success: true, orderId: orderId, message: 'Order placed successfully', emailSent: emailResult.sent };
+  if (!emailResult.sent && emailResult.error) {
+    response.emailError = emailResult.error;
+    response.emailHint = 'Run authorizeNimraEmailSending once in Apps Script, then deploy a new Web App version with Execute as Me.';
   }
-
-  return { success: true, orderId: orderId, message: 'Order placed successfully' };
+  return response;
 }
 
 function getAllOrders(spreadsheet, userId, mobile, email) {
@@ -883,7 +881,7 @@ function handleAuthRegister(spreadsheet, params) {
   var user = params.user || {};
   var name = String(user.Name || '').trim();
   var mobile = getUserMobile(user);
-  var email = String(user.Username || '').trim();
+  var email = normalizeEmail(user.Username);
   var password = String(user.Password || '').trim();
   var role = String(user.Role || 'Customer').trim();
   
@@ -892,13 +890,16 @@ function handleAuthRegister(spreadsheet, params) {
   if (!name || !password || (!mobile && !email)) {
     return { success: false, message: 'Name, password, and at least one contact method (email/mobile) are required.' };
   }
+  if (email && !isValidEmail(email)) {
+    return { success: false, message: 'Enter a valid email address.' };
+  }
 
   var users = getUsersData(spreadsheet);
   
   // Check duplicates
   for (var i = 0; i < users.length; i++) {
     var u = users[i];
-    if (email && String(u.Username).trim() === email) {
+    if (email && normalizeEmail(u.Username) === email) {
       return { success: false, message: 'Email already registered.' };
     }
     if (mobile && String(u.Mobile).trim() === mobile) {
@@ -922,12 +923,13 @@ function handleAuthRegister(spreadsheet, params) {
   if (result.success) {
     newUser.ID = result.ID;
     delete newUser.Password;
-    try {
-      if (email) sendWelcomeEmail(email, name);
-    } catch (e) {
-      Logger.log("Error sending welcome email: " + e);
+    var emailResult = sendWelcomeEmail(email, name);
+    var response = { success: true, message: 'Registration successful', user: newUser, emailSent: emailResult.sent };
+    if (!emailResult.sent && emailResult.error) {
+      response.emailError = emailResult.error;
+      response.emailHint = 'Run authorizeNimraEmailSending once in Apps Script, then deploy a new Web App version with Execute as Me.';
     }
-    return { success: true, message: 'Registration successful', user: newUser };
+    return response;
   }
   return result;
 }
@@ -947,19 +949,22 @@ function getUserMobile(user) {
 }
 
 function handleAuthGoogleSignIn(spreadsheet, params) {
-  var email = String(params.email || '').trim();
+  var email = normalizeEmail(params.email);
   var name = String(params.name || '').trim();
   var role = String(params.role || 'Customer').trim(); // Default role for new users
   
   if (!email) {
     return { success: false, message: 'Email is required for Google Sign-In.' };
   }
+  if (!isValidEmail(email)) {
+    return { success: false, message: 'Enter a valid Google account email address.' };
+  }
 
   var users = getUsersData(spreadsheet);
   
   for (var i = 0; i < users.length; i++) {
     var u = users[i];
-    if (String(u.Username).trim() === email) {
+    if (normalizeEmail(u.Username) === email) {
       if (!u.Active) {
         return { success: false, message: 'Your account is inactive. Please contact support.' };
       }
@@ -986,12 +991,13 @@ function handleAuthGoogleSignIn(spreadsheet, params) {
   if (result.success) {
     newUser.ID = result.ID;
     delete newUser.Password;
-    try {
-      if (email) sendWelcomeEmail(email, name);
-    } catch (e) {
-      Logger.log("Error sending welcome email: " + e);
+    var emailResult = sendWelcomeEmail(email, name);
+    var response = { success: true, message: 'Registration successful', user: newUser, emailSent: emailResult.sent };
+    if (!emailResult.sent && emailResult.error) {
+      response.emailError = emailResult.error;
+      response.emailHint = 'Run authorizeNimraEmailSending once in Apps Script, then deploy a new Web App version with Execute as Me.';
     }
-    return { success: true, message: 'Registration successful', user: newUser };
+    return response;
   }
   return result;
 }
@@ -1142,6 +1148,10 @@ function findUserRowByEmail(spreadsheet, email) {
 }
 
 function sendPasswordResetOtpEmail(email, otp, name) {
+  email = normalizeEmail(email);
+  if (!email || !isValidEmail(email)) {
+    throw new Error('Invalid email address.');
+  }
   var displayName = String(name || 'NIMRA customer').trim();
   var subject = 'NIMRA password reset OTP';
   var plainBody = 'Hello ' + displayName + ',\n\n' +
@@ -1154,23 +1164,8 @@ function sendPasswordResetOtpEmail(email, otp, name) {
     '<p>This OTP is valid for 10 minutes. If you did not request this, you can ignore this email.</p>' +
     '<p>NIMRA Support</p>';
 
-  var message = {
-    to: email,
-    subject: subject,
-    body: plainBody,
-    htmlBody: htmlBody,
-    name: 'NIMRA Support'
-  };
-
-  try {
-    MailApp.sendEmail(message);
-  } catch (mailError) {
-    Logger.log('MailApp failed, retrying with GmailApp: ' + getErrorMessage(mailError));
-    GmailApp.sendEmail(email, subject, plainBody, {
-      htmlBody: htmlBody,
-      name: 'NIMRA Support'
-    });
-  }
+  var result = sendNimraEmail(email, subject, plainBody, htmlBody, 'NIMRA Support');
+  if (!result.sent) throw new Error(result.error || 'Unable to send OTP email.');
 }
 
 function escapeHtml(value) {
@@ -1187,6 +1182,44 @@ function getErrorMessage(error) {
   return error.message || error.toString();
 }
 
+function sendNimraEmail(email, subject, plainBody, htmlBody, senderName) {
+  email = normalizeEmail(email);
+  if (!email || !isValidEmail(email)) {
+    return { sent: false, error: 'Invalid email address.' };
+  }
+
+  var message = {
+    to: email,
+    subject: subject,
+    body: plainBody,
+    htmlBody: htmlBody,
+    name: senderName || 'NIMRA Support',
+    replyTo: 'tsenterprises.nat@gmail.com'
+  };
+
+  try {
+    MailApp.sendEmail(message);
+    Logger.log('Email sent with MailApp to ' + email + ' subject: ' + subject);
+    return { sent: true };
+  } catch (mailError) {
+    var mailErrorMessage = getErrorMessage(mailError);
+    Logger.log('MailApp failed for ' + email + ': ' + mailErrorMessage);
+    try {
+      GmailApp.sendEmail(email, subject, plainBody, {
+        htmlBody: htmlBody,
+        name: senderName || 'NIMRA Support',
+        replyTo: 'tsenterprises.nat@gmail.com'
+      });
+      Logger.log('Email sent with GmailApp to ' + email + ' subject: ' + subject);
+      return { sent: true };
+    } catch (gmailError) {
+      var gmailErrorMessage = getErrorMessage(gmailError);
+      Logger.log('GmailApp failed for ' + email + ': ' + gmailErrorMessage);
+      return { sent: false, error: mailErrorMessage + ' | GmailApp: ' + gmailErrorMessage };
+    }
+  }
+}
+
 function authorizeNimraEmailSending() {
   var email = Session.getEffectiveUser().getEmail();
   if (!email) {
@@ -1194,6 +1227,8 @@ function authorizeNimraEmailSending() {
   }
 
   sendPasswordResetOtpEmail(email, '000000', 'NIMRA Admin');
+  sendWelcomeEmail(email, 'NIMRA Admin');
+  sendOrderConfirmationEmail(email, 'NIMRA Admin', 'NIMRA-AUTH-TEST', 'Email authorization test', 0);
   return 'Authorization email sent to ' + email + '. Now deploy the Web App as a new version.';
 }
 
@@ -1283,7 +1318,7 @@ function sendWelcomeEmail(email, name) {
   email = normalizeEmail(email);
   if (!email || !isValidEmail(email)) {
     Logger.log("sendWelcomeEmail skipped: invalid email address provided.");
-    return;
+    return { sent: false };
   }
   var displayName = String(name || 'Customer').trim();
   var subject = 'Welcome to NIMRA!';
@@ -1296,29 +1331,14 @@ function sendWelcomeEmail(email, name) {
     '<p>Explore our wide range of premium beverages. If you have any questions, feel free to reply to this email.</p>' +
     '<p>Cheers,<br>The NIMRA Team</p>';
 
-  var message = {
-    to: email,
-    subject: subject,
-    body: plainBody,
-    htmlBody: htmlBody,
-    name: 'NIMRA Team'
-  };
-
-  try {
-    MailApp.sendEmail(message);
-  } catch (mailError) {
-    GmailApp.sendEmail(email, subject, plainBody, {
-      htmlBody: htmlBody,
-      name: 'NIMRA Team'
-    });
-  }
+  return sendNimraEmail(email, subject, plainBody, htmlBody, 'NIMRA Team');
 }
 
 function sendOrderConfirmationEmail(email, name, orderId, products, totalAmount) {
   email = normalizeEmail(email);
   if (!email || !isValidEmail(email)) {
     Logger.log("sendOrderConfirmationEmail skipped: invalid email address provided.");
-    return;
+    return { sent: false };
   }
   var displayName = String(name || 'Customer').trim();
   var subject = 'NIMRA Order Confirmation - ' + orderId;
@@ -1335,22 +1355,7 @@ function sendOrderConfirmationEmail(email, name, orderId, products, totalAmount)
     '<p>We will notify you once it is dispatched.</p>' +
     '<p>NIMRA Support</p>';
 
-  var message = {
-    to: email,
-    subject: subject,
-    body: plainBody,
-    htmlBody: htmlBody,
-    name: 'NIMRA Support'
-  };
-
-  try {
-    MailApp.sendEmail(message);
-  } catch (mailError) {
-    GmailApp.sendEmail(email, subject, plainBody, {
-      htmlBody: htmlBody,
-      name: 'NIMRA Support'
-    });
-  }
+  return sendNimraEmail(email, subject, plainBody, htmlBody, 'NIMRA Support');
 }
 
 function testEmailTemplates() {
