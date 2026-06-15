@@ -79,10 +79,6 @@ export default function Footer({ companyInfo }: FooterProps) {
 
           <div className="footer-bottom">
             <p>&copy; {currentYear} {companyInfo.BrandName} Beverage Company (T.S. Enterprises). All rights reserved.</p>
-            <div className="footer-legal">
-              <Link href="/contact">Support</Link>
-              <Link href="/about">Quality Standards</Link>
-            </div>
           </div>
         </div>
       </footer>
@@ -205,13 +201,6 @@ export default function Footer({ companyInfo }: FooterProps) {
           flex-wrap: wrap;
           gap: 1rem;
         }
-        .footer-legal {
-          display: flex;
-          gap: 1.5rem;
-        }
-        .footer-legal a:hover {
-          color: var(--primary-color);
-        }
         .whatsapp-fab {
           position: fixed;
           bottom: 2rem;
@@ -250,10 +239,6 @@ export default function Footer({ companyInfo }: FooterProps) {
           .footer-bottom {
             flex-direction: column;
             text-align: center;
-          }
-          .footer-legal {
-            flex-direction: column;
-            gap: 0.75rem;
           }
           .whatsapp-fab {
             width: 56px;

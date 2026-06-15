@@ -20,6 +20,7 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
   const isAdmin = pathname?.startsWith('/admin');
   const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password';
   const isLanding = pathname === '/landing';
+  const isCustomerPortal = pathname === '/customer-portal';
 
   useEffect(() => {
     if (isLoading) return;
@@ -41,19 +42,21 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
 
   if (isAdmin || isAuthPage || isLanding) {
     return (
-      <main style={{ flex: '1' }}>
-        {children}
-      </main>
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <main style={{ flex: '1' }}>
+          {children}
+        </main>
+      </div>
     );
   }
 
   return (
-    <>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Header companyInfo={companyInfo} />
       <main style={{ flex: '1', paddingTop: '80px' }}>
         {children}
       </main>
       <Footer companyInfo={companyInfo} />
-    </>
+    </div>
   );
 }

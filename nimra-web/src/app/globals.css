@@ -1,23 +1,23 @@
 :root {
   /* Colors */
-  --primary-color: #06b6d4;      /* Cyan 500 - Fresh, modern */
-  --primary-rgb: 6, 182, 212;
-  --primary-hover: #0891b2;     /* Cyan 600 */
-  --secondary-color: #0f172a;    /* Slate 900 */
-  --secondary-rgb: 15, 23, 42;
-  --accent-color: #10b981;       /* Emerald 500 */
-  --accent-rgb: 16, 185, 129;
-  --accent-hover: #059669;
+  --primary-color: #0f5ea8;      /* Premium blue */
+  --primary-rgb: 15, 94, 168;
+  --primary-hover: #0b4f8f;     /* Deeper blue */
+  --secondary-color: #072241;    /* Deep navy */
+  --secondary-rgb: 7, 34, 65;
+  --accent-color: #2bb673;       /* Fresh green accent */
+  --accent-rgb: 43, 182, 115;
+  --accent-hover: #1f9a5b;
   
-  --bg-primary: #f8fafc;        /* Slate 50 */
+  --bg-primary: #f7f9fc;        /* Soft cool gray */
   --bg-secondary: #ffffff;      /* White */
-  --bg-tertiary: #f1f5f9;       /* Slate 100 */
-  --nav-bg: rgba(248, 250, 252, 0.85);
-  --text-primary: #0f172a;      /* Slate 900 */
-  --text-secondary: #475569;    /* Slate 600 */
-  --text-muted: #94a3b8;        /* Slate 400 */
-  --border-color: #e2e8f0;      /* Slate 200 */
-  --border-light: #f1f5f9;      /* Slate 100 */
+  --bg-tertiary: #eef4fb;       /* Soft blue tint */
+  --nav-bg: rgba(247, 249, 252, 0.88);
+  --text-primary: #072241;      /* Navy */
+  --text-secondary: #4c5f76;    /* Slate blue */
+  --text-muted: #7b8ca5;        /* Muted blue */
+  --border-color: #dfe8f3;      /* Light blue border */
+  --border-light: #f1f5fb;      /* Light panel */
   
   --glass-bg: rgba(255, 255, 255, 0.8);
   --glass-border: rgba(255, 255, 255, 0.35);

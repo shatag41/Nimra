@@ -45,7 +45,10 @@ export default function LandingPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          background: linear-gradient(135deg, rgba(6, 182, 212, 0.05) 0%, rgba(10, 10, 10, 1) 100%);
+          background: 
+            radial-gradient(circle at 12% 18%, rgba(var(--primary-rgb), 0.15), transparent 32rem),
+            radial-gradient(circle at 86% 78%, rgba(var(--accent-rgb), 0.12), transparent 30rem),
+            linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
           padding: 1rem;
         }
 
@@ -56,17 +59,14 @@ export default function LandingPage() {
           max-width: 500px;
           width: 100%;
           animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-          border: 1px solid rgba(6, 182, 212, 0.15);
-          box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
-          background: rgba(15, 15, 15, 0.6);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid var(--border-color);
+          box-shadow: var(--shadow-2xl);
         }
 
         .welcome-title {
           font-size: 2rem;
           font-weight: 800;
-          color: white;
+          color: var(--text-primary);
           margin-bottom: 0.5rem;
           font-family: var(--font-heading);
           letter-spacing: -0.02em;
@@ -92,7 +92,7 @@ export default function LandingPage() {
         .spinner {
           width: 48px;
           height: 48px;
-          border: 4px solid rgba(6, 182, 212, 0.1);
+          border: 4px solid var(--border-color);
           border-left-color: var(--primary-color);
           border-radius: 50%;
           animation: spin 1s linear infinite;

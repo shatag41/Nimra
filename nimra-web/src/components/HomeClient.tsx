@@ -39,20 +39,37 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           <div
             key={banner.ID}
             className={`hero-slide ${idx === activeBanner ? 'active' : ''}`}
-            style={{ backgroundImage: `linear-gradient(to right, rgba(15, 23, 42, 0.8) 30%, rgba(15, 23, 42, 0.4) 100%), url(${banner.ImageUrl})` }}
+            style={{ backgroundImage: `linear-gradient(90deg, rgba(var(--secondary-rgb), 0.95) 0%, rgba(var(--secondary-rgb), 0.78) 45%, rgba(var(--secondary-rgb), 0.26) 100%), url(${banner.ImageUrl})` }}
           >
             <div className="container hero-content">
-              <span className="badge badge-primary animate-fade-in">Premium Hydration</span>
-              <h1 className="hero-title">{banner.Title}</h1>
-              <p className="hero-subtitle">{banner.Subtitle}</p>
-              <div className="hero-actions">
-                <Link href={banner.ButtonLink.startsWith('#') ? `/products` : banner.ButtonLink} className="btn btn-primary">
-                  {banner.ButtonText}
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                </Link>
-                <Link href="/about" className="btn btn-secondary" style={{ color: 'white', borderColor: 'white' }}>
-                  Our Story
-                </Link>
+              <div className="hero-copy">
+                <span className="badge badge-primary animate-fade-in">Premium Hydration</span>
+                <h1 className="hero-title">{banner.Title}</h1>
+                <p className="hero-subtitle">{banner.Subtitle}</p>
+                <div className="hero-actions">
+                  <Link href={banner.ButtonLink.startsWith('#') ? `/products` : banner.ButtonLink} className="btn btn-primary">
+                    {banner.ButtonText}
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                  </Link>
+                  <Link href="/about" className="btn btn-secondary">
+                    Our Story
+                  </Link>
+                </div>
+                <div className="hero-highlights">
+                  <span>Advanced purification</span>
+                  <span>Reliable doorstep delivery</span>
+                  <span>Trusted by families & offices</span>
+                </div>
+              </div>
+
+              <div className="hero-card glass">
+                <div className="hero-card-badge">NIMRA Promise</div>
+                <h3>Pure water crafted for everyday wellness.</h3>
+                <ul>
+                  <li>Mineral-balanced taste with consistent quality</li>
+                  <li>Range suited for homes, offices, and events</li>
+                  <li>Fast, dependable service across the city</li>
+                </ul>
               </div>
             </div>
           </div>
@@ -85,14 +102,14 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
               />
               <div className="water-drop-card glass">
                 <h3>10-Step Pure</h3>
-                <p>Reverse Osmosis, Mineral Addition, Ozonation</p>
+                <p>Reverse osmosis, mineral balancing, and protection at every stage.</p>
               </div>
             </div>
             <div className="story-content">
               <span className="badge badge-primary">About NIMRA</span>
-              <h2>Sourced to Refresh. Purified to Protect.</h2>
+              <h2>Sourced to refresh. Purified to protect.</h2>
               <p className="story-description">
-                {companyInfo.AboutStory || "At NIMRA, we believe pure drinking water is the cornerstone of robust health. Under T.S. Enterprises, we combine high-end standard purification technologies with mineral configuration balancing to ensure every drop of NIMRA is safe, clean, and refreshing."}
+                {companyInfo.AboutStory || "At NIMRA, we believe pure drinking water is the cornerstone of robust health. Under T.S. Enterprises, we combine advanced purification with careful mineral balancing to ensure every drop is safe, clean, and consistently refreshing."}
               </p>
               <div className="values-grid">
                 <div className="value-item">
@@ -100,8 +117,8 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                   </div>
                   <div>
-                    <h4>ISI Certified</h4>
-                    <p>Processed under strict Bureau of Indian Standards norms.</p>
+                    <h4>Certified Quality</h4>
+                    <p>Produced under stringent quality controls for dependable purity.</p>
                   </div>
                 </div>
                 <div className="value-item">
@@ -109,13 +126,13 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
                   </div>
                   <div>
-                    <h4>Mineral Rich</h4>
-                    <p>Enriched with balanced quantities of Potassium and Magnesium.</p>
+                    <h4>Balanced Minerals</h4>
+                    <p>Carefully enriched for a smooth, refreshing taste in every bottle.</p>
                   </div>
                 </div>
               </div>
               <Link href="/about" className="btn btn-primary" style={{ marginTop: '1.5rem' }}>
-                Learn More About Us
+                Discover Our Standards
               </Link>
             </div>
           </div>
@@ -237,18 +254,15 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
       <style jsx>{`
         /* Hero Carousel styling */
         .hero-section {
-          height: calc(85vh - 80px);
-          min-height: 500px;
+          height: calc(90vh - 80px);
+          min-height: 620px;
           position: relative;
           overflow: hidden;
-          background: var(--bg-secondary);
+          background: linear-gradient(135deg, var(--bg-tertiary) 0%, rgba(var(--primary-rgb), 0.12) 100%);
         }
         .hero-slide {
           position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
+          inset: 0;
           background-size: cover;
           background-position: center;
           opacity: 0;
@@ -262,26 +276,107 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           z-index: 2;
         }
         .hero-content {
-          color: var(--text-primary);
+          color: white;
           z-index: 10;
-          max-width: 650px;
+          display: grid;
+          grid-template-columns: 1.2fr 0.8fr;
+          gap: 2rem;
+          align-items: center;
+        }
+        .hero-copy {
+          max-width: 680px;
         }
         .hero-title {
           font-size: 3.5rem;
           font-weight: 800;
-          margin-top: 1.5rem;
-          margin-bottom: 1.5rem;
-          letter-spacing: -0.02em;
+          margin-top: 1.25rem;
+          margin-bottom: 1.25rem;
+          letter-spacing: -0.03em;
+          line-height: 1.05;
         }
         .hero-subtitle {
-          font-size: 1.15rem;
-          line-height: 1.6;
-          color: var(--text-muted);
-          margin-bottom: 2.5rem;
+          font-size: 1.08rem;
+          line-height: 1.75;
+          color: rgba(255, 255, 255, 0.84);
+          margin-bottom: 2rem;
+          max-width: 620px;
         }
         .hero-actions {
           display: flex;
-          gap: 1.25rem;
+          gap: 1rem;
+          flex-wrap: wrap;
+          margin-bottom: 1.25rem;
+        }
+        .hero-actions .btn-primary {
+          background: var(--accent-color);
+          color: white;
+          box-shadow: 0 12px 35px rgba(43, 182, 115, 0.28);
+        }
+        .hero-actions .btn-primary:hover {
+          background: var(--accent-hover);
+        }
+        .hero-actions .btn-secondary {
+          background: var(--glass-bg);
+          color: var(--text-primary);
+          border: 1px solid var(--glass-border);
+        }
+        .hero-highlights {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.75rem;
+        }
+        .hero-highlights span {
+          display: inline-flex;
+          align-items: center;
+          padding: 0.6rem 0.9rem;
+          border-radius: 999px;
+          background: var(--glass-bg);
+          border: 1px solid var(--glass-border);
+          font-size: 0.8rem;
+          font-weight: 600;
+          color: var(--text-primary);
+        }
+        .hero-card {
+          border-radius: var(--radius-xl);
+          padding: 1.5rem;
+          box-shadow: var(--shadow-xl);
+          max-width: 360px;
+          margin-left: auto;
+        }
+        .hero-card-badge {
+          display: inline-flex;
+          padding: 0.38rem 0.7rem;
+          border-radius: 999px;
+          background: rgba(var(--primary-rgb), 0.12);
+          color: var(--primary-color);
+          font-size: 0.74rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          margin-bottom: 0.8rem;
+        }
+        .hero-card h3 {
+          font-size: 1.2rem;
+          margin-bottom: 0.9rem;
+          color: var(--text-primary);
+        }
+        .hero-card ul {
+          list-style: none;
+          display: grid;
+          gap: 0.7rem;
+          color: var(--text-secondary);
+          font-size: 0.95rem;
+        }
+        .hero-card li {
+          position: relative;
+          padding-left: 1.1rem;
+        }
+        .hero-card li::before {
+          content: '•';
+          position: absolute;
+          left: 0;
+          color: var(--accent-color);
+          font-weight: 700;
         }
         .carousel-dots {
           position: absolute;
@@ -296,20 +391,20 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           width: 12px;
           height: 12px;
           border-radius: 50%;
-          background: rgba(148, 163, 184, 0.4);
+          background: rgba(255, 255, 255, 0.4);
           border: none;
           cursor: pointer;
           transition: all var(--transition-fast);
         }
         .dot.active {
-          background: var(--primary-color);
-          width: 28px;
+          background: var(--accent-color);
+          width: 32px;
           border-radius: var(--radius-md);
         }
 
         /* Brand Story styling */
         .story-section {
-          background-color: var(--bg-secondary);
+          background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
         }
         .story-grid {
           display: grid;
@@ -327,55 +422,58 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         }
         .water-drop-card {
           position: absolute;
-          bottom: -1.5rem;
-          right: -1.5rem;
-          padding: 1.75rem;
+          bottom: -1.25rem;
+          right: -1.25rem;
+          padding: 1.35rem 1.5rem;
           border-radius: var(--radius-xl);
-          max-width: 250px;
+          max-width: 260px;
         }
         .water-drop-card h3 {
           color: var(--primary-color);
-          font-size: 1.2rem;
-          margin-bottom: 0.5rem;
+          font-size: 1.1rem;
+          margin-bottom: 0.35rem;
           font-weight: 700;
         }
         .water-drop-card p {
           font-size: 0.85rem;
-          color: var(--text-muted);
+          color: var(--text-secondary);
+          line-height: 1.5;
         }
         .story-content h2 {
-          font-size: 2.5rem;
+          font-size: 2.45rem;
           margin-top: 1rem;
-          margin-bottom: 1.5rem;
+          margin-bottom: 1.25rem;
           letter-spacing: -0.02em;
         }
         .story-description {
           line-height: 1.7;
           color: var(--text-secondary);
           margin-bottom: 2rem;
+          max-width: 620px;
         }
         .values-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 1.5rem;
+          gap: 1.25rem;
           margin-bottom: 1rem;
         }
         .value-item {
           display: flex;
-          gap: 1rem;
-          padding: 1rem;
+          gap: 0.9rem;
+          padding: 1rem 1rem 1.1rem;
           border-radius: var(--radius-lg);
-          background: var(--bg-primary);
+          background: var(--bg-secondary);
           border: 1px solid var(--border-color);
           transition: all var(--transition-normal);
         }
         .value-item:hover {
           border-color: var(--primary-color);
           box-shadow: var(--shadow-md);
+          transform: translateY(-2px);
         }
         .value-icon {
-          width: 48px;
-          height: 48px;
+          width: 44px;
+          height: 44px;
           border-radius: var(--radius-md);
           background: rgba(var(--primary-rgb), 0.1);
           display: flex;
@@ -384,11 +482,11 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           flex-shrink: 0;
         }
         .value-item h4 {
-          margin-bottom: 0.25rem;
-          font-size: 1.05rem;
+          margin-bottom: 0.2rem;
+          font-size: 1rem;
         }
         .value-item p {
-          font-size: 0.85rem;
+          font-size: 0.84rem;
           color: var(--text-muted);
           line-height: 1.4;
         }
@@ -396,16 +494,17 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         /* Product Preview */
         .section-header {
           text-align: center;
-          max-width: 600px;
-          margin: 0 auto 4rem;
+          max-width: 640px;
+          margin: 0 auto 3.5rem;
         }
         .section-header h2 {
-          font-size: 2.5rem;
-          margin-top: 1rem;
-          margin-bottom: 1rem;
+          font-size: 2.35rem;
+          margin-top: 0.8rem;
+          margin-bottom: 0.8rem;
         }
         .section-header p {
           color: var(--text-secondary);
+          line-height: 1.7;
         }
         .preview-grid {
           display: grid;
@@ -414,13 +513,14 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         }
         .product-preview-card {
           border-radius: var(--radius-xl);
-          padding: 1.5rem;
+          padding: 1.4rem;
           display: flex;
           flex-direction: column;
           align-items: center;
           text-align: center;
           transition: transform var(--transition-normal), box-shadow var(--transition-normal);
           box-shadow: var(--shadow-md);
+          background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
         }
         .product-preview-card:hover {
           transform: translateY(-8px);
@@ -431,7 +531,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           display: flex;
           align-items: center;
           justify-content: center;
-          margin-bottom: 1.5rem;
+          margin-bottom: 1.25rem;
         }
         .prod-img-box img {
           max-height: 100%;
@@ -441,7 +541,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           transition: transform var(--transition-normal);
         }
         .product-preview-card:hover .prod-img-box img {
-          transform: scale(1.06);
+          transform: scale(1.05);
         }
         .prod-vol {
           display: inline-block;
@@ -451,17 +551,17 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           background: rgba(var(--primary-rgb), 0.1);
           padding: 0.25rem 0.75rem;
           border-radius: 50px;
-          margin-bottom: 0.5rem;
+          margin-bottom: 0.55rem;
         }
         .prod-info-box h3 {
-          font-size: 1.25rem;
-          margin-bottom: 0.5rem;
+          font-size: 1.16rem;
+          margin-bottom: 0.45rem;
         }
         .prod-info-box p {
-          font-size: 0.85rem;
+          font-size: 0.9rem;
           color: var(--text-secondary);
-          line-height: 1.5;
-          margin-bottom: 1.5rem;
+          line-height: 1.55;
+          margin-bottom: 1.3rem;
         }
         .prod-footer {
           width: 100%;
@@ -473,7 +573,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           padding-top: 1rem;
         }
         .prod-price {
-          font-size: 1.35rem;
+          font-size: 1.2rem;
           font-weight: 800;
           color: var(--text-primary);
         }
@@ -484,18 +584,15 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
 
         /* RUSH Soda "Coming Soon" section */
         .rush-section {
-          background: linear-gradient(135deg, #090d16 0%, #171d2b 100%);
-          color: white;
+          background: linear-gradient(135deg, var(--secondary-color) 0%, rgba(var(--primary-rgb), 0.9) 100%);
+          color: var(--bg-primary);
           padding: 6rem 0;
           z-index: 1;
           position: relative;
         }
         .bubble-bg {
           position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
+          inset: 0;
           overflow: hidden;
           z-index: -1;
           pointer-events: none;
@@ -684,9 +781,14 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
 
         /* Responsive */
         @media (max-width: 1024px) {
-          .story-grid, .rush-grid {
+          .hero-content,
+          .story-grid,
+          .rush-grid {
             grid-template-columns: 1fr;
             gap: 3rem;
+          }
+          .hero-card {
+            margin-left: 0;
           }
           .story-image-container {
             max-width: 500px;
@@ -697,6 +799,9 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           }
         }
         @media (max-width: 768px) {
+          .hero-section {
+            min-height: 680px;
+          }
           .hero-title {
             font-size: 2.5rem;
           }

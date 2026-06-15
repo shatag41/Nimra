@@ -117,13 +117,13 @@ export default function CustomerPortal() {
           width: 100%;
           margin: 0;
           padding: 0;
-          background: #f8fafc;
+          background: var(--bg-primary);
           min-height: 100vh;
         }
 
         .portal-header {
           padding: 3rem 4rem;
-          background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 50%, #10b981 100%);
+          background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
           position: relative;
           overflow: hidden;
           color: white;
@@ -197,13 +197,13 @@ export default function CustomerPortal() {
         .action-card {
           padding: 2.5rem 2rem;
           border-radius: 1.5rem;
-          border: none;
+          border: 1px solid var(--border-color);
           text-align: center;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          background: white;
-          color: #0f172a;
+          background: var(--bg-secondary);
+          color: var(--text-primary);
           text-decoration: none;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05);
+          box-shadow: var(--shadow-sm);
           position: relative;
           overflow: hidden;
         }
@@ -215,7 +215,7 @@ export default function CustomerPortal() {
           left: 0;
           width: 100%;
           height: 4px;
-          background: linear-gradient(90deg, #0ea5e9, #06b6d4, #10b981);
+          background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
           transform: scaleX(0);
           transform-origin: center;
           transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -223,8 +223,8 @@ export default function CustomerPortal() {
 
         .action-card:hover {
           transform: translateY(-8px);
-          box-shadow: 0 20px 40px -15px rgba(14, 165, 233, 0.35), 0 10px 24px -10px rgba(14, 165, 233, 0.25);
-          background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+          box-shadow: var(--shadow-xl);
+          border-color: var(--primary-color);
         }
         
         .action-card:hover::before {
@@ -240,22 +240,22 @@ export default function CustomerPortal() {
 
         .action-card h3 {
           font-size: 1.35rem;
-          color: #0f172a;
+          color: var(--text-primary);
           margin-bottom: 0.5rem;
           font-weight: 800;
           letter-spacing: -0.01em;
         }
 
         .action-card p {
-          color: #64748b;
+          color: var(--text-secondary);
           font-size: 0.95rem;
           line-height: 1.6;
         }
 
         .orders-section {
           padding: 3rem 4rem;
-          background: white;
-          box-shadow: 0 -1px 0 rgba(0,0,0,0.05);
+          background: var(--bg-secondary);
+          box-shadow: 0 -1px 0 var(--border-color);
         }
         
         .orders-content {
@@ -272,7 +272,7 @@ export default function CustomerPortal() {
         
         .section-header h2 {
           font-size: 1.75rem;
-          color: #0f172a;
+          color: var(--text-primary);
           margin: 0;
           font-weight: 800;
           letter-spacing: -0.02em;
@@ -281,7 +281,7 @@ export default function CustomerPortal() {
         .orders-loading, .empty-orders {
           text-align: center;
           padding: 4rem 2rem;
-          color: #64748b;
+          color: var(--text-secondary);
         }
         
         .empty-orders p {
@@ -292,8 +292,8 @@ export default function CustomerPortal() {
         .table-responsive {
           overflow-x: auto;
           border-radius: 1rem;
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
+          background: var(--bg-primary);
+          border: 1px solid var(--border-color);
         }
 
         .orders-table {
@@ -306,7 +306,7 @@ export default function CustomerPortal() {
 
         .orders-table th, .orders-table td {
           padding: 1.25rem 1.5rem;
-          border-bottom: 1px solid #e2e8f0;
+          border-bottom: 1px solid var(--border-color);
         }
         
         .orders-table tr:last-child td {
@@ -314,9 +314,9 @@ export default function CustomerPortal() {
         }
 
         .orders-table th {
-          color: #475569;
+          color: var(--text-secondary);
           font-weight: 700;
-          background: #f1f5f9;
+          background: var(--bg-tertiary);
           font-size: 0.85rem;
           letter-spacing: 0.05em;
           text-transform: uppercase;
@@ -324,32 +324,49 @@ export default function CustomerPortal() {
         
         .orders-table td {
           font-size: 0.95rem;
-          color: #0f172a;
+          color: var(--text-primary);
         }
 
         .status-badge {
-          display: inline-block;
-          padding: 0.4rem 1rem;
+          display: inline-flex;
+          align-items: center;
+          padding: 0.375rem 0.875rem;
           border-radius: 999px;
-          font-size: 0.85rem;
+          font-size: 0.75rem;
           font-weight: 700;
-          letter-spacing: 0.025em;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
         }
 
-        .status-badge.pending { background: #fef3c7; color: #92400e; border: none; }
-        .status-badge.processing { background: #dbeafe; color: #1e40af; border: none; }
-        .status-badge.shipped { background: #f3e8ff; color: #7c3aed; border: none; }
-        .status-badge.delivered { background: #d1fae5; color: #065f46; border: none; }
-        .status-badge.cancelled { background: #fee2e2; color: #991b1b; border: none; }
+        .status-badge.pending { 
+          background: rgba(249, 115, 22, 0.12); 
+          color: #f97316; 
+        }
+        .status-badge.processing { 
+          background: rgba(59, 130, 246, 0.12); 
+          color: #3b82f6; 
+        }
+        .status-badge.shipped { 
+          background: rgba(168, 85, 247, 0.12); 
+          color: #a855f7; 
+        }
+        .status-badge.delivered { 
+          background: rgba(16, 185, 129, 0.12); 
+          color: #047857; 
+        }
+        .status-badge.cancelled { 
+          background: rgba(239, 68, 68, 0.12); 
+          color: #dc2626; 
+        }
 
         .loading-state {
           min-height: 100vh;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #64748b;
+          color: var(--text-secondary);
           font-size: 1.05rem;
-          background: #f8fafc;
+          background: var(--bg-primary);
         }
         
         @media (max-width: 1200px) {
