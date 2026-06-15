@@ -93,6 +93,33 @@ a {
   transition: var(--transition-fast);
 }
 
+button,
+[role="button"],
+a[href],
+input,
+textarea,
+select,
+summary {
+  pointer-events: auto;
+  position: relative;
+  z-index: 2;
+}
+
+.btn,
+.icon-btn,
+.mobile-menu-btn,
+.cart-link,
+.map-tab-btn,
+.faq-item,
+.whatsapp-fab,
+.auth-submit,
+.auth-google-button {
+  position: relative;
+  z-index: 10;
+  isolation: isolate;
+  pointer-events: auto;
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   font-weight: 700;
@@ -280,7 +307,8 @@ section {
   position: relative;
   overflow: hidden;
   pointer-events: auto;
-  z-index: 1;
+  z-index: 10;
+  isolation: isolate;
 }
 
 .btn::before {

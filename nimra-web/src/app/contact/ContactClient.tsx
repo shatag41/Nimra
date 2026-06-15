@@ -9,6 +9,18 @@ interface ContactClientProps {
   companyInfo: CompanyInfo;
 }
 
+function getMapEmbedUrl(embedUrl?: string, fallbackAddress?: string) {
+  if (embedUrl && /^https?:\/\//i.test(embedUrl)) {
+    return embedUrl;
+  }
+
+  if (!fallbackAddress) {
+    return '';
+  }
+
+  return `https://www.google.com/maps?q=${encodeURIComponent(fallbackAddress)}&output=embed`;
+}
+
 export default function ContactClient({ companyInfo }: ContactClientProps) {
   const searchParams = useSearchParams();
   const [mapTab, setMapTab] = useState<'office' | 'plant'>('office');
@@ -32,6 +44,8 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
     message: '',
   });
 
+  const officeMapUrl = getMapEmbedUrl(companyInfo.OfficeMapEmbed, companyInfo.OfficeAddress);
+  const plantMapUrl = getMapEmbedUrl(companyInfo.PlantMapEmbed, companyInfo.PlantAddress);
   const isPhoneValid = /^\d{10}$/.test(form.phone.trim());
   const isFormValid = Boolean(
     form.name.trim() &&
@@ -165,10 +179,10 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
                 
                 <div className="map-iframe-container">
                   {mapTab === 'office' ? (
-                    companyInfo.OfficeMapEmbed ? (
+                    officeMapUrl ? (
                       <iframe
                         title="Corporate Office Map"
-                        src={companyInfo.OfficeMapEmbed}
+                        src={officeMapUrl}
                         width="100%"
                         height="300"
                         style={{ border: 0 }}
@@ -180,10 +194,10 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
                       <div className="map-loader">Loading map...</div>
                     )
                   ) : (
-                    companyInfo.PlantMapEmbed ? (
+                    plantMapUrl ? (
                       <iframe
                         title="Manufacturing Plant Map"
-                        src={companyInfo.PlantMapEmbed}
+                        src={plantMapUrl}
                         width="100%"
                         height="300"
                         style={{ border: 0 }}
@@ -340,6 +354,11 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
           grid-template-columns: 1fr 1.1fr;
           gap: 4rem;
         }
+        .details-col {
+          position: relative;
+          z-index: 1;
+          pointer-events: auto;
+        }
         .details-col h2, .form-col h2 {
           font-size: 1.75rem;
           margin-bottom: 0.5rem;
@@ -404,10 +423,15 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
           box-shadow: var(--shadow-lg);
           background: var(--bg-primary);
           border: 1px solid var(--border-color);
+          position: relative;
+          z-index: 1;
+          pointer-events: auto;
         }
         .map-tabs {
           display: flex;
           border-bottom: 1px solid var(--border-color);
+          position: relative;
+          z-index: 10;
         }
         .map-tab-btn {
           flex: 1;
@@ -420,6 +444,9 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
           color: var(--text-secondary);
           cursor: pointer;
           transition: all var(--transition-fast);
+          pointer-events: auto;
+          position: relative;
+          z-index: 20;
         }
         .map-tab-btn:hover {
           color: var(--primary-color);
@@ -448,6 +475,9 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
           height: fit-content;
           background: var(--bg-primary);
           border: 1px solid var(--border-color);
+          position: relative;
+          z-index: 1;
+          pointer-events: auto;
         }
         .status-banner {
           display: flex;
@@ -473,11 +503,17 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
           display: flex;
           flex-direction: column;
           gap: 1.25rem;
+          position: relative;
+          z-index: 5;
+          pointer-events: auto;
         }
         .form-group {
           display: flex;
           flex-direction: column;
           gap: 0.5rem;
+          position: relative;
+          z-index: 10;
+          pointer-events: auto;
         }
         .form-row {
           display: grid;
@@ -501,11 +537,19 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
           font-family: var(--font-body);
           font-size: 0.95rem;
           transition: all var(--transition-fast);
+          pointer-events: auto;
+          position: relative;
+          z-index: 20;
         }
         input:focus, textarea:focus {
           outline: none;
           border-color: var(--primary-color);
           box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
+        }
+        .inquiry-submit {
+          pointer-events: auto;
+          z-index: 10;
+          position: relative;
         }
         .inquiry-submit:disabled {
           background: var(--text-muted);
@@ -514,6 +558,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
           box-shadow: none;
           cursor: not-allowed;
           opacity: 0.7;
+          pointer-events: none;
         }
         .inquiry-submit:disabled:hover {
           background: var(--text-muted);

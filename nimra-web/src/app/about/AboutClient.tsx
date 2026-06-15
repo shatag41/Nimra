@@ -7,8 +7,21 @@ interface AboutClientProps {
   companyInfo: CompanyInfo;
 }
 
+function getMapEmbedUrl(embedUrl?: string, fallbackAddress?: string) {
+  if (embedUrl && /^https?:\/\//i.test(embedUrl)) {
+    return embedUrl;
+  }
+
+  if (!fallbackAddress) {
+    return '';
+  }
+
+  return `https://www.google.com/maps?q=${encodeURIComponent(fallbackAddress)}&output=embed`;
+}
+
 export default function AboutClient({ companyInfo }: AboutClientProps) {
   const [activeSection, setActiveSection] = useState<'story' | 'quality' | 'plant'>('story');
+  const plantMapUrl = getMapEmbedUrl(companyInfo.PlantMapEmbed, companyInfo.PlantAddress);
 
   const steps = [
     { title: '1. Source Intake', desc: 'Water is sourced responsibly from clean, underground aquifers.' },
@@ -114,10 +127,10 @@ export default function AboutClient({ companyInfo }: AboutClientProps) {
                 </div>
               </div>
               <div className="plant-map-box">
-                {companyInfo.PlantMapEmbed ? (
+                {plantMapUrl ? (
                   <iframe
                     title="NIMRA Plant Location Map"
-                    src={companyInfo.PlantMapEmbed}
+                    src={plantMapUrl}
                     width="100%"
                     height="350"
                     style={{ border: 0, borderRadius: '16px' }}
