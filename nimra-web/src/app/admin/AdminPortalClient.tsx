@@ -62,6 +62,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [hoveredPoint, setHoveredPoint] = useState<{ x: number; y: number; revenue: number; date: string } | null>(null);
   const [products, setProducts] = useState<Product[]>(initialCMSData.products || []);
   const [banners, setBanners] = useState<Banner[]>(initialCMSData.banners || []);
   const [faqs, setFaqs] = useState<FAQ[]>(initialCMSData.faqs || []);
@@ -680,6 +681,98 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
     }));
   };
 
+  // Dynamic Chart Calculations
+  // Donut Chart calculations
+  const totalOrdersCount = orders.length;
+  const countDelivered = orders.filter(o => o.status === 'Delivered').length;
+  const countInProgress = orders.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled').length;
+  const countCancelled = orders.filter(o => o.status === 'Cancelled').length;
+
+  const fDelivered = totalOrdersCount > 0 ? countDelivered / totalOrdersCount : 0;
+  const fInProgress = totalOrdersCount > 0 ? countInProgress / totalOrdersCount : 0;
+  const fCancelled = totalOrdersCount > 0 ? countCancelled / totalOrdersCount : 0;
+
+  const circ = 377; // 2 * PI * 60 approx 376.99
+  const deliveredDashArray = `${(fDelivered * circ).toFixed(1)} ${circ}`;
+  const deliveredDashOffset = 0;
+
+  const inProgressDashArray = `${(fInProgress * circ).toFixed(1)} ${circ}`;
+  const inProgressDashOffset = -(fDelivered * circ);
+
+  const cancelledDashArray = `${(fCancelled * circ).toFixed(1)} ${circ}`;
+  const cancelledDashOffset = -((fDelivered + fInProgress) * circ);
+
+  // Line Chart calculations
+  const revenueByDate: { [date: string]: number } = {};
+  orders
+    .filter(o => o.status === 'Delivered' && o.createdAt)
+    .forEach(o => {
+      try {
+        const dateStr = new Date(o.createdAt).toISOString().split('T')[0];
+        revenueByDate[dateStr] = (revenueByDate[dateStr] || 0) + Number(o.total || 0);
+      } catch (e) {
+        // Ignore date parse errors
+      }
+    });
+
+  const last7Days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    last7Days.push(d.toISOString().split('T')[0]);
+  }
+
+  const chartData = last7Days.map(day => ({
+    date: day,
+    revenue: revenueByDate[day] || 0
+  }));
+
+  const maxRev = Math.max(...chartData.map(d => d.revenue), 0);
+  const chartMax = maxRev > 0 ? maxRev * 1.15 : 100;
+
+  const linePoints = chartData.map((d, i) => {
+    const x = 40 + i * (440 / 6);
+    const y = 170 - (d.revenue / chartMax) * 150;
+    return { x, y, revenue: d.revenue, date: d.date };
+  });
+
+  const linePathD = linePoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+  const areaPathD = linePoints.length > 0
+    ? `${linePathD} L ${linePoints[linePoints.length - 1].x.toFixed(1)} 170 L ${linePoints[0].x.toFixed(1)} 170 Z`
+    : '';
+
+  const formatDateLabel = (dateStr: string) => {
+    try {
+      const [_, month, day] = dateStr.split('-');
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const monthIdx = parseInt(month, 10) - 1;
+      return `${monthNames[monthIdx]} ${day}`;
+    } catch {
+      return dateStr;
+    }
+  };
+
+  // Hover tracker
+  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
+    if (!linePoints || linePoints.length === 0) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clientX = e.clientX - rect.left;
+    const svgX = (clientX / rect.width) * 500;
+    
+    let closest = linePoints[0];
+    let minDiff = Math.abs(linePoints[0].x - svgX);
+    
+    for (let i = 1; i < linePoints.length; i++) {
+      const diff = Math.abs(linePoints[i].x - svgX);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closest = linePoints[i];
+      }
+    }
+    
+    setHoveredPoint(closest);
+  };
+
   if (!currentUser) return null;
 
   return (
@@ -895,13 +988,18 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                 </div>
 
                 {/* SVG Charts section */}
-                <div className="charts-grid">
+        <div className="charts-grid">
                   {/* Revenue Line Chart */}
                   <div className="chart-card glass">
                     <h3>Revenue Trend (Delivered Orders)</h3>
                     <div className="chart-wrapper">
-                      {/* Simple Responsive SVG Line Chart */}
-                      <svg viewBox="0 0 500 200" className="svg-chart">
+                      <svg 
+                        viewBox="0 0 500 200" 
+                        className="svg-chart"
+                        onMouseMove={handleMouseMove}
+                        onMouseLeave={() => setHoveredPoint(null)}
+                        style={{ overflow: 'visible' }}
+                      >
                         {/* Grid lines */}
                         <line x1="40" y1="20" x2="480" y2="20" stroke="var(--border-color)" strokeDasharray="4 4" />
                         <line x1="40" y1="70" x2="480" y2="70" stroke="var(--border-color)" strokeDasharray="4 4" />
@@ -909,34 +1007,96 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                         <line x1="40" y1="170" x2="480" y2="170" stroke="var(--border-color)" />
                         
                         {/* Area Gradient */}
-                        <path
-                          d="M 40 170 L 113 150 L 186 160 L 260 90 L 333 130 L 406 50 L 480 120 L 480 170 Z"
-                          fill="url(#chartAreaGrad)"
-                        />
+                        {areaPathD && (
+                          <path
+                            d={areaPathD}
+                            fill="url(#chartAreaGrad)"
+                          />
+                        )}
                         
                         {/* Line */}
-                        <path
-                          d="M 40 170 L 113 150 L 186 160 L 260 90 L 333 130 L 406 50 L 480 120"
-                          fill="none"
-                          stroke="var(--primary-color)"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                        />
+                        {linePathD && (
+                          <path
+                            d={linePathD}
+                            fill="none"
+                            stroke="var(--primary-color)"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                          />
+                        )}
                         
                         {/* Points */}
-                        <circle cx="40" cy="170" r="4" fill="var(--primary-color)" />
-                        <circle cx="113" cy="150" r="4" fill="var(--primary-color)" />
-                        <circle cx="186" cy="160" r="4" fill="var(--primary-color)" />
-                        <circle cx="260" cy="90" r="4" fill="var(--primary-color)" />
-                        <circle cx="333" cy="130" r="4" fill="var(--primary-color)" />
-                        <circle cx="406" cy="50" r="4" fill="var(--primary-color)" />
-                        <circle cx="480" cy="120" r="4" fill="var(--primary-color)" />
+                        {linePoints.map((p, idx) => (
+                          <circle 
+                            key={idx} 
+                            cx={p.x} 
+                            cy={p.y} 
+                            r={hoveredPoint?.date === p.date ? 6 : 4} 
+                            fill="var(--primary-color)"
+                            style={{ cursor: 'pointer', transition: 'r 0.15s ease' }}
+                          />
+                        ))}
 
                         {/* Labels */}
-                        <text x="40" y="190" textAnchor="middle" fontSize="9" fill="var(--text-secondary)">Jun 01</text>
-                        <text x="186" y="190" textAnchor="middle" fontSize="9" fill="var(--text-secondary)">Jun 05</text>
-                        <text x="333" y="190" textAnchor="middle" fontSize="9" fill="var(--text-secondary)">Jun 10</text>
-                        <text x="480" y="190" textAnchor="middle" fontSize="9" fill="var(--text-secondary)">Jun 12</text>
+                        {linePoints.map((p, idx) => {
+                          if (idx === 0 || idx === 2 || idx === 4 || idx === 6) {
+                            return (
+                              <text key={idx} x={p.x} y="190" textAnchor="middle" fontSize="9" fill="var(--text-secondary)">
+                                {formatDateLabel(p.date)}
+                              </text>
+                            );
+                          }
+                          return null;
+                        })}
+
+                        {/* Hover Tooltip Overlay */}
+                        {hoveredPoint && (
+                          <g style={{ pointerEvents: 'none' }}>
+                            {/* Vertical indicator line */}
+                            <line 
+                              x1={hoveredPoint.x} 
+                              y1={hoveredPoint.y} 
+                              x2={hoveredPoint.x} 
+                              y2={170} 
+                              stroke="var(--primary-color)" 
+                              strokeWidth="1.5" 
+                              strokeDasharray="2 2" 
+                            />
+                            
+                            {/* Pulsing highlight ring */}
+                            <circle 
+                              cx={hoveredPoint.x} 
+                              cy={hoveredPoint.y} 
+                              r="8" 
+                              fill="transparent" 
+                              stroke="var(--primary-color)" 
+                              strokeWidth="1.5" 
+                              style={{ opacity: 0.5 }}
+                            />
+                            
+                            {/* Tooltip block */}
+                            <g transform={`translate(${hoveredPoint.x > 380 ? hoveredPoint.x - 110 : hoveredPoint.x < 120 ? hoveredPoint.x : hoveredPoint.x - 55}, ${hoveredPoint.y - 45})`}>
+                              <rect 
+                                width="110" 
+                                height="36" 
+                                rx="6" 
+                                fill="var(--glass-bg)" 
+                                stroke="var(--primary-color)" 
+                                strokeWidth="1" 
+                                style={{ 
+                                  filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.15))', 
+                                  backdropFilter: 'blur(4px)' 
+                                }} 
+                              />
+                              <text x="55" y="14" textAnchor="middle" fontSize="9" fontWeight="bold" fill="var(--text-primary)">
+                                {formatDateLabel(hoveredPoint.date)}
+                              </text>
+                              <text x="55" y="27" textAnchor="middle" fontSize="9.5" fontWeight="bold" fill="var(--primary-color)">
+                                {formatCurrency(hoveredPoint.revenue)}
+                              </text>
+                            </g>
+                          </g>
+                        )}
 
                         <defs>
                           <linearGradient id="chartAreaGrad" x1="0" y1="0" x2="0" y2="1">
@@ -955,15 +1115,21 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                       <svg viewBox="0 0 160 160" width="140" height="140">
                         {/* Simple Donut SVG */}
                         <circle cx="80" cy="80" r="60" fill="transparent" stroke="var(--border-color)" strokeWidth="15" />
-                        {/* Delivered portion (approx 40%) */}
-                        <circle cx="80" cy="80" r="60" fill="transparent" stroke="var(--primary-color)" strokeWidth="15" 
-                                strokeDasharray="150 376" strokeDashoffset="0" />
-                        {/* Pending/Processing portion (approx 40%) */}
-                        <circle cx="80" cy="80" r="60" fill="transparent" stroke="#f97316" strokeWidth="15" 
-                                strokeDasharray="120 376" strokeDashoffset="-150" />
-                        {/* Cancelled portion (approx 20%) */}
-                        <circle cx="80" cy="80" r="60" fill="transparent" stroke="#ef4444" strokeWidth="15" 
-                                strokeDasharray="106 376" strokeDashoffset="-270" />
+                        {/* Delivered portion */}
+                        {countDelivered > 0 && (
+                          <circle cx="80" cy="80" r="60" fill="transparent" stroke="var(--primary-color)" strokeWidth="15" 
+                                  strokeDasharray={deliveredDashArray} strokeDashoffset={deliveredDashOffset} />
+                        )}
+                        {/* Pending/Processing portion */}
+                        {countInProgress > 0 && (
+                          <circle cx="80" cy="80" r="60" fill="transparent" stroke="#f97316" strokeWidth="15" 
+                                  strokeDasharray={inProgressDashArray} strokeDashoffset={inProgressDashOffset} />
+                        )}
+                        {/* Cancelled portion */}
+                        {countCancelled > 0 && (
+                          <circle cx="80" cy="80" r="60" fill="transparent" stroke="#ef4444" strokeWidth="15" 
+                                  strokeDasharray={cancelledDashArray} strokeDashoffset={cancelledDashOffset} />
+                        )}
                       </svg>
                       <div className="legend-list">
                         <div><span className="legend-dot green"></span> Delivered ({orders.filter(o => o.status === 'Delivered').length})</div>
@@ -2651,11 +2817,13 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           z-index: 2000;
           backdrop-filter: blur(4px);
         }
-        .modal-content {
+        .modal-card {
           background: var(--bg-secondary);
           border-radius: var(--radius-xl);
-          width: 100%;
-          max-width: 520px;
+          width: 90%;
+          max-width: 560px;
+          max-height: 90vh;
+          overflow-y: auto;
           box-shadow: var(--shadow-2xl);
           animation: scaleIn 0.2s ease-out forwards;
           border: 1px solid var(--border-color);
@@ -2727,6 +2895,12 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 1rem;
+        }
+        @media (max-width: 600px) {
+          .form-row {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+          }
         }
         .modal-footer {
           padding: 1.25rem 1.5rem;

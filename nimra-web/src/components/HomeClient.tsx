@@ -285,6 +285,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         }
         .hero-copy {
           max-width: 680px;
+          color: white !important;
         }
         .hero-title {
           font-size: 3.5rem;
@@ -293,11 +294,12 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           margin-bottom: 1.25rem;
           letter-spacing: -0.03em;
           line-height: 1.05;
+          color: white !important;
         }
         .hero-subtitle {
           font-size: 1.08rem;
           line-height: 1.75;
-          color: rgba(255, 255, 255, 0.84);
+          color: rgba(255, 255, 255, 0.85) !important;
           margin-bottom: 2rem;
           max-width: 620px;
         }
@@ -316,9 +318,12 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           background: var(--accent-hover);
         }
         .hero-actions .btn-secondary {
-          background: var(--glass-bg);
-          color: var(--text-primary);
-          border: 1px solid var(--glass-border);
+          background: rgba(255, 255, 255, 0.12);
+          color: white !important;
+          border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .hero-actions .btn-secondary:hover {
+          background: rgba(255, 255, 255, 0.2);
         }
         .hero-highlights {
           display: flex;
@@ -330,11 +335,11 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           align-items: center;
           padding: 0.6rem 0.9rem;
           border-radius: 999px;
-          background: var(--glass-bg);
-          border: 1px solid var(--glass-border);
+          background: rgba(255, 255, 255, 0.15) !important;
+          border: 1px solid rgba(255, 255, 255, 0.2) !important;
           font-size: 0.8rem;
           font-weight: 600;
-          color: var(--text-primary);
+          color: white !important;
         }
         .hero-card {
           border-radius: var(--radius-xl);
