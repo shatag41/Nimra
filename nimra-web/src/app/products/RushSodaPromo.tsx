@@ -10,70 +10,75 @@ export default function RushSodaPromo() {
       <div className="bubble bubble-4"></div>
       <div className="bubble bubble-5"></div>
 
-      <div className="promo-content">
-        <div className="promo-badge">
-          🚀 COMING SOON
-        </div>
-        
-        <h2 className="promo-headline">RUSH Soda is Coming Soon!</h2>
-        <p className="promo-subheading">
-          Get ready for a refreshing new experience. Exciting flavors and sparkling refreshment are on the way.
-        </p>
+      <div className="promo-wrapper">
+        <div className="promo-main-row">
+          <div className="promo-text-content">
+            <div className="promo-badge">
+              🚀 COMING SOON
+            </div>
+            
+            <h2 className="promo-headline">RUSH Soda is Coming Soon!</h2>
+            <p className="promo-subheading">
+              Get ready for a refreshing new experience. Exciting flavors and sparkling refreshment are on the way.
+            </p>
 
-        <div className="main-graphic-container">
-          <div className="glow-effect"></div>
-          <img 
-            src="/rush-soda-can-new.png" 
-            alt="RUSH Soda Premium Can" 
-            className="soda-can floating-animation"
-          />
+            <div className="launch-banner">
+              <span className="pulse-dot"></span>
+              Launching Soon Across Pune
+            </div>
+
+            <div className="compact-features">
+              <div className="compact-feature glassmorphism">
+                <div className="feature-icon">💧</div>
+                <span>Refreshing</span>
+              </div>
+              <div className="compact-feature glassmorphism">
+                <div className="feature-icon">✨</div>
+                <span>Premium</span>
+              </div>
+              <div className="compact-feature glassmorphism">
+                <div className="feature-icon">🌈</div>
+                <span>Flavors</span>
+              </div>
+              <div className="compact-feature glassmorphism">
+                <div className="feature-icon">🚀</div>
+                <span>Soon</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="promo-graphic-content">
+            <div className="main-graphic-container">
+              <div className="glow-effect"></div>
+              <img 
+                src="/rush-soda-can-new.png" 
+                alt="RUSH Soda Premium Can" 
+                className="soda-can floating-animation"
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="launch-banner">
-          <span className="pulse-dot"></span>
-          Launching Soon Across Pune
-        </div>
-
-        <div className="features-grid">
-          <div className="feature-item glassmorphism">
-            <div className="feature-icon">💧</div>
-            <span>Refreshing Taste</span>
-          </div>
-          <div className="feature-item glassmorphism">
-            <div className="feature-icon">✨</div>
-            <span>Premium Quality</span>
-          </div>
-          <div className="feature-item glassmorphism">
-            <div className="feature-icon">🌈</div>
-            <span>Multiple Flavors</span>
-          </div>
-          <div className="feature-item glassmorphism">
-            <div className="feature-icon">🚀</div>
-            <span>Launching Soon</span>
-          </div>
-        </div>
-
-        <h3 className="flavors-heading">Upcoming Flavors</h3>
-        <div className="flavors-grid">
+        <div className="compact-flavors-grid">
           <div className="flavor-card glassmorphism cola">
             <div className="flavor-accent"></div>
             <h4>Cola Blast</h4>
-            <p>Classic cola taste with an electrifying twist.</p>
+            <p>Classic cola with a twist.</p>
           </div>
           <div className="flavor-card glassmorphism orange">
             <div className="flavor-accent"></div>
             <h4>Orange Spark</h4>
-            <p>Zesty and vibrant citrus refreshment.</p>
+            <p>Zesty citrus refreshment.</p>
           </div>
           <div className="flavor-card glassmorphism lemon">
             <div className="flavor-accent"></div>
-            <h4>Lemon Lime Rush</h4>
-            <p>Crisp, clear, and perfectly balanced.</p>
+            <h4>Lemon Lime</h4>
+            <p>Crisp and perfectly balanced.</p>
           </div>
           <div className="flavor-card glassmorphism berry">
             <div className="flavor-accent"></div>
             <h4>Berry Fizz</h4>
-            <p>A burst of wild mixed berries.</p>
+            <p>Burst of wild mixed berries.</p>
           </div>
         </div>
       </div>
@@ -82,90 +87,142 @@ export default function RushSodaPromo() {
         .rush-promo-container {
           position: relative;
           width: 100%;
-          min-height: 80vh;
           background: linear-gradient(145deg, #0f172a 0%, #1e1b4b 100%);
-          border-radius: var(--radius-2xl, 24px);
+          border-radius: var(--radius-xl, 16px);
           overflow: hidden;
-          padding: 4rem 2rem;
+          padding: 2rem 1.5rem;
           color: #fff;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+          box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.4);
           border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        /* Floating Bubbles */
-        .bubble {
-          position: absolute;
-          border-radius: 50%;
-          background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), rgba(255,255,255,0.05));
-          box-shadow: inset 0 0 20px rgba(255,255,255,0.2), 0 0 10px rgba(255,255,255,0.1);
-          animation: floatUp 15s infinite ease-in-out;
-          opacity: 0.6;
-        }
-        .bubble-1 { width: 80px; height: 80px; left: 10%; bottom: -100px; animation-duration: 12s; animation-delay: 0s; }
-        .bubble-2 { width: 40px; height: 40px; left: 25%; bottom: -50px; animation-duration: 8s; animation-delay: 2s; }
-        .bubble-3 { width: 120px; height: 120px; right: 15%; bottom: -150px; animation-duration: 18s; animation-delay: 1s; }
-        .bubble-4 { width: 60px; height: 60px; right: 30%; bottom: -80px; animation-duration: 14s; animation-delay: 4s; }
-        .bubble-5 { width: 30px; height: 30px; left: 50%; bottom: -40px; animation-duration: 10s; animation-delay: 3s; }
-
-        @keyframes floatUp {
-          0% { transform: translateY(0) scale(1); opacity: 0; }
-          20% { opacity: 0.6; }
-          50% { transform: translateY(-400px) scale(1.1); }
-          80% { opacity: 0.4; }
-          100% { transform: translateY(-800px) scale(1); opacity: 0; }
-        }
-
-        .promo-content {
+        .promo-wrapper {
           position: relative;
           z-index: 10;
-          max-width: 900px;
-          text-align: center;
+          max-width: 1000px;
+          margin: 0 auto;
           display: flex;
           flex-direction: column;
+          gap: 1.5rem;
+        }
+
+        .promo-main-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 2rem;
+        }
+
+        .promo-text-content {
+          flex: 1;
+          text-align: left;
+        }
+
+        .promo-graphic-content {
+          flex-shrink: 0;
+          display: flex;
+          justify-content: center;
           align-items: center;
         }
 
         .promo-badge {
           display: inline-flex;
           align-items: center;
-          gap: 0.5rem;
           background: linear-gradient(90deg, #ec4899, #8b5cf6);
-          padding: 0.5rem 1.2rem;
+          padding: 0.35rem 0.8rem;
           border-radius: 999px;
           font-weight: 800;
-          font-size: 0.9rem;
+          font-size: 0.7rem;
           letter-spacing: 1px;
           text-transform: uppercase;
-          margin-bottom: 1.5rem;
-          box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);
+          margin-bottom: 0.75rem;
+          box-shadow: 0 2px 10px rgba(236, 72, 153, 0.4);
         }
 
         .promo-headline {
-          font-size: 3.5rem;
+          font-size: 2.2rem;
           font-weight: 900;
           background: linear-gradient(to right, #fff, #a5b4fc);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
-          margin-bottom: 1rem;
-          line-height: 1.2;
+          margin-bottom: 0.4rem;
+          line-height: 1.1;
         }
 
         .promo-subheading {
-          font-size: 1.2rem;
+          font-size: 0.95rem;
           color: #94a3b8;
-          max-width: 600px;
-          margin-bottom: 3rem;
-          line-height: 1.6;
+          max-width: 500px;
+          margin-bottom: 1.25rem;
+          line-height: 1.5;
+        }
+
+        .launch-banner {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          background: rgba(255, 255, 255, 0.06);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(8px);
+          padding: 0.4rem 1rem;
+          border-radius: 999px;
+          font-size: 0.85rem;
+          font-weight: 600;
+          color: #e2e8f0;
+          margin-bottom: 1.5rem;
+        }
+
+        .pulse-dot {
+          width: 8px;
+          height: 8px;
+          background-color: #10b981;
+          border-radius: 50%;
+          box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+          animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+          0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+          70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .compact-features {
+          display: flex;
+          gap: 0.75rem;
+          flex-wrap: wrap;
+        }
+
+        .glassmorphism {
+          background: rgba(255, 255, 255, 0.03);
+          backdrop-filter: blur(8px);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .compact-feature {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+          padding: 0.4rem 0.75rem;
+          border-radius: 8px;
+          font-size: 0.8rem;
+          font-weight: 600;
+          color: #e2e8f0;
+          transition: background 0.2s ease;
+        }
+        
+        .compact-feature:hover {
+          background: rgba(255, 255, 255, 0.08);
+        }
+
+        .feature-icon {
+          font-size: 1rem;
         }
 
         .main-graphic-container {
           position: relative;
-          margin-bottom: 3rem;
-          width: 300px;
-          height: 400px;
+          width: 140px;
+          height: 200px;
           display: flex;
           justify-content: center;
           align-items: center;
@@ -175,8 +232,8 @@ export default function RushSodaPromo() {
           position: absolute;
           width: 100%;
           height: 100%;
-          background: radial-gradient(circle, rgba(139, 92, 246, 0.6) 0%, rgba(0,0,0,0) 70%);
-          filter: blur(40px);
+          background: radial-gradient(circle, rgba(139, 92, 246, 0.5) 0%, rgba(0,0,0,0) 70%);
+          filter: blur(25px);
           z-index: 1;
         }
 
@@ -186,123 +243,38 @@ export default function RushSodaPromo() {
           max-width: 100%;
           max-height: 100%;
           object-fit: contain;
-          mix-blend-mode: screen;
-          filter: drop-shadow(0 20px 30px rgba(0,0,0,0.5)) contrast(1.15) brightness(1.1);
+          mix-blend-mode: lighten;
+          filter: contrast(1.2) brightness(1.1);
         }
 
         .floating-animation {
-          animation: float 6s ease-in-out infinite;
+          animation: float 4s ease-in-out infinite;
         }
 
         @keyframes float {
-          0% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-20px) rotate(2deg); }
-          100% { transform: translateY(0px) rotate(0deg); }
+          0% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+          100% { transform: translateY(0px); }
         }
 
-        .launch-banner {
-          display: inline-flex;
-          align-items: center;
+        .compact-flavors-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
           gap: 0.75rem;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          backdrop-filter: blur(10px);
-          padding: 0.75rem 2rem;
-          border-radius: 999px;
-          font-size: 1.1rem;
-          font-weight: 600;
-          color: #e2e8f0;
-          margin-bottom: 4rem;
-        }
-
-        .pulse-dot {
-          width: 12px;
-          height: 12px;
-          background-color: #10b981;
-          border-radius: 50%;
-          box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-          animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-          0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-          70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-          100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-        }
-
-        .features-grid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 1.5rem;
-          width: 100%;
-          margin-bottom: 4rem;
-        }
-
-        .glassmorphism {
-          background: rgba(255, 255, 255, 0.03);
-          backdrop-filter: blur(12px);
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-        }
-
-        .feature-item {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 1rem;
-          padding: 1.5rem;
-          border-radius: 1rem;
-          transition: transform 0.3s ease, background 0.3s ease;
-        }
-        
-        .feature-item:hover {
-          transform: translateY(-5px);
-          background: rgba(255, 255, 255, 0.08);
-        }
-
-        .feature-icon {
-          font-size: 2.5rem;
-          background: rgba(255, 255, 255, 0.1);
-          width: 60px;
-          height: 60px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 50%;
-        }
-
-        .feature-item span {
-          font-weight: 600;
-          font-size: 1rem;
-          color: #e2e8f0;
-        }
-
-        .flavors-heading {
-          font-size: 2rem;
-          font-weight: 800;
-          margin-bottom: 2rem;
-          text-align: center;
-          color: #fff;
-        }
-
-        .flavors-grid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 1.5rem;
           width: 100%;
         }
 
         .flavor-card {
           position: relative;
-          padding: 2rem 1.5rem;
-          border-radius: 1rem;
+          padding: 0.85rem 1rem;
+          border-radius: 12px;
           text-align: left;
           overflow: hidden;
-          transition: transform 0.3s ease;
+          transition: transform 0.2s ease;
         }
 
         .flavor-card:hover {
-          transform: translateY(-10px);
+          transform: translateY(-4px);
         }
 
         .flavor-accent {
@@ -310,7 +282,7 @@ export default function RushSodaPromo() {
           top: 0;
           left: 0;
           width: 100%;
-          height: 6px;
+          height: 4px;
         }
 
         .cola .flavor-accent { background: linear-gradient(90deg, #ef4444, #991b1b); }
@@ -319,42 +291,72 @@ export default function RushSodaPromo() {
         .berry .flavor-accent { background: linear-gradient(90deg, #a855f7, #6b21a8); }
 
         .flavor-card h4 {
-          font-size: 1.25rem;
+          font-size: 0.95rem;
           font-weight: 700;
-          margin-bottom: 0.5rem;
-          margin-top: 0.5rem;
+          margin-bottom: 0.2rem;
+          margin-top: 0.2rem;
           color: #f8fafc;
         }
 
         .flavor-card p {
-          font-size: 0.9rem;
+          font-size: 0.75rem;
           color: #94a3b8;
-          line-height: 1.5;
+          line-height: 1.3;
+          margin: 0;
+        }
+
+        /* Floating Bubbles */
+        .bubble {
+          position: absolute;
+          border-radius: 50%;
+          background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.3), rgba(255,255,255,0.02));
+          box-shadow: inset 0 0 10px rgba(255,255,255,0.1);
+          animation: floatUp 15s infinite ease-in-out;
+          opacity: 0.4;
+        }
+        .bubble-1 { width: 60px; height: 60px; left: 10%; bottom: -80px; animation-duration: 12s; animation-delay: 0s; }
+        .bubble-2 { width: 30px; height: 30px; left: 25%; bottom: -40px; animation-duration: 8s; animation-delay: 2s; }
+        .bubble-3 { width: 90px; height: 90px; right: 15%; bottom: -100px; animation-duration: 18s; animation-delay: 1s; }
+        .bubble-4 { width: 40px; height: 40px; right: 30%; bottom: -60px; animation-duration: 14s; animation-delay: 4s; }
+        .bubble-5 { width: 25px; height: 25px; left: 50%; bottom: -30px; animation-duration: 10s; animation-delay: 3s; }
+
+        @keyframes floatUp {
+          0% { transform: translateY(0) scale(1); opacity: 0; }
+          20% { opacity: 0.4; }
+          50% { transform: translateY(-300px) scale(1.1); }
+          80% { opacity: 0.2; }
+          100% { transform: translateY(-600px) scale(1); opacity: 0; }
         }
 
         /* Responsive Styles */
-        @media (max-width: 1024px) {
-          .features-grid, .flavors-grid {
+        @media (max-width: 860px) {
+          .promo-main-row {
+            flex-direction: column;
+            text-align: center;
+          }
+          .promo-text-content {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+          }
+          .compact-features {
+            justify-content: center;
+          }
+          .compact-flavors-grid {
             grid-template-columns: repeat(2, 1fr);
           }
           .promo-headline {
-            font-size: 3rem;
+            font-size: 2rem;
           }
         }
 
-        @media (max-width: 640px) {
-          .features-grid, .flavors-grid {
+        @media (max-width: 480px) {
+          .compact-flavors-grid {
             grid-template-columns: 1fr;
           }
           .promo-headline {
-            font-size: 2.2rem;
-          }
-          .rush-promo-container {
-            padding: 3rem 1.5rem;
-          }
-          .main-graphic-container {
-            width: 250px;
-            height: 350px;
+            font-size: 1.8rem;
           }
         }
       `}</style>
