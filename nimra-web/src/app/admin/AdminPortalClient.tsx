@@ -709,10 +709,12 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
   // Line Chart calculations
   const revenueByDate: { [date: string]: number } = {};
   orders
-    .filter(o => o.status === 'Delivered' && o.createdAt)
+    .filter(o => o.status === 'Delivered')
     .forEach(o => {
       try {
-        const dateStr = new Date(o.createdAt).toISOString().split('T')[0];
+        const targetDateStr = o.updatedAt || o.createdAt;
+        if (!targetDateStr) return;
+        const dateStr = new Date(targetDateStr as string).toISOString().split('T')[0];
         revenueByDate[dateStr] = (revenueByDate[dateStr] || 0) + Number(o.total || 0);
       } catch (e) {
         // Ignore date parse errors
