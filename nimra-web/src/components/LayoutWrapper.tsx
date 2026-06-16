@@ -29,7 +29,7 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
     if (isAuthenticated && isAuthPage) {
       router.replace(user?.Role === 'Admin' ? '/admin' : '/customer-portal');
     } else if (isAdmin && !isAdminLogin && !isAuthenticated) {
-      router.replace('/admin/login');
+      router.replace('/login');
     } else if (isAdmin && !isAdminLogin && user?.Role !== 'Admin') {
       router.replace('/customer-portal');
     } else if (!isAuthenticated && isCheckout) {

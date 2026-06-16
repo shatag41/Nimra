@@ -121,7 +121,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         if (role !== 'Admin') {
           localStorage.removeItem('nimra_admin_user');
           Cookies.remove('nimra_user', { path: '/' });
-          router.replace('/admin/login');
+          router.replace('/login');
           return;
         }
         const adminSession = {
@@ -159,11 +159,11 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           return;
         }
       } catch {
-        Cookies.remove('nimra_user');
+        Cookies.remove('nimra_user', { path: '/' });
       }
     }
 
-    router.replace('/admin/login');
+    router.replace('/login');
   }, [router]);
 
   // Load all dashboard databases
@@ -231,16 +231,15 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
       document.body.style.overflow = '';
     };
   }, [isProfilePanelOpen]);
-
-  const showAlert = (text: string, type: 'success' | 'error' = 'success') => {
+  const showAlert = (text: string, type: 'success' | 'error' = 'success') => {
     setAlertMsg({ text, type });
     setTimeout(() => setAlertMsg({ text: '', type: 'success' }), 4000);
   };
 
   const performLogout = () => {
     localStorage.removeItem('nimra_admin_user');
-    Cookies.remove('nimra_user');
-    router.replace('/admin/login');
+    Cookies.remove('nimra_user', { path: '/' });
+    router.replace('/login');
   };
 
   const handleLogout = () => {

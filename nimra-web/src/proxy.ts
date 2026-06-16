@@ -36,7 +36,7 @@ export function proxy(request: NextRequest) {
 
   if (isAdminPath && pathname !== '/admin/login') {
     if (!user) {
-      return NextResponse.redirect(new URL('/admin/login', request.url));
+      return NextResponse.redirect(new URL('/login', request.url));
     }
 
     if (!isAdminUser) {
