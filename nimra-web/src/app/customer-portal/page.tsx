@@ -437,8 +437,16 @@ const portalStyles = `
 
         .table-wrap {
           overflow-x: auto;
+          overflow-y: auto;
+          max-height: 360px;
           border: 1px solid var(--border-color);
           border-radius: 8px;
+        }
+
+        .orders-table thead th {
+          position: sticky;
+          top: 0;
+          z-index: 1;
         }
 
         .orders-table {
