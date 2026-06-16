@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Product } from '../../types/cms';
@@ -43,6 +43,21 @@ export default function ProductsClient({ products }: ProductsClientProps) {
       setCartToast((t) => ({ ...t, visible: false }));
     }, 3000);
   };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const addId = params.get('add');
+      if (addId) {
+        const targetProduct = products.find((p) => String(p.ID) === addId);
+        if (targetProduct) {
+          handleAdd(targetProduct);
+          const newUrl = window.location.pathname;
+          window.history.replaceState({}, '', newUrl);
+        }
+      }
+    }
+  }, [products]);
 
   const handleIncrease = (product: Product) => {
     const item = getCartItem(product);

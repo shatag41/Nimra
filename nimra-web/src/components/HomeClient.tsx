@@ -160,7 +160,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
                   <p>{product.Description.substring(0, 80)}...</p>
                   <div className="prod-footer">
                     <span className="prod-price">₹{product.Price}</span>
-                    <Link href="/products" className="btn btn-secondary btn-sm">
+                    <Link href={`/products?add=${product.ID}`} className="btn btn-secondary btn-sm">
                       Order Now
                     </Link>
                   </div>

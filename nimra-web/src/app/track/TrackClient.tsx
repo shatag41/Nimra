@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { OrderRecord } from '../../types/cms';
 import { useAuth } from '../../context/AuthContext';
 import { trackOrder } from '../../utils/api';
@@ -11,6 +11,7 @@ const steps = ['Pending', 'Confirmed', 'Processing', 'Dispatched', 'Out for Deli
 
 export default function TrackClient() {
   const params = useSearchParams();
+  const router = useRouter();
   const { user } = useAuth();
   const [orderId, setOrderId] = useState(params.get('orderId') || '');
   const [mobile, setMobile] = useState(user?.Mobile || '');
@@ -21,10 +22,15 @@ export default function TrackClient() {
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
+    if (!user) {
+      const nextPath = orderId.trim() ? `/track?orderId=${encodeURIComponent(orderId.trim())}` : '/track';
+      router.push(`/login?next=${encodeURIComponent(nextPath)}`);
+      return;
+    }
     setLoading(true);
     setMessage('');
     setOrder(null);
-    const result = await trackOrder(orderId.trim(), user ? '' : mobileValue.trim(), {
+    const result = await trackOrder(orderId.trim(), '', {
       userId: user?.ID,
       email: user?.Username,
       mobile: user?.Mobile,
