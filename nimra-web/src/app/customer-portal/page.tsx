@@ -3,9 +3,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
-import { fetchCustomerOrders } from '../../utils/api';
-import { OrderRecord } from '../../types/cms';
-import { formatCurrency } from '../../utils/commerce';
+import { fetchCustomerOrders, fetchCMSData } from '../../utils/api';
+import { OrderRecord, Product } from '../../types/cms';
+import { formatCurrency, isOrderable } from '../../utils/commerce';
+import { useCart } from '../../components/CartProvider';
 
 const statusClass = (status: string) => status.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
@@ -18,8 +19,23 @@ const formatDate = (value?: string) => {
 
 export default function CustomerPortal() {
   const { user, isAuthenticated, isLoading } = useAuth();
+  const { addProduct } = useCart();
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
+  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const data = await fetchCMSData();
+        const orderable = (data.products || []).filter(isOrderable);
+        setRecommendedProducts(orderable.slice(0, 4));
+      } catch (err) {
+        console.error('Failed to load recommended products', err);
+      }
+    };
+    loadProducts();
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -242,28 +258,39 @@ export default function CustomerPortal() {
         </aside>
       </section>
 
-      <section className="quick-section">
-        <Link href="/products" className="quick-card">
-          <span className="quick-icon">W</span>
-          <h3>Product Range</h3>
-          <p>Order packaged water bottles, cans, and office jars.</p>
-        </Link>
-        <Link href="/cart" className="quick-card">
-          <span className="quick-icon">C</span>
-          <h3>Cart</h3>
-          <p>Review quantities and prepare your checkout details.</p>
-        </Link>
-        <Link href="/contact" className="quick-card">
-          <span className="quick-icon">S</span>
-          <h3>Support</h3>
-          <p>Ask about bulk delivery, invoices, or scheduled supply.</p>
-        </Link>
-        <Link href="/about#quality" className="quick-card">
-          <span className="quick-icon">Q</span>
-          <h3>Quality</h3>
-          <p>View the purification process and NIMRA standards.</p>
-        </Link>
-      </section>
+      {recommendedProducts.length > 0 && (
+        <section className="recommendations-section">
+          <div className="section-head-left">
+            <span className="eyebrow">Recommendations</span>
+            <h2>Recommended Products</h2>
+            <p>Pure hydration options curated for your regular supply.</p>
+          </div>
+          <div className="recommendations-grid">
+            {recommendedProducts.map((product) => (
+              <div key={product.ID} className="rec-card glass">
+                <div className="rec-img-box">
+                  <img src={product.ImageUrl} alt={product.Name} />
+                </div>
+                <div className="rec-info">
+                  <span className="rec-vol">{product.Volume}</span>
+                  <h3>{product.Name}</h3>
+                  <p className="rec-desc">{product.Description.substring(0, 80)}...</p>
+                  <div className="rec-footer">
+                    <span className="rec-price">{formatCurrency(Number(product.Price))}</span>
+                    <button 
+                      className="btn btn-primary btn-sm add-btn"
+                      onClick={() => addProduct(product)}
+                      style={{ cursor: 'pointer', border: 'none' }}
+                    >
+                      Add to Cart
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <style jsx>{portalStyles}</style>
     </div>
@@ -632,6 +659,125 @@ const portalStyles = `
           line-height: 1.55;
         }
 
+        /* ── Recommendations ── */
+        .recommendations-section {
+          max-width: 1280px;
+          margin: 2rem auto 0;
+          padding: 0 2rem;
+        }
+
+        .section-head-left {
+          margin-bottom: 1.5rem;
+        }
+
+        .section-head-left h2 {
+          font-size: 1.5rem;
+          margin: 0.25rem 0;
+        }
+
+        .section-head-left p {
+          color: var(--text-secondary);
+          font-size: 0.95rem;
+        }
+
+        .recommendations-grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 1.25rem;
+        }
+
+        .rec-card {
+          background: var(--bg-secondary);
+          border: 1px solid var(--border-color);
+          border-radius: 12px;
+          padding: 1.25rem;
+          display: flex;
+          flex-direction: column;
+          transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+        }
+
+        .rec-card:hover {
+          transform: translateY(-4px);
+          border-color: var(--primary-color);
+          box-shadow: var(--shadow-lg);
+        }
+
+        .rec-img-box {
+          height: 140px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--bg-primary);
+          border-radius: 8px;
+          margin-bottom: 1rem;
+          overflow: hidden;
+        }
+
+        .rec-img-box img {
+          max-height: 90%;
+          max-width: 90%;
+          object-fit: contain;
+          transition: transform var(--transition-normal);
+        }
+
+        .rec-card:hover .rec-img-box img {
+          transform: scale(1.05);
+        }
+
+        .rec-info {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+        }
+
+        .rec-vol {
+          display: inline-block;
+          font-size: 0.72rem;
+          font-weight: 800;
+          color: var(--primary-color);
+          background: rgba(var(--primary-rgb), 0.1);
+          padding: 0.2rem 0.6rem;
+          border-radius: 50px;
+          align-self: flex-start;
+          margin-bottom: 0.5rem;
+        }
+
+        .rec-info h3 {
+          font-size: 1.05rem;
+          font-weight: 750;
+          margin: 0 0 0.35rem;
+          color: var(--text-primary);
+        }
+
+        .rec-desc {
+          font-size: 0.85rem;
+          color: var(--text-secondary);
+          line-height: 1.5;
+          margin-bottom: 1rem;
+          flex: 1;
+        }
+
+        .rec-footer {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border-top: 1px solid var(--border-color);
+          padding-top: 0.8rem;
+          margin-top: auto;
+        }
+
+        .rec-price {
+          font-size: 1.15rem;
+          font-weight: 850;
+          color: var(--text-primary);
+        }
+
+        .add-btn {
+          padding: 0.45rem 0.9rem;
+          font-size: 0.82rem;
+          font-weight: 800;
+        }
+
         .loading-state {
           min-height: 100vh;
           display: flex;
@@ -643,6 +789,10 @@ const portalStyles = `
 
         @media (max-width: 1100px) {
           .metric-grid, .quick-section {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .recommendations-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
           }
 
@@ -661,8 +811,12 @@ const portalStyles = `
             padding: 2rem 1.25rem;
           }
 
-          .metric-grid, .portal-grid, .quick-section {
+          .metric-grid, .portal-grid, .quick-section, .recommendations-grid {
             grid-template-columns: 1fr;
+            padding: 0 1rem;
+          }
+
+          .recommendations-section {
             padding: 0 1rem;
           }
 
