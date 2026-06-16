@@ -684,23 +684,27 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
   // Dynamic Chart Calculations
   // Donut Chart calculations
   const totalOrdersCount = orders.length;
-  const countDelivered = orders.filter(o => o.status === 'Delivered').length;
-  const countInProgress = orders.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled').length;
-  const countCancelled = orders.filter(o => o.status === 'Cancelled').length;
-
-  const fDelivered = totalOrdersCount > 0 ? countDelivered / totalOrdersCount : 0;
-  const fInProgress = totalOrdersCount > 0 ? countInProgress / totalOrdersCount : 0;
-  const fCancelled = totalOrdersCount > 0 ? countCancelled / totalOrdersCount : 0;
-
   const circ = 377; // 2 * PI * 60 approx 376.99
-  const deliveredDashArray = `${(fDelivered * circ).toFixed(1)} ${circ}`;
-  const deliveredDashOffset = 0;
+  
+  const orderStatuses = [
+    { name: 'Pending', color: '#f59e0b' },
+    { name: 'Confirmed', color: '#3b82f6' },
+    { name: 'Processing', color: '#8b5cf6' },
+    { name: 'Dispatched', color: '#6366f1' },
+    { name: 'Out for Delivery', color: '#06b6d4' },
+    { name: 'Delivered', color: '#10b981' },
+    { name: 'Cancelled', color: '#ef4444' },
+  ];
 
-  const inProgressDashArray = `${(fInProgress * circ).toFixed(1)} ${circ}`;
-  const inProgressDashOffset = -(fDelivered * circ);
-
-  const cancelledDashArray = `${(fCancelled * circ).toFixed(1)} ${circ}`;
-  const cancelledDashOffset = -((fDelivered + fInProgress) * circ);
+  let currentOffset = 0;
+  const statusStats = orderStatuses.map(status => {
+    const count = orders.filter(o => o.status === status.name).length;
+    const fraction = totalOrdersCount > 0 ? count / totalOrdersCount : 0;
+    const dashArray = `${(fraction * circ).toFixed(1)} ${circ}`;
+    const dashOffset = currentOffset;
+    currentOffset -= (fraction * circ);
+    return { ...status, count, dashArray, dashOffset };
+  });
 
   // Line Chart calculations
   const revenueByDate: { [date: string]: number } = {};
@@ -1112,29 +1116,30 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                   <div className="chart-card glass">
                     <h3>Orders Status Distribution</h3>
                     <div className="donut-chart-flex">
-                      <svg viewBox="0 0 160 160" width="140" height="140">
-                        {/* Simple Donut SVG */}
-                        <circle cx="80" cy="80" r="60" fill="transparent" stroke="var(--border-color)" strokeWidth="15" />
-                        {/* Delivered portion */}
-                        {countDelivered > 0 && (
-                          <circle cx="80" cy="80" r="60" fill="transparent" stroke="var(--primary-color)" strokeWidth="15" 
-                                  strokeDasharray={deliveredDashArray} strokeDashoffset={deliveredDashOffset} />
-                        )}
-                        {/* Pending/Processing portion */}
-                        {countInProgress > 0 && (
-                          <circle cx="80" cy="80" r="60" fill="transparent" stroke="#f97316" strokeWidth="15" 
-                                  strokeDasharray={inProgressDashArray} strokeDashoffset={inProgressDashOffset} />
-                        )}
-                        {/* Cancelled portion */}
-                        {countCancelled > 0 && (
-                          <circle cx="80" cy="80" r="60" fill="transparent" stroke="#ef4444" strokeWidth="15" 
-                                  strokeDasharray={cancelledDashArray} strokeDashoffset={cancelledDashOffset} />
-                        )}
-                      </svg>
-                      <div className="legend-list">
-                        <div><span className="legend-dot green"></span> Delivered ({orders.filter(o => o.status === 'Delivered').length})</div>
-                        <div><span className="legend-dot orange"></span> In Progress ({orders.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled').length})</div>
-                        <div><span className="legend-dot red"></span> Cancelled ({orders.filter(o => o.status === 'Cancelled').length})</div>
+                      <div style={{ position: 'relative', width: 140, height: 140 }}>
+                        <svg viewBox="0 0 160 160" width="140" height="140" style={{ transform: 'rotate(-90deg)' }}>
+                          {/* Simple Donut SVG */}
+                          <circle cx="80" cy="80" r="60" fill="transparent" stroke="var(--border-color)" strokeWidth="15" />
+                          {statusStats.map((stat, idx) => stat.count > 0 && (
+                            <circle key={idx} cx="80" cy="80" r="60" fill="transparent" stroke={stat.color} strokeWidth="15" 
+                                    strokeDasharray={stat.dashArray} strokeDashoffset={stat.dashOffset} />
+                          ))}
+                        </svg>
+                        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                          <strong style={{ fontSize: '1.4rem', color: 'var(--text-primary)', lineHeight: 1, marginBottom: '2px' }}>{totalOrdersCount}</strong>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Total</span>
+                        </div>
+                      </div>
+                      <div className="legend-list" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '4px', fontSize: '0.8rem', flex: 1, marginLeft: '1rem', alignContent: 'center' }}>
+                        {statusStats.map((stat, idx) => (
+                          <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', opacity: stat.count > 0 ? 1 : 0.4 }}>
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                              <span style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: stat.color, marginRight: '6px', display: 'inline-block' }}></span>
+                              {stat.name}
+                            </div>
+                            <strong>{stat.count}</strong>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
