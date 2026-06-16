@@ -129,7 +129,7 @@ export default function Footer({ companyInfo }: FooterProps) {
           background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
           border-radius: var(--radius-sm);
         }
-        .footer-logo {
+        :global(.footer-logo) {
           display: flex;
           align-items: center;
           gap: 0.75rem;
@@ -138,9 +138,9 @@ export default function Footer({ companyInfo }: FooterProps) {
           font-size: 1.6rem;
           color: var(--text-primary);
           margin-bottom: 1rem;
-          transition: transform var(--transition-fast);
+          transition: transform var(--transition-fast) ease-in-out;
         }
-        .footer-logo:hover {
+        :global(.footer-logo:hover) {
           transform: translateX(4px);
         }
         .brand-pitch {
@@ -153,12 +153,12 @@ export default function Footer({ companyInfo }: FooterProps) {
           flex-direction: column;
           gap: 0.6rem;
         }
-        .footer-links a {
-          transition: all var(--transition-fast);
+        :global(.footer-links a) {
+          transition: all var(--transition-fast) ease-in-out;
           display: inline-block;
           padding: 0.2rem 0;
         }
-        .footer-links a:hover {
+        :global(.footer-links a:hover) {
           color: var(--primary-color);
           transform: translateX(6px);
         }

@@ -7,6 +7,8 @@ import Footer from './Footer';
 import { CompanyInfo } from '../types/cms';
 import { useAuth } from '../context/AuthContext';
 
+import Cookies from 'js-cookie';
+
 interface LayoutWrapperProps {
   children: React.ReactNode;
   companyInfo: CompanyInfo;
@@ -17,11 +19,28 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isNewTab = !sessionStorage.getItem('nimra_session_initialized');
+      if (isNewTab) {
+        sessionStorage.setItem('nimra_session_initialized', 'true');
+        Cookies.remove('nimra_user', { path: '/' });
+        localStorage.removeItem('nimra_admin_user');
+        if (window.location.pathname !== '/') {
+          window.location.href = '/';
+        } else {
+          window.location.reload();
+        }
+      }
+    }
+  }, []);
+
   const isAdmin = pathname?.startsWith('/admin');
   const isAdminLogin = pathname === '/admin/login';
   const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password' || isAdminLogin;
   const isCheckout = pathname === '/checkout' || pathname?.startsWith('/checkout/');
-  const isLanding = pathname === '/landing';
+  const isProtected = isAdmin || pathname?.startsWith('/customer-portal') || isCheckout;
+  const isAuthOrProtected = isProtected || isAuthPage;
 
   useEffect(() => {
     if (isLoading) return;
@@ -37,7 +56,7 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
     }
   }, [isAdmin, isAdminLogin, isAuthPage, isAuthenticated, isCheckout, isLoading, pathname, router, user]);
 
-  if (isLoading) {
+  if (isLoading && isAuthOrProtected) {
     return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyItems: 'center', backgroundColor: '#0a0a0a' }}></div>;
   }
 
@@ -49,7 +68,7 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
     return null;
   }
 
-  if (isAdmin || isAuthPage || isLanding) {
+  if (isAdmin || isAuthPage) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <main style={{ flex: '1' }}>

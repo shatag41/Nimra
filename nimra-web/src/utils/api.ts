@@ -213,12 +213,17 @@ export const sendRequest = async (payload: AuthRequest): Promise<AuthResponse> =
   return data as AuthResponse;
 };
 
+let clientCMSCache: CMSData | null = null;
+
 // Fetch CMS Data via internal proxy
 export const fetchCMSData = async (): Promise<CMSData> => {
+  if (typeof window !== 'undefined' && clientCMSCache) {
+    return clientCMSCache;
+  }
   try {
     const fetchOptions: RequestInit & { next?: { revalidate: number } } =
       typeof window === 'undefined'
-        ? { next: { revalidate: 60 } }
+        ? { next: { revalidate: 300 } }
         : { cache: 'default' };
 
     const res = await fetch(getProxyUrl(), {
@@ -230,12 +235,17 @@ export const fetchCMSData = async (): Promise<CMSData> => {
 
     if (data.error) throw new Error(data.error);
 
-    return {
+    const cmsData = {
       banners: data.banners || [],
       products: data.products || [],
       faqs: data.faqs || [],
       companyInfo: data.companyInfo || {},
     };
+
+    if (typeof window !== 'undefined') {
+      clientCMSCache = cmsData;
+    }
+    return cmsData;
   } catch (err) {
     console.error('Error loading CMS data.', err);
     return {

@@ -62,6 +62,10 @@ const fallbackData = {
   ],
 };
 
+let cachedCMSData: any = null;
+let lastFetchTime = 0;
+const CACHE_TTL = 300000; // 5 minutes cache
+
 // Proxy GET requests to Google Apps Script
 export async function GET(req: Request) {
   const requestUrl = new URL(req.url);
@@ -74,11 +78,21 @@ export async function GET(req: Request) {
   const cacheHeaders = shouldUseLiveData
     ? { 'Cache-Control': 'no-store' }
     : { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' };
+
+  // If fetching main CMS data (action is null), serve from in-memory cache if fresh
+  const now = Date.now();
+  if (!action && cachedCMSData && (now - lastFetchTime < CACHE_TTL)) {
+    return NextResponse.json(cachedCMSData, { headers: cacheHeaders });
+  }
   
   if (APPS_SCRIPT_URL) {
     try {
       const targetUrl = new URL(APPS_SCRIPT_URL);
       requestUrl.searchParams.forEach((value, key) => targetUrl.searchParams.set(key, value));
+
+      // 10 seconds timeout controller for fast response fallback (Google Apps Script can take > 1.5s)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       const res = await fetch(targetUrl.toString(), {
         method: 'GET',
@@ -86,17 +100,33 @@ export async function GET(req: Request) {
         headers: {
           'Accept': 'application/json',
         },
-        next: { revalidate: shouldUseLiveData ? 0 : 60 },
+        signal: controller.signal,
+        next: { revalidate: shouldUseLiveData ? 0 : 300 },
       });
+      clearTimeout(timeoutId);
 
       const text = await res.text();
       if (!text.trim().startsWith('<')) {
         const data = JSON.parse(text);
+        // Save successfully fetched main CMS data to cache
+        if (!action) {
+          cachedCMSData = data;
+          lastFetchTime = now;
+        }
         return NextResponse.json(data, { headers: cacheHeaders });
       }
-    } catch (err) {
-      console.error('Google Sheets GET fetch failed, using local fallback:', err);
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        console.warn(`[CMS API Proxy] Google Sheets fetch timed out (10s limit) for action: ${action || 'main'}. Serving cached or fallback data.`);
+      } else {
+        console.error('Google Sheets GET fetch failed, using local fallback:', err);
+      }
     }
+  }
+
+  // Fallback: If live fetch failed/timed out and we have stale CMS cache for main action, return it
+  if (!action && cachedCMSData) {
+    return NextResponse.json(cachedCMSData, { headers: cacheHeaders });
   }
 
   // Use fallback data
