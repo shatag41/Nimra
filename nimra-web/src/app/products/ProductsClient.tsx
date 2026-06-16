@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Product } from '../../types/cms';
 import { useCart } from '../../components/CartProvider';
 import { formatCurrency, isOrderable, normalizeCategory } from '../../utils/commerce';
+import RushSodaPromo from './RushSodaPromo';
 
 interface ProductsClientProps {
   products: Product[];
@@ -98,8 +99,11 @@ export default function ProductsClient({ products }: ProductsClientProps) {
             ))}
           </div>
 
-          <div className="catalog-grid animate-fade-in">
-            {filteredProducts.map((product) => {
+          {activeTab === 'Upcoming RUSH Soda' ? (
+            <RushSodaPromo />
+          ) : (
+            <div className="catalog-grid animate-fade-in">
+              {filteredProducts.map((product) => {
               const orderable = isOrderable(product);
               const id = String(product.ID || product.Name);
               const cartItem = getCartItem(product);
@@ -174,7 +178,8 @@ export default function ProductsClient({ products }: ProductsClientProps) {
                 </article>
               );
             })}
-          </div>
+            </div>
+          )}
         </div>
       </section>
 
