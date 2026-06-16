@@ -74,7 +74,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(null);
     Cookies.remove('nimra_user', { path: '/' });
     localStorage.removeItem('nimra_admin_user');
-    router.replace('/');
+    window.location.href = '/';
   };
 
   return (

@@ -230,18 +230,7 @@ export default function RegisterPage() {
               {errors.mobile && <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem' }}>{errors.mobile}</p>}
             </div>
 
-            <div className="auth-field">
-              <label htmlFor="role">Register As</label>
-              <select
-                id="role"
-                className="auth-select"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-              >
-                <option value="Customer">Customer</option>
-                <option value="Admin">Admin</option>
-              </select>
-            </div>
+
           </div>
           
           <p className="auth-help" style={{ marginTop: '0.25rem' }}>Either email or mobile is required.</p>

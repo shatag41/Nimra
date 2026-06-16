@@ -241,7 +241,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           align-items: center;
           justify-content: space-between;
         }
-        .logo {
+        :global(.logo) {
           display: flex;
           align-items: center;
           gap: 0.75rem;
@@ -250,6 +250,11 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           font-size: 1.5rem;
           letter-spacing: -0.02em;
           color: var(--text-primary);
+          transition: transform var(--transition-fast), opacity var(--transition-fast);
+        }
+        :global(.logo:hover) {
+          transform: translateY(-1px) scale(1.02);
+          opacity: 0.9;
         }
         .logo-text {
           background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
@@ -260,24 +265,26 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           display: flex;
           gap: 2.5rem;
         }
-        .nav-link {
+        :global(.nav-link) {
           font-size: 0.95rem;
           font-weight: 600;
           color: var(--text-secondary);
           position: relative;
           padding: 0.45rem 0.85rem;
           border-radius: 999px;
-          transition: color var(--transition-fast), background var(--transition-fast);
+          transition: all var(--transition-fast) ease-in-out;
+          cursor: pointer;
         }
-        .nav-link:hover {
+        :global(.nav-link:hover) {
           color: var(--primary-color);
           background: rgba(var(--primary-rgb), 0.08);
+          transform: translateY(-1px);
         }
-        .nav-link.active {
+        :global(.nav-link.active) {
           color: var(--primary-color);
           background: rgba(var(--primary-rgb), 0.12);
         }
-        .nav-link::after {
+        :global(.nav-link::after) {
           content: '';
           position: absolute;
           bottom: 2px;
@@ -290,7 +297,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           transition: transform var(--transition-fast);
           transform-origin: center;
         }
-        .nav-link:hover::after, .nav-link.active::after {
+        :global(.nav-link:hover::after), :global(.nav-link.active::after) {
           transform: scaleX(1);
         }
         .header-actions {
@@ -298,7 +305,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           align-items: center;
           gap: 1rem;
         }
-        .cart-link {
+        :global(.cart-link) {
           position: relative;
           width: 44px;
           height: 44px;
@@ -309,12 +316,13 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           border-radius: var(--radius-xl);
           color: var(--text-primary);
           background: var(--bg-secondary);
-          transition: all var(--transition-fast);
+          transition: all var(--transition-fast) ease-in-out;
         }
-        .cart-link:hover {
+        :global(.cart-link:hover) {
           border-color: var(--primary-color);
           color: var(--primary-color);
-          background: rgba(6, 182, 212, 0.05);
+          background: rgba(var(--primary-rgb), 0.08);
+          transform: translateY(-1px);
         }
         .cart-link span {
           position: absolute;
@@ -344,12 +352,13 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: all var(--transition-fast);
+          transition: all var(--transition-fast) ease-in-out;
         }
         .icon-btn:hover {
-          background: rgba(6, 182, 212, 0.08);
+          background: rgba(var(--primary-rgb), 0.08);
           color: var(--primary-color);
           border-color: var(--primary-color);
+          transform: translateY(-1px);
         }
         .mobile-menu-btn {
           display: none;
@@ -382,15 +391,16 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           flex-direction: column;
           gap: 1.5rem;
         }
-        .mobile-nav-link {
+        :global(.mobile-nav-link) {
           font-size: 1.1rem;
           font-weight: 700;
           color: var(--text-secondary);
           padding: 0.75rem 0;
           border-bottom: 1px solid var(--border-light);
-          transition: color var(--transition-fast);
+          transition: color var(--transition-fast) ease-in-out;
+          display: block;
         }
-        .mobile-nav-link.active, .mobile-nav-link:hover {
+        :global(.mobile-nav-link.active), :global(.mobile-nav-link:hover) {
           color: var(--primary-color);
         }
         

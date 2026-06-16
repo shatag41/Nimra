@@ -30,6 +30,7 @@ import {
 import { formatCurrency } from '../../utils/commerce';
 import LogoutConfirmationModal from '../../components/LogoutConfirmationModal';
 import ThemeToggle from '../../components/ThemeToggle';
+import { useAuth } from '../../context/AuthContext';
 
 interface AdminPortalClientProps {
   initialCMSData: CMSData;
@@ -39,6 +40,7 @@ type TabType = 'dashboard' | 'orders' | 'products' | 'banners' | 'faqs' | 'inqui
 
 export default function AdminPortalClient({ initialCMSData }: AdminPortalClientProps) {
   const router = useRouter();
+  const { logout } = useAuth();
   
   // Auth state
   const [currentUser, setCurrentUser] = useState<{
@@ -237,9 +239,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
   };
 
   const performLogout = () => {
-    localStorage.removeItem('nimra_admin_user');
-    Cookies.remove('nimra_user', { path: '/' });
-    router.replace('/login');
+    logout();
   };
 
   const handleLogout = () => {
