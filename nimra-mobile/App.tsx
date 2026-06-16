@@ -57,6 +57,7 @@ function AppShell() {
   const [prefillParams, setPrefillParams] = useState<{ product?: string; subject?: string; orderId?: string } | null>(null);
   
   const { user, logout } = useAuth();
+  const userRole = user?.Role;
 
   const loadData = async (silent = false) => {
     if (silent) {
@@ -81,6 +82,16 @@ function AppShell() {
   }, []);
 
   const handleNavigate = (tab: string, params?: any) => {
+    if (userRole === 'Admin' && tab !== 'AdminPortal') {
+      setCurrentTab('AdminPortal');
+      return;
+    }
+
+    if (userRole === 'Customer' && tab === 'AdminPortal') {
+      setCurrentTab('CustomerPortal');
+      return;
+    }
+
     if (params) {
       setPrefillParams(params);
       if (params.product) {
@@ -212,6 +223,14 @@ function AppShell() {
           />
         );
       case 'AdminPortal':
+        if (userRole !== 'Admin') {
+          return (
+            <CustomerPortalScreen
+              isDark={isDark}
+              onNavigate={handleNavigate}
+            />
+          );
+        }
         return (
           <AdminPortalScreen
             isDark={isDark}
@@ -221,6 +240,16 @@ function AppShell() {
           />
         );
       case 'CustomerPortal':
+        if (userRole === 'Admin') {
+          return (
+            <AdminPortalScreen
+              isDark={isDark}
+              companyInfo={cmsData.companyInfo}
+              onRefresh={() => loadData(true)}
+              onNavigate={handleNavigate}
+            />
+          );
+        }
         return (
           <CustomerPortalScreen
             isDark={isDark}

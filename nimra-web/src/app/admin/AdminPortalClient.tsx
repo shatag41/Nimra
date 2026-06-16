@@ -117,10 +117,17 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         const parsedSession = JSON.parse(session);
         const appSession = Cookies.get('nimra_user');
         const parsedCookieUser = appSession ? JSON.parse(appSession) : null;
+        const role = parsedSession.role || parsedCookieUser?.Role;
+        if (role !== 'Admin') {
+          localStorage.removeItem('nimra_admin_user');
+          Cookies.remove('nimra_user', { path: '/' });
+          router.replace('/admin/login');
+          return;
+        }
         const adminSession = {
           id: parsedSession.id || parsedSession.ID || parsedCookieUser?.ID || '',
           username: parsedSession.username || parsedSession.email || parsedCookieUser?.Username || '',
-          role: parsedSession.role || parsedCookieUser?.Role || 'Admin',
+          role: 'Admin' as const,
           name: parsedSession.name || parsedCookieUser?.Name || '',
           email: parsedSession.email || parsedSession.username || parsedCookieUser?.Username || '',
           phone: parsedSession.phone || parsedCookieUser?.Mobile || '',
@@ -156,7 +163,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
       }
     }
 
-    router.replace('/login');
+    router.replace('/admin/login');
   }, [router]);
 
   // Load all dashboard databases
@@ -233,7 +240,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
   const performLogout = () => {
     localStorage.removeItem('nimra_admin_user');
     Cookies.remove('nimra_user');
-    router.replace('/login');
+    router.replace('/admin/login');
   };
 
   const handleLogout = () => {
@@ -303,12 +310,12 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         throw new Error(saveResult.message || 'Unable to update profile');
       }
 
-      Cookies.set('nimra_user', JSON.stringify(updatedSession), { expires: 7 });
+      Cookies.set('nimra_user', JSON.stringify(updatedSession), { path: '/', sameSite: 'lax' });
 
       const updatedAdminSession = {
         id: currentUser?.id || parsedCookieUser?.ID || 0,
         username: trimmedEmail,
-        role: currentUser?.role || parsedCookieUser?.Role || 'Admin',
+        role: 'Admin' as const,
         name: trimmedName,
         email: trimmedEmail,
         phone: cleanedPhone,

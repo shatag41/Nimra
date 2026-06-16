@@ -24,8 +24,10 @@ export default function CustomerPortal() {
   useEffect(() => {
     if (isAuthenticated && user) {
       loadOrders();
+    } else if (!isLoading) {
+      setLoadingOrders(false);
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, isLoading, user]);
 
   const loadOrders = async () => {
     setLoadingOrders(true);
@@ -61,8 +63,60 @@ export default function CustomerPortal() {
   const completedProfileFields = profileFields.filter((field) => Boolean(field.value)).length;
   const profilePercent = Math.round((completedProfileFields / profileFields.length) * 100);
 
-  if (isLoading || !isAuthenticated) {
+  if (isLoading) {
     return <div className="loading-state">Loading your portal...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="portal-page">
+        <section className="portal-hero">
+          <div>
+            <span className="eyebrow">Customer Portal</span>
+            <h1>Welcome to NIMRA</h1>
+            <p>Browse products, read FAQs, learn about our water quality, and track an existing order without signing in.</p>
+          </div>
+          <div className="hero-actions">
+            <Link href="/products" className="btn btn-primary">Browse Products</Link>
+            <Link href="/track" className="btn btn-secondary">Track Order</Link>
+          </div>
+        </section>
+
+        <section className="quick-section guest">
+          <Link href="/products" className="quick-card">
+            <span className="quick-icon">W</span>
+            <h3>Product Range</h3>
+            <p>View bottles, cans, jars, pricing, and availability from the live catalog.</p>
+          </Link>
+          <Link href="/track" className="quick-card">
+            <span className="quick-icon">T</span>
+            <h3>Track Order</h3>
+            <p>Check delivery status using your order details.</p>
+          </Link>
+          <Link href="/about" className="quick-card">
+            <span className="quick-icon">Q</span>
+            <h3>Quality</h3>
+            <p>Learn about NIMRA purification, infrastructure, and standards.</p>
+          </Link>
+          <Link href="/contact" className="quick-card">
+            <span className="quick-icon">S</span>
+            <h3>Support</h3>
+            <p>Ask about bulk delivery, invoices, events, or scheduled supply.</p>
+          </Link>
+        </section>
+
+        <section className="guest-checkout">
+          <div>
+            <span className="eyebrow">Checkout</span>
+            <h2>Sign in when you are ready to place an order.</h2>
+            <p>Browsing is public. Login is only required for checkout and account-specific order history.</p>
+          </div>
+          <Link href="/login" className="btn btn-primary">Login to Checkout</Link>
+        </section>
+
+        <style jsx>{portalStyles}</style>
+      </div>
+    );
   }
 
   return (
@@ -211,7 +265,12 @@ export default function CustomerPortal() {
         </Link>
       </section>
 
-      <style jsx>{`
+      <style jsx>{portalStyles}</style>
+    </div>
+  );
+}
+
+const portalStyles = `
         .portal-page {
           min-height: 100vh;
           background: var(--bg-primary);
@@ -511,6 +570,32 @@ export default function CustomerPortal() {
           gap: 1rem;
         }
 
+        .quick-section.guest {
+          margin-top: 2rem;
+        }
+
+        .guest-checkout {
+          max-width: 1280px;
+          margin: 1.5rem auto 0;
+          padding: 1.35rem 2rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 1rem;
+          background: var(--bg-secondary);
+          border-top: 1px solid var(--border-color);
+          border-bottom: 1px solid var(--border-color);
+        }
+
+        .guest-checkout h2 {
+          margin: 0.25rem 0 0.35rem;
+          font-size: 1.35rem;
+        }
+
+        .guest-checkout p {
+          color: var(--text-secondary);
+        }
+
         .quick-card {
           padding: 1.2rem;
           color: var(--text-primary);
@@ -593,8 +678,11 @@ export default function CustomerPortal() {
             align-items: flex-start;
             flex-direction: column;
           }
+
+          .guest-checkout {
+            align-items: flex-start;
+            flex-direction: column;
+            padding: 1.25rem;
+          }
         }
-      `}</style>
-    </div>
-  );
-}
+      `;

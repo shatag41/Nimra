@@ -72,6 +72,8 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
     } else {
       return [
         { name: 'Home', href: '/' },
+        { name: 'Products', href: '/products' },
+        { name: 'Track Order', href: '/track' },
         { name: 'About Us', href: '/about' },
         { name: 'Contact Us', href: '/contact' },
       ];
@@ -263,24 +265,33 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           font-weight: 600;
           color: var(--text-secondary);
           position: relative;
-          padding: 0.5rem 0;
-          transition: color var(--transition-fast);
+          padding: 0.45rem 0.85rem;
+          border-radius: 999px;
+          transition: color var(--transition-fast), background var(--transition-fast);
         }
-        .nav-link:hover, .nav-link.active {
+        .nav-link:hover {
           color: var(--primary-color);
+          background: rgba(var(--primary-rgb), 0.08);
+        }
+        .nav-link.active {
+          color: var(--primary-color);
+          background: rgba(var(--primary-rgb), 0.12);
         }
         .nav-link::after {
           content: '';
           position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 0;
+          bottom: 2px;
+          left: 0.85rem;
+          right: 0.85rem;
           height: 2px;
           background: var(--primary-color);
-          transition: width var(--transition-fast);
+          border-radius: 2px;
+          transform: scaleX(0);
+          transition: transform var(--transition-fast);
+          transform-origin: center;
         }
         .nav-link:hover::after, .nav-link.active::after {
-          width: 100%;
+          transform: scaleX(1);
         }
         .header-actions {
           display: flex;

@@ -9,8 +9,11 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const publicPaths = ['/login', '/register', '/forgot-password', '/admin/login'];
-  const isPublicPath = publicPaths.includes(pathname);
+  const authPaths = ['/login', '/register', '/forgot-password', '/admin/login'];
+  const isAuthPath = authPaths.includes(pathname);
+  const protectedCustomerPaths = ['/checkout'];
+  const isProtectedCustomerPath = protectedCustomerPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+  const isAdminPath = pathname.startsWith('/admin');
 
   let user = null;
   if (userCookie) {
@@ -26,16 +29,25 @@ export function proxy(request: NextRequest) {
   }
 
   const isAdminUser = user?.Role === 'Admin';
-  if (pathname === '/' || pathname === '/portal') {
-    return NextResponse.redirect(new URL('/login', request.url));
+
+  if (user && isAuthPath) {
+    return NextResponse.redirect(new URL(isAdminUser ? '/admin' : '/customer-portal', request.url));
   }
 
-  if (!user && !isPublicPath) {
-    return NextResponse.redirect(new URL('/login', request.url));
+  if (isAdminPath && pathname !== '/admin/login') {
+    if (!user) {
+      return NextResponse.redirect(new URL('/admin/login', request.url));
+    }
+
+    if (!isAdminUser) {
+      return NextResponse.redirect(new URL('/customer-portal', request.url));
+    }
   }
 
-  if (user && pathname.startsWith('/admin') && !isAdminUser) {
-    return NextResponse.redirect(new URL('/customer-portal', request.url));
+  if (!user && isProtectedCustomerPath) {
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('next', pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();

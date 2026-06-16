@@ -1220,16 +1220,78 @@ function sendNimraEmail(email, subject, plainBody, htmlBody, senderName) {
   }
 }
 
+// ── HARDCODE YOUR EMAIL HERE if Session.getEffectiveUser() keeps failing ──
+var NIMRA_OVERRIDE_TEST_EMAIL = ''; // e.g. 'yourname@gmail.com'
+
 function authorizeNimraEmailSending() {
-  var email = Session.getEffectiveUser().getEmail();
-  if (!email) {
-    throw new Error('Could not detect the effective user email. Run this from the Apps Script editor account that owns the web app deployment.');
+  // Try to get email from session; fall back to override
+  var rawEmail = Session.getEffectiveUser().getEmail();
+  Logger.log('Session.getEffectiveUser().getEmail() returned: [' + rawEmail + ']');
+
+  var email = normalizeEmail(rawEmail || NIMRA_OVERRIDE_TEST_EMAIL);
+  Logger.log('Normalized test email: [' + email + ']');
+
+  if (!email || !isValidEmail(email)) {
+    throw new Error(
+      'Could not get a valid email address.\n' +
+      'Session returned: [' + rawEmail + ']\n' +
+      'Fix: Set NIMRA_OVERRIDE_TEST_EMAIL at the top of this script to your Gmail address and run again.\n' +
+      'Also make sure you are running this function from the Apps Script EDITOR (not via web app URL).'
+    );
   }
 
-  sendPasswordResetOtpEmail(email, '000000', 'NIMRA Admin');
-  sendWelcomeEmail(email, 'NIMRA Admin');
-  sendOrderConfirmationEmail(email, 'NIMRA Admin', 'NIMRA-AUTH-TEST', 'Email authorization test', 0);
-  return 'Authorization email sent to ' + email + '. Now deploy the Web App as a new version.';
+  Logger.log('Starting authorization test emails to: ' + email);
+  var results = [];
+
+  // 1. OTP email
+  try {
+    sendPasswordResetOtpEmail(email, '123456', 'NIMRA Admin');
+    results.push('OTP email: SENT');
+    Logger.log('OTP email sent OK');
+  } catch (e) {
+    results.push('OTP email: FAILED - ' + getErrorMessage(e));
+    Logger.log('OTP email FAILED: ' + getErrorMessage(e));
+  }
+
+  // 2. Welcome email
+  try {
+    var welcomeResult = sendWelcomeEmail(email, 'NIMRA Admin');
+    if (welcomeResult && welcomeResult.sent) {
+      results.push('Welcome email: SENT');
+      Logger.log('Welcome email sent OK');
+    } else {
+      results.push('Welcome email: FAILED - ' + (welcomeResult ? welcomeResult.error : 'unknown'));
+      Logger.log('Welcome email FAILED: ' + (welcomeResult ? welcomeResult.error : 'unknown'));
+    }
+  } catch (e) {
+    results.push('Welcome email: FAILED - ' + getErrorMessage(e));
+    Logger.log('Welcome email FAILED: ' + getErrorMessage(e));
+  }
+
+  // 3. Order confirmation email
+  try {
+    var orderResult = sendOrderConfirmationEmail(email, 'NIMRA Admin', 'NIMRA-AUTH-TEST', 'Auth test item x1', 99);
+    if (orderResult && orderResult.sent) {
+      results.push('Order email: SENT');
+      Logger.log('Order email sent OK');
+    } else {
+      results.push('Order email: FAILED - ' + (orderResult ? orderResult.error : 'unknown'));
+      Logger.log('Order email FAILED: ' + (orderResult ? orderResult.error : 'unknown'));
+    }
+  } catch (e) {
+    results.push('Order email: FAILED - ' + getErrorMessage(e));
+    Logger.log('Order email FAILED: ' + getErrorMessage(e));
+  }
+
+  var summary = 'Auth test complete for [' + email + ']:\n' + results.join('\n');
+  Logger.log(summary);
+
+  var allSent = results.every(function(r) { return r.indexOf('SENT') !== -1; });
+  if (!allSent) {
+    throw new Error(summary + '\n\nIf permission errors appear, make sure the Web App is deployed with "Execute as: Me" and this function was run from the Script EDITOR (not via web app URL).');
+  }
+
+  return summary + '\n\nAll emails sent! Now deploy the Web App as a NEW VERSION with "Execute as: Me".';
 }
 
 function updateUserLastLogin(spreadsheet, userId) {

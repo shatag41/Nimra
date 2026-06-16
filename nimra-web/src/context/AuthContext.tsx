@@ -50,6 +50,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const login = (userData: User) => {
     const isAdminUser = userData.Role === 'Admin';
+    const nextPath = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('next') : null;
+    const safeNextPath = nextPath?.startsWith('/') && !nextPath.startsWith('//') ? nextPath : null;
     setUser(userData);
     // Session cookie: removed { expires: 7 } so it expires on window close
     Cookies.set('nimra_user', JSON.stringify(userData), { path: '/', sameSite: 'lax' }); 
@@ -65,14 +67,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } else {
       localStorage.removeItem('nimra_admin_user');
     }
-    router.replace(isAdminUser ? '/admin' : '/customer-portal');
+    router.replace(isAdminUser ? '/admin' : (safeNextPath || '/customer-portal'));
   };
 
   const logout = () => {
     setUser(null);
     Cookies.remove('nimra_user', { path: '/' });
     localStorage.removeItem('nimra_admin_user');
-    router.replace('/login');
+    router.replace('/');
   };
 
   return (

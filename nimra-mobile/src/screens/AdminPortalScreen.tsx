@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLORS } from '../styles/theme';
+import { useAuth } from '../context/AuthContext';
 import {
   OrderRecord,
   Inquiry,
@@ -45,6 +46,7 @@ type SubTab = 'Dashboard' | 'Orders' | 'Products' | 'Inquiries' | 'Users' | 'Ann
 
 export default function AdminPortalScreen({ isDark, companyInfo, onRefresh, onNavigate }: AdminPortalScreenProps) {
   const theme = isDark ? COLORS.dark : COLORS.light;
+  const { user, logout } = useAuth();
 
   // Session & Auth States
   const [currentUser, setCurrentUser] = useState<{ username: string; role: 'Admin' | 'Manager'; name: string } | null>(null);
@@ -81,19 +83,22 @@ export default function AdminPortalScreen({ isDark, companyInfo, onRefresh, onNa
   // Check login session
   useEffect(() => {
     const checkSession = async () => {
-      try {
-        const session = await AsyncStorage.getItem('nimra_admin_user');
-        if (session) {
-          setCurrentUser(JSON.parse(session));
-        }
-      } catch (err) {
-        console.warn('Failed to read session', err);
-      } finally {
-        setAuthChecked(true);
+      if (user?.Role === 'Admin') {
+        const sessionData = {
+          username: user.Username,
+          role: 'Admin' as const,
+          name: user.Name,
+        };
+        await AsyncStorage.setItem('nimra_admin_user', JSON.stringify(sessionData));
+        setCurrentUser(sessionData);
+      } else {
+        await AsyncStorage.removeItem('nimra_admin_user');
+        setCurrentUser(null);
       }
+      setAuthChecked(true);
     };
     checkSession();
-  }, []);
+  }, [user]);
 
   // Fetch admin databases
   const refreshAdminData = async () => {
@@ -146,14 +151,14 @@ export default function AdminPortalScreen({ isDark, companyInfo, onRefresh, onNa
         (u) =>
           u.Username.toLowerCase() === loginUsername.trim().toLowerCase() &&
           u.Password === loginPassword.trim() &&
-          (u.Role === 'Admin' || u.Role === 'Manager') &&
+          u.Role === 'Admin' &&
           (u.Active === true || u.Active === 'true')
       );
 
       if (matched) {
         const sessionData = {
           username: matched.Username,
-          role: matched.Role === 'Admin' ? 'Admin' as const : 'Manager' as const,
+          role: 'Admin' as const,
           name: matched.Name,
         };
         await AsyncStorage.setItem('nimra_admin_user', JSON.stringify(sessionData));
@@ -173,6 +178,7 @@ export default function AdminPortalScreen({ isDark, companyInfo, onRefresh, onNa
   const handleLogout = async () => {
     await AsyncStorage.removeItem('nimra_admin_user');
     setCurrentUser(null);
+    await logout();
   };
 
   // Order status helper styling
@@ -341,43 +347,15 @@ export default function AdminPortalScreen({ isDark, companyInfo, onRefresh, onNa
     );
   }
 
-  // RENDER LOGIN SCREEN
+  // RENDER ACCESS DENIED SCREEN
   if (!currentUser) {
     return (
       <ScrollView style={[styles.container, { backgroundColor: theme.background }]} contentContainerStyle={styles.centerContent}>
         <View style={[styles.loginCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.loginTitle, { color: theme.text }]}>🔑 NIMRA ADMIN</Text>
-          <Text style={[styles.loginSubtitle, { color: theme.textMuted }]}>Access administrative control console</Text>
+          <Text style={[styles.loginSubtitle, { color: theme.textMuted }]}>Log in with an Admin account to access this dashboard.</Text>
 
-          <View style={styles.group}>
-            <Text style={[styles.label, { color: theme.text }]}>Username</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: theme.background, borderColor: theme.border, color: theme.text }]}
-              value={loginUsername}
-              onChangeText={setLoginUsername}
-              placeholder="Enter username"
-              placeholderTextColor={theme.textMuted}
-              autoCapitalize="none"
-            />
-          </View>
-
-          <View style={styles.group}>
-            <Text style={[styles.label, { color: theme.text }]}>Password</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: theme.background, borderColor: theme.border, color: theme.text }]}
-              value={loginPassword}
-              onChangeText={setLoginPassword}
-              placeholder="Enter password"
-              placeholderTextColor={theme.textMuted}
-              secureTextEntry
-            />
-          </View>
-
-          <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: COLORS.primary }]} onPress={handleLogin} disabled={loginLoading}>
-            {loginLoading ? <ActivityIndicator size="small" color="white" /> : <Text style={styles.primaryBtnText}>Access Dashboard</Text>}
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.backBtn} onPress={() => onNavigate('Home')}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => onNavigate('CustomerPortal')}>
             <Text style={[styles.backBtnText, { color: theme.textMuted }]}>← Back to Store</Text>
           </TouchableOpacity>
         </View>

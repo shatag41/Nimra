@@ -139,7 +139,7 @@ export default function CheckoutClient() {
 
   if (cart.items.length === 0 && status.kind !== 'success') {
     return (
-      <div className="checkout-page"><div className="container empty"><h1>Checkout</h1><p>Your cart is empty.</p><Link className="btn btn-primary" href="/products">Shop Products</Link></div><style jsx>{styles}</style></div>
+      <div className="checkout-page"><div className="container empty"><h1>Checkout</h1><p>Your cart is empty.</p><Link className="btn btn-primary" href="/products">Shop Products</Link></div></div>
     );
   }
 
@@ -235,126 +235,12 @@ export default function CheckoutClient() {
               <div className="sum-row"><span>Delivery</span><strong>{cart.deliveryCharge ? formatCurrency(cart.deliveryCharge) : 'Free'}</strong></div>
               <div className="sum-row total"><span>Total</span><strong>{formatCurrency(cart.grandTotal)}</strong></div>
               {status.message && <p className={`status-${status.kind}`}>{status.message}</p>}
-              <button className="btn btn-primary" disabled={status.kind === 'loading'}>{status.kind === 'loading' ? 'Placing...' : 'Place Order'}</button>
+              <button type="submit" className="btn btn-primary place-order-btn" disabled={status.kind === 'loading'}>{status.kind === 'loading' ? 'Placing...' : 'Place Order'}</button>
             </aside>
           </form>
         )}
       </div>
-      <style jsx>{styles}</style>
     </div>
   );
 }
-
-const styles = `
-  .checkout-page { background: var(--bg-secondary); min-height: 70vh; padding: 2rem 0; }
-  .checkout-head h1, .empty h1 { font-size: 2.6rem; margin: 1rem 0 2rem; }
-  .empty { text-align: center; max-width: 680px; margin: 0 auto; }
-
-  .checkout-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 380px;
-    gap: 2rem;
-    align-items: start;
-  }
-
-  .form-card {
-    border-radius: var(--radius-xl);
-    padding: 1.75rem;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    box-shadow: var(--shadow-md);
-  }
-
-  .co-summary {
-    position: sticky;
-    top: 100px;
-    border-radius: var(--radius-xl);
-    padding: 1.75rem;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    box-shadow: var(--shadow-md);
-  }
-
-  .co-success {
-    text-align: center;
-    max-width: 680px;
-    margin: 0 auto;
-    border-radius: var(--radius-xl);
-    padding: 2.5rem 1.75rem;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    box-shadow: var(--shadow-md);
-    animation: scaleIn 0.3s ease-out;
-  }
-  .co-success p { color: var(--text-secondary); }
-  .co-success strong { display: block; font-size: 1.3rem; margin: 1rem 0; color: var(--primary-color); }
-  .success-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 1rem; }
-
-  .field { display: grid; gap: 0.45rem; margin-bottom: 1rem; }
-  label { color: var(--text-secondary); font-weight: 700; font-size: 0.9rem; cursor: pointer; }
-
-  input, textarea {
-    width: 100%;
-    min-height: 58px;
-    border: 1.5px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: 0.9rem 1rem;
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-    font: inherit;
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-    box-sizing: border-box;
-  }
-  textarea { min-height: 126px; resize: vertical; }
-  input:focus, textarea:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.12);
-  }
-
-  /* Select: pure CSS arrow via background-image — no wrapper div, no stacking issues */
-  .co-select {
-    width: 100%;
-    height: 58px;
-    border: 1.5px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: 0 2.75rem 0 1rem;
-    background-color: var(--bg-secondary);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%234c5f76' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 1rem center;
-    color: var(--text-primary);
-    font: inherit;
-    font-size: 1rem;
-    cursor: pointer;
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-    box-sizing: border-box;
-  }
-  .co-select:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.12);
-  }
-  .co-select:disabled { opacity: 0.45; cursor: not-allowed; }
-  .co-select option { background: var(--bg-primary); color: var(--text-primary); }
-
-  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-
-  .co-summary h2 { margin-bottom: 1.5rem; font-size: 1.35rem; }
-  .sum-row { display: flex; justify-content: space-between; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color); }
-  .sum-row span { color: var(--text-secondary); }
-  .sum-row.total { font-size: 1.2rem; border-bottom: none; margin-bottom: 1.5rem; }
-  .co-summary button { width: 100%; border: none; cursor: pointer; justify-content: center; }
-  .co-summary button:disabled { opacity: 0.7; cursor: progress; }
-
-  .status-error { color: #dc2626; font-weight: 700; margin-bottom: 0.75rem; }
-  .status-loading { color: var(--text-secondary); margin-bottom: 0.75rem; }
-
-  @media (max-width: 900px) { .checkout-grid { grid-template-columns: 1fr; } .co-summary { position: static; } }
-  @media (max-width: 640px) { .split { grid-template-columns: 1fr; } }
-`;
-
 

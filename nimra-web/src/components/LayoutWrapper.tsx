@@ -15,31 +15,37 @@ interface LayoutWrapperProps {
 export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   const isAdmin = pathname?.startsWith('/admin');
-  const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password';
+  const isAdminLogin = pathname === '/admin/login';
+  const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password' || isAdminLogin;
+  const isCheckout = pathname === '/checkout' || pathname?.startsWith('/checkout/');
   const isLanding = pathname === '/landing';
 
   useEffect(() => {
     if (isLoading) return;
 
-    if (pathname === '/') {
-      router.replace('/login');
-    } else if (!isAuthenticated && !isAuthPage) {
+    if (isAuthenticated && isAuthPage) {
+      router.replace(user?.Role === 'Admin' ? '/admin' : '/customer-portal');
+    } else if (isAdmin && !isAdminLogin && !isAuthenticated) {
+      router.replace('/admin/login');
+    } else if (isAdmin && !isAdminLogin && user?.Role !== 'Admin') {
+      router.replace('/customer-portal');
+    } else if (!isAuthenticated && isCheckout) {
       router.replace('/login');
     }
-  }, [isAuthPage, isAuthenticated, isLoading, pathname, router]);
+  }, [isAdmin, isAdminLogin, isAuthPage, isAuthenticated, isCheckout, isLoading, pathname, router, user]);
 
   if (isLoading) {
     return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyItems: 'center', backgroundColor: '#0a0a0a' }}></div>;
   }
 
-  if (!isAuthenticated && !isAuthPage) {
+  if (isAdmin && !isAdminLogin && (!isAuthenticated || user?.Role !== 'Admin')) {
     return null;
   }
 
-  if (pathname === '/') {
+  if (!isAuthenticated && isCheckout) {
     return null;
   }
 

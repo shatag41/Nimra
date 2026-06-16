@@ -12,7 +12,7 @@ export default function PortalRedirectPage() {
     if (isLoading) return;
 
     if (!isAuthenticated) {
-      router.replace('/login');
+      router.replace('/customer-portal');
       return;
     }
 

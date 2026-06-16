@@ -19,6 +19,11 @@ export default function LoginClient() {
     if (session) {
       try {
         const adminSession = JSON.parse(session);
+        if (adminSession.role !== 'Admin') {
+          localStorage.removeItem('nimra_admin_user');
+          Cookies.remove('nimra_user', { path: '/' });
+          return;
+        }
         if (!Cookies.get('nimra_user')) {
           Cookies.set(
             'nimra_user',
@@ -49,6 +54,10 @@ export default function LoginClient() {
       const res = await sendRequest({ type: 'login', username, password });
       if (res.success && res.user) {
         const matchedUser = res.user;
+        if (matchedUser.Role !== 'Admin') {
+          setError('Admin access requires an active Admin role.');
+          return;
+        }
         const userSession = {
           ID: matchedUser.ID,
           Name: matchedUser.Name,
@@ -58,7 +67,7 @@ export default function LoginClient() {
           Active: true,
         };
         // Save user session
-        Cookies.set('nimra_user', JSON.stringify(userSession), { expires: 7 });
+        Cookies.set('nimra_user', JSON.stringify(userSession), { path: '/', sameSite: 'lax' });
         localStorage.setItem(
           'nimra_admin_user',
           JSON.stringify({

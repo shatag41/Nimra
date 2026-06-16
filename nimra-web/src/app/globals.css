@@ -84,7 +84,13 @@ body {
 
 main {
   flex: 1;
-  animation: fadeIn var(--transition-slow) ease-out forwards;
+  animation: mainFadeIn var(--transition-slow) ease-out forwards;
+}
+
+/* opacity-only fade — NO transform, so main never creates a stacking context */
+@keyframes mainFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 a {
@@ -96,13 +102,17 @@ a {
 button,
 [role="button"],
 a[href],
-input,
-textarea,
-select,
 summary {
   pointer-events: auto;
+}
+
+/* Form elements need position:relative so native dropdowns and
+   focus rings position correctly relative to the element */
+input,
+textarea,
+select {
+  pointer-events: auto;
   position: relative;
-  z-index: 2;
 }
 
 .btn,
@@ -268,7 +278,7 @@ html.theme-transition .card-glass {
 section {
   padding: 6rem 0;
   position: relative;
-  overflow: hidden;
+  overflow: clip; /* clip hides decorative overflow without blocking pointer events on transformed children */
 }
 
 .section-sm { padding: 3rem 0; }
@@ -314,14 +324,15 @@ section {
 .btn::before {
   content: '';
   position: absolute;
-  top: 0;
+  inset: 0;
   left: -100%;
   width: 100%;
   height: 100%;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
   transition: left var(--transition-slow);
-  pointer-events: none;
-  z-index: -1;
+  pointer-events: none !important;
+  z-index: 0;
+  border-radius: inherit;
 }
 
 .btn:hover::before { left: 100%; }
@@ -1141,4 +1152,133 @@ section {
     bottom: 1.5rem;
     right: 1.5rem;
   }
+}
+
+/* ── Checkout Page ─────────────────────────────────────────────────────────── */
+.checkout-page { background: var(--bg-secondary); min-height: 70vh; padding: 2rem 0; }
+.checkout-head h1, .checkout-page .empty h1 { font-size: 2.6rem; margin: 1rem 0 2rem; }
+.checkout-page .empty { text-align: center; max-width: 680px; margin: 0 auto; }
+
+.checkout-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 2rem;
+  align-items: start;
+}
+
+.form-card {
+  border-radius: var(--radius-xl);
+  padding: 1.75rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+}
+
+.co-summary {
+  position: sticky;
+  top: 100px;
+  border-radius: var(--radius-xl);
+  padding: 1.75rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+}
+
+.co-success {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto;
+  border-radius: var(--radius-xl);
+  padding: 2.5rem 1.75rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+  animation: scaleIn 0.3s ease-out;
+}
+.co-success p { color: var(--text-secondary); }
+.co-success strong { display: block; font-size: 1.3rem; margin: 1rem 0; color: var(--primary-color); }
+.success-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 1rem; }
+
+.checkout-page .field { display: grid; gap: 0.45rem; margin-bottom: 1rem; }
+.checkout-page label { color: var(--text-secondary); font-weight: 700; font-size: 0.9rem; cursor: pointer; }
+
+.checkout-page input,
+.checkout-page textarea {
+  width: 100%;
+  min-height: 58px;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.9rem 1rem;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font: inherit;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  box-sizing: border-box;
+}
+.checkout-page textarea { min-height: 126px; resize: vertical; }
+.checkout-page input:focus,
+.checkout-page textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.12);
+}
+
+/* Select dropdown — pure CSS arrow, no wrapper needed */
+.co-select {
+  width: 100%;
+  height: 58px;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0 2.75rem 0 1rem;
+  background-color: var(--bg-secondary);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%234c5f76' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  box-sizing: border-box;
+  pointer-events: auto;
+  position: relative;
+  z-index: 1;
+}
+.co-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.12);
+}
+.co-select:disabled { opacity: 0.45; cursor: not-allowed; }
+.co-select option { background: var(--bg-primary); color: var(--text-primary); }
+
+.checkout-page .split { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+.co-summary h2 { margin-bottom: 1.5rem; font-size: 1.35rem; }
+.sum-row { display: flex; justify-content: space-between; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color); }
+.sum-row span { color: var(--text-secondary); }
+.sum-row.total { font-size: 1.2rem; border-bottom: none; margin-bottom: 1.5rem; }
+.co-summary button { width: 100%; border: none; cursor: pointer; justify-content: center; }
+.co-summary button:disabled { opacity: 0.7; cursor: progress; }
+.place-order-btn {
+  position: relative !important;
+  z-index: 10 !important;
+  pointer-events: auto !important;
+  isolation: isolate;
+  margin-top: 0.5rem;
+}
+.place-order-btn::before { pointer-events: none !important; }
+
+.status-error { color: #dc2626; font-weight: 700; margin-bottom: 0.75rem; }
+.status-loading { color: var(--text-secondary); margin-bottom: 0.75rem; }
+
+@media (max-width: 900px) {
+  .checkout-grid { grid-template-columns: 1fr; }
+  .co-summary { position: static; }
+}
+@media (max-width: 640px) {
+  .checkout-page .split { grid-template-columns: 1fr; }
 }
