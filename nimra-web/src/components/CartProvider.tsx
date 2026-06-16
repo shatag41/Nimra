@@ -20,16 +20,15 @@ interface CartContextValue {
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
-const STORAGE_KEY_PREFIX = 'nimra-cart-v2';
-
-const getCartOwnerKey = (user: ReturnType<typeof useAuth>['user']) => {
-  if (!user) return 'guest';
-  return String(user.ID || user.Username || user.Mobile || 'guest').trim() || 'guest';
+const getStorageKey = (user: ReturnType<typeof useAuth>['user']) => {
+  if (!user) return 'nimra-cart';
+  const ownerId = String(user.ID || user.Username || user.Mobile || '').trim();
+  return ownerId ? `nimra-cart-${ownerId}` : 'nimra-cart';
 };
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
-  const storageKey = `${STORAGE_KEY_PREFIX}:${getCartOwnerKey(user)}`;
+  const storageKey = getStorageKey(user);
   const [items, setItems] = useState<CartItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [activeStorageKey, setActiveStorageKey] = useState('');
@@ -45,11 +44,52 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         let localItems = saved ? JSON.parse(saved) : [];
         
         if (user && user.ID) {
-          const cloudItems = await fetchCart(user.ID);
-          if (cloudItems && cloudItems.length > 0) {
-            localItems = cloudItems;
-            localStorage.setItem(storageKey, JSON.stringify(localItems));
+          // 1. Read guest cart from localStorage
+          const guestKey = 'nimra-cart';
+          const guestSaved = localStorage.getItem(guestKey);
+          // Also check legacy key
+          const legacyGuestSaved = localStorage.getItem('nimra-cart-v2:guest');
+          
+          let guestItems: CartItem[] = [];
+          if (guestSaved) {
+            guestItems = JSON.parse(guestSaved);
+          } else if (legacyGuestSaved) {
+            guestItems = JSON.parse(legacyGuestSaved);
           }
+          
+          // 2. Fetch user's server cart (if exists)
+          const cloudItems = await fetchCart(user.ID);
+          let baseItems: CartItem[] = cloudItems && cloudItems.length > 0 ? cloudItems : localItems;
+
+          // 3. Merge carts intelligently
+          if (guestItems && guestItems.length > 0) {
+            const mergedMap = new Map<string, CartItem>();
+            
+            baseItems.forEach(item => {
+              mergedMap.set(item.productId, { ...item });
+            });
+            
+            guestItems.forEach(gItem => {
+              const existing = mergedMap.get(gItem.productId);
+              if (existing) {
+                // same product -> increase quantity
+                existing.quantity += gItem.quantity;
+              } else {
+                // new product -> add item
+                mergedMap.set(gItem.productId, { ...gItem });
+              }
+            });
+            
+            localItems = Array.from(mergedMap.values());
+            
+            // 6. Do NOT clear cart until merge succeeds
+            localStorage.removeItem(guestKey);
+            localStorage.removeItem('nimra-cart-v2:guest');
+          } else {
+            localItems = baseItems;
+          }
+          
+          localStorage.setItem(storageKey, JSON.stringify(localItems));
         }
         
         if (!cancelled) {
@@ -57,7 +97,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           setActiveStorageKey(storageKey);
           setHydrated(true);
         }
-      } catch {
+      } catch (err) {
+        console.error("Cart hydration error:", err);
         if (!cancelled) {
           setItems([]);
           setActiveStorageKey(storageKey);
