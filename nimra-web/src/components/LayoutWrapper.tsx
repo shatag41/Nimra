@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import Header from './Header';
 import Footer from './Footer';
 import { CompanyInfo } from '../types/cms';
@@ -16,6 +16,7 @@ interface LayoutWrapperProps {
 
 export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
 
@@ -46,13 +47,17 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
     if (isLoading) return;
 
     if (isAuthenticated && isAuthPage) {
-      router.replace(user?.Role === 'Admin' ? '/admin' : '/customer-portal');
+      const nextPath = searchParams?.get('next');
+      const safeNextPath = nextPath?.startsWith('/') && !nextPath.startsWith('//') ? nextPath : null;
+      router.replace(safeNextPath || (user?.Role === 'Admin' ? '/admin' : '/customer-portal'));
     } else if (isAdmin && !isAdminLogin && !isAuthenticated) {
-      router.replace('/login');
+      const fullPath = window.location.pathname + window.location.search;
+      router.replace(`/login?next=${encodeURIComponent(fullPath)}`);
     } else if (isAdmin && !isAdminLogin && user?.Role !== 'Admin') {
       router.replace('/customer-portal');
     } else if (!isAuthenticated && isCheckout) {
-      router.replace('/login');
+      const fullPath = window.location.pathname + window.location.search;
+      router.replace(`/login?next=${encodeURIComponent(fullPath)}`);
     }
   }, [isAdmin, isAdminLogin, isAuthPage, isAuthenticated, isCheckout, isLoading, pathname, router, user]);
 

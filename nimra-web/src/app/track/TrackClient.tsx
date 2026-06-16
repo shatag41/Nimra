@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { OrderRecord } from '../../types/cms';
 import { useAuth } from '../../context/AuthContext';
@@ -14,16 +14,20 @@ export default function TrackClient() {
   const router = useRouter();
   const { user } = useAuth();
   const [orderId, setOrderId] = useState(params.get('orderId') || '');
-  const [mobile, setMobile] = useState(user?.Mobile || '');
+  const [mobile, setMobile] = useState(params.get('mobile') || user?.Mobile || '');
   const [order, setOrder] = useState<OrderRecord | null>(null);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const mobileValue = mobile || user?.Mobile || '';
 
-  const submit = async (event: FormEvent) => {
-    event.preventDefault();
+  const submit = useCallback(async (event?: FormEvent) => {
+    if (event) event.preventDefault();
     if (!user) {
-      const nextPath = orderId.trim() ? `/track?orderId=${encodeURIComponent(orderId.trim())}` : '/track';
+      let queryParams = new URLSearchParams();
+      if (orderId.trim()) queryParams.set('orderId', orderId.trim());
+      if (mobileValue.trim()) queryParams.set('mobile', mobileValue.trim());
+      queryParams.set('autoSubmit', 'true');
+      const nextPath = queryParams.toString() ? `/track?${queryParams.toString()}` : '/track';
       router.push(`/login?next=${encodeURIComponent(nextPath)}`);
       return;
     }
@@ -38,9 +42,23 @@ export default function TrackClient() {
     setLoading(false);
     if (result.success && result.order) setOrder(result.order);
     else setMessage(result.message || 'Order not found.');
-  };
+  }, [user, orderId, mobileValue, router]);
 
   const activeIndex = order ? steps.indexOf(order.status) : -1;
+
+  const hasAutoSubmitted = useRef(false);
+
+  useEffect(() => {
+    if (params.get('autoSubmit') === 'true' && user && !hasAutoSubmitted.current) {
+      hasAutoSubmitted.current = true;
+      submit();
+      
+      // Clean up the URL to remove autoSubmit
+      const url = new URL(window.location.href);
+      url.searchParams.delete('autoSubmit');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [user, params, submit]);
 
   return (
     <section className="track-page">
