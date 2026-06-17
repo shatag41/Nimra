@@ -2,17 +2,19 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Product } from '../../types/cms';
-import { useCart } from '../../components/CartProvider';
-import { formatCurrency, isOrderable, normalizeCategory } from '../../utils/commerce';
+import { useCart } from '../../hooks/useCart';
+import { Categories } from '../../components/portal/Categories';
+import { CatalogCard } from '../../components/portal/Products';
+import { CartToast } from '../../components/portal/Notifications';
+import { normalizeCategory } from '../../utils/commerce';
 import RushSodaPromo from './RushSodaPromo';
 
 interface ProductsClientProps {
   products: Product[];
 }
 
-const categories = [
+const categoriesData = [
   { id: 'All', name: 'All Products' },
   { id: 'Packaged Drinking Water', name: 'Packaged Drinking Water' },
   { id: 'Mineral Water', name: 'Mineral Water' },
@@ -23,17 +25,11 @@ const categories = [
 export default function ProductsClient({ products }: ProductsClientProps) {
   const [activeTab, setActiveTab] = useState('All');
   const [cartToast, setCartToast] = useState<{ name: string; visible: boolean }>({ name: '', visible: false });
-  const { addProduct, updateQuantity, items } = useCart();
-  const router = useRouter();
+  const { addProduct } = useCart();
 
   const filteredProducts = products.filter((product) =>
     activeTab === 'All' ? true : normalizeCategory(product.Category) === activeTab
   );
-
-  const getCartItem = (product: Product) => {
-    const id = String(product.ID || product.Name);
-    return items.find((item) => item.productId === id) ?? null;
-  };
 
   const handleAdd = (product: Product) => {
     addProduct(product);
@@ -59,38 +55,13 @@ export default function ProductsClient({ products }: ProductsClientProps) {
     }
   }, [products]);
 
-  const handleIncrease = (product: Product) => {
-    const item = getCartItem(product);
-    if (item) {
-      updateQuantity(item.productId, item.quantity + 1);
-    } else {
-      handleAdd(product);
-    }
-  };
-
-  const handleDecrease = (product: Product) => {
-    const item = getCartItem(product);
-    if (item) {
-      updateQuantity(item.productId, item.quantity - 1);
-    }
-  };
-
   return (
     <>
-      {/* Cart Added Toast Banner */}
-      <div className={`cart-toast-banner ${cartToast.visible ? 'visible' : ''}`}>
-        <div className="toast-content">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-            <polyline points="22 4 12 14.01 9 11.01"/>
-          </svg>
-          <span><strong>{cartToast.name}</strong> added to cart!</span>
-        </div>
-        <Link href="/cart" className="toast-go-btn" onClick={() => setCartToast((t) => ({ ...t, visible: false }))}>
-          Go to Cart →
-        </Link>
-        <button className="toast-close" onClick={() => setCartToast((t) => ({ ...t, visible: false }))}>✕</button>
-      </div>
+      <CartToast
+        visible={cartToast.visible}
+        name={cartToast.name}
+        onClose={() => setCartToast((t) => ({ ...t, visible: false }))}
+      />
 
       <section className="products-hero">
         <div className="container">
@@ -102,103 +73,25 @@ export default function ProductsClient({ products }: ProductsClientProps) {
 
       <section className="products-catalog-section">
         <div className="container">
-          <div className="catalog-tabs">
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                className={`tab-btn ${activeTab === category.id ? 'active' : ''}`}
-                onClick={() => setActiveTab(category.id)}
-              >
-                {category.name}
-              </button>
-            ))}
-          </div>
+          <Categories
+            categories={categoriesData}
+            activeTab={activeTab}
+            onSelectTab={setActiveTab}
+          />
 
           {activeTab === 'Upcoming RUSH Soda' ? (
             <RushSodaPromo />
           ) : (
             <div className="catalog-grid animate-fade-in">
-              {filteredProducts.map((product) => {
-              const orderable = isOrderable(product);
-              const id = String(product.ID || product.Name);
-              const cartItem = getCartItem(product);
-              const inCart = cartItem !== null && cartItem.quantity > 0;
-
-              return (
-                <article key={id} className={`catalog-card glass ${inCart ? 'in-cart' : ''}`}>
-                  <div className="cat-img-box">
-                    <img src={product.ImageUrl} alt={product.Name} />
-                    {inCart && (
-                      <div className="cart-count-badge">{cartItem.quantity}</div>
-                    )}
-                  </div>
-                  <div className="cat-info-box">
-                    <div className="cat-meta">
-                      <span className="cat-volume">{product.Volume}</span>
-                      <span className="cat-badge">{normalizeCategory(product.Category)}</span>
-                    </div>
-                    <h3>{product.Name}</h3>
-                    <p>{product.Description}</p>
-                    {product.Specifications && <p className="specs">{product.Specifications}</p>}
-                    <div className="cat-price-row">
-                      <div>
-                        <span className="price-lbl">{orderable ? 'Retail Price' : 'Expected Price'}</span>
-                        <div className="price-val">{formatCurrency(Number(product.Price))}</div>
-                      </div>
-
-                      {orderable ? (
-                        inCart ? (
-                          <div className="qty-controls">
-                            <button
-                              className="qty-btn qty-minus"
-                              onClick={() => handleDecrease(product)}
-                              aria-label="Decrease quantity"
-                            >
-                              −
-                            </button>
-                            <span className="qty-count">{cartItem.quantity}</span>
-                            <button
-                              className="qty-btn qty-plus"
-                              onClick={() => handleIncrease(product)}
-                              aria-label="Increase quantity"
-                            >
-                              +
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            className="btn btn-primary btn-sm add-cart-btn"
-                            onClick={() => handleAdd(product)}
-                          >
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
-                              <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
-                            </svg>
-                            Add to Cart
-                          </button>
-                        )
-                      ) : (
-                        <Link href="/contact?subject=RUSH%20Soda%20Launch" className="btn btn-secondary btn-sm">
-                          Notify Me
-                        </Link>
-                      )}
-                    </div>
-
-                    {inCart && (
-                      <Link href="/cart" className="view-cart-link">
-                        View Cart ({cartItem.quantity} item{cartItem.quantity > 1 ? 's' : ''}) →
-                      </Link>
-                    )}
-                  </div>
-                </article>
-              );
-            })}
+              {filteredProducts.map((product) => (
+                <CatalogCard key={String(product.ID || product.Name)} product={product} onAdd={handleAdd} />
+              ))}
             </div>
           )}
         </div>
       </section>
 
-      <style jsx>{`
+      <style jsx global>{`
         /* ── Cart Toast Banner ── */
         .cart-toast-banner {
           position: fixed;

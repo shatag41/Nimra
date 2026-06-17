@@ -1,77 +1,46 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { useAuth } from '../../context/AuthContext';
-import { fetchCustomerOrders, fetchCMSData } from '../../utils/api';
-import { OrderRecord, Product } from '../../types/cms';
-import { formatCurrency, isOrderable } from '../../utils/commerce';
-import { useCart } from '../../components/CartProvider';
+import dynamic from 'next/dynamic';
+import { useAuth } from '../../hooks/useAuth';
+import { useCustomerOrders } from '../../hooks/useCustomerOrders';
+import { useCMSData } from '../../hooks/useCMSData';
+import { isOrderable } from '../../utils/commerce';
+import { PortalHero } from '../../components/portal/Hero';
+import { Orders } from '../../components/portal/Orders';
+import { Profile } from '../../components/portal/Profile';
+import { CartToast } from '../../components/portal/Notifications';
 
-const statusClass = (status: string) => status.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+// Lazy-loaded heavy sections for faster page loads
+const RecommendationCard = dynamic(
+  () => import('../../components/portal/Products').then((mod) => mod.RecommendationCard),
+  { ssr: false, loading: () => <div className="loading-state">Loading recommendation...</div> }
+);
 
-const formatDate = (value?: string) => {
-  if (!value) return 'Not available';
-  var date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Not available';
-  return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-};
+const RushPortalBanner = dynamic(
+  () => import('../../components/portal/Banners').then((mod) => mod.RushPortalBanner),
+  { ssr: false, loading: () => <div className="loading-state">Loading banner...</div> }
+);
 
 export default function CustomerPortal() {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const { addProduct } = useCart();
-  const [orders, setOrders] = useState<OrderRecord[]>([]);
-  const [loadingOrders, setLoadingOrders] = useState(true);
-  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+  const { products } = useCMSData();
+  const { orders, loadingOrders, metrics, refreshOrders } = useCustomerOrders();
+  const [cartToast, setCartToast] = React.useState<{ name: string; visible: boolean }>({ name: '', visible: false });
 
-  useEffect(() => {
-    const loadProducts = async () => {
-      try {
-        const data = await fetchCMSData();
-        const orderable = (data.products || []).filter(isOrderable);
-        setRecommendedProducts(orderable.slice(0, 4));
-      } catch (err) {
-        console.error('Failed to load recommended products', err);
-      }
-    };
-    loadProducts();
-  }, []);
-
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      loadOrders();
-    } else if (!isLoading) {
-      setLoadingOrders(false);
-    }
-  }, [isAuthenticated, isLoading, user]);
-
-  const loadOrders = async () => {
-    setLoadingOrders(true);
-    try {
-      const data = await fetchCustomerOrders(user?.ID || '', user?.Username || '');
-      setOrders(data);
-    } catch (err) {
-      console.error('Failed to load orders', err);
-    } finally {
-      setLoadingOrders(false);
-    }
+  const handleProductAdded = (product: any) => {
+    setCartToast({ name: product.Name, visible: true });
+    clearTimeout((window as any).__portalCartToastTimer);
+    (window as any).__portalCartToastTimer = window.setTimeout(() => {
+      setCartToast((t) => ({ ...t, visible: false }));
+    }, 3000);
   };
 
-  const metrics = useMemo(() => {
-    const totalSpend = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
-    const activeOrders = orders.filter((order) => !/delivered|cancelled/i.test(order.status)).length;
-    const deliveredOrders = orders.filter((order) => /delivered/i.test(order.status)).length;
-    const latestOrder = orders[0];
-    return { totalSpend, activeOrders, deliveredOrders, latestOrder };
-  }, [orders]);
-
-  const profileFields = [
-    { label: 'Email', value: user?.Username },
-    { label: 'Mobile', value: user?.Mobile },
-    { label: 'Role', value: user?.Role },
-  ];
-  const completedProfileFields = profileFields.filter((field) => Boolean(field.value)).length;
-  const profilePercent = Math.round((completedProfileFields / profileFields.length) * 100);
+  const recommendedProducts = React.useMemo(() => {
+    const orderable = (products || []).filter(isOrderable);
+    return orderable.slice(0, 4);
+  }, [products]);
 
   if (isLoading) {
     return <div className="loading-state">Loading your portal...</div>;
@@ -80,17 +49,7 @@ export default function CustomerPortal() {
   if (!isAuthenticated) {
     return (
       <div className="portal-page">
-        <section className="portal-hero">
-          <div>
-            <span className="eyebrow">Customer Portal</span>
-            <h1>Welcome to NIMRA</h1>
-            <p>Browse products, learn about our water quality, and track an existing order without signing in.</p>
-          </div>
-          <div className="hero-actions">
-            <Link href="/products" className="btn btn-primary">Browse Products</Link>
-            <Link href="/track" className="btn btn-ghost">Track Order</Link>
-          </div>
-        </section>
+        <PortalHero isAuthenticated={false} />
 
         <section className="quick-section guest">
           <Link href="/products" className="quick-card">
@@ -124,20 +83,14 @@ export default function CustomerPortal() {
           <Link href="/login" className="btn btn-primary">Login to Checkout</Link>
         </section>
 
-        <style jsx>{portalStyles}</style>
+        <style jsx global>{portalStyles}</style>
       </div>
     );
   }
 
   return (
     <div className="portal-page">
-      <section className="portal-hero">
-        <div>
-          <span className="eyebrow">Customer Portal</span>
-          <h1>Welcome back, {user?.Name || 'Customer'}</h1>
-          <p>Manage orders, track deliveries, and reach NIMRA support from one clean workspace.</p>
-        </div>
-      </section>
+      <PortalHero isAuthenticated={true} name={user?.Name} />
 
       <section className="metric-grid" aria-label="Account summary">
         <div className="metric-card">
@@ -157,78 +110,16 @@ export default function CustomerPortal() {
         </div>
         <div className="metric-card">
           <span>Total Spend</span>
-          <strong>{formatCurrency(metrics.totalSpend)}</strong>
+          <strong>₹{metrics.totalSpend.toFixed(2)}</strong>
           <small>Cash on delivery purchases</small>
         </div>
       </section>
 
       <section className="portal-grid">
-        <div className="panel orders-panel">
-          <div className="panel-head">
-            <div>
-              <span className="eyebrow" style={{ color: 'var(--primary-color)', background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.2)', borderRadius: '999px', padding: '0.2rem 0.75rem', fontSize: '0.7rem' }}>Orders</span>
-              <h2>Recent Activity</h2>
-            </div>
-            <button className="refresh-btn" type="button" onClick={loadOrders} disabled={loadingOrders}>
-              {loadingOrders ? 'Refreshing...' : '↻ Refresh'}
-            </button>
-          </div>
-
-          {loadingOrders ? (
-            <div className="empty-state">Loading your orders...</div>
-          ) : orders.length > 0 ? (
-            <div className="table-wrap">
-              <table className="orders-table">
-                <thead>
-                  <tr>
-                    <th>Order ID</th>
-                    <th>Date</th>
-                    <th>Status</th>
-                    <th>Total</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {orders.slice(0, 6).map((order) => (
-                    <tr key={order.orderId}>
-                      <td className="order-id">{order.orderId}</td>
-                      <td>{formatDate(order.createdAt)}</td>
-                      <td><span className={`status-badge ${statusClass(order.status)}`}>{order.status}</span></td>
-                      <td>{formatCurrency(Number(order.total || 0))}</td>
-                      <td><Link href={`/track?orderId=${order.orderId}`} className="table-link">Track →</Link></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="empty-state">
-              <h3>No orders yet</h3>
-              <p>Your NIMRA order history will appear here after checkout.</p>
-              <Link href="/products" className="btn btn-primary">Browse Products</Link>
-            </div>
-          )}
-        </div>
+        <Orders orders={orders} loadingOrders={loadingOrders} onRefresh={refreshOrders} />
 
         <aside className="side-stack">
-          <div className="panel profile-card">
-            <div className="panel-head compact">
-              <div>
-                <span className="eyebrow" style={{ color: 'var(--primary-color)', background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.2)', borderRadius: '999px', padding: '0.2rem 0.75rem', fontSize: '0.7rem' }}>Profile</span>
-                <h2>Account Details</h2>
-              </div>
-              <span className="completion">{profilePercent}%</span>
-            </div>
-            <div className="progress-track"><span style={{ width: `${profilePercent}%` }} /></div>
-            <dl className="profile-list">
-              {profileFields.map((field) => (
-                <div key={field.label}>
-                  <dt>{field.label}</dt>
-                  <dd>{field.value || 'Not provided'}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
+          <Profile user={user} />
 
           <div className="panel next-card">
             <span className="eyebrow" style={{ color: 'var(--primary-color)', background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.2)', borderRadius: '999px', padding: '0.2rem 0.75rem', fontSize: '0.7rem' }}>Next Step</span>
@@ -257,51 +148,95 @@ export default function CustomerPortal() {
           </div>
           <div className="recommendations-grid">
             {recommendedProducts.map((product) => (
-              <div key={product.ID} className="rec-card">
-                <div className="rec-img-box">
-                  <img src={product.ImageUrl} alt={product.Name} />
-                </div>
-                <div className="rec-info">
-                  <span className="rec-vol">{product.Volume}</span>
-                  <h3>{product.Name}</h3>
-                  <p className="rec-desc">{product.Description.substring(0, 80)}...</p>
-                  <div className="rec-footer">
-                    <span className="rec-price">{formatCurrency(Number(product.Price))}</span>
-                    <button
-                      className="btn btn-primary btn-sm add-btn"
-                      onClick={() => addProduct(product)}
-                      style={{ cursor: 'pointer', border: 'none' }}
-                    >
-                      Add to Cart
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <RecommendationCard key={product.ID} product={product} onAdd={handleProductAdded} />
             ))}
           </div>
         </section>
       )}
 
-      <section className="recommendations-section" style={{ marginTop: '3rem' }}>
-        <div className="panel rush-portal-banner" style={{ background: 'linear-gradient(135deg, #020617 0%, #0f172a 100%)', color: 'white', border: '1px solid #1e293b', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '3rem 2rem' }}>
-          <span className="eyebrow" style={{ color: '#fbbf24', background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: '999px', padding: '0.2rem 0.75rem', fontSize: '0.7rem', marginBottom: '1rem' }}>Coming Soon</span>
-          <h2 style={{ marginBottom: '1rem', fontSize: '2rem', color: 'white', fontWeight: '800', letterSpacing: '-0.02em' }}>RUSH Club Soda</h2>
-          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '1rem', marginBottom: '2rem', maxWidth: '500px', lineHeight: '1.6' }}>
-            Prepare for the ultimate bubbly experience. Pure, crisp, and extra sparkling. Crafted to elevate your mocktails, parties, or enjoyed chilled.
-          </p>
-          <Link href="/contact" className="btn btn-primary" style={{ padding: '0.85rem 2.5rem', fontSize: '1rem', fontWeight: '700', borderRadius: 'var(--radius-lg)' }}>
-            Get Notified
-          </Link>
-        </div>
-      </section>
+      <RushPortalBanner />
 
-      <style jsx>{portalStyles}</style>
+      <CartToast
+        visible={cartToast.visible}
+        name={cartToast.name}
+        onClose={() => setCartToast((t) => ({ ...t, visible: false }))}
+      />
+
+      <style jsx global>{portalStyles}</style>
     </div>
   );
 }
 
 const portalStyles = `
   .portal-page { min-height: 100vh; background: var(--bg-primary); padding-bottom: 4rem; }
+
+  /* ── Cart Toast Banner ── */
+  .cart-toast-banner {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(120px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--primary-color);
+    border-radius: var(--radius-xl);
+    padding: 0.9rem 1.25rem;
+    box-shadow: 0 8px 32px rgba(6, 182, 212, 0.25);
+    min-width: 340px;
+    max-width: 90vw;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .cart-toast-banner.visible {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .toast-content {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex: 1;
+    color: var(--text-primary);
+    font-size: 0.92rem;
+  }
+  .toast-content svg {
+    color: #22c55e;
+    flex-shrink: 0;
+  }
+  .toast-go-btn {
+    background: var(--primary-color);
+    color: white;
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-lg);
+    white-space: nowrap;
+    transition: background var(--transition-fast);
+    text-decoration: none;
+  }
+  .toast-go-btn:hover {
+    background: var(--accent-color);
+  }
+  .toast-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0 0.25rem;
+    line-height: 1;
+    transition: color var(--transition-fast);
+  }
+  .toast-close:hover { color: var(--text-primary); }
+
+  @media (max-width: 640px) {
+    .cart-toast-banner { min-width: unset; width: calc(100vw - 2rem); }
+  }
 
   .portal-hero {
     padding: 3.5rem 4rem 5.5rem;

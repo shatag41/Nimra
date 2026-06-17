@@ -1,11 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useCart } from '../../components/CartProvider';
-import { FREE_DELIVERY_MINIMUM, formatCurrency } from '../../utils/commerce';
+import { useCart } from '../../hooks/useCart';
+import { CartItemsList, CartSummary } from '../../components/portal/Cart';
 
 export default function CartClient() {
-  const { items, subtotal, deliveryCharge, grandTotal, updateQuantity, removeItem } = useCart();
+  const { items } = useCart();
 
   if (items.length === 0) {
     return (
@@ -16,7 +16,7 @@ export default function CartClient() {
           <p>Add NIMRA bottles or bulk jars and checkout for home or office delivery.</p>
           <Link href="/products" className="btn btn-primary">Continue Shopping</Link>
         </div>
-        <style jsx>{styles}</style>
+        <style jsx global>{styles}</style>
       </section>
     );
   }
@@ -33,38 +33,11 @@ export default function CartClient() {
         </div>
 
         <div className="cart-layout">
-          <div className="cart-list">
-            {items.map((item) => (
-              <article key={item.productId} className="cart-row glass">
-                <img src={item.imageUrl} alt={item.name} />
-                <div className="row-main">
-                  <span>{item.category} / {item.volume}</span>
-                  <h3>{item.name}</h3>
-                  <strong>{formatCurrency(item.price)}</strong>
-                </div>
-                <div className="qty">
-                  <button onClick={() => updateQuantity(item.productId, item.quantity - 1)}>-</button>
-                  <span>{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.productId, item.quantity + 1)}>+</button>
-                </div>
-                <button className="remove" onClick={() => removeItem(item.productId)}>Remove</button>
-              </article>
-            ))}
-          </div>
-
-          <aside className="summary glass">
-            <h2>Order Summary</h2>
-            <div><span>Subtotal</span><strong>{formatCurrency(subtotal)}</strong></div>
-            <div><span>Delivery</span><strong>{deliveryCharge ? formatCurrency(deliveryCharge) : 'Free'}</strong></div>
-            {subtotal < FREE_DELIVERY_MINIMUM && (
-              <p>Add {formatCurrency(FREE_DELIVERY_MINIMUM - subtotal)} more for free delivery.</p>
-            )}
-            <div className="total"><span>Grand Total</span><strong>{formatCurrency(grandTotal)}</strong></div>
-            <Link href="/checkout" className="btn btn-primary">Checkout</Link>
-          </aside>
+          <CartItemsList />
+          <CartSummary />
         </div>
       </div>
-      <style jsx>{styles}</style>
+      <style jsx global>{styles}</style>
     </section>
   );
 }
