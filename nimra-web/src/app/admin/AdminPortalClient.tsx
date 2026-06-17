@@ -54,8 +54,19 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
   const [authChecked, setAuthChecked] = useState(false);
 
   // Tab State
-  const [activeTab, setActiveTab] = useState<TabType>('dashboard');
+  const [activeTab, setActiveTab] = useState<TabType>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('nimra_admin_active_tab');
+      if (saved) return saved as TabType;
+    }
+    return 'dashboard';
+  });
   const [globalSearch, setGlobalSearch] = useState('');
+
+  // Persist activeTab to localStorage
+  useEffect(() => {
+    localStorage.setItem('nimra_admin_active_tab', activeTab);
+  }, [activeTab]);
 
   // DB States
   const [orders, setOrders] = useState<OrderRecord[]>([]);
@@ -846,7 +857,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Panel
           </h1>
           <div className="header-actions">
-            {activeTab !== 'dashboard' && activeTab !== 'notifications' && (
+            {activeTab !== 'dashboard' && activeTab !== 'notifications' && activeTab !== 'settings' && (
               <div className="search-container" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                 <span style={{ position: 'absolute', left: '12px', color: 'var(--text-secondary)' }}>🔍</span>
                 <input
@@ -1603,7 +1614,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
 
             {/* SETTINGS (Company Info) */}
             {activeTab === 'settings' && (
-              <div className="settings-tab card glass">
+              <div className="settings-tab">
                 {currentUser.role !== 'Admin' ? (
                   <div className="access-denied-block">
                     <h2>🚫 Administrative Privileges Required</h2>
@@ -1611,89 +1622,110 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                   </div>
                 ) : (
                   <form onSubmit={handleSettingsSubmit} className="settings-form">
-                    <h3>NIMRA Beverages Store Brand & Contact Information</h3>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
-                      These settings sync instantly across all checkout panels, headers, maps, and social buttons on both Customer Web and Customer Mobile applications.
-                    </p>
+                    <div className="settings-header-banner" style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '2rem' }}>
+                      <div className="settings-banner-icon" style={{ fontSize: '2rem' }}>⚙️</div>
+                      <div>
+                        <h3 style={{ margin: 0 }}>NIMRA Brand & Contact Configurator</h3>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '4px 0 0 0' }}>
+                          These settings sync instantly across all checkout panels, headers, maps, and social integrations on both Customer Web and Customer Mobile applications.
+                        </p>
+                      </div>
+                    </div>
 
-                    <div className="settings-grid">
+                    {/* SECTION 1: Brand & Contact Info */}
+                    <div className="settings-section">
+                      <div className="settings-section-title">
+                        <span>🏷️</span> Brand Details & Social Channels
+                      </div>
+                      <div className="settings-grid">
+                        <div className="form-group">
+                          <label>Brand Name</label>
+                          <input
+                            required
+                            type="text"
+                            value={companyInfo.BrandName || ''}
+                            onChange={(e) => handleSettingsFieldChange('BrandName', e.target.value)}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label>Support Phone Number</label>
+                          <input
+                            required
+                            type="text"
+                            value={companyInfo.Phone || ''}
+                            onChange={(e) => handleSettingsFieldChange('Phone', e.target.value)}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label>Contact Email Address</label>
+                          <input
+                            required
+                            type="email"
+                            value={companyInfo.Email || ''}
+                            onChange={(e) => handleSettingsFieldChange('Email', e.target.value)}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label>WhatsApp Registry Number (Country Code Prepended)</label>
+                          <input
+                            required
+                            type="text"
+                            value={companyInfo.WhatsAppNumber || ''}
+                            onChange={(e) => handleSettingsFieldChange('WhatsAppNumber', e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* SECTION 2: Operations & Plant Locations */}
+                    <div className="settings-section">
+                      <div className="settings-section-title">
+                        <span>📍</span> Operations & Plant Locations
+                      </div>
                       <div className="form-group">
-                        <label>Brand Name</label>
+                        <label>Office Address Location Description</label>
                         <input
                           required
                           type="text"
-                          value={companyInfo.BrandName || ''}
-                          onChange={(e) => handleSettingsFieldChange('BrandName', e.target.value)}
+                          value={companyInfo.OfficeAddress || ''}
+                          onChange={(e) => handleSettingsFieldChange('OfficeAddress', e.target.value)}
                         />
                       </div>
-                      <div className="form-group">
-                        <label>Support Phone Number</label>
+                      <div className="form-group" style={{ marginTop: '1.25rem' }}>
+                        <label>Packaging Plant Address Location Description</label>
                         <input
                           required
                           type="text"
-                          value={companyInfo.Phone || ''}
-                          onChange={(e) => handleSettingsFieldChange('Phone', e.target.value)}
+                          value={companyInfo.PlantAddress || ''}
+                          onChange={(e) => handleSettingsFieldChange('PlantAddress', e.target.value)}
                         />
+                      </div>
+                    </div>
+
+                    {/* SECTION 3: Brand Narrative & Identity */}
+                    <div className="settings-section">
+                      <div className="settings-section-title">
+                        <span>📖</span> Brand Story & Quality Standards
                       </div>
                       <div className="form-group">
-                        <label>Contact Email Address</label>
-                        <input
-                          required
-                          type="email"
-                          value={companyInfo.Email || ''}
-                          onChange={(e) => handleSettingsFieldChange('Email', e.target.value)}
+                        <label>About Us Brand Story Narrative</label>
+                        <textarea
+                          rows={4}
+                          value={companyInfo.AboutStory || ''}
+                          onChange={(e) => handleSettingsFieldChange('AboutStory', e.target.value)}
                         />
                       </div>
-                      <div className="form-group">
-                        <label>WhatsApp Registry Number (Country Code Prepended)</label>
-                        <input
-                          required
-                          type="text"
-                          value={companyInfo.WhatsAppNumber || ''}
-                          onChange={(e) => handleSettingsFieldChange('WhatsAppNumber', e.target.value)}
+                      <div className="form-group" style={{ marginTop: '1.25rem' }}>
+                        <label>Quality Standards Narrative Text</label>
+                        <textarea
+                          rows={3}
+                          value={companyInfo.QualityText || ''}
+                          onChange={(e) => handleSettingsFieldChange('QualityText', e.target.value)}
                         />
                       </div>
                     </div>
 
-                    <div className="form-group" style={{ marginTop: '1.25rem' }}>
-                      <label>Office Address Location Description</label>
-                      <input
-                        required
-                        type="text"
-                        value={companyInfo.OfficeAddress || ''}
-                        onChange={(e) => handleSettingsFieldChange('OfficeAddress', e.target.value)}
-                      />
-                    </div>
-
-                    <div className="form-group" style={{ marginTop: '1.25rem' }}>
-                      <label>Packaging Plant Address Location Description</label>
-                      <input
-                        required
-                        type="text"
-                        value={companyInfo.PlantAddress || ''}
-                        onChange={(e) => handleSettingsFieldChange('PlantAddress', e.target.value)}
-                      />
-                    </div>
-
-                    <div className="form-group" style={{ marginTop: '1.25rem' }}>
-                      <label>About Us Brand Story Narrative</label>
-                      <textarea
-                        rows={4}
-                        value={companyInfo.AboutStory || ''}
-                        onChange={(e) => handleSettingsFieldChange('AboutStory', e.target.value)}
-                      />
-                    </div>
-
-                    <div className="form-group" style={{ marginTop: '1.25rem' }}>
-                      <label>Quality Standards Narrative Text</label>
-                      <textarea
-                        rows={3}
-                        value={companyInfo.QualityText || ''}
-                        onChange={(e) => handleSettingsFieldChange('QualityText', e.target.value)}
-                      />
-                    </div>
-
-                    <button type="submit" className="btn btn-primary" style={{ marginTop: '1.5rem' }} disabled={saveLoading}>
+                    <button type="submit" className="btn btn-primary" style={{ marginTop: '1rem', width: '100%', display: 'flex', justifyContent: 'center' }} disabled={saveLoading}>
                       {saveLoading ? 'Saving Info...' : '💾 Overwrite Company Info'}
                     </button>
                   </form>
@@ -2235,32 +2267,36 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
 
       {/* ==================================================== */}
       {/* DESIGN SYSTEM CSS */}
-      {/* ==================================================== */}
       <style jsx>{`
         .admin-container {
           display: flex;
-          min-height: 90vh;
+          min-height: 100vh;
           background-color: var(--bg-primary);
           color: var(--text-primary);
         }
 
         /* SIDEBAR STYLING */
         .admin-sidebar {
-          width: 260px;
-          min-width: 260px;
-          background: linear-gradient(180deg, var(--bg-secondary), var(--bg-tertiary));
+          width: 220px;
+          min-width: 220px;
+          background: var(--bg-primary);
           border-right: 1px solid var(--border-color);
-          padding: 1.5rem 1.25rem;
+          padding: 1.25rem 0.875rem;
           display: flex;
           flex-direction: column;
-          gap: 1.25rem;
-          z-index: 100;
+          gap: 1rem;
+          z-index: 200;
           position: fixed;
           top: 0;
           left: 0;
           height: 100vh;
           overflow-y: auto;
           scrollbar-width: none; /* Firefox */
+          box-shadow: 4px 0 24px rgba(0, 0, 0, 0.02);
+        }
+        [data-theme="dark"] .admin-sidebar {
+          background: var(--bg-primary);
+          border-right: 1px solid var(--border-color);
         }
         
         .admin-sidebar::-webkit-scrollbar {
@@ -2270,14 +2306,14 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         .sidebar-brand {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
-          padding-bottom: 1.25rem;
+          gap: 0.625rem;
+          padding-bottom: 1rem;
           border-bottom: 1px solid var(--border-color);
         }
         .brand-text {
           font-family: var(--font-heading);
           font-weight: 800;
-          font-size: 1.35rem;
+          font-size: 1.2rem;
           background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
@@ -2286,15 +2322,21 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         .sidebar-user {
           display: flex;
           align-items: center;
-          gap: 0.875rem;
-          padding: 1rem;
-          border-radius: var(--radius-lg);
-          background: rgba(var(--primary-rgb), 0.06);
-          border: 1px solid var(--border-color);
+          gap: 0.625rem;
+          padding: 0.625rem;
+          border-radius: var(--radius-md);
+          background: var(--glass-bg);
+          border: 1px solid var(--glass-border);
+          box-shadow: var(--shadow-sm);
+          transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+        }
+        .sidebar-user:hover {
+          transform: translateY(-2px);
+          box-shadow: var(--shadow-md);
         }
         .user-avatar {
-          width: 44px;
-          height: 44px;
+          width: 34px;
+          height: 34px;
           border-radius: 50%;
           background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
           color: white;
@@ -2302,51 +2344,58 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           align-items: center;
           justify-content: center;
           font-weight: 800;
-          font-size: 1.25rem;
+          font-size: 1rem;
           box-shadow: var(--shadow-sm);
         }
         .user-details {
           display: flex;
           flex-direction: column;
-          gap: 0.25rem;
+          gap: 0.125rem;
         }
         .user-name {
-          font-size: 0.95rem;
+          font-size: 0.85rem;
           font-weight: 700;
         }
         .user-role {
-          font-size: 0.7rem;
-          padding: 0.125rem 0.5rem;
+          font-size: 0.65rem;
+          padding: 0.1rem 0.375rem;
           width: fit-content;
         }
 
         .sidebar-nav {
           display: flex;
           flex-direction: column;
-          gap: 0.5rem;
+          gap: 0.375rem;
           flex: 1;
         }
         .nav-btn {
           background: transparent;
           border: none;
           text-align: left;
-          padding: 0.875rem 1rem;
+          padding: 0.55rem 0.75rem;
           border-radius: var(--radius-md);
-          color: var(--text-secondary);
+          color: rgba(37, 99, 235, 0.7);
           font-weight: 600;
-          font-size: 0.95rem;
+          font-size: 0.85rem;
           cursor: pointer;
           transition: all var(--transition-normal);
           display: flex;
           align-items: center;
-          gap: 0.75rem;
+          gap: 0.5rem;
           position: relative;
           overflow: hidden;
+        }
+        [data-theme="dark"] .nav-btn {
+          color: rgba(147, 197, 253, 0.75);
         }
         .nav-btn:hover {
           color: var(--primary-color);
           background: rgba(var(--primary-rgb), 0.08);
           transform: translateX(4px);
+        }
+        [data-theme="dark"] .nav-btn:hover {
+          color: #93c5fd;
+          background: rgba(59, 130, 246, 0.12);
         }
         .nav-btn.active {
           color: white;
@@ -2354,31 +2403,39 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           box-shadow: 0 4px 14px rgba(var(--primary-rgb), 0.3);
           transform: translateX(4px);
         }
+        [data-theme="dark"] .nav-btn.active {
+          color: white;
+          background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+        }
 
         /* MAIN SECTION STYLING */
         .admin-main {
           flex: 1;
           display: flex;
           flex-direction: column;
-          padding: 2rem;
-          margin-left: 260px;
-          overflow-y: auto;
+          padding: 1.25rem 1.5rem;
+          margin-left: 220px;
           position: relative;
+          gap: 2rem;
         }
 
         .main-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 1.5rem 2rem;
-          border-radius: var(--radius-xl);
-          border: 1px solid var(--glass-border);
-          background: var(--glass-bg);
-          backdrop-filter: blur(16px);
+          padding: 1rem 1.5rem;
+          border-bottom: 1px solid var(--border-color);
+          background: var(--nav-bg);
+          backdrop-filter: blur(20px) saturate(180%);
+          -webkit-backdrop-filter: blur(20px) saturate(180%);
+          box-shadow: var(--shadow-sm);
+          position: sticky;
+          top: 0;
+          z-index: 150;
+          margin-left: -1.5rem;
+          margin-right: -1.5rem;
+          margin-top: -1.25rem;
           margin-bottom: 2rem;
-          box-shadow: var(--shadow-md);
-          position: relative;
-          z-index: 100;
         }
         .main-header h1 {
           font-size: 1.6rem;
@@ -2574,24 +2631,101 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         }
         .stat-card {
           padding: 1.75rem;
-          border-radius: var(--radius-xl);
-          border: 1px solid var(--border-color);
-          background: var(--bg-secondary);
+          border-radius: var(--radius-2xl);
+          border: 1px solid var(--glass-border);
+          background: var(--glass-bg);
+          backdrop-filter: blur(16px);
           display: flex;
           flex-direction: column;
           gap: 0.5rem;
           transition: all var(--transition-normal);
-          box-shadow: var(--shadow-sm);
+          box-shadow: var(--shadow-md);
+          position: relative;
+          overflow: hidden;
         }
         .stat-card:hover {
-          transform: translateY(-5px);
+          transform: translateY(-6px);
           box-shadow: var(--shadow-xl);
           border-color: rgba(var(--primary-rgb), 0.3);
         }
+        .stat-card::after {
+          content: ''; position: absolute; top: 0; right: 0;
+          width: 150px; height: 150px;
+          background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%);
+          opacity: 0; transition: opacity var(--transition-normal);
+          pointer-events: none;
+        }
+        .stat-card:hover::after { opacity: 1; }
         .stat-label {
           color: var(--text-secondary);
           font-size: 0.875rem;
+          font-weight: 700;        
+        }
+        /* SETTINGS TAB STYLING */
+        .settings-tab {
+          width: 100%;
+          padding: 0 !important;
+        }
+        .settings-section {
+          background: rgba(37, 99, 235, 0.02);
+          border: 1.5px solid var(--border-light);
+          border-radius: var(--radius-xl);
+          padding: 1.75rem;
+          margin-bottom: 1.75rem;
+          transition: border-color var(--transition-fast), background-color var(--transition-fast);
+        }
+        [data-theme="dark"] .settings-section {
+          background: rgba(255, 255, 255, 0.01);
+          border-color: rgba(255, 255, 255, 0.05);
+        }
+        .settings-section:hover {
+          border-color: rgba(var(--primary-rgb), 0.15);
+        }
+        .settings-section-title {
+          font-family: var(--font-heading);
+          font-size: 1.05rem;
           font-weight: 700;
+          color: var(--primary-color);
+          margin-bottom: 1.25rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          border-bottom: 1px solid var(--border-light);
+          padding-bottom: 0.5rem;
+        }
+        [data-theme="dark"] .settings-section-title {
+          border-color: rgba(255, 255, 255, 0.05);
+          color: var(--accent-color);
+        }
+        .settings-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 1.25rem;
+        }
+        @media (max-width: 768px) {
+          .settings-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+          }
+        }
+
+        /* SCROLLABLE TABLES STYLING */
+        .table-responsive {
+          width: 100%;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          border-radius: var(--radius-xl);
+          border: 1px solid var(--border-color);
+          background: var(--bg-secondary);
+        }
+        [data-theme="dark"] .table-responsive {
+          border-color: rgba(255, 255, 255, 0.1);
+          background: rgba(15, 23, 42, 0.4);
+        }
+        .admin-table {
+          width: 100%;
+          border-collapse: collapse;
+          min-width: 850px; /* Force scrollbar inside table-responsive wrapper */
         }
         .stat-val {
           font-size: 2rem;
@@ -2613,10 +2747,11 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         }
         .chart-card {
           padding: 1.75rem;
-          border-radius: var(--radius-xl);
-          border: 1px solid var(--border-color);
-          background: var(--bg-secondary);
-          box-shadow: var(--shadow-sm);
+          border-radius: var(--radius-2xl);
+          border: 1px solid var(--glass-border);
+          background: var(--glass-bg);
+          backdrop-filter: blur(16px);
+          box-shadow: var(--shadow-md);
           transition: all var(--transition-normal);
         }
         .chart-card:hover {
@@ -3080,11 +3215,187 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           border-color: #ef4444 !important;
           box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
         }
-        .form-input-error-message {
-          margin-top: 0.5rem;
+        .form-input-error-message {          margin-top: 0.5rem;
           font-size: 0.85rem;
           color: #ef4444;
           font-weight: 500;
+        }
+
+        /* ANNOUNCEMENTS (NOTIFICATIONS) TAB STYLING */
+        .notif-grid {
+          display: grid;
+          grid-template-columns: 1fr 1.25fr;
+          gap: 2rem;
+          align-items: start;
+        }
+        @media (max-width: 992px) {
+          .notif-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+          }
+        }
+        .notif-sender-panel {
+          background: var(--glass-bg);
+          border: 1px solid var(--glass-border);
+          border-radius: var(--radius-xl);
+          padding: 2rem;
+          box-shadow: var(--shadow-md);
+          backdrop-filter: blur(12px);
+          transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+        }
+        .notif-sender-panel:hover {
+          box-shadow: var(--shadow-lg);
+          border-color: rgba(var(--primary-rgb), 0.25);
+        }
+        .notif-sender-panel h3 {
+          font-family: var(--font-heading);
+          font-size: 1.25rem;
+          margin-bottom: 0.5rem;
+          color: var(--text-primary);
+          background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+        .notif-logs-panel {
+          background: var(--glass-bg);
+          border: 1px solid var(--glass-border);
+          border-radius: var(--radius-xl);
+          padding: 2rem;
+          box-shadow: var(--shadow-md);
+          backdrop-filter: blur(12px);
+          max-height: 600px;
+          display: flex;
+          flex-direction: column;
+        }
+        .notif-logs-panel h3 {
+          font-family: var(--font-heading);
+          font-size: 1.25rem;
+          margin-bottom: 1.25rem;
+        }
+        .logs-list {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+          overflow-y: auto;
+          padding-right: 0.5rem;
+          flex: 1;
+        }
+        .log-item {
+          background: var(--bg-primary);
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-lg);
+          padding: 1.25rem;
+          position: relative;
+          transition: all var(--transition-normal);
+        }
+        .log-item:hover {
+          transform: translateY(-2px);
+          box-shadow: var(--shadow-md);
+          border-color: var(--primary-color);
+          background: var(--bg-secondary);
+        }
+        .log-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 1rem;
+          margin-bottom: 0.25rem;
+        }
+        .log-header strong {
+          font-size: 1rem;
+          color: var(--text-primary);
+        }
+        .btn-delete-log {
+          background: transparent;
+          border: none;
+          color: var(--text-muted);
+          cursor: pointer;
+          font-size: 1rem;
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+          transition: all var(--transition-fast);
+        }
+        .btn-delete-log:hover {
+          background: rgba(239, 68, 68, 0.1);
+          color: #ef4444;
+          transform: scale(1.1);
+        }
+        .log-time {
+          font-size: 0.75rem;
+          color: var(--text-muted);
+          display: block;
+          margin-bottom: 0.75rem;
+          font-weight: 500;
+        }
+        .log-item p {
+          color: var(--text-secondary);
+          font-size: 0.9rem;
+          line-height: 1.5;
+        }
+
+        /* SETTINGS TAB STYLING */
+        .settings-tab {
+          max-width: 100%;
+          margin: 0 auto;
+        }
+        .settings-form h3 {
+          font-family: var(--font-heading);
+          font-size: 1.35rem;
+          margin-bottom: 0.5rem;
+          background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+        .settings-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 1.5rem;
+          margin-bottom: 1rem;
+        }
+        @media (max-width: 768px) {
+          .settings-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+          }
+        }
+
+        /* PREMIUM FORM FIELD THEMES */
+        .form-input, .form-select, .form-textarea, .form-group input, .form-group select, .form-group textarea {
+          background: var(--bg-primary);
+          border: 1.5px solid var(--border-color);
+          color: var(--text-primary);
+          border-radius: var(--radius-md);
+          padding: 0.75rem 1rem;
+          transition: all var(--transition-fast);
+        }
+        [data-theme="dark"] .form-input, 
+        [data-theme="dark"] .form-select, 
+        [data-theme="dark"] .form-textarea,
+        [data-theme="dark"] .form-group input,
+        [data-theme="dark"] .form-group select,
+        [data-theme="dark"] .form-group textarea {
+          background: rgba(30, 41, 59, 0.45);
+          border-color: rgba(255, 255, 255, 0.1);
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus, 
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.15);
+          background: var(--bg-secondary);
+        }
+        [data-theme="dark"] .form-input:focus, 
+        [data-theme="dark"] .form-select:focus, 
+        [data-theme="dark"] .form-textarea:focus,
+        [data-theme="dark"] .form-group input:focus,
+        [data-theme="dark"] .form-group select:focus,
+        [data-theme="dark"] .form-group textarea:focus {
+          background: rgba(30, 41, 59, 0.85);
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.25);
         }
 
         /* RESPONSIVE */
@@ -3098,12 +3409,12 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         }
         @media (max-width: 900px) {
           .admin-sidebar {
-            width: 220px;
-            min-width: 220px;
-            padding: 1.25rem 1rem;
+            width: 180px;
+            min-width: 180px;
+            padding: 1.25rem 0.75rem;
           }
           .admin-main {
-            margin-left: 220px;
+            margin-left: 180px;
           }
           .recent-activity-grid {
             grid-template-columns: 1fr;

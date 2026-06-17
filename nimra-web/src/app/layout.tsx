@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { AuthProvider } from '../context/AuthContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import './globals.css';
@@ -73,9 +74,11 @@ export default async function RootLayout({
           <AuthProvider>
             <StyledJsxRegistry>
               <CartProvider>
-                <LayoutWrapper companyInfo={data.companyInfo}>
-                  {children}
-                </LayoutWrapper>
+                <Suspense fallback={null}>
+                  <LayoutWrapper companyInfo={data.companyInfo}>
+                    {children}
+                  </LayoutWrapper>
+                </Suspense>
               </CartProvider>
             </StyledJsxRegistry>
           </AuthProvider>
