@@ -64,6 +64,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           name: userData.Name,
         })
       );
+      localStorage.setItem('nimra_admin_active_tab', 'dashboard');
     } else {
       localStorage.removeItem('nimra_admin_user');
     }

@@ -13,6 +13,7 @@ interface HeaderProps {
 }
 
 export default React.memo(function Header({ companyInfo }: HeaderProps) {
+  const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -20,10 +21,13 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
   const pathname = usePathname();
   const { totalItems } = useCart();
   const { user, logout } = useAuth();
-  const dashboardHref = user?.Role === 'Admin' ? '/admin' : '/customer-portal';
-  const logoHref = user ? dashboardHref : '/';
+
+  const activeUser = mounted ? user : null;
+  const dashboardHref = activeUser?.Role === 'Admin' ? '/admin' : '/customer-portal';
+  const logoHref = activeUser ? dashboardHref : '/';
 
   useEffect(() => {
+    setMounted(true);
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
     const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     const activeTheme = savedTheme || systemTheme;
@@ -50,13 +54,15 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
   };
 
   const getNavLinks = () => {
-    if (user?.Role === 'Admin') {
+    if (activeUser?.Role === 'Admin') {
       return [
         { name: 'Dashboard', href: '/admin' },
-        { name: 'Products', href: '/admin/products' },
-        { name: 'Orders', href: '/admin/orders' },
+        { name: 'Products', href: '/products' },
+        { name: 'Track', href: '/track' },
+        { name: 'About', href: '/about' },
+        { name: 'Contact', href: '/contact' },
       ];
-    } else if (user?.Role === 'Customer') {
+    } else if (activeUser?.Role === 'Customer') {
       return [
         { name: 'Portal', href: '/customer-portal' },
         { name: 'Products', href: '/products' },
@@ -131,15 +137,15 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
             </button>
 
             {/* Cart — only for Customers */}
-            {(!user || user.Role === 'Customer') && (
-              <Link href="/cart" prefetch={true} className="cart-link" aria-label={`Cart with ${totalItems} items`}>
+            {(!activeUser || activeUser.Role === 'Customer') && (
+              <Link href="/cart" prefetch={true} className="cart-link" aria-label={`Cart with ${mounted ? totalItems : 0} items`}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
-                {totalItems > 0 && <span className="cart-count">{totalItems}</span>}
+                {mounted && totalItems > 0 && <span className="cart-count">{totalItems}</span>}
               </Link>
             )}
 
             {/* Login / Logout */}
-            {user ? (
+            {activeUser ? (
               <button onClick={() => setIsLogoutModalOpen(true)} className="btn btn-outline-danger">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                 Logout
@@ -184,7 +190,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
 
               <div className="mobile-nav-divider" />
 
-              {(!user || user.Role === 'Customer') && (
+              {(!activeUser || activeUser.Role === 'Customer') && (
                 <Link
                   href="/cart"
                   prefetch={true}
@@ -193,11 +199,11 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
-                  Cart ({totalItems})
+                  Cart ({mounted ? totalItems : 0})
                 </Link>
               )}
 
-              {user ? (
+              {activeUser ? (
                 <button
                   className="btn btn-outline-danger"
                   style={{ width: '100%', justifyContent: 'center' }}

@@ -76,6 +76,7 @@ export default function LoginClient() {
             name: matchedUser.Name,
           })
         );
+        localStorage.setItem('nimra_admin_active_tab', 'dashboard');
         router.replace('/admin');
       } else {
         setError(res.message || 'Invalid username or password. Please try again.');
