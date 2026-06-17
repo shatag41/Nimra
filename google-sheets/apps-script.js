@@ -148,18 +148,32 @@ function saveOrder(spreadsheet, params) {
   Logger.log("saveOrder: Starting order validation.");
   var customer = params.customer || {};
   var items = params.items || [];
-  
-  var name = String(customer.name || '').trim();
-  var mobile = String(customer.mobile || '').trim();
-  var email = normalizeEmail(customer.email);
-  var address = String(customer.address || '').trim();
-  var city = String(customer.city || '').trim();
-  var state = String(customer.state || '').trim();
-  var pincode = String(customer.pincode || '').trim();
-  var instructions = String(customer.instructions || '').trim();
-  var totalAmount = Number(params.total || 0);
-  var userId = String(params.userId || customer.userId || customer.userID || customer.ID || '').trim();
 
+  // ── Extract all checkout fields ──────────────────────────────────────────
+  var name           = String(customer.name        || '').trim();
+  var mobile         = String(customer.mobile      || '').trim();
+  var altMobile      = String(customer.altMobile   || '').trim();
+  var email          = normalizeEmail(customer.email);
+  var flatNo         = String(customer.flatNo      || '').trim();
+  var buildingName   = String(customer.buildingName|| '').trim();
+  var locality       = String(customer.locality    || '').trim();
+  var landmark       = String(customer.landmark    || '').trim();
+  var city           = String(customer.city        || '').trim();
+  var state          = String(customer.state       || '').trim();
+  var pincode        = String(customer.pincode     || '').trim();
+  var addressType    = String(customer.addressType || 'Home').trim();
+  var instructions   = String(customer.instructions|| '').trim();
+  var totalAmount    = Number(params.total         || 0);
+  var userId         = String(params.userId || customer.userId || customer.userID || customer.ID || '').trim();
+
+  // Build composite Full Address from granular fields (also accept legacy address field)
+  var fullAddress = String(customer.address || '').trim();
+  if (!fullAddress) {
+    fullAddress = [flatNo, buildingName, locality, landmark, city, state, pincode]
+      .filter(Boolean).join(', ');
+  }
+
+  // If email not provided, try to fetch it from the Users sheet via userId
   if ((!email || !isValidEmail(email)) && userId) {
     var users = getUsersData(spreadsheet);
     for (var i = 0; i < users.length; i++) {
@@ -170,24 +184,28 @@ function saveOrder(spreadsheet, params) {
     }
   }
 
-  // Validate required fields: Name, Mobile (10 digits), Address, City, State, Pincode (6 digits), items, and totalAmount
-  if (!name || !/^[0-9]{10}$/.test(mobile) || !address || !city || !state || !/^[0-9]{6}$/.test(pincode) || !items.length || totalAmount <= 0) {
-    Logger.log("saveOrder Validation Failure. Name=" + name + ", Mobile=" + mobile + ", Address=" + address + ", ItemsCount=" + items.length + ", Total=" + totalAmount);
-    return { success: false, message: 'Invalid order payload. Required fields are missing or invalid.' };
+  // ── Validation: required fields ──────────────────────────────────────────
+  // Accept either new granular fields (flatNo + locality) or legacy address
+  var hasAddress = (flatNo && locality) || fullAddress;
+  if (!name || !/^[0-9]{10}$/.test(mobile) || !hasAddress || !city || !state || !/^[0-9]{6}$/.test(pincode) || !items.length || totalAmount <= 0) {
+    Logger.log("saveOrder Validation Failure. Name=" + name + ", Mobile=" + mobile + ", FlatNo=" + flatNo + ", Locality=" + locality + ", City=" + city + ", State=" + state + ", Pincode=" + pincode + ", ItemsCount=" + items.length + ", Total=" + totalAmount);
+    return { success: false, message: 'Invalid order payload. Required fields (name, mobile, address, city, state, pincode, items) are missing or invalid.' };
   }
 
   Logger.log("Handler Execution: saveOrder handler is executing.");
   var sheet = ensureOrdersSheet(spreadsheet);
   Logger.log("Sheet Selection: Selected sheet name is: " + sheet.getName());
 
-  var timestamp = new Date();
-  var orderId = 'NIMRA-' + Utilities.formatDate(timestamp, Session.getScriptTimeZone(), 'yyyyMMdd-HHmmss') + '-' + Math.floor(Math.random() * 900 + 100);
+  // ── Build row data ───────────────────────────────────────────────────────
+  var timestamp     = new Date();
+  var orderId       = 'NIMRA-' + Utilities.formatDate(timestamp, Session.getScriptTimeZone(), 'yyyyMMdd-HHmmss') + '-' + Math.floor(Math.random() * 900 + 100);
   var paymentMethod = String(params.paymentMethod || 'Cash on Delivery');
-  var source = String(params.source || 'Website');
-  var createdAt = params.createdAt ? new Date(params.createdAt) : timestamp;
-  var updatedAt = params.updatedAt ? new Date(params.updatedAt) : timestamp;
-  var subtotal = Number(params.subtotal || 0);
-  var deliveryCharge = Number(params.deliveryCharge || 0);
+  var source        = String(params.source || 'Website');
+  var createdAt     = params.createdAt ? new Date(params.createdAt) : timestamp;
+  var updatedAt     = params.updatedAt ? new Date(params.updatedAt) : timestamp;
+  var subtotal      = Number(params.subtotal || 0);
+  var deliveryCharge= Number(params.deliveryCharge || 0);
+
   var products = items.map(function(item) {
     return item.name + ' (' + item.volume + ')';
   }).join(' | ');
@@ -195,29 +213,37 @@ function saveOrder(spreadsheet, params) {
     return item.quantity;
   }).join(' | ');
 
+  // ── Row order MUST match ensureOrdersSheet headers exactly ───────────────
   var rowData = [
-    orderId,
-    timestamp,
-    name,
-    mobile,
-    email,
-    address,
-    city,
-    state,
-    pincode,
-    instructions,
-    products,
-    quantities,
-    subtotal,
-    deliveryCharge,
-    totalAmount,
-    paymentMethod,
-    'Pending',
-    source,
-    createdAt,
-    updatedAt,
-    userId
+    orderId,          // Order ID
+    timestamp,        // Order Date
+    name,             // Customer Name
+    mobile,           // Mobile Number
+    altMobile,        // Alternate Mobile Number
+    email,            // Email
+    flatNo,           // House/Flat No.
+    buildingName,     // Building/Society Name
+    locality,         // Area/Locality
+    landmark,         // Landmark
+    fullAddress,      // Full Address
+    city,             // City
+    state,            // State
+    pincode,          // Pincode
+    addressType,      // Address Type
+    instructions,     // Delivery Instructions
+    products,         // Products
+    quantities,       // Quantities
+    subtotal,         // Subtotal
+    deliveryCharge,   // Delivery Charge
+    totalAmount,      // Total Amount
+    paymentMethod,    // Payment Method
+    'Pending',        // Order Status
+    source,           // Source
+    createdAt,        // Created At
+    updatedAt,        // Updated At
+    userId            // Customer User ID
   ];
+
   Logger.log("Appended Values: Appending row data to " + sheet.getName() + " sheet: " + JSON.stringify(rowData));
   sheet.appendRow(rowData);
 
@@ -278,29 +304,30 @@ function trackOrder(spreadsheet, orderId, mobile, userId, email) {
 
 function updateOrderStatus(spreadsheet, params) {
   var orderId = params.orderId;
-  var status = params.status;
+  var status  = params.status;
   var sheet = spreadsheet.getSheetByName('Orders');
   if (!sheet) return { success: false, message: 'Orders sheet not found.' };
-  
-  var data = sheet.getDataRange().getValues();
+
+  var data    = sheet.getDataRange().getValues();
   var headers = data[0];
-  var orderIdIndex = headers.indexOf('Order ID');
-  var statusIndex = headers.indexOf('Order Status');
+
+  // Use exact new column names
+  var orderIdIndex   = headers.indexOf('Order ID');
+  var statusIndex    = headers.indexOf('Order Status');
   var updatedAtIndex = headers.indexOf('Updated At');
-  
-  var nameIndex = headers.indexOf('Customer Name');
-  var emailIndex = headers.indexOf('Email');
-  var mobileIndex = headers.indexOf('Mobile Number');
-  
+  var nameIndex      = headers.indexOf('Customer Name');
+  var emailIndex     = headers.indexOf('Email');
+  var mobileIndex    = headers.indexOf('Mobile Number');
+
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][orderIdIndex]).trim() === String(orderId).trim()) {
-      sheet.getRange(i + 1, statusIndex + 1).setValue(status);
-      sheet.getRange(i + 1, updatedAtIndex + 1).setValue(new Date());
-      
-      var name = nameIndex >= 0 ? data[i][nameIndex] : '';
-      var email = emailIndex >= 0 ? data[i][emailIndex] : '';
+      if (statusIndex  >= 0) sheet.getRange(i + 1, statusIndex  + 1).setValue(status);
+      if (updatedAtIndex >= 0) sheet.getRange(i + 1, updatedAtIndex + 1).setValue(new Date());
+
+      var name   = nameIndex   >= 0 ? data[i][nameIndex]   : '';
+      var email  = emailIndex  >= 0 ? data[i][emailIndex]  : '';
       var mobile = mobileIndex >= 0 ? data[i][mobileIndex] : '';
-      
+
       var emailResult = sendOrderStatusUpdateEmail(email, name, orderId, status, mobile);
       var response = { success: true, message: 'Order status updated successfully', emailSent: emailResult.sent };
       if (!emailResult.sent && emailResult.error) {
@@ -348,61 +375,84 @@ function rowToOrder(headers, row) {
     createdAt: toISOString(value('Order Date')),
     updatedAt: toISOString(value('Updated At')) || toISOString(value('Order Date')),
     customer: {
-      userId: value('Customer User ID'),
-      name: value('Customer Name'),
-      mobile: value('Mobile Number'),
-      email: value('Email'),
-      address: value('Address'),
-      city: value('City'),
-      state: value('State'),
-      pincode: value('Pincode'),
-      instructions: value('Special Instructions')
+      userId:       value('Customer User ID'),
+      name:         value('Customer Name'),
+      mobile:       value('Mobile Number'),
+      altMobile:    value('Alternate Mobile Number'),
+      email:        value('Email'),
+      flatNo:       value('House/Flat No.'),
+      buildingName: value('Building/Society Name'),
+      locality:     value('Area/Locality'),
+      landmark:     value('Landmark'),
+      address:      value('Full Address'),
+      city:         value('City'),
+      state:        value('State'),
+      pincode:      value('Pincode'),
+      addressType:  value('Address Type'),
+      instructions: value('Delivery Instructions')
     },
     items: items,
-    subtotal: Number(value('Subtotal') || 0),
-    deliveryCharge: Number(value('Delivery Charge') || 0),
-    total: Number(value('Total Amount') || 0),
+    subtotal:      Number(value('Subtotal')       || 0),
+    deliveryCharge:Number(value('Delivery Charge')|| 0),
+    total:         Number(value('Total Amount')   || 0),
     paymentMethod: value('Payment Method') || 'Cash on Delivery',
-    source: value('Source') || 'Website'
+    source:        value('Source')         || 'Website'
   };
 }
 
 function ensureOrdersSheet(spreadsheet) {
+  // ── Column order must match rowData in saveOrder() exactly ───────────────
   var requiredHeaders = [
-    'Order ID',
-    'Order Date',
-    'Customer Name',
-    'Mobile Number',
-    'Email',
-    'Address',
-    'City',
-    'State',
-    'Pincode',
-    'Special Instructions',
-    'Products',
-    'Quantities',
-    'Subtotal',
-    'Delivery Charge',
-    'Total Amount',
-    'Payment Method',
-    'Order Status',
-    'Source',
-    'Created At',
-    'Updated At',
-    'Customer User ID'
+    'Order ID',                  // col 1
+    'Order Date',                // col 2
+    'Customer Name',             // col 3
+    'Mobile Number',             // col 4
+    'Alternate Mobile Number',   // col 5
+    'Email',                     // col 6
+    'House/Flat No.',            // col 7
+    'Building/Society Name',     // col 8
+    'Area/Locality',             // col 9
+    'Landmark',                  // col 10
+    'Full Address',              // col 11
+    'City',                      // col 12
+    'State',                     // col 13
+    'Pincode',                   // col 14
+    'Address Type',              // col 15
+    'Delivery Instructions',     // col 16
+    'Products',                  // col 17
+    'Quantities',                // col 18
+    'Subtotal',                  // col 19
+    'Delivery Charge',           // col 20
+    'Total Amount',              // col 21
+    'Payment Method',            // col 22
+    'Order Status',              // col 23
+    'Source',                    // col 24
+    'Created At',                // col 25
+    'Updated At',                // col 26
+    'Customer User ID'           // col 27
   ];
 
   var sheet = spreadsheet.getSheetByName('Orders');
   if (!sheet) {
+    Logger.log("ensureOrdersSheet: Orders sheet not found, creating it.");
     sheet = spreadsheet.insertSheet('Orders');
   }
 
-  var headerRange = sheet.getRange(1, 1, 1, requiredHeaders.length);
-  var currentHeaders = headerRange.getValues()[0] || [];
-  var needsUpdate = currentHeaders.join('|') !== requiredHeaders.join('|');
+  // Only update headers if they don't match (avoids overwriting existing data)
+  var existingHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn() || requiredHeaders.length).getValues()[0] || [];
+  var existingStr = existingHeaders.slice(0, requiredHeaders.length).join('|');
+  var requiredStr  = requiredHeaders.join('|');
 
-  if (needsUpdate) {
-    headerRange.setValues([requiredHeaders]);
+  if (existingStr !== requiredStr) {
+    Logger.log("ensureOrdersSheet: Header mismatch detected — writing correct headers.");
+    // Extend the range if needed
+    if (sheet.getLastColumn() < requiredHeaders.length) {
+      sheet.getRange(1, 1, 1, requiredHeaders.length).setValues([requiredHeaders]);
+    } else {
+      sheet.getRange(1, 1, 1, requiredHeaders.length).setValues([requiredHeaders]);
+    }
+  } else {
+    Logger.log("ensureOrdersSheet: Headers already correct.");
   }
 
   return sheet;

@@ -75,12 +75,20 @@ export interface OrderCustomer {
   userId?: string | number;
   name: string;
   mobile: string;
+  altMobile?: string;
   email: string;
-  address: string;
-  city: string;
-  state: string;
+  flatNo: string;
+  buildingName?: string;
+  locality: string;
+  landmark?: string;
   pincode: string;
+  state: string;
+  city: string;
+  addressType?: 'Home' | 'Work' | 'Other';
   instructions?: string;
+  saveAddress?: boolean;
+  /** @deprecated use flatNo + buildingName + locality instead */
+  address?: string;
 }
 
 export interface OrderSubmission {
