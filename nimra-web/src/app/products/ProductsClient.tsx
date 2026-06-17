@@ -264,21 +264,38 @@ export default function ProductsClient({ products }: ProductsClientProps) {
 
         /* ── Hero ── */
         .products-hero {
-          background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.06) 0%, rgba(var(--secondary-rgb), 0.02) 100%);
+          background: linear-gradient(135deg, #172554 0%, #2563eb 55%, #3b82f6 100%);
           text-align: center;
-          padding: 4rem 0 2rem;
-          border-bottom: 1px solid var(--border-color);
+          padding: 5rem 0 3rem;
+          color: white;
+          position: relative;
+          overflow: hidden;
+        }
+        .products-hero::before {
+          content: '';
+          position: absolute;
+          top: -60px; right: -60px;
+          width: 260px; height: 260px;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.06);
+          pointer-events: none;
+        }
+        .products-hero .badge-primary {
+          background: rgba(255,255,255,0.15);
+          color: white;
+          border-color: rgba(255,255,255,0.25);
         }
         .products-hero h1 {
-          font-size: 3rem;
+          font-size: clamp(2rem, 4vw, 3rem);
           margin-top: 1rem;
           margin-bottom: 1rem;
+          color: white !important;
         }
         .products-hero p {
           max-width: 680px;
           margin: 0 auto;
-          color: var(--text-secondary);
-          font-size: 1.1rem;
+          color: rgba(255,255,255,0.82);
+          font-size: 1.05rem;
         }
 
         /* ── Catalog ── */
@@ -443,7 +460,9 @@ export default function ProductsClient({ products }: ProductsClientProps) {
         .price-val {
           font-size: 1.4rem;
           font-weight: 800;
-          color: var(--text-primary);
+          color: var(--primary-color);
+          font-family: var(--font-heading);
+          letter-spacing: -0.02em;
         }
 
         /* ── Add to Cart Button ── */

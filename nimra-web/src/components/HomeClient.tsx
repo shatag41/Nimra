@@ -15,7 +15,6 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
   const [activeBanner, setActiveBanner] = useState(0);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
-  // Auto-play banners
   useEffect(() => {
     if (banners.length <= 1) return;
     const interval = setInterval(() => {
@@ -28,53 +27,90 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
     setActiveFaq(activeFaq === index ? null : index);
   };
 
-  // Select top 3 products for homepage spotlight
   const spotlightProducts = products.slice(0, 3);
 
   return (
     <>
-      {/* 1. HERO BANNER CAROUSEL */}
+      {/* ─── 1. HERO CAROUSEL ───────────────────────────────────────────────── */}
       <section className="hero-section">
         {banners.map((banner, idx) => (
           <div
             key={banner.ID}
             className={`hero-slide ${idx === activeBanner ? 'active' : ''}`}
-            style={{ backgroundImage: `linear-gradient(90deg, rgba(var(--secondary-rgb), 0.95) 0%, rgba(var(--secondary-rgb), 0.78) 45%, rgba(var(--secondary-rgb), 0.26) 100%), url(${banner.ImageUrl})` }}
+            style={{
+              backgroundImage: `
+                linear-gradient(105deg,
+                  rgba(15,23,42,0.93) 0%,
+                  rgba(30,58,138,0.82) 40%,
+                  rgba(37,99,235,0.45) 70%,
+                  rgba(59,130,246,0.15) 100%
+                ),
+                url(${banner.ImageUrl})`
+            }}
           >
             <div className="container hero-content">
               <div className="hero-copy">
-                <span className="badge badge-primary animate-fade-in">Premium Hydration</span>
+                <div className="hero-eyebrow animate-fade-in">
+                  <span className="eyebrow-dot" />
+                  Premium Hydration
+                </div>
                 <h1 className="hero-title">{banner.Title}</h1>
                 <p className="hero-subtitle">{banner.Subtitle}</p>
                 <div className="hero-actions">
-                  <Link href={banner.ButtonLink.startsWith('#') ? `/products` : banner.ButtonLink} className="btn btn-primary">
+                  <Link
+                    href={banner.ButtonLink.startsWith('#') ? '/products' : banner.ButtonLink}
+                    className="btn btn-hero-primary"
+                  >
                     {banner.ButtonText}
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                   </Link>
-                  <Link href="/about" className="btn btn-secondary">
+                  <Link href="/about" className="btn btn-ghost">
                     Our Story
                   </Link>
                 </div>
-                <div className="hero-highlights">
-                  <span>Advanced purification</span>
-                  <span>Reliable doorstep delivery</span>
-                  <span>Trusted by families & offices</span>
+                <div className="hero-trust-bar">
+                  <div className="trust-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    BIS Certified
+                  </div>
+                  <div className="trust-divider" />
+                  <div className="trust-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                    10-Step Purification
+                  </div>
+                  <div className="trust-divider" />
+                  <div className="trust-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    50,000+ Customers
+                  </div>
                 </div>
               </div>
 
               <div className="hero-card glass">
-                <div className="hero-card-badge">NIMRA Promise</div>
+                <div className="hero-card-tag">NIMRA Promise</div>
                 <h3>Pure water crafted for everyday wellness.</h3>
-                <ul>
-                  <li>Mineral-balanced taste with consistent quality</li>
-                  <li>Range suited for homes, offices, and events</li>
-                  <li>Fast, dependable service across the city</li>
+                <ul className="hero-card-list">
+                  <li>
+                    <span className="list-check">✓</span>
+                    Mineral-balanced taste with consistent quality
+                  </li>
+                  <li>
+                    <span className="list-check">✓</span>
+                    Range suited for homes, offices & events
+                  </li>
+                  <li>
+                    <span className="list-check">✓</span>
+                    Fast, dependable service across the city
+                  </li>
                 </ul>
+                <Link href="/products" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: '1rem' }}>
+                  Explore Products
+                </Link>
               </div>
             </div>
           </div>
         ))}
-        
+
         {/* Carousel Dots */}
         {banners.length > 1 && (
           <div className="carousel-dots">
@@ -88,59 +124,111 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
             ))}
           </div>
         )}
+
+        {/* Scroll indicator */}
+        <div className="scroll-indicator">
+          <div className="scroll-mouse">
+            <div className="scroll-wheel" />
+          </div>
+        </div>
       </section>
 
-      {/* 2. BRAND STORY SECTION */}
+      {/* ─── 2. STATS BAR ───────────────────────────────────────────────────── */}
+      <section className="stats-section">
+        <div className="container">
+          <div className="stats-grid">
+            {[
+              { value: '50,000+', label: 'Happy Customers', icon: '👥' },
+              { value: '10-Step', label: 'Purification Process', icon: '💧' },
+              { value: '99.9%', label: 'Purity Guaranteed', icon: '🛡️' },
+              { value: '24hr', label: 'Delivery Available', icon: '🚚' },
+            ].map((stat) => (
+              <div key={stat.label} className="stat-card">
+                <span className="stat-emoji">{stat.icon}</span>
+                <strong className="stat-value">{stat.value}</strong>
+                <span className="stat-label">{stat.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── 3. BRAND STORY ─────────────────────────────────────────────────── */}
       <section className="story-section">
+        <div className="story-bg-shape" />
         <div className="container">
           <div className="story-grid">
             <div className="story-image-container">
-              <img 
-                src="https://images.unsplash.com/photo-1555116505-38ab61800975?auto=format&fit=crop&q=80&w=800" 
-                alt="Pristine spring water" 
-                className="story-img animate-float"
-              />
-              <div className="water-drop-card glass">
-                <h3>10-Step Pure</h3>
-                <p>Reverse osmosis, mineral balancing, and protection at every stage.</p>
+              <div className="story-img-wrapper">
+                <img
+                  src="https://images.unsplash.com/photo-1612442443556-09b5b309e637?auto=format&fit=crop&q=80&w=800"
+                  alt="Pure water purification process"
+                  className="story-img animate-float-slow"
+                />
+                <div className="story-img-overlay" />
+              </div>
+              <div className="purity-card glass">
+                <div className="purity-icon">💎</div>
+                <div>
+                  <strong>10-Step Pure</strong>
+                  <p>RO + mineral balancing at every stage</p>
+                </div>
+              </div>
+              <div className="story-badge-pill">
+                <span>Since 2018</span>
               </div>
             </div>
+
             <div className="story-content">
-              <span className="badge badge-primary">About NIMRA</span>
-              <h2>Sourced to refresh. Purified to protect.</h2>
+              <span className="badge badge-primary">About {companyInfo.BrandName}</span>
+              <h2 className="story-title">Sourced to refresh.<br />Purified to protect.</h2>
               <p className="story-description">
-                {companyInfo.AboutStory || "At NIMRA, we believe pure drinking water is the cornerstone of robust health. Under T.S. Enterprises, we combine advanced purification with careful mineral balancing to ensure every drop is safe, clean, and consistently refreshing."}
+                {companyInfo.AboutStory || `At NIMRA, we believe pure drinking water is the cornerstone of robust health. Under T.S. Enterprises, we combine advanced purification with careful mineral balancing to ensure every drop is safe, clean, and consistently refreshing.`}
               </p>
               <div className="values-grid">
-                <div className="value-item">
-                  <div className="value-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                {[
+                  {
+                    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+                    title: 'Certified Quality',
+                    desc: 'Stringent quality controls for dependable purity at every step.'
+                  },
+                  {
+                    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>,
+                    title: 'Balanced Minerals',
+                    desc: 'Carefully enriched for a smooth, refreshing taste every time.'
+                  },
+                  {
+                    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" strokeWidth="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>,
+                    title: 'Reliable Supply',
+                    desc: 'Consistent stock and fast delivery across Pune and Daund.'
+                  },
+                  {
+                    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" strokeWidth="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>,
+                    title: 'Full Range',
+                    desc: 'From 200ml bottles to 20L jars — every hydration need covered.'
+                  }
+                ].map((v) => (
+                  <div key={v.title} className="value-item">
+                    <div className="value-icon">{v.icon}</div>
+                    <div>
+                      <h4>{v.title}</h4>
+                      <p>{v.desc}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4>Certified Quality</h4>
-                    <p>Produced under stringent quality controls for dependable purity.</p>
-                  </div>
-                </div>
-                <div className="value-item">
-                  <div className="value-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
-                  </div>
-                  <div>
-                    <h4>Balanced Minerals</h4>
-                    <p>Carefully enriched for a smooth, refreshing taste in every bottle.</p>
-                  </div>
-                </div>
+                ))}
               </div>
-              <Link href="/about" className="btn btn-primary" style={{ marginTop: '1.5rem' }}>
+              <Link href="/about" className="btn btn-primary" style={{ marginTop: '2rem', display: 'inline-flex' }}>
                 Discover Our Standards
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 3. PRODUCT PREVIEW SECTION */}
+      {/* ─── 4. PRODUCT PREVIEW ─────────────────────────────────────────────── */}
       <section className="product-preview-section">
+        <div className="section-bg-dots" />
         <div className="container">
           <div className="section-header">
             <span className="badge badge-primary">Our Offerings</span>
@@ -149,18 +237,25 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           </div>
 
           <div className="preview-grid">
-            {spotlightProducts.map((product) => (
-              <div key={product.ID} className="product-preview-card glass">
+            {spotlightProducts.map((product, i) => (
+              <div key={product.ID} className="product-preview-card" style={{ animationDelay: `${i * 0.1}s` }}>
                 <div className="prod-img-box">
-                  <img src={product.ImageUrl} alt={product.Name} />
+                  <img src={product.ImageUrl} alt={product.Name} loading="lazy" />
+                  <div className="prod-img-overlay" />
                 </div>
                 <div className="prod-info-box">
-                  <span className="prod-vol">{product.Volume}</span>
+                  <div className="prod-meta">
+                    <span className="prod-vol">{product.Volume}</span>
+                    {i === 0 && <span className="prod-badge-best">Best Seller</span>}
+                  </div>
                   <h3>{product.Name}</h3>
-                  <p>{product.Description.substring(0, 80)}...</p>
+                  <p>{product.Description.substring(0, 90)}...</p>
                   <div className="prod-footer">
-                    <span className="prod-price">₹{product.Price}</span>
-                    <Link href={`/products?add=${product.ID}`} className="btn btn-secondary btn-sm">
+                    <div>
+                      <span className="prod-price-label">From</span>
+                      <span className="prod-price">₹{product.Price}</span>
+                    </div>
+                    <Link href={`/products?add=${product.ID}`} className="btn btn-primary btn-sm">
                       Order Now
                     </Link>
                   </div>
@@ -169,58 +264,72 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
             ))}
           </div>
 
-          <div style={{ textAlign: 'center', marginTop: '3rem' }}>
-            <Link href="/products" className="btn btn-primary">
+          <div className="view-all-wrap">
+            <Link href="/products" className="btn btn-secondary btn-lg">
               View All Products
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* 4. RUSH SODA "COMING SOON" SECTION */}
+      {/* ─── 5. RUSH SODA TEASER ────────────────────────────────────────────── */}
       <section className="rush-section">
-        {/* Animated Bubbles background */}
         <div className="bubble-bg">
-          <div className="bubble" style={{ left: '10%', width: '15px', height: '15px', animationDelay: '0s', animationDuration: '8s' }}></div>
-          <div className="bubble" style={{ left: '20%', width: '25px', height: '25px', animationDelay: '1s', animationDuration: '12s' }}></div>
-          <div className="bubble" style={{ left: '45%', width: '10px', height: '10px', animationDelay: '0.5s', animationDuration: '6s' }}></div>
-          <div className="bubble" style={{ left: '70%', width: '30px', height: '30px', animationDelay: '2s', animationDuration: '10s' }}></div>
-          <div className="bubble" style={{ left: '85%', width: '20px', height: '20px', animationDelay: '1.5s', animationDuration: '9s' }}></div>
+          {[
+            { left: '8%', w: '14px', delay: '0s', dur: '8s' },
+            { left: '22%', w: '22px', delay: '1.2s', dur: '11s' },
+            { left: '46%', w: '9px', delay: '0.4s', dur: '7s' },
+            { left: '68%', w: '28px', delay: '2s', dur: '10s' },
+            { left: '85%', w: '18px', delay: '1.6s', dur: '9s' },
+          ].map((b, i) => (
+            <div key={i} className="bubble" style={{ left: b.left, width: b.w, height: b.w, animationDelay: b.delay, animationDuration: b.dur }} />
+          ))}
         </div>
 
         <div className="container">
           <div className="rush-grid">
             <div className="rush-content">
               <span className="badge badge-orange">Coming Soon</span>
-              <h2 className="rush-title">Feel the Fizz of <span>RUSH Soda</span></h2>
+              <h2 className="rush-title">
+                Feel the Fizz of{' '}
+                <span className="rush-brand">RUSH Soda</span>
+              </h2>
               <p className="rush-text">
-                Prepare your taste buds for the ultimate bubbly experience. Sourced under NIMRA, **RUSH Soda** is our upcoming range of premium sparkling club sodas and refreshing carbonated drinks. Crafted to complement your mocktails, parties, or to enjoy chilled directly!
+                Prepare your taste buds for the ultimate bubbly experience. RUSH Soda — NIMRA's upcoming range of premium sparkling club sodas and carbonated refreshments. Crafted to elevate your mocktails, parties, or enjoyed chilled.
               </p>
               <div className="rush-features">
-                <div className="rush-feature-pill">Extra Sparkling</div>
-                <div className="rush-feature-pill">Zero Impurities</div>
-                <div className="rush-feature-pill">Pure Crisp Taste</div>
+                {['Extra Sparkling', 'Zero Impurities', 'Pure Crisp Taste', 'Event Ready'].map((f) => (
+                  <span key={f} className="rush-pill">{f}</span>
+                ))}
               </div>
-              <Link href="/contact" className="btn btn-primary" style={{ background: '#f97316', boxShadow: '0 4px 14px rgba(249, 115, 22, 0.4)' }}>
-                Notify Me on Release
+              <Link href="/contact" className="btn btn-rush" style={{ background: 'linear-gradient(135deg, #f97316, #ea580c)', color: 'white', border: 'none' }}>
+                Get Notified on Launch
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
               </Link>
             </div>
+
             <div className="rush-visual">
-              <div className="can-mockup">
-                <div className="can-reflection"></div>
+              <div className="can-outer-glow" />
+              <div className="can-mockup animate-float">
+                <div className="can-reflection" />
                 <div className="can-label">
                   <span className="label-brand">NIMRA</span>
                   <span className="label-title">RUSH</span>
                   <span className="label-sub">CLUB SODA</span>
                 </div>
+                <div className="can-bubbles">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="can-bubble" style={{ left: `${15 + i * 12}%`, animationDelay: `${i * 0.3}s` }} />
+                  ))}
+                </div>
               </div>
-              <div className="fizz-glow"></div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 5. FAQs SECTION */}
+      {/* ─── 6. FAQ ─────────────────────────────────────────────────────────── */}
       <section className="faq-section">
         <div className="container">
           <div className="section-header">
@@ -231,15 +340,18 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
 
           <div className="faq-accordion-box">
             {faqs.map((faq, idx) => (
-              <div 
-                key={faq.ID} 
+              <div
+                key={faq.ID}
                 className={`faq-item ${idx === activeFaq ? 'active' : ''}`}
                 onClick={() => toggleFaq(idx)}
               >
                 <div className="faq-question">
-                  <h3>{faq.Question}</h3>
+                  <div className="faq-q-inner">
+                    <span className="faq-num">{String(idx + 1).padStart(2, '0')}</span>
+                    <h3>{faq.Question}</h3>
+                  </div>
                   <span className="faq-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m6 9 6 6 6-6"/></svg>
                   </span>
                 </div>
                 <div className="faq-answer">
@@ -252,14 +364,16 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
       </section>
 
       <style jsx>{`
-        /* Hero Carousel styling */
+        /* ── Hero ───────────────────────────────────────────────────────────── */
         .hero-section {
-          height: calc(90vh - 80px);
-          min-height: 620px;
+          height: calc(100vh - 75px);
+          min-height: 640px;
+          max-height: 900px;
           position: relative;
           overflow: hidden;
-          background: linear-gradient(135deg, var(--bg-tertiary) 0%, rgba(var(--primary-rgb), 0.12) 100%);
+          background: #001a0c;
         }
+
         .hero-slide {
           position: absolute;
           inset: 0;
@@ -269,305 +383,515 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           z-index: 1;
           display: flex;
           align-items: center;
-          transition: opacity var(--transition-slow) ease-in-out;
+          transition: opacity 700ms ease-in-out;
         }
-        .hero-slide.active {
-          opacity: 1;
-          z-index: 2;
-        }
+        .hero-slide.active { opacity: 1; z-index: 2; }
+
         .hero-content {
           color: white;
           z-index: 10;
           display: grid;
-          grid-template-columns: 1.2fr 0.8fr;
-          gap: 2rem;
+          grid-template-columns: 1.15fr 0.85fr;
+          gap: 3rem;
           align-items: center;
+          padding-top: 2rem;
         }
-        .hero-copy {
-          max-width: 680px;
-          color: white !important;
-        }
-        .hero-title {
-          font-size: 3.5rem;
-          font-weight: 800;
-          margin-top: 1.25rem;
+
+        .hero-copy { max-width: 680px; }
+
+        .hero-eyebrow {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.4rem 1rem;
+          border-radius: 999px;
+          background: rgba(59, 130, 246, 0.18);
+          border: 1px solid rgba(59, 130, 246, 0.35);
+          font-size: 0.8rem;
+          font-weight: 700;
+          color: #93C5FD;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
           margin-bottom: 1.25rem;
-          letter-spacing: -0.03em;
-          line-height: 1.05;
-          color: white !important;
         }
+
+        .eyebrow-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: #3b82f6;
+          animation: greenPulse 2s ease-in-out infinite;
+        }
+
+        .hero-title {
+          font-size: clamp(2.4rem, 5vw, 4rem);
+          font-weight: 900;
+          line-height: 1.05;
+          letter-spacing: -0.03em;
+          color: white !important;
+          margin-bottom: 1.25rem;
+        }
+
         .hero-subtitle {
           font-size: 1.08rem;
           line-height: 1.75;
-          color: rgba(255, 255, 255, 0.85) !important;
+          color: rgba(255,255,255,0.8) !important;
           margin-bottom: 2rem;
-          max-width: 620px;
+          max-width: 580px;
         }
+
         .hero-actions {
           display: flex;
           gap: 1rem;
           flex-wrap: wrap;
-          margin-bottom: 1.25rem;
+          margin-bottom: 2rem;
         }
-        .hero-actions .btn-primary {
-          background: var(--accent-color);
-          color: white;
-          box-shadow: 0 12px 35px rgba(43, 182, 115, 0.28);
-        }
-        .hero-actions .btn-primary:hover {
-          background: var(--accent-hover);
-        }
-        .hero-actions .btn-secondary {
-          background: rgba(255, 255, 255, 0.12);
-          color: white !important;
-          border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-        .hero-actions .btn-secondary:hover {
-          background: rgba(255, 255, 255, 0.2);
-        }
-        .hero-highlights {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.75rem;
-        }
-        .hero-highlights span {
+
+        .btn-hero-primary {
           display: inline-flex;
           align-items: center;
-          padding: 0.6rem 0.9rem;
-          border-radius: 999px;
-          background: rgba(255, 255, 255, 0.15) !important;
-          border: 1px solid rgba(255, 255, 255, 0.2) !important;
-          font-size: 0.8rem;
-          font-weight: 600;
-          color: white !important;
+          gap: 0.6rem;
+          padding: 0.95rem 2rem;
+          font-family: var(--font-heading);
+          font-weight: 700;
+          font-size: 0.97rem;
+          border-radius: var(--radius-xl);
+          border: none;
+          cursor: pointer;
+          background: linear-gradient(135deg, #3b82f6, #2563eb);
+          color: white;
+          box-shadow: 0 8px 28px rgba(59, 130, 246, 0.4);
+          transition: all 200ms ease;
+          position: relative;
+          overflow: hidden;
+          z-index: 10;
         }
+        .btn-hero-primary:hover {
+          transform: translateY(-3px) scale(1.02);
+          box-shadow: 0 16px 40px rgba(59, 130, 246, 0.5);
+        }
+
+        .hero-trust-bar {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          flex-wrap: wrap;
+        }
+
+        .trust-item {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+          font-size: 0.82rem;
+          font-weight: 600;
+          color: rgba(255,255,255,0.72);
+        }
+        .trust-item svg { color: #3b82f6; flex-shrink: 0; }
+        .trust-divider { width: 1px; height: 16px; background: rgba(255,255,255,0.2); }
+
         .hero-card {
           border-radius: var(--radius-xl);
-          padding: 1.5rem;
-          box-shadow: var(--shadow-xl);
+          padding: 1.75rem;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.3);
           max-width: 360px;
           margin-left: auto;
+          border: 1px solid rgba(255,255,255,0.2);
+          background: rgba(255,255,255,0.12) !important;
+          backdrop-filter: blur(24px) !important;
         }
-        .hero-card-badge {
+
+        .hero-card-tag {
           display: inline-flex;
-          padding: 0.38rem 0.7rem;
+          padding: 0.3rem 0.75rem;
           border-radius: 999px;
-          background: rgba(var(--primary-rgb), 0.12);
-          color: var(--primary-color);
-          font-size: 0.74rem;
+          background: rgba(59, 130, 246, 0.2);
+          color: #93C5FD;
+          font-size: 0.72rem;
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.12em;
-          margin-bottom: 0.8rem;
+          margin-bottom: 0.85rem;
+          border: 1px solid rgba(59, 130, 246, 0.3);
         }
+
         .hero-card h3 {
-          font-size: 1.2rem;
-          margin-bottom: 0.9rem;
-          color: var(--text-primary);
-        }
-        .hero-card ul {
-          list-style: none;
-          display: grid;
-          gap: 0.7rem;
-          color: var(--text-secondary);
-          font-size: 0.95rem;
-        }
-        .hero-card li {
-          position: relative;
-          padding-left: 1.1rem;
-        }
-        .hero-card li::before {
-          content: '•';
-          position: absolute;
-          left: 0;
-          color: var(--accent-color);
+          font-size: 1.15rem;
+          margin-bottom: 1rem;
+          color: white !important;
           font-weight: 700;
+          line-height: 1.4;
         }
+
+        .hero-card-list {
+          list-style: none;
+          display: flex;
+          flex-direction: column;
+          gap: 0.7rem;
+        }
+
+        .hero-card-list li {
+          display: flex;
+          align-items: flex-start;
+          gap: 0.6rem;
+          font-size: 0.9rem;
+          color: rgba(255,255,255,0.82);
+          line-height: 1.4;
+        }
+
+        .list-check {
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: rgba(59, 130, 246, 0.2);
+          color: #3b82f6;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.72rem;
+          font-weight: 800;
+          flex-shrink: 0;
+        }
+
         .carousel-dots {
           position: absolute;
           bottom: 2rem;
           left: 50%;
           transform: translateX(-50%);
           display: flex;
-          gap: 0.75rem;
+          gap: 0.6rem;
           z-index: 100;
         }
         .dot {
-          width: 12px;
-          height: 12px;
+          width: 10px;
+          height: 10px;
           border-radius: 50%;
-          background: rgba(255, 255, 255, 0.4);
+          background: rgba(255,255,255,0.35);
           border: none;
           cursor: pointer;
-          transition: all var(--transition-fast);
+          transition: all 300ms ease;
         }
         .dot.active {
-          background: var(--accent-color);
-          width: 32px;
-          border-radius: var(--radius-md);
+          background: #3b82f6;
+          width: 28px;
+          border-radius: 5px;
         }
 
-        /* Brand Story styling */
-        .story-section {
-          background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+        .scroll-indicator {
+          position: absolute;
+          bottom: 2rem;
+          right: 2rem;
+          z-index: 100;
+          opacity: 0.6;
+          animation: float 3s ease-in-out infinite;
         }
+        .scroll-mouse {
+          width: 24px;
+          height: 38px;
+          border: 2px solid rgba(255,255,255,0.5);
+          border-radius: 12px;
+          display: flex;
+          justify-content: center;
+          padding-top: 5px;
+        }
+        .scroll-wheel {
+          width: 3px;
+          height: 8px;
+          background: rgba(255,255,255,0.7);
+          border-radius: 2px;
+          animation: scrollWheel 1.5s ease-in-out infinite;
+        }
+        @keyframes scrollWheel {
+          0%   { transform: translateY(0); opacity: 1; }
+          100% { transform: translateY(8px); opacity: 0; }
+        }
+
+        /* ── Stats Bar ──────────────────────────────────────────────────────── */
+        .stats-section {
+          padding: 0;
+          background: var(--bg-secondary);
+        }
+
+        .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          border-top: 1px solid var(--border-color);
+          border-bottom: 1px solid var(--border-color);
+        }
+
+        .stat-card {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 0.35rem;
+          padding: 2rem 1rem;
+          text-align: center;
+          border-right: 1px solid var(--border-color);
+          transition: background var(--transition-fast);
+        }
+        .stat-card:last-child { border-right: none; }
+        .stat-card:hover { background: rgba(37, 99, 235, 0.04); }
+
+        .stat-emoji { font-size: 1.75rem; line-height: 1; }
+
+        .stat-value {
+          font-family: var(--font-heading);
+          font-size: 1.65rem;
+          font-weight: 800;
+          color: var(--primary-color);
+          letter-spacing: -0.02em;
+          line-height: 1;
+        }
+
+        .stat-label {
+          font-size: 0.8rem;
+          font-weight: 600;
+          color: var(--text-secondary);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        /* ── Story ──────────────────────────────────────────────────────────── */
+        .story-section {
+          background: var(--bg-secondary);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .story-bg-shape {
+          position: absolute;
+          top: -80px;
+          right: -80px;
+          width: 400px;
+          height: 400px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(37,99,235,0.06) 0%, transparent 70%);
+          pointer-events: none;
+        }
+
         .story-grid {
           display: grid;
           grid-template-columns: 1fr 1.1fr;
-          gap: 4rem;
+          gap: 5rem;
           align-items: center;
         }
-        .story-image-container {
+
+        .story-image-container { position: relative; }
+
+        .story-img-wrapper {
+          border-radius: var(--radius-2xl);
+          overflow: hidden;
+          box-shadow: var(--shadow-xl);
           position: relative;
         }
+
         .story-img {
           width: 100%;
+          display: block;
+          border-radius: var(--radius-2xl);
+        }
+
+        .story-img-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, transparent 60%, rgba(15,23,42,0.3) 100%);
+        }
+
+        .purity-card {
+          position: absolute;
+          bottom: -1.5rem;
+          right: -1.5rem;
+          padding: 1rem 1.25rem;
           border-radius: var(--radius-xl);
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          max-width: 240px;
           box-shadow: var(--shadow-xl);
         }
-        .water-drop-card {
+        .purity-icon { font-size: 1.5rem; }
+        .purity-card strong { display: block; font-size: 0.95rem; color: var(--text-primary); }
+        .purity-card p { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.15rem; }
+
+        .story-badge-pill {
           position: absolute;
-          bottom: -1.25rem;
-          right: -1.25rem;
-          padding: 1.35rem 1.5rem;
-          border-radius: var(--radius-xl);
-          max-width: 260px;
-        }
-        .water-drop-card h3 {
-          color: var(--primary-color);
-          font-size: 1.1rem;
-          margin-bottom: 0.35rem;
+          top: 1.25rem;
+          left: -0.75rem;
+          padding: 0.35rem 0.9rem;
+          background: linear-gradient(135deg, #2563eb, #3b82f6);
+          color: white;
+          border-radius: 999px;
+          font-size: 0.78rem;
           font-weight: 700;
+          box-shadow: var(--shadow-md);
         }
-        .water-drop-card p {
-          font-size: 0.85rem;
-          color: var(--text-secondary);
-          line-height: 1.5;
+
+        .story-title {
+          font-size: clamp(2rem, 3.5vw, 2.75rem);
+          font-weight: 800;
+          margin: 1rem 0 1.25rem;
+          letter-spacing: -0.025em;
+          line-height: 1.15;
         }
-        .story-content h2 {
-          font-size: 2.45rem;
-          margin-top: 1rem;
-          margin-bottom: 1.25rem;
-          letter-spacing: -0.02em;
-        }
+
         .story-description {
-          line-height: 1.7;
+          line-height: 1.75;
           color: var(--text-secondary);
           margin-bottom: 2rem;
-          max-width: 620px;
+          font-size: 1rem;
         }
+
         .values-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 1.25rem;
-          margin-bottom: 1rem;
+          gap: 1rem;
         }
+
         .value-item {
           display: flex;
-          gap: 0.9rem;
-          padding: 1rem 1rem 1.1rem;
+          gap: 0.85rem;
+          padding: 1rem 1.1rem;
           border-radius: var(--radius-lg);
-          background: var(--bg-secondary);
+          background: var(--bg-primary);
           border: 1px solid var(--border-color);
           transition: all var(--transition-normal);
         }
         .value-item:hover {
           border-color: var(--primary-color);
+          background: rgba(37,99,235,0.04);
           box-shadow: var(--shadow-md);
           transform: translateY(-2px);
         }
+
         .value-icon {
-          width: 44px;
-          height: 44px;
+          width: 42px;
+          height: 42px;
           border-radius: var(--radius-md);
-          background: rgba(var(--primary-rgb), 0.1);
+          background: rgba(37,99,235,0.1);
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
         }
-        .value-item h4 {
-          margin-bottom: 0.2rem;
-          font-size: 1rem;
-        }
-        .value-item p {
-          font-size: 0.84rem;
-          color: var(--text-muted);
-          line-height: 1.4;
+
+        .value-item h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.2rem; }
+        .value-item p  { font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
+
+        /* ── Products ───────────────────────────────────────────────────────── */
+        .product-preview-section {
+          background: var(--bg-primary);
+          position: relative;
         }
 
-        /* Product Preview */
+        .section-bg-dots {
+          position: absolute;
+          inset: 0;
+          background-image: radial-gradient(circle, rgba(37,99,235,0.06) 1px, transparent 1px);
+          background-size: 28px 28px;
+          pointer-events: none;
+        }
+
         .section-header {
           text-align: center;
           max-width: 640px;
           margin: 0 auto 3.5rem;
         }
         .section-header h2 {
-          font-size: 2.35rem;
-          margin-top: 0.8rem;
-          margin-bottom: 0.8rem;
+          font-size: clamp(1.8rem, 3vw, 2.5rem);
+          margin: 0.85rem 0;
+          font-weight: 800;
+          letter-spacing: -0.02em;
         }
         .section-header p {
           color: var(--text-secondary);
           line-height: 1.7;
+          font-size: 1rem;
         }
+
         .preview-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 2rem;
+          gap: 1.75rem;
         }
+
         .product-preview-card {
+          background: var(--bg-secondary);
           border-radius: var(--radius-xl);
-          padding: 1.4rem;
+          border: 1px solid var(--border-color);
+          overflow: hidden;
           display: flex;
           flex-direction: column;
-          align-items: center;
-          text-align: center;
-          transition: transform var(--transition-normal), box-shadow var(--transition-normal);
-          box-shadow: var(--shadow-md);
-          background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+          transition: all var(--transition-normal);
+          box-shadow: var(--shadow-sm);
+          position: relative;
         }
         .product-preview-card:hover {
           transform: translateY(-8px);
           box-shadow: var(--shadow-xl);
+          border-color: var(--primary-color);
         }
+
         .prod-img-box {
-          height: 200px;
+          height: 220px;
           display: flex;
           align-items: center;
           justify-content: center;
-          margin-bottom: 1.25rem;
+          background: linear-gradient(180deg, #f1f5f9, #f8fafc);
+          position: relative;
+          overflow: hidden;
+          padding: 1rem;
         }
+
         .prod-img-box img {
           max-height: 100%;
           max-width: 100%;
           object-fit: contain;
-          border-radius: var(--radius-lg);
           transition: transform var(--transition-normal);
+          position: relative;
+          z-index: 1;
         }
-        .product-preview-card:hover .prod-img-box img {
-          transform: scale(1.05);
+        .product-preview-card:hover .prod-img-box img { transform: scale(1.06); }
+
+        .prod-img-overlay {
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(circle at center, rgba(37,99,235,0.06) 0%, transparent 70%);
         }
+
+        .prod-info-box { padding: 1.35rem; flex: 1; display: flex; flex-direction: column; }
+
+        .prod-meta {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-bottom: 0.6rem;
+        }
+
         .prod-vol {
           display: inline-block;
-          font-size: 0.75rem;
+          font-size: 0.72rem;
           font-weight: 700;
           color: var(--primary-color);
-          background: rgba(var(--primary-rgb), 0.1);
-          padding: 0.25rem 0.75rem;
-          border-radius: 50px;
-          margin-bottom: 0.55rem;
+          background: rgba(37,99,235,0.1);
+          padding: 0.22rem 0.65rem;
+          border-radius: 999px;
+          border: 1px solid rgba(37,99,235,0.2);
         }
-        .prod-info-box h3 {
-          font-size: 1.16rem;
-          margin-bottom: 0.45rem;
+
+        .prod-badge-best {
+          display: inline-block;
+          font-size: 0.68rem;
+          font-weight: 700;
+          color: #ea6a0a;
+          background: rgba(249,115,22,0.1);
+          padding: 0.22rem 0.6rem;
+          border-radius: 999px;
+          border: 1px solid rgba(249,115,22,0.2);
         }
-        .prod-info-box p {
-          font-size: 0.9rem;
-          color: var(--text-secondary);
-          line-height: 1.55;
-          margin-bottom: 1.3rem;
-        }
+
+        .prod-info-box h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.45rem; }
+        .prod-info-box p  { font-size: 0.87rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 1.25rem; flex: 1; }
+
         .prod-footer {
           width: 100%;
           display: flex;
@@ -577,250 +901,340 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           border-top: 1px solid var(--border-color);
           padding-top: 1rem;
         }
-        .prod-price {
-          font-size: 1.2rem;
-          font-weight: 800;
-          color: var(--text-primary);
-        }
-        .btn-sm {
-          padding: 0.5rem 1rem;
-          font-size: 0.85rem;
+
+        .prod-price-label {
+          display: block;
+          font-size: 0.7rem;
+          font-weight: 600;
+          color: var(--text-muted);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
         }
 
-        /* RUSH Soda "Coming Soon" section */
-        .rush-section {
-          background: linear-gradient(135deg, var(--secondary-color) 0%, rgba(var(--primary-rgb), 0.9) 100%);
-          color: var(--bg-primary);
-          padding: 6rem 0;
-          z-index: 1;
-          position: relative;
+        .prod-price {
+          font-size: 1.35rem;
+          font-weight: 800;
+          color: var(--primary-color);
+          font-family: var(--font-heading);
+          letter-spacing: -0.02em;
         }
+
+        .view-all-wrap {
+          text-align: center;
+          margin-top: 3rem;
+        }
+
+        .rush-section {
+          background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+          color: white;
+          position: relative;
+          overflow: hidden;
+        }
+
         .bubble-bg {
           position: absolute;
           inset: 0;
           overflow: hidden;
-          z-index: -1;
           pointer-events: none;
         }
+
         .bubble {
           position: absolute;
           bottom: -50px;
-          background: rgba(249, 115, 22, 0.15);
-          border: 1px solid rgba(249, 115, 22, 0.3);
+          background: rgba(249, 115, 22, 0.12);
+          border: 1px solid rgba(249, 115, 22, 0.25);
           border-radius: 50%;
           animation: bubbleUp 8s ease-in infinite;
         }
+
         .rush-grid {
           display: grid;
           grid-template-columns: 1.2fr 0.8fr;
           gap: 4rem;
           align-items: center;
         }
-        .rush-content h2 {
+
+        .rush-title {
+          font-size: clamp(2rem, 4vw, 3.2rem);
+          font-weight: 900;
           color: white;
-          font-size: 3rem;
-          font-weight: 800;
-          margin-top: 1rem;
-          margin-bottom: 1.5rem;
-          letter-spacing: -0.02em;
+          margin: 1rem 0 1.5rem;
+          letter-spacing: -0.025em;
+          line-height: 1.1;
         }
-        .rush-content h2 span {
-          background: linear-gradient(135deg, #f97316 0%, #ffedd5 100%);
+
+        .rush-brand {
+          background: linear-gradient(135deg, #f97316, #fbbf24);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
+
         .rush-text {
-          color: #94a3b8;
+          color: rgba(255,255,255,0.65);
           line-height: 1.8;
           margin-bottom: 2rem;
+          font-size: 1rem;
         }
+
         .rush-features {
           display: flex;
-          gap: 1rem;
+          gap: 0.75rem;
           flex-wrap: wrap;
           margin-bottom: 2.5rem;
         }
-        .rush-feature-pill {
-          padding: 0.5rem 1.25rem;
-          border-radius: 50px;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          font-size: 0.85rem;
+
+        .rush-pill {
+          padding: 0.45rem 1.1rem;
+          border-radius: 999px;
+          background: rgba(255,255,255,0.07);
+          border: 1px solid rgba(255,255,255,0.12);
+          font-size: 0.83rem;
           font-weight: 600;
-          color: #e2e8f0;
+          color: rgba(255,255,255,0.75);
         }
-        /* Glassy Can Mockup */
+
+        .btn-rush {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.6rem;
+          padding: 0.95rem 2rem;
+          font-family: var(--font-heading);
+          font-weight: 700;
+          font-size: 0.95rem;
+          border-radius: var(--radius-xl);
+          border: none;
+          cursor: pointer;
+          background: linear-gradient(135deg, #f97316, #ea580c);
+          color: white;
+          box-shadow: 0 8px 28px rgba(249,115,22,0.35);
+          transition: all 200ms ease;
+          position: relative;
+          overflow: hidden;
+          z-index: 10;
+        }
+        .btn-rush:hover {
+          transform: translateY(-3px) scale(1.02);
+          box-shadow: 0 16px 40px rgba(249,115,22,0.5);
+        }
+
         .rush-visual {
           display: flex;
           justify-content: center;
           align-items: center;
           position: relative;
         }
-        .can-mockup {
-          width: 140px;
+
+        .can-outer-glow {
+          position: absolute;
+          width: 280px;
           height: 280px;
-          background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-          border: 2px solid rgba(249, 115, 22, 0.3);
-          border-radius: 30px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(249,115,22,0.12) 0%, transparent 70%);
+          pointer-events: none;
+        }
+
+        .can-mockup {
+          width: 148px;
+          height: 290px;
+          background: linear-gradient(160deg, #1A2A20 0%, #0D1810 100%);
+          border: 1.5px solid rgba(249,115,22,0.25);
+          border-radius: 32px;
           position: relative;
-          box-shadow: var(--shadow-xl), 0 0 30px rgba(249, 115, 22, 0.15);
+          box-shadow: var(--shadow-xl), 0 0 40px rgba(249,115,22,0.12);
           overflow: hidden;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          animation: float 5s ease-in-out infinite;
         }
+
         .can-reflection {
           position: absolute;
-          top: 0;
-          left: 0;
-          width: 50%;
+          top: 0; left: 0;
+          width: 40%;
           height: 100%;
-          background: linear-gradient(to right, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 100%);
+          background: linear-gradient(to right, rgba(255,255,255,0.12) 0%, transparent 100%);
           pointer-events: none;
+          border-radius: 32px 0 0 32px;
         }
+
         .can-label {
           display: flex;
           flex-direction: column;
           align-items: center;
           text-align: center;
-          transform: rotate(-5deg);
-        }
-        .label-brand {
-          font-size: 0.75rem;
-          font-weight: 800;
-          letter-spacing: 0.2em;
-          color: rgba(255, 255, 255, 0.5);
-          margin-bottom: 0.25rem;
-        }
-        .label-title {
-          font-size: 2.2rem;
-          font-weight: 900;
-          font-family: var(--font-heading);
-          color: #f97316;
-          text-shadow: 0 2px 10px rgba(249, 115, 22, 0.3);
-          letter-spacing: 0.05em;
-        }
-        .label-sub {
-          font-size: 0.65rem;
-          font-weight: 700;
-          letter-spacing: 0.3em;
-          color: white;
-          margin-top: 0.25rem;
-        }
-        .fizz-glow {
-          position: absolute;
-          width: 250px;
-          height: 250px;
-          background: radial-gradient(circle, rgba(249, 115, 22, 0.1) 0%, rgba(0, 0, 0, 0) 70%);
-          pointer-events: none;
-          z-index: -1;
+          position: relative;
+          z-index: 1;
         }
 
-        /* FAQ styling */
-        .faq-section {
-          background-color: var(--bg-secondary);
+        .label-brand {
+          font-size: 0.7rem;
+          font-weight: 800;
+          letter-spacing: 0.22em;
+          color: rgba(255,255,255,0.45);
+          margin-bottom: 0.2rem;
         }
+
+        .label-title {
+          font-size: 2.4rem;
+          font-weight: 900;
+          font-family: var(--font-heading);
+          background: linear-gradient(135deg, #f97316, #fbbf24);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          letter-spacing: 0.05em;
+          line-height: 1;
+          text-shadow: none;
+        }
+
+        .label-sub {
+          font-size: 0.6rem;
+          font-weight: 700;
+          letter-spacing: 0.35em;
+          color: rgba(255,255,255,0.55);
+          margin-top: 0.25rem;
+        }
+
+        .can-bubbles {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 60px;
+          pointer-events: none;
+        }
+
+        .can-bubble {
+          position: absolute;
+          bottom: 0;
+          width: 5px;
+          height: 5px;
+          border-radius: 50%;
+          background: rgba(249,115,22,0.3);
+          animation: bubbleUp 2s ease-in infinite;
+        }
+
+        /* ── FAQ ────────────────────────────────────────────────────────────── */
+        .faq-section {
+          background: var(--bg-secondary);
+        }
+
         .faq-accordion-box {
-          max-width: 800px;
+          max-width: 820px;
           margin: 0 auto;
           display: flex;
           flex-direction: column;
-          gap: 1rem;
+          gap: 0.875rem;
         }
+
         .faq-item {
           border-radius: var(--radius-lg);
           background: var(--bg-primary);
-          border: 1px solid var(--border-color);
+          border: 1.5px solid var(--border-color);
           overflow: hidden;
           cursor: pointer;
           transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
         }
-        .faq-item:hover {
+        .faq-item:hover { border-color: var(--primary-color); box-shadow: var(--shadow-md); }
+        .faq-item.active {
           border-color: var(--primary-color);
-          box-shadow: var(--shadow-md);
+          box-shadow: 0 0 0 3px rgba(0,150,58,0.1);
         }
+
         .faq-question {
           padding: 1.25rem 1.5rem;
           display: flex;
           align-items: center;
           justify-content: space-between;
+          gap: 1rem;
           user-select: none;
         }
-        .faq-question h3 {
-          font-size: 1.05rem;
-          font-weight: 600;
+
+        .faq-q-inner {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
         }
-        .faq-icon {
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          background: var(--bg-secondary);
+
+        .faq-num {
+          font-size: 0.72rem;
+          font-weight: 800;
+          color: var(--primary-color);
+          background: rgba(0,150,58,0.1);
+          border: 1px solid rgba(0,150,58,0.2);
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: transform var(--transition-normal), background-color var(--transition-fast);
           flex-shrink: 0;
+          letter-spacing: 0;
+        }
+
+        .faq-question h3 {
+          font-size: 1rem;
+          font-weight: 600;
+          line-height: 1.4;
+        }
+
+        .faq-icon {
+          width: 34px;
+          height: 34px;
+          border-radius: 8px;
+          background: var(--bg-secondary);
+          border: 1px solid var(--border-color);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          transition: transform var(--transition-normal), background var(--transition-fast), border-color var(--transition-fast);
+          color: var(--text-secondary);
         }
         .faq-item.active .faq-icon {
           transform: rotate(180deg);
-          background-color: var(--primary-color);
+          background: var(--primary-color);
+          border-color: var(--primary-color);
           color: white;
         }
+
         .faq-answer {
           max-height: 0;
           overflow: hidden;
           transition: max-height var(--transition-normal) ease-out, padding var(--transition-normal);
         }
         .faq-item.active .faq-answer {
-          max-height: 200px;
+          max-height: 240px;
           border-top: 1px solid var(--border-color);
-          padding: 1.25rem 1.5rem;
+          padding: 1.25rem 1.5rem 1.25rem calc(1.5rem + 32px + 1rem);
         }
-        .faq-answer p {
-          font-size: 0.95rem;
-          line-height: 1.6;
-          color: var(--text-secondary);
+        .faq-answer p { font-size: 0.95rem; line-height: 1.65; color: var(--text-secondary); }
+
+        /* ── Responsive ─────────────────────────────────────────────────────── */
+        @media (max-width: 1024px) {
+          .hero-content, .story-grid, .rush-grid {
+            grid-template-columns: 1fr;
+            gap: 2.5rem;
+          }
+          .hero-card { margin: 0 auto; max-width: 100%; }
+          .story-image-container { max-width: 500px; margin: 0 auto; }
+          .stats-grid { grid-template-columns: repeat(2, 1fr); }
+          .stat-card { border-right: none; border-bottom: 1px solid var(--border-color); }
+          .stat-card:nth-child(odd) { border-right: 1px solid var(--border-color); }
+          .stat-card:nth-last-child(-n+2) { border-bottom: none; }
         }
 
-        /* Responsive */
-        @media (max-width: 1024px) {
-          .hero-content,
-          .story-grid,
-          .rush-grid {
-            grid-template-columns: 1fr;
-            gap: 3rem;
-          }
-          .hero-card {
-            margin-left: 0;
-          }
-          .story-image-container {
-            max-width: 500px;
-            margin: 0 auto;
-          }
-          .preview-grid {
-            grid-template-columns: repeat(2, 1fr);
-          }
-        }
         @media (max-width: 768px) {
-          .hero-section {
-            min-height: 680px;
-          }
-          .hero-title {
-            font-size: 2.5rem;
-          }
-          .rush-content h2 {
-            font-size: 2.2rem;
-          }
-          .preview-grid {
-            grid-template-columns: 1fr;
-            max-width: 400px;
-            margin: 0 auto;
-          }
-          .values-grid {
-            grid-template-columns: 1fr;
-          }
+          .hero-section { min-height: 700px; height: 100svh; }
+          .preview-grid { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
+          .values-grid { grid-template-columns: 1fr; }
+          .scroll-indicator { display: none; }
+        }
+
+        @media (max-width: 640px) {
+          .stats-grid { grid-template-columns: 1fr 1fr; }
+          .hero-trust-bar { gap: 0.75rem; }
+          .trust-divider { display: none; }
         }
       `}</style>
     </>
