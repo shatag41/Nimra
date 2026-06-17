@@ -1,0 +1,441 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { Product } from '@/types/cms';
+import { useCart } from '@/frontend/customer/hooks/useCart';
+import { Categories } from './portal/Categories';
+import { CatalogCard } from './portal/Products';
+import { CartToast } from './portal/Notifications';
+import { normalizeCategory } from '../utils/commerce';
+import RushSodaPromo from './RushSodaPromo';
+
+interface ProductsClientProps {
+  products: Product[];
+}
+
+const categoriesData = [
+  { id: 'All', name: 'All Products' },
+  { id: 'Packaged Drinking Water', name: 'Packaged Drinking Water' },
+  { id: 'Mineral Water', name: 'Mineral Water' },
+  { id: 'Bulk Water', name: 'Bulk Water' },
+  { id: 'Upcoming RUSH Soda', name: 'RUSH Soda' },
+];
+
+export default function ProductsClient({ products }: ProductsClientProps) {
+  const [activeTab, setActiveTab] = useState('All');
+  const [cartToast, setCartToast] = useState<{ name: string; visible: boolean }>({ name: '', visible: false });
+  const { addProduct } = useCart();
+
+  const filteredProducts = products.filter((product) =>
+    activeTab === 'All' ? true : normalizeCategory(product.Category) === activeTab
+  );
+
+  const handleAdd = (product: Product) => {
+    addProduct(product);
+    setCartToast({ name: product.Name, visible: true });
+    clearTimeout((window as any).__cartToastTimer);
+    (window as any).__cartToastTimer = window.setTimeout(() => {
+      setCartToast((t) => ({ ...t, visible: false }));
+    }, 3000);
+  };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const addId = params.get('add');
+      if (addId) {
+        const targetProduct = products.find((p) => String(p.ID) === addId);
+        if (targetProduct) {
+          handleAdd(targetProduct);
+          const newUrl = window.location.pathname;
+          window.history.replaceState({}, '', newUrl);
+        }
+      }
+    }
+  }, [products]);
+
+  return (
+    <>
+      <CartToast
+        visible={cartToast.visible}
+        name={cartToast.name}
+        onClose={() => setCartToast((t) => ({ ...t, visible: false }))}
+      />
+
+      <section className="products-hero">
+        <div className="container">
+          <span className="badge badge-primary">Products</span>
+          <h1>Order NIMRA Water</h1>
+          <p>Choose packaged drinking water, mineral water, bulk jars, and future RUSH Soda products managed directly from Google Sheets.</p>
+        </div>
+      </section>
+
+      <section className="products-catalog-section">
+        <div className="container">
+          <Categories
+            categories={categoriesData}
+            activeTab={activeTab}
+            onSelectTab={setActiveTab}
+          />
+
+          {activeTab === 'Upcoming RUSH Soda' ? (
+            <RushSodaPromo />
+          ) : (
+            <div className="catalog-grid animate-fade-in">
+              {filteredProducts.map((product) => (
+                <CatalogCard key={String(product.ID || product.Name)} product={product} onAdd={handleAdd} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <style jsx global>{`
+        /* ── Cart Toast Banner ── */
+        .cart-toast-banner {
+          position: fixed;
+          bottom: 2rem;
+          left: 50%;
+          transform: translateX(-50%) translateY(120px);
+          z-index: 2000;
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          background: var(--bg-primary);
+          border: 1px solid var(--primary-color);
+          border-radius: var(--radius-xl);
+          padding: 0.9rem 1.25rem;
+          box-shadow: 0 8px 32px rgba(6, 182, 212, 0.25);
+          min-width: 340px;
+          max-width: 90vw;
+          transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+          opacity: 0;
+          pointer-events: none;
+        }
+        .cart-toast-banner.visible {
+          transform: translateX(-50%) translateY(0);
+          opacity: 1;
+          pointer-events: auto;
+        }
+        .toast-content {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          flex: 1;
+          color: var(--text-primary);
+          font-size: 0.92rem;
+        }
+        .toast-content svg {
+          color: #22c55e;
+          flex-shrink: 0;
+        }
+        .toast-go-btn {
+          background: var(--primary-color);
+          color: white;
+          font-weight: 700;
+          font-size: 0.85rem;
+          padding: 0.5rem 1rem;
+          border-radius: var(--radius-lg);
+          white-space: nowrap;
+          transition: background var(--transition-fast);
+        }
+        .toast-go-btn:hover {
+          background: var(--accent-color);
+        }
+        .toast-close {
+          background: none;
+          border: none;
+          color: var(--text-muted);
+          cursor: pointer;
+          font-size: 1rem;
+          padding: 0 0.25rem;
+          line-height: 1;
+          transition: color var(--transition-fast);
+        }
+        .toast-close:hover { color: var(--text-primary); }
+
+        /* ── Hero ── */
+        .products-hero {
+          background: linear-gradient(135deg, #172554 0%, #2563eb 55%, #3b82f6 100%);
+          text-align: center;
+          padding: 5rem 0 3rem;
+          color: white;
+          position: relative;
+          overflow: hidden;
+        }
+        .products-hero::before {
+          content: '';
+          position: absolute;
+          top: -60px; right: -60px;
+          width: 260px; height: 260px;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.06);
+          pointer-events: none;
+        }
+        .products-hero .badge-primary {
+          background: rgba(255,255,255,0.15);
+          color: white;
+          border-color: rgba(255,255,255,0.25);
+        }
+        .products-hero h1 {
+          font-size: clamp(2rem, 4vw, 3rem);
+          margin-top: 1rem;
+          margin-bottom: 1rem;
+          color: white !important;
+        }
+        .products-hero p {
+          max-width: 680px;
+          margin: 0 auto;
+          color: rgba(255,255,255,0.82);
+          font-size: 1.05rem;
+        }
+
+        /* ── Catalog ── */
+        .products-catalog-section {
+          background-color: var(--bg-secondary);
+          padding: 2rem 0;
+        }
+        .catalog-tabs {
+          display: flex;
+          justify-content: center;
+          gap: 1rem;
+          margin-bottom: 3rem;
+          flex-wrap: wrap;
+        }
+        .tab-btn {
+          padding: 0.75rem 1.4rem;
+          border-radius: 999px;
+          border: 1px solid var(--border-color);
+          background: var(--bg-primary);
+          color: var(--text-secondary);
+          font-family: var(--font-heading);
+          font-weight: 600;
+          font-size: 0.9rem;
+          cursor: pointer;
+          transition: all var(--transition-fast);
+        }
+        .tab-btn:hover, .tab-btn.active {
+          background: var(--primary-color);
+          border-color: var(--primary-color);
+          color: white;
+          box-shadow: var(--shadow-md);
+        }
+        .catalog-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 2rem;
+        }
+
+        /* ── Card ── */
+        .catalog-card {
+          border-radius: var(--radius-xl);
+          padding: 1.5rem;
+          display: flex;
+          flex-direction: column;
+          box-shadow: var(--shadow-md);
+          transition: all var(--transition-normal);
+          border: 2px solid transparent;
+          position: relative;
+          z-index: 1;
+          isolation: isolate;
+        }
+        .catalog-card:hover {
+          transform: translateY(-6px);
+          box-shadow: var(--shadow-xl);
+          z-index: 2;
+        }
+        .catalog-card.in-cart {
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.12), var(--shadow-lg);
+        }
+        .cat-img-box {
+          height: 250px;
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 1.5rem;
+          border-radius: var(--radius-lg);
+          background: var(--bg-primary);
+          overflow: hidden;
+        }
+        .cat-img-box img {
+          max-height: 86%;
+          max-width: 86%;
+          object-fit: contain;
+          border-radius: var(--radius-md);
+          transition: transform var(--transition-normal);
+        }
+        .catalog-card:hover .cat-img-box img {
+          transform: scale(1.05);
+        }
+        .cart-count-badge {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          width: 32px;
+          height: 32px;
+          border-radius: 999px;
+          background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+          color: white;
+          font-size: 0.8rem;
+          font-weight: 800;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: var(--shadow-sm);
+          animation: pop-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+          pointer-events: none;
+        }
+        @keyframes pop-in {
+          from { transform: scale(0); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+        .cat-info-box {
+          display: flex;
+          flex: 1;
+          flex-direction: column;
+        }
+        .cat-info-box h3 {
+          font-size: 1.35rem;
+          margin-bottom: 0.75rem;
+        }
+        .cat-info-box p {
+          font-size: 0.9rem;
+          color: var(--text-secondary);
+          line-height: 1.6;
+          margin-bottom: 1rem;
+        }
+        .specs {
+          padding: 0.75rem;
+          background: var(--bg-primary);
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-md);
+          font-size: 0.8rem !important;
+        }
+        .cat-meta {
+          display: flex;
+          gap: 0.75rem;
+          margin-bottom: 0.75rem;
+          align-items: center;
+          flex-wrap: wrap;
+        }
+        .cat-volume, .cat-badge {
+          font-size: 0.75rem;
+          font-weight: 700;
+          padding: 0.25rem 0.75rem;
+          border-radius: 999px;
+        }
+        .cat-volume {
+          color: var(--primary-color);
+          background: rgba(var(--primary-rgb), 0.1);
+        }
+        .cat-badge {
+          color: var(--text-secondary);
+          background: var(--bg-primary);
+          border: 1px solid var(--border-light);
+        }
+        .cat-price-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+          margin-top: auto;
+          border-top: 1px solid var(--border-color);
+          padding-top: 1.25rem;
+        }
+        .price-lbl {
+          font-size: 0.75rem;
+          color: var(--text-muted);
+          display: block;
+        }
+        .price-val {
+          font-size: 1.4rem;
+          font-weight: 800;
+          color: var(--primary-color);
+          font-family: var(--font-heading);
+          letter-spacing: -0.02em;
+        }
+
+        /* ── Add to Cart Button ── */
+        .add-cart-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
+          white-space: nowrap;
+        }
+        button.btn {
+          border: none;
+          cursor: pointer;
+        }
+
+        /* ── Quantity Controls ── */
+        .qty-controls {
+          display: flex;
+          align-items: center;
+          border: 1.5px solid var(--primary-color);
+          border-radius: 999px;
+          overflow: hidden;
+          background: rgba(var(--primary-rgb), 0.06);
+          gap: 0;
+        }
+        .qty-btn {
+          width: 36px;
+          height: 36px;
+          border: none;
+          background: transparent;
+          color: var(--primary-color);
+          font-size: 1.2rem;
+          font-weight: 700;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: background var(--transition-fast);
+          flex-shrink: 0;
+        }
+        .qty-btn:hover {
+          background: rgba(var(--primary-rgb), 0.15);
+        }
+        .qty-count {
+          min-width: 32px;
+          text-align: center;
+          font-weight: 800;
+          font-size: 1rem;
+          color: var(--primary-color);
+        }
+
+        /* ── View Cart Link ── */
+        .view-cart-link {
+          display: block;
+          text-align: center;
+          margin-top: 0.75rem;
+          font-size: 0.85rem;
+          font-weight: 700;
+          color: var(--primary-color);
+          padding: 0.5rem;
+          border-radius: var(--radius-md);
+          background: rgba(var(--primary-rgb), 0.06);
+          border: 1px solid rgba(var(--primary-rgb), 0.2);
+          transition: all var(--transition-fast);
+        }
+        .view-cart-link:hover {
+          background: rgba(var(--primary-rgb), 0.12);
+          border-color: var(--primary-color);
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 1024px) {
+          .catalog-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 640px) {
+          .products-hero h1 { font-size: 2.2rem; }
+          .catalog-grid { grid-template-columns: 1fr; }
+          .cat-price-row { align-items: flex-start; flex-direction: column; }
+          .cart-toast-banner { min-width: unset; width: calc(100vw - 2rem); }
+        }
+      `}</style>
+    </>
+  );
+}

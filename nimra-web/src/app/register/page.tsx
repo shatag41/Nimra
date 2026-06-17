@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '@/frontend/customer/contexts/AuthContext';
 import { useGoogleLogin } from '@react-oauth/google';
 import Link from 'next/link';
-import { sendRequest } from '../../utils/api';
+import { sendRequest } from '@/utils/api';
 import { toast } from 'sonner';
-import ThemeToggle from '../../components/ThemeToggle';
+import ThemeToggle from '@/frontend/customer/components/ThemeToggle';
 
 export default function RegisterPage() {
   const { login } = useAuth();

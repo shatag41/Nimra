@@ -3,8 +3,8 @@
 import React, { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
-import { sendRequest } from '../../../utils/api';
-import { AdminUser } from '../../../types/cms';
+import { sendRequest } from '@/utils/api';
+import { AdminUser } from '@/types/cms';
 
 export default function LoginClient() {
   const router = useRouter();

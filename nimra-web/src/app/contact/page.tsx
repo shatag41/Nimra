@@ -1,6 +1,14 @@
-import React, { Suspense } from 'react';
-import ContactClient from './ContactClient';
-import { fetchCMSData } from '../../utils/api';
+import React from 'react';
+import dynamic from 'next/dynamic';
+import { fetchCMSData } from '@/utils/api';
+
+const ContactClient = dynamic(() => import('@/frontend/customer/components/ContactClient'), {
+  loading: () => (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50vh', color: '#94a3b8' }}>
+      Loading Contact Dashboard...
+    </div>
+  )
+});
 
 export const metadata = {
   title: 'Contact Us | Wholesale Orders & Support',
@@ -11,12 +19,6 @@ export default async function Page() {
   const data = await fetchCMSData();
 
   return (
-    <Suspense fallback={
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50vh', color: '#94a3b8' }}>
-        Loading Contact Dashboard...
-      </div>
-    }>
-      <ContactClient companyInfo={data.companyInfo} />
-    </Suspense>
+    <ContactClient companyInfo={data.companyInfo} />
   );
 }

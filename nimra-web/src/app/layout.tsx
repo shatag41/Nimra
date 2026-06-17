@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import { AuthProvider } from '../context/AuthContext';
+import { AuthProvider } from '@/frontend/customer/contexts/AuthContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import './globals.css';
-import LayoutWrapper from '../components/LayoutWrapper';
-import { CartProvider } from '../components/CartProvider';
-import { fetchCMSData } from '../utils/api';
+import LayoutWrapper from '@/frontend/customer/components/LayoutWrapper';
+import { CartProvider } from '@/frontend/customer/contexts/CartProvider';
+import { fetchCMSData } from '@/utils/api';
 import StyledJsxRegistry from './registry';
 import { Toaster } from 'sonner';
 

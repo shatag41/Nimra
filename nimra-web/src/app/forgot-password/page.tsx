@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { sendRequest } from '../../utils/api';
+import { sendRequest } from '@/utils/api';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import ThemeToggle from '../../components/ThemeToggle';
+import ThemeToggle from '@/frontend/customer/components/ThemeToggle';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');

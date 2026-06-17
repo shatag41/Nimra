@@ -1,5 +1,5 @@
-import { CMSData, InquirySubmission, OrderRecord, OrderSubmission, AdminUser, Notification, Inquiry, Product, Banner, FAQ, CompanyInfo, CartItem } from '../types/cms';
-import type { User } from '../context/AuthContext';
+import { CMSData, InquirySubmission, OrderRecord, OrderSubmission, AdminUser, Notification, Inquiry, Product, Banner, FAQ, CompanyInfo, CartItem } from '@/types/cms';
+import type { User } from '@/frontend/customer/contexts/AuthContext';
 
 export type AuthRequest =
   | { type: 'login'; username: string; password: string }
