@@ -143,10 +143,6 @@ export default function CustomerPortal() {
           <h1>Welcome back, {user?.Name || 'Customer'}</h1>
           <p>Manage orders, track deliveries, and reach NIMRA support from one clean workspace.</p>
         </div>
-        <div className="hero-actions">
-          <Link href="/products" className="btn btn-primary">Order Water</Link>
-          <Link href="/track" className="btn btn-secondary">Track Order</Link>
-        </div>
       </section>
 
       <section className="metric-grid" aria-label="Account summary">
