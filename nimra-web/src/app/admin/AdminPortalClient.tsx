@@ -38,6 +38,83 @@ interface AdminPortalClientProps {
 
 type TabType = 'dashboard' | 'orders' | 'products' | 'banners' | 'faqs' | 'inquiries' | 'users' | 'notifications' | 'settings';
 
+interface CustomSelectOption {
+  value: string;
+  label: string;
+}
+
+interface CustomSelectProps {
+  value: string;
+  onChange: (val: string) => void;
+  options: CustomSelectOption[];
+  placeholder?: string;
+  clearable?: boolean;
+  onClear?: () => void;
+}
+
+function CustomSelect({ value, onChange, options, placeholder = 'Select...', clearable = false, onClear }: CustomSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOpt = options.find(o => o.value === value);
+
+  return (
+    <div ref={containerRef} className="custom-select-container">
+      <div 
+        onClick={() => setIsOpen(!isOpen)} 
+        className={`custom-select-trigger ${isOpen ? 'open' : ''}`}
+      >
+        <span className="custom-select-text">{selectedOpt ? selectedOpt.label : placeholder}</span>
+        <div className="custom-select-actions">
+          {clearable && value !== 'All' && value !== 'latest' && onClear && (
+            <span 
+              onClick={(e) => {
+                e.stopPropagation();
+                onClear();
+                setIsOpen(false);
+              }} 
+              className="custom-select-clear"
+            >
+              ✕
+            </span>
+          )}
+          <span className="custom-select-arrow">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </span>
+        </div>
+      </div>
+      {isOpen && (
+        <div className="custom-select-options-list">
+          {options.map((opt) => (
+            <div 
+              key={opt.value} 
+              onClick={() => {
+                onChange(opt.value);
+                setIsOpen(false);
+              }}
+              className={`custom-select-option ${opt.value === value ? 'selected' : ''}`}
+            >
+              {opt.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminPortalClient({ initialCMSData }: AdminPortalClientProps) {
   const router = useRouter();
   const { logout } = useAuth();
@@ -118,6 +195,61 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
   // User Edit Form state
   const [editingUser, setEditingUser] = useState<Partial<AdminUser> | null>(null);
   const [userFormOpen, setUserFormOpen] = useState(false);
+
+  // Filters State
+  const [orderStatusFilter, setOrderStatusFilter] = useState('All');
+  const [orderPaymentFilter, setOrderPaymentFilter] = useState('All');
+  const [productCategoryFilter, setProductCategoryFilter] = useState('All');
+  const [productStatusFilter, setProductStatusFilter] = useState('All');
+  const [bannerStatusFilter, setBannerStatusFilter] = useState('All');
+  const [faqStatusFilter, setFaqStatusFilter] = useState('All');
+  const [userRoleFilter, setUserRoleFilter] = useState('All');
+  const [userStatusFilter, setUserStatusFilter] = useState('All');
+
+  // Date sorting and Date range Filter States
+  const [orderSort, setOrderSort] = useState('latest');
+  const [showFilters, setShowFilters] = useState(false);
+  const [orderStartDate, setOrderStartDate] = useState('');
+  const [orderEndDate, setOrderEndDate] = useState('');
+
+  const [inquirySort, setInquirySort] = useState('latest');
+  const [inquiryStartDate, setInquiryStartDate] = useState('');
+  const [inquiryEndDate, setInquiryEndDate] = useState('');
+
+  const [notificationSort, setNotificationSort] = useState('latest');
+
+  // Clear Filter Handlers
+  const handleClearOrderFilters = () => {
+    setOrderStatusFilter('All');
+    setOrderPaymentFilter('All');
+    setOrderSort('latest');
+    setOrderStartDate('');
+    setOrderEndDate('');
+  };
+
+  const handleClearProductFilters = () => {
+    setProductCategoryFilter('All');
+    setProductStatusFilter('All');
+  };
+
+  const handleClearBannerFilters = () => {
+    setBannerStatusFilter('All');
+  };
+
+  const handleClearFaqFilters = () => {
+    setFaqStatusFilter('All');
+  };
+
+  const handleClearInquiryFilters = () => {
+    setInquirySort('latest');
+    setInquiryStartDate('');
+    setInquiryEndDate('');
+  };
+
+  const handleClearUserFilters = () => {
+    setUserRoleFilter('All');
+    setUserStatusFilter('All');
+  };
 
   // Notification Send Form state
   const [notifTitle, setNotifTitle] = useState('');
@@ -245,7 +377,8 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
       document.body.style.overflow = '';
     };
   }, [isProfilePanelOpen]);
-  const showAlert = (text: string, type: 'success' | 'error' = 'success') => {
+
+  const showAlert = (text: string, type: 'success' | 'error' = 'success') => {
     setAlertMsg({ text, type });
     setTimeout(() => setAlertMsg({ text: '', type: 'success' }), 4000);
   };
@@ -358,52 +491,128 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
   // Sorting and Filtering
   const searchLower = globalSearch.toLowerCase();
   
-  // Sort orders by newest first (created descending or orderId descending)
+  // Sort orders by date
   const sortedOrders = [...orders].sort((a, b) => {
     const dateA = new Date(a.createdAt || 0).getTime();
     const dateB = new Date(b.createdAt || 0).getTime();
-    if (dateA !== dateB) return dateB - dateA;
-    return (b.orderId || '').localeCompare(a.orderId || '');
+    if (orderSort === 'earliest') {
+      if (dateA !== dateB) return dateA - dateB;
+      return (a.orderId || '').localeCompare(b.orderId || '');
+    } else {
+      if (dateA !== dateB) return dateB - dateA;
+      return (b.orderId || '').localeCompare(a.orderId || '');
+    }
   });
 
-  const filteredOrders = sortedOrders.filter(o => 
-    String(o.orderId || '').toLowerCase().includes(searchLower) ||
-    String(o.customer?.name || '').toLowerCase().includes(searchLower) ||
-    String(o.customer?.mobile || '').toLowerCase().includes(searchLower) ||
-    String(o.status || '').toLowerCase().includes(searchLower)
-  );
+  const filteredOrders = sortedOrders.filter(o => {
+    const matchesSearch = String(o.orderId || '').toLowerCase().includes(searchLower) ||
+      String(o.customer?.name || '').toLowerCase().includes(searchLower) ||
+      String(o.customer?.mobile || '').toLowerCase().includes(searchLower) ||
+      String(o.status || '').toLowerCase().includes(searchLower);
+    
+    const matchesStatus = orderStatusFilter === 'All' || o.status === orderStatusFilter;
+    const matchesPayment = orderPaymentFilter === 'All' || o.paymentMethod === orderPaymentFilter;
+    
+    let matchesDateRange = true;
+    if (orderStartDate) {
+      const start = new Date(orderStartDate).getTime();
+      const created = new Date(o.createdAt).getTime();
+      if (created < start) matchesDateRange = false;
+    }
+    if (orderEndDate) {
+      const end = new Date(orderEndDate);
+      end.setHours(23, 59, 59, 999);
+      const created = new Date(o.createdAt).getTime();
+      if (created > end.getTime()) matchesDateRange = false;
+    }
+    
+    return matchesSearch && matchesStatus && matchesPayment && matchesDateRange;
+  });
 
-  const filteredProducts = products.filter(p => 
-    String(p.Name || '').toLowerCase().includes(searchLower) || 
-    String(p.Category || '').toLowerCase().includes(searchLower) ||
-    String(p.Description || '').toLowerCase().includes(searchLower)
-  );
+  const filteredProducts = products.filter(p => {
+    const matchesSearch = String(p.Name || '').toLowerCase().includes(searchLower) || 
+      String(p.Category || '').toLowerCase().includes(searchLower) ||
+      String(p.Description || '').toLowerCase().includes(searchLower);
+      
+    const matchesCategory = productCategoryFilter === 'All' || p.Category === productCategoryFilter;
+    const matchesStatus = productStatusFilter === 'All' || 
+      (productStatusFilter === 'Active' && p.Active !== false) ||
+      (productStatusFilter === 'Inactive' && p.Active === false);
+      
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
 
-  const filteredBanners = banners.filter(b => 
-    String(b.Title || '').toLowerCase().includes(searchLower) || 
-    String(b.Subtitle || '').toLowerCase().includes(searchLower)
-  );
+  const filteredBanners = banners.filter(b => {
+    const matchesSearch = String(b.Title || '').toLowerCase().includes(searchLower) || 
+      String(b.Subtitle || '').toLowerCase().includes(searchLower);
+      
+    const matchesStatus = bannerStatusFilter === 'All' || 
+      (bannerStatusFilter === 'Active' && b.Active !== false) ||
+      (bannerStatusFilter === 'Inactive' && b.Active === false);
+      
+    return matchesSearch && matchesStatus;
+  });
 
-  const filteredFaqs = faqs.filter(f => 
-    String(f.Question || '').toLowerCase().includes(searchLower) || 
-    String(f.Answer || '').toLowerCase().includes(searchLower)
-  );
+  const filteredFaqs = faqs.filter(f => {
+    const matchesSearch = String(f.Question || '').toLowerCase().includes(searchLower) || 
+      String(f.Answer || '').toLowerCase().includes(searchLower);
+      
+    const matchesStatus = faqStatusFilter === 'All' || 
+      (faqStatusFilter === 'Active' && f.Active !== false) ||
+      (faqStatusFilter === 'Inactive' && f.Active === false);
+      
+    return matchesSearch && matchesStatus;
+  });
 
-  const filteredInquiries = inquiries.filter(i => 
-    String(i.Name || '').toLowerCase().includes(searchLower) || 
-    String(i.Subject || '').toLowerCase().includes(searchLower) || 
-    String(i.Message || '').toLowerCase().includes(searchLower) ||
-    String(i.Email || '').toLowerCase().includes(searchLower) ||
-    String(i.Phone || '').toLowerCase().includes(searchLower)
-  );
+  const sortedInquiries = [...inquiries].sort((a, b) => {
+    const dateA = new Date(a.Timestamp || 0).getTime();
+    const dateB = new Date(b.Timestamp || 0).getTime();
+    return inquirySort === 'earliest' ? dateA - dateB : dateB - dateA;
+  });
 
-  const filteredUsers = users.filter(u => 
-    String(u.Name || '').toLowerCase().includes(searchLower) || 
-    String(u.Username || '').toLowerCase().includes(searchLower) || 
-    String(u.Role || '').toLowerCase().includes(searchLower)
-  );
+  const filteredInquiries = sortedInquiries.filter(i => {
+    const matchesSearch = String(i.Name || '').toLowerCase().includes(searchLower) || 
+      String(i.Subject || '').toLowerCase().includes(searchLower) || 
+      String(i.Message || '').toLowerCase().includes(searchLower) ||
+      String(i.Email || '').toLowerCase().includes(searchLower) ||
+      String(i.Phone || '').toLowerCase().includes(searchLower);
 
-  const filteredNotifications = notifications.filter(n => 
+    let matchesDateRange = true;
+    if (inquiryStartDate) {
+      const start = new Date(inquiryStartDate).getTime();
+      const created = new Date(i.Timestamp).getTime();
+      if (created < start) matchesDateRange = false;
+    }
+    if (inquiryEndDate) {
+      const end = new Date(inquiryEndDate);
+      end.setHours(23, 59, 59, 999);
+      const created = new Date(i.Timestamp).getTime();
+      if (created > end.getTime()) matchesDateRange = false;
+    }
+
+    return matchesSearch && matchesDateRange;
+  });
+
+  const filteredUsers = users.filter(u => {
+    const matchesSearch = String(u.Name || '').toLowerCase().includes(searchLower) || 
+      String(u.Username || '').toLowerCase().includes(searchLower) || 
+      String(u.Role || '').toLowerCase().includes(searchLower);
+      
+    const matchesRole = userRoleFilter === 'All' || u.Role === userRoleFilter;
+    const matchesStatus = userStatusFilter === 'All' || 
+      (userStatusFilter === 'Active' && u.Active !== false) ||
+      (userStatusFilter === 'Inactive' && u.Active === false);
+      
+    return matchesSearch && matchesRole && matchesStatus;
+  });
+
+  const sortedNotifications = [...notifications].sort((a, b) => {
+    const dateA = new Date(a.Timestamp || 0).getTime();
+    const dateB = new Date(b.Timestamp || 0).getTime();
+    return notificationSort === 'earliest' ? dateA - dateB : dateB - dateA;
+  });
+
+  const filteredNotifications = sortedNotifications.filter(n => 
     String(n.Title || '').toLowerCase().includes(searchLower) || 
     String(n.Message || '').toLowerCase().includes(searchLower)
   );
@@ -858,24 +1067,88 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           </h1>
           <div className="header-actions">
             {activeTab !== 'dashboard' && activeTab !== 'notifications' && activeTab !== 'settings' && (
-              <div className="search-container" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <span style={{ position: 'absolute', left: '12px', color: 'var(--text-secondary)' }}>🔍</span>
-                <input
-                  type="text"
-                  placeholder={`Search ${activeTab}...`}
-                  value={globalSearch}
-                  onChange={(e) => setGlobalSearch(e.target.value)}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexGrow: 1, maxWidth: '500px' }}>
+                <div className="search-container" style={{ position: 'relative', display: 'flex', alignItems: 'center', flexGrow: 1, width: '100%' }}>
+                  <input
+                    type="text"
+                    placeholder={`Search ${activeTab}...`}
+                    value={globalSearch}
+                    onChange={(e) => setGlobalSearch(e.target.value)}
+                    className="search-bar-glass"
+                  />
+                  <svg 
+                    width="18" 
+                    height="18" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2.5" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    className="search-icon-svg"
+                    style={{ 
+                      position: 'absolute', 
+                      left: '18px', 
+                      pointerEvents: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      zIndex: 2
+                    }}
+                  >
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                  {globalSearch && (
+                    <button
+                      onClick={() => setGlobalSearch('')}
+                      style={{
+                        position: 'absolute',
+                        right: '16px',
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '4px',
+                        borderRadius: '50%',
+                        zIndex: 3,
+                        transition: 'all var(--transition-fast)'
+                      }}
+                      className="search-clear-btn"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                    </button>
+                  )}
+                </div>
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={`filter-toggle-btn ${showFilters ? 'active' : ''}`}
                   style={{
-                    padding: '8px 12px 8px 36px',
-                    borderRadius: '20px',
+                    background: showFilters ? 'var(--primary-color)' : 'var(--bg-secondary)',
+                    color: showFilters ? 'white' : 'var(--text-primary)',
                     border: '1px solid var(--border-color)',
-                    background: 'var(--glass-bg)',
-                    color: 'var(--text-primary)',
-                    outline: 'none',
-                    fontSize: '0.9rem',
-                    minWidth: '240px'
+                    padding: '8px 14px',
+                    borderRadius: '20px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    transition: 'all var(--transition-fast)',
+                    flexShrink: 0
                   }}
-                />
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                  </svg>
+                  Filters
+                </button>
               </div>
             )}
             <button onClick={refreshData} disabled={loading} className="btn-refresh">
@@ -1197,6 +1470,88 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             {/* ORDERS TAB */}
             {activeTab === 'orders' && (
               <div className="orders-tab card glass">
+                {showFilters && (
+                  <div className="filter-bar animate-fade-in">
+                    <div className="filter-group">
+                      <label>Status:</label>
+                      <CustomSelect
+                        value={orderStatusFilter}
+                        onChange={setOrderStatusFilter}
+                        clearable={true}
+                        onClear={() => setOrderStatusFilter('All')}
+                        options={[
+                          { value: 'All', label: 'All Statuses' },
+                          { value: 'Pending', label: 'Pending' },
+                          { value: 'Confirmed', label: 'Confirmed' },
+                          { value: 'Processing', label: 'Processing' },
+                          { value: 'Dispatched', label: 'Dispatched' },
+                          { value: 'Out for Delivery', label: 'Out for Delivery' },
+                          { value: 'Delivered', label: 'Delivered' },
+                          { value: 'Cancelled', label: 'Cancelled' },
+                        ]}
+                      />
+                    </div>
+                    <div className="filter-group">
+                      <label>Payment:</label>
+                      <CustomSelect
+                        value={orderPaymentFilter}
+                        onChange={setOrderPaymentFilter}
+                        clearable={true}
+                        onClear={() => setOrderPaymentFilter('All')}
+                        options={[
+                          { value: 'All', label: 'All Payments' },
+                          { value: 'Cash on Delivery', label: 'Cash on Delivery' },
+                          { value: 'UPI / Online', label: 'UPI / Online' },
+                          { value: 'Google Pay', label: 'Google Pay' },
+                        ]}
+                      />
+                    </div>
+                    <div className="filter-group">
+                      <label>Date Sort:</label>
+                      <CustomSelect
+                        value={orderSort}
+                        onChange={setOrderSort}
+                        clearable={true}
+                        onClear={() => setOrderSort('latest')}
+                        options={[
+                          { value: 'latest', label: 'Latest First' },
+                          { value: 'earliest', label: 'Earliest First' },
+                        ]}
+                      />
+                    </div>
+                    <div className="filter-group">
+                      <label>From:</label>
+                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        <input
+                          type="date"
+                          value={orderStartDate}
+                          onChange={(e) => setOrderStartDate(e.target.value)}
+                          className="form-input filter-input"
+                        />
+                      </div>
+                    </div>
+                    <div className="filter-group">
+                      <label>To:</label>
+                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <input
+                          type="date"
+                          value={orderEndDate}
+                          min={orderStartDate}
+                          onChange={(e) => setOrderEndDate(e.target.value)}
+                          className="form-input filter-input"
+                        />
+                        {(orderStatusFilter !== 'All' || orderPaymentFilter !== 'All' || orderSort !== 'latest' || orderStartDate !== '' || orderEndDate !== '') && (
+                          <button className="btn-clear" onClick={handleClearOrderFilters} title="Clear Filters" style={{ display: 'inline-flex', flexShrink: 0, whiteSpace: 'nowrap', alignItems: 'center', justifyContent: 'center', padding: '0.45rem 0.55rem' }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M23 4v6h-6"></path>
+                              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div className="table-responsive">
                   <table className="admin-table">
                     <thead>
@@ -1258,7 +1613,43 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                   </button>
                 </div>
 
-                <div className="table-responsive" style={{ marginTop: '1rem' }}>
+                {showFilters && (
+                  <div className="filter-bar animate-fade-in">
+                    <div className="filter-group">
+                      <label>Category:</label>
+                      <CustomSelect
+                        value={productCategoryFilter}
+                        onChange={setProductCategoryFilter}
+                        clearable={true}
+                        onClear={() => setProductCategoryFilter('All')}
+                        options={[
+                          { value: 'All', label: 'All Categories' },
+                          { value: 'Packaged Water', label: 'Packaged Water' },
+                          { value: 'Mineral Water', label: 'Mineral Water' },
+                          { value: 'Bulk Water', label: 'Bulk Water' },
+                          { value: 'Upcoming RUSH Soda', label: 'Upcoming RUSH Soda' },
+                        ]}
+                      />
+                    </div>
+                    <div className="filter-group">
+                      <label>Status:</label>
+                      <CustomSelect
+                        value={productStatusFilter}
+                        onChange={setProductStatusFilter}
+                        clearable={true}
+                        onClear={() => setProductStatusFilter('All')}
+                        options={[
+                          { value: 'All', label: 'All Statuses' },
+                          { value: 'Active', label: 'Active' },
+                          { value: 'Inactive', label: 'Inactive' },
+                        ]}
+                      />
+                    </div>
+
+                  </div>
+                )}
+
+                <div className="table-responsive">
                   <table className="admin-table">
                     <thead>
                       <tr>
@@ -1326,7 +1717,27 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                   </button>
                 </div>
 
-                <div className="table-responsive" style={{ marginTop: '1rem' }}>
+                {showFilters && (
+                  <div className="filter-bar animate-fade-in">
+                    <div className="filter-group">
+                      <label>Status:</label>
+                      <CustomSelect
+                        value={bannerStatusFilter}
+                        onChange={setBannerStatusFilter}
+                        clearable={true}
+                        onClear={() => setBannerStatusFilter('All')}
+                        options={[
+                          { value: 'All', label: 'All Statuses' },
+                          { value: 'Active', label: 'Active' },
+                          { value: 'Inactive', label: 'Inactive' },
+                        ]}
+                      />
+                    </div>
+
+                  </div>
+                )}
+
+                <div className="table-responsive">
                   <table className="admin-table">
                     <thead>
                       <tr>
@@ -1389,7 +1800,27 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                   </button>
                 </div>
 
-                <div className="table-responsive" style={{ marginTop: '1rem' }}>
+                {showFilters && (
+                  <div className="filter-bar animate-fade-in">
+                    <div className="filter-group">
+                      <label>Status:</label>
+                      <CustomSelect
+                        value={faqStatusFilter}
+                        onChange={setFaqStatusFilter}
+                        clearable={true}
+                        onClear={() => setFaqStatusFilter('All')}
+                        options={[
+                          { value: 'All', label: 'All Statuses' },
+                          { value: 'Active', label: 'Active' },
+                          { value: 'Inactive', label: 'Inactive' },
+                        ]}
+                      />
+                    </div>
+
+                  </div>
+                )}
+
+                <div className="table-responsive">
                   <table className="admin-table">
                     <thead>
                       <tr>
@@ -1435,6 +1866,46 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             {/* INQUIRIES TAB */}
             {activeTab === 'inquiries' && (
               <div className="inquiries-tab card glass">
+                {showFilters && (
+                  <div className="filter-bar animate-fade-in">
+                    <div className="filter-group">
+                      <label>Date Sort:</label>
+                      <CustomSelect
+                        value={inquirySort}
+                        onChange={setInquirySort}
+                        clearable={true}
+                        onClear={() => setInquirySort('latest')}
+                        options={[
+                          { value: 'latest', label: 'Latest First' },
+                          { value: 'earliest', label: 'Earliest First' },
+                        ]}
+                      />
+                    </div>
+                    <div className="filter-group">
+                      <label>From:</label>
+                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        <input
+                          type="date"
+                          value={inquiryStartDate}
+                          onChange={(e) => setInquiryStartDate(e.target.value)}
+                          className="form-input filter-input"
+                        />
+                      </div>
+                    </div>
+                    <div className="filter-group">
+                      <label>To:</label>
+                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        <input
+                          type="date"
+                          value={inquiryEndDate}
+                          min={inquiryStartDate}
+                          onChange={(e) => setInquiryEndDate(e.target.value)}
+                          className="form-input filter-input"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div className="table-responsive">
                   <table className="admin-table">
                     <thead>
@@ -1499,14 +1970,48 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                     <div className="section-head-btn">
                       <h3>Portal User Accounts</h3>
                       <button className="btn btn-primary btn-add" onClick={() => {
-                        setEditingUser({ Username: '', Password: '', Role: 'Manager', Name: '', Active: true });
+                        setEditingUser({ Username: '', Password: '', Role: 'Customer', Name: '', Active: true });
                         setUserFormOpen(true);
                       }}>
                         ➕ Create User
                       </button>
                     </div>
 
-                    <div className="table-responsive" style={{ marginTop: '1rem' }}>
+                    {showFilters && (
+                      <div className="filter-bar animate-fade-in">
+                        <div className="filter-group">
+                          <label>Role:</label>
+                          <CustomSelect
+                            value={userRoleFilter}
+                            onChange={setUserRoleFilter}
+                            clearable={true}
+                            onClear={() => setUserRoleFilter('All')}
+                            options={[
+                              { value: 'All', label: 'All Roles' },
+                              { value: 'Admin', label: 'Admin' },
+                              { value: 'Customer', label: 'Customer' },
+                            ]}
+                          />
+                        </div>
+                        <div className="filter-group">
+                          <label>Status:</label>
+                          <CustomSelect
+                            value={userStatusFilter}
+                            onChange={setUserStatusFilter}
+                            clearable={true}
+                            onClear={() => setUserStatusFilter('All')}
+                            options={[
+                              { value: 'All', label: 'All Statuses' },
+                              { value: 'Active', label: 'Active' },
+                              { value: 'Inactive', label: 'Disabled' },
+                            ]}
+                          />
+                        </div>
+
+                      </div>
+                    )}
+
+                    <div className="table-responsive">
                       <table className="admin-table">
                         <thead>
                           <tr>
@@ -1774,19 +2279,19 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
 
               <div className="form-group" style={{ marginTop: '1rem' }}>
                 <label>Update Delivery Status</label>
-                <select
+                <CustomSelect
                   value={orderStatusVal}
-                  onChange={(e) => setOrderStatusVal(e.target.value)}
-                  className="modal-select"
-                >
-                  <option value="Pending">Pending</option>
-                  <option value="Confirmed">Confirmed</option>
-                  <option value="Processing">Processing</option>
-                  <option value="Dispatched">Dispatched</option>
-                  <option value="Out for Delivery">Out for Delivery</option>
-                  <option value="Delivered">Delivered</option>
-                  <option value="Cancelled">Cancelled</option>
-                </select>
+                  onChange={setOrderStatusVal}
+                  options={[
+                    { value: 'Pending', label: 'Pending' },
+                    { value: 'Confirmed', label: 'Confirmed' },
+                    { value: 'Processing', label: 'Processing' },
+                    { value: 'Dispatched', label: 'Dispatched' },
+                    { value: 'Out for Delivery', label: 'Out for Delivery' },
+                    { value: 'Delivered', label: 'Delivered' },
+                    { value: 'Cancelled', label: 'Cancelled' },
+                  ]}
+                />
               </div>
 
               <div className="modal-footer">
@@ -1845,28 +2350,30 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                 </div>
               </div>
 
-              <div className="form-row">
+              <div className="form-row" style={{ zIndex: 12, position: 'relative' }}>
                 <div className="form-group">
                   <label>Product Category</label>
-                  <select
+                  <CustomSelect
                     value={editingProduct.Category || 'Packaged Water'}
-                    onChange={(e) => setEditingProduct(prev => ({ ...prev, Category: e.target.value }))}
-                  >
-                    <option value="Packaged Water">Packaged Water</option>
-                    <option value="Mineral Water">Mineral Water</option>
-                    <option value="Bulk Water">Bulk Water</option>
-                    <option value="Upcoming RUSH Soda">Upcoming RUSH Soda</option>
-                  </select>
+                    onChange={(val) => setEditingProduct(prev => ({ ...prev, Category: val }))}
+                    options={[
+                      { value: 'Packaged Water', label: 'Packaged Water' },
+                      { value: 'Mineral Water', label: 'Mineral Water' },
+                      { value: 'Bulk Water', label: 'Bulk Water' },
+                      { value: 'Upcoming RUSH Soda', label: 'Upcoming RUSH Soda' },
+                    ]}
+                  />
                 </div>
                 <div className="form-group">
                   <label>Catalog Status</label>
-                  <select
+                  <CustomSelect
                     value={editingProduct.Active !== false ? 'true' : 'false'}
-                    onChange={(e) => setEditingProduct(prev => ({ ...prev, Active: e.target.value === 'true' }))}
-                  >
-                    <option value="true">Active & Visible</option>
-                    <option value="false">Hidden / Inactive</option>
-                  </select>
+                    onChange={(val) => setEditingProduct(prev => ({ ...prev, Active: val === 'true' }))}
+                    options={[
+                      { value: 'true', label: 'Active & Visible' },
+                      { value: 'false', label: 'Hidden / Inactive' },
+                    ]}
+                  />
                 </div>
               </div>
 
@@ -1967,7 +2474,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                 </div>
               </div>
 
-              <div className="form-row">
+              <div className="form-row" style={{ zIndex: 12, position: 'relative' }}>
                 <div className="form-group">
                   <label>Slide Image URL</label>
                   <input
@@ -1979,13 +2486,14 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                 </div>
                 <div className="form-group">
                   <label>Banner Status</label>
-                  <select
+                  <CustomSelect
                     value={editingBanner.Active !== false ? 'true' : 'false'}
-                    onChange={(e) => setEditingBanner(prev => ({ ...prev, Active: e.target.value === 'true' }))}
-                  >
-                    <option value="true">Active (Visible)</option>
-                    <option value="false">Inactive (Hidden)</option>
-                  </select>
+                    onChange={(val) => setEditingBanner(prev => ({ ...prev, Active: val === 'true' }))}
+                    options={[
+                      { value: 'true', label: 'Active (Visible)' },
+                      { value: 'false', label: 'Inactive (Hidden)' },
+                    ]}
+                  />
                 </div>
               </div>
 
@@ -2032,15 +2540,16 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                 />
               </div>
 
-              <div className="form-group">
+              <div className="form-group" style={{ zIndex: 12, position: 'relative' }}>
                 <label>FAQ Registry Status</label>
-                <select
+                <CustomSelect
                   value={editingFAQ.Active !== false ? 'true' : 'false'}
-                  onChange={(e) => setEditingFAQ(prev => ({ ...prev, Active: e.target.value === 'true' }))}
-                >
-                  <option value="true">Active & Published</option>
-                  <option value="false">Draft / Inactive</option>
-                </select>
+                  onChange={(val) => setEditingFAQ(prev => ({ ...prev, Active: val === 'true' }))}
+                  options={[
+                    { value: 'true', label: 'Active & Published' },
+                    { value: 'false', label: 'Draft / Inactive' },
+                  ]}
+                />
               </div>
 
               <div className="modal-footer">
@@ -2098,26 +2607,28 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                 </div>
               </div>
 
-              <div className="form-row">
+              <div className="form-row" style={{ zIndex: 12, position: 'relative' }}>
                 <div className="form-group">
                   <label>Access Role Authority</label>
-                  <select
-                    value={editingUser.Role || 'Manager'}
-                    onChange={(e) => setEditingUser(prev => ({ ...prev, Role: e.target.value as any }))}
-                  >
-                    <option value="Admin">Admin (Full Control)</option>
-                    <option value="Manager">Manager (Staff Access)</option>
-                  </select>
+                  <CustomSelect
+                    value={editingUser.Role || 'Customer'}
+                    onChange={(val) => setEditingUser(prev => ({ ...prev, Role: val as any }))}
+                    options={[
+                      { value: 'Admin', label: 'Admin (Full Control)' },
+                      { value: 'Customer', label: 'Customer (Portal Access)' },
+                    ]}
+                  />
                 </div>
                 <div className="form-group">
                   <label>Account Status</label>
-                  <select
+                  <CustomSelect
                     value={editingUser.Active !== false ? 'true' : 'false'}
-                    onChange={(e) => setEditingUser(prev => ({ ...prev, Active: e.target.value === 'true' }))}
-                  >
-                    <option value="true">Enabled (Access Allowed)</option>
-                    <option value="false">Disabled (Suspended)</option>
-                  </select>
+                    onChange={(val) => setEditingUser(prev => ({ ...prev, Active: val === 'true' }))}
+                    options={[
+                      { value: 'true', label: 'Enabled (Access Allowed)' },
+                      { value: 'false', label: 'Disabled (Suspended)' },
+                    ]}
+                  />
                 </div>
               </div>
 
@@ -2416,7 +2927,9 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           padding: 1.25rem 1.5rem;
           margin-left: 220px;
           position: relative;
-          gap: 2rem;
+          height: 100vh;
+          overflow: hidden;
+          gap: 1rem;
         }
 
         .main-header {
@@ -2446,6 +2959,8 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           gap: 1.25rem;
           position: relative;
           z-index: 1000;
+          flex-grow: 1;
+          justify-content: flex-end;
         }
         .btn-refresh {
           background: var(--bg-primary);
@@ -2598,6 +3113,11 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         }
 
         .tab-viewport {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          min-height: 0;
           animation: fadeIn var(--transition-normal) forwards;
         }
 
@@ -2711,12 +3231,23 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
 
         /* SCROLLABLE TABLES STYLING */
         .table-responsive {
-          width: 100%;
-          overflow-x: auto;
+          flex: 1;
+          overflow: auto;
+          min-height: 0;
           -webkit-overflow-scrolling: touch;
           border-radius: var(--radius-xl);
           border: 1px solid var(--border-color);
           background: var(--bg-secondary);
+        }
+        .admin-table thead th {
+          position: sticky;
+          top: 0;
+          background: var(--bg-secondary);
+          z-index: 10;
+          box-shadow: 0 1px 0 var(--border-color);
+        }
+        [data-theme="dark"] .admin-table thead th {
+          background: #1e293b;
         }
         [data-theme="dark"] .table-responsive {
           border-color: rgba(255, 255, 255, 0.1);
@@ -2857,9 +3388,20 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         }
 
         /* TAB SECTIONS */
-        .orders-tab, .products-tab, .banners-tab, .faqs-tab, .inquiries-tab, .users-tab, .notifications-tab, .settings-tab {
-          width: 100%;
-          padding: 2rem;
+        .orders-tab, .products-tab, .banners-tab, .faqs-tab, .inquiries-tab, .users-tab, .notifications-tab {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          min-height: 0;
+          padding: 1.5rem !important;
+        }
+        .settings-tab {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          overflow-y: auto;
+          padding: 1.5rem !important;
         }
         .section-head-btn {
           display: flex;
@@ -2961,14 +3503,15 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         }
         .modal-card {
           background: var(--bg-secondary);
-          border-radius: var(--radius-xl);
-          width: 90%;
-          max-width: 560px;
+          border-radius: var(--radius-2xl);
+          width: 95%;
+          max-width: 680px;
           max-height: 90vh;
           overflow-y: auto;
-          box-shadow: var(--shadow-2xl);
-          animation: scaleIn 0.2s ease-out forwards;
+          box-shadow: var(--shadow-2xl), 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+          animation: scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
           border: 1px solid var(--border-color);
+          transition: all var(--transition-normal);
         }
         .modal-header {
           padding: 1.5rem;
@@ -3364,7 +3907,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         }
 
         /* PREMIUM FORM FIELD THEMES */
-        .form-input, .form-select, .form-textarea, .form-group input, .form-group select, .form-group textarea {
+        .form-input, .form-select, .modal-select, .form-textarea, .form-group input, .form-group select, .form-group textarea {
           background: var(--bg-primary);
           border: 1.5px solid var(--border-color);
           color: var(--text-primary);
@@ -3374,6 +3917,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         }
         [data-theme="dark"] .form-input, 
         [data-theme="dark"] .form-select, 
+        [data-theme="dark"] .modal-select,
         [data-theme="dark"] .form-textarea,
         [data-theme="dark"] .form-group input,
         [data-theme="dark"] .form-group select,
@@ -3381,7 +3925,22 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           background: rgba(30, 41, 59, 0.45);
           border-color: rgba(255, 255, 255, 0.1);
         }
-        .form-input:focus, .form-select:focus, .form-textarea:focus, 
+        .form-select, .form-group select, .modal-select {
+          appearance: none !important;
+          -webkit-appearance: none !important;
+          -moz-appearance: none !important;
+          background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+          background-repeat: no-repeat !important;
+          background-position: right 1rem center !important;
+          background-size: 1.1em !important;
+          padding-right: 2.75rem !important;
+        }
+        [data-theme="dark"] .form-select, 
+        [data-theme="dark"] .form-group select, 
+        [data-theme="dark"] .modal-select {
+          background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2360a5fa' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+        }
+        .form-input:focus, .form-select:focus, .modal-select:focus, .form-textarea:focus, 
         .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
           border-color: var(--primary-color);
           box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.15);
@@ -3389,6 +3948,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         }
         [data-theme="dark"] .form-input:focus, 
         [data-theme="dark"] .form-select:focus, 
+        [data-theme="dark"] .modal-select:focus,
         [data-theme="dark"] .form-textarea:focus,
         [data-theme="dark"] .form-group input:focus,
         [data-theme="dark"] .form-group select:focus,
@@ -3473,6 +4033,408 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           .form-row {
             grid-template-columns: 1fr;
           }
+        }
+        /* FILTERS BAR */
+        .filter-bar {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+          gap: 0.75rem;
+          margin-bottom: 1.25rem;
+          background: var(--bg-secondary);
+          padding: 1rem;
+          border-radius: var(--radius-xl);
+          border: 1px solid var(--border-color);
+          align-items: end;
+          width: 100%;
+          box-shadow: var(--shadow-sm);
+          position: relative;
+          z-index: 30;
+        }
+        @media (max-width: 768px) {
+          .filter-bar {
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            padding: 0.75rem;
+            gap: 0.5rem;
+          }
+        }
+        .filter-clear-cross {
+          position: absolute;
+          right: 2.25rem;
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          color: #ef4444;
+          font-size: 0.95rem;
+          font-weight: 800;
+          padding: 2px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 10;
+          transition: transform var(--transition-fast), color var(--transition-fast);
+        }
+        .filter-clear-cross:hover {
+          color: #dc2626;
+          transform: scale(1.15);
+        }
+        .filter-clear-cross.date-cross {
+          right: 0.75rem;
+        }
+        .filter-toggle-btn {
+          box-shadow: var(--shadow-sm);
+        }
+        .filter-toggle-btn:hover {
+          transform: translateY(-1px);
+          box-shadow: var(--shadow-md);
+        }
+        .filter-toggle-btn.active {
+          box-shadow: 0 4px 14px rgba(var(--primary-rgb), 0.3);
+        }
+        .filter-group {
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 0.35rem;
+          min-width: 0;
+          width: 100%;
+        }
+        .filter-group label {
+          font-weight: 700;
+          font-size: 0.8rem;
+          color: var(--text-secondary);
+          white-space: nowrap;
+          margin-bottom: 0;
+        }
+        .filter-select {
+          padding: 0.45rem 2.85rem 0.45rem 0.6rem !important;
+          font-size: 0.8rem !important;
+          border-radius: 10px !important;
+          width: 100%;
+          min-width: 0;
+          height: auto !important;
+          border: 1.5px solid var(--border-color);
+          background-color: var(--bg-primary);
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .filter-select:hover {
+          border-color: var(--primary-color);
+          box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.08);
+          transform: translateY(-1px);
+        }
+        .filter-select:focus {
+          outline: none;
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.15), 0 4px 12px rgba(var(--primary-rgb), 0.08);
+        }
+        .filter-input {
+          padding: 0.55rem 0.75rem !important;
+          font-size: 0.8rem !important;
+          border-radius: 10px !important;
+          width: 100%;
+          min-width: 0;
+          height: 38px !important;
+          border: 1.5px solid var(--border-color);
+          background-color: var(--bg-primary);
+          color: var(--text-primary);
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          box-sizing: border-box;
+        }
+        .filter-input:hover {
+          border-color: var(--primary-color);
+        }
+        .filter-input:focus {
+          outline: none;
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.12);
+        }
+        .btn-clear {
+          padding: 0.45rem 0.875rem !important;
+          font-size: 0.825rem !important;
+          border-radius: var(--radius-md) !important;
+          font-weight: 700 !important;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          cursor: pointer;
+          border: 1.5px solid #ef4444 !important;
+          background: rgba(239, 68, 68, 0.05) !important;
+          color: #ef4444 !important;
+          transition: all var(--transition-fast) !important;
+          height: 38px !important;
+          box-sizing: border-box;
+        }
+        .btn-clear:hover {
+          background: #ef4444 !important;
+          color: white !important;
+          box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+        }
+
+        /* PREMIUM GLASS SEARCH & DROPDOWNS */
+        .search-bar-glass {
+          padding: 11px 44px 11px 48px;
+          border-radius: 28px;
+          border: 1.5px solid var(--border-color);
+          background: rgba(255, 255, 255, 0.45);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          color: var(--text-primary);
+          outline: none;
+          font-size: 0.95rem;
+          width: 100%;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        }
+        [data-theme="dark"] .search-bar-glass {
+          background: rgba(15, 23, 42, 0.45);
+          border-color: rgba(255, 255, 255, 0.1);
+        }
+        .search-bar-glass:hover {
+          border-color: var(--primary-color);
+          background: rgba(255, 255, 255, 0.65);
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+        }
+        [data-theme="dark"] .search-bar-glass:hover {
+          background: rgba(15, 23, 42, 0.65);
+        }
+        .search-bar-glass:focus {
+          border-color: var(--primary-color);
+          background: var(--bg-primary);
+          box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.2), 0 8px 20px rgba(var(--primary-rgb), 0.08);
+        }
+        [data-theme="dark"] .search-bar-glass:focus {
+          background: rgba(15, 23, 42, 0.85);
+        }
+
+        .search-clear-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all var(--transition-fast);
+        }
+        .search-clear-btn:hover {
+          color: #ef4444 !important;
+          background: rgba(239, 68, 68, 0.1) !important;
+          transform: scale(1.1);
+        }
+
+        .form-select, .modal-select {
+          border-radius: 12px !important;
+          background-color: var(--bg-primary) !important;
+          border: 1.5px solid var(--border-color) !important;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+          cursor: pointer;
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        .form-select:hover, .modal-select:hover {
+          border-color: var(--primary-color) !important;
+          background-color: var(--bg-secondary) !important;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.08) !important;
+        }
+        .form-select:focus, .modal-select:focus {
+          outline: none !important;
+          border-color: var(--primary-color) !important;
+          box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.15), 0 4px 12px rgba(var(--primary-rgb), 0.08) !important;
+          background-color: var(--bg-secondary) !important;
+        }
+      `}</style>
+
+      {/* GLOBAL PREMIUM STYLES FOR CUSTOM SELECT COMPONENT */}
+      <style jsx global>{`
+        /* Custom Select Container */
+        .custom-select-container {
+          position: relative;
+          width: 100%;
+        }
+
+        /* Trigger Button */
+        .custom-select-trigger {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          width: 100%;
+          height: 38px;
+          padding: 0.45rem 0.85rem;
+          font-size: 0.825rem;
+          font-weight: 500;
+          color: var(--text-primary);
+          background: var(--bg-primary);
+          border: 1.5px solid var(--border-color);
+          border-radius: 10px;
+          cursor: pointer;
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+          user-select: none;
+          box-sizing: border-box;
+        }
+
+        [data-theme="dark"] .custom-select-trigger {
+          background: rgba(30, 41, 59, 0.45);
+          border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .custom-select-trigger:hover {
+          border-color: var(--primary-color);
+          background: var(--bg-secondary);
+          box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.08);
+        }
+
+        [data-theme="dark"] .custom-select-trigger:hover {
+          background: rgba(30, 41, 59, 0.65);
+        }
+
+        .custom-select-trigger.open {
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15), 0 4px 12px rgba(var(--primary-rgb), 0.08);
+          background: var(--bg-secondary);
+        }
+
+        .custom-select-text {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        /* Actions area inside trigger */
+        .custom-select-actions {
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
+          flex-shrink: 0;
+          margin-left: 0.5rem;
+        }
+
+        .custom-select-clear {
+          color: var(--text-muted);
+          cursor: pointer;
+          font-size: 0.75rem;
+          font-weight: bold;
+          padding: 2px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: color var(--transition-fast), transform var(--transition-fast);
+        }
+
+        .custom-select-clear:hover {
+          color: #ef4444;
+          transform: scale(1.15);
+        }
+
+        .custom-select-arrow {
+          color: var(--primary-color);
+          display: flex;
+          align-items: center;
+          transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .custom-select-trigger.open .custom-select-arrow {
+          transform: rotate(180deg);
+        }
+
+        /* Options dropdown list container */
+        .custom-select-options-list {
+          position: absolute;
+          top: calc(100% + 6px);
+          left: 0;
+          width: 100%;
+          background: var(--bg-secondary);
+          border: 1px solid var(--border-color);
+          border-radius: 12px;
+          box-shadow: var(--shadow-xl), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+          z-index: 2200; /* Higher than sticky headers & tables */
+          max-height: 240px;
+          overflow-y: auto;
+          padding: 4px;
+          animation: dropdownIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          box-sizing: border-box;
+        }
+
+        [data-theme="dark"] .custom-select-options-list {
+          background: #1e293b;
+          border-color: rgba(255, 255, 255, 0.1);
+          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+        }
+
+        @keyframes dropdownIn {
+          from {
+            opacity: 0;
+            transform: translateY(-8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        /* Individual Option Item */
+        .custom-select-option {
+          padding: 0.55rem 0.75rem;
+          font-size: 0.8rem;
+          font-weight: 500;
+          color: var(--text-primary);
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all var(--transition-fast);
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          overflow: hidden;
+          box-sizing: border-box;
+        }
+
+        .custom-select-option:hover {
+          background: rgba(var(--primary-rgb), 0.08);
+          color: var(--primary-color);
+          transform: translateX(2px);
+        }
+
+        [data-theme="dark"] .custom-select-option:hover {
+          background: rgba(59, 130, 246, 0.12);
+          color: #93c5fd;
+        }
+
+        .custom-select-option.selected {
+          background: var(--primary-color);
+          color: white !important;
+        }
+
+        /* Date Picker Calendar Icon Contrast Fix for Night Mode */
+        [data-theme="dark"] .filter-input::-webkit-calendar-picker-indicator,
+        [data-theme="dark"] .form-input::-webkit-calendar-picker-indicator,
+        [data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+          filter: invert(1) brightness(0.95) !important;
+          cursor: pointer !important;
+        }
+        .filter-input::-webkit-calendar-picker-indicator,
+        .form-input::-webkit-calendar-picker-indicator,
+        input[type="date"]::-webkit-calendar-picker-indicator {
+          cursor: pointer !important;
+          transition: transform 0.2s ease !important;
+        }
+        .filter-input::-webkit-calendar-picker-indicator:hover,
+        .form-input::-webkit-calendar-picker-indicator:hover,
+        input[type="date"]::-webkit-calendar-picker-indicator:hover {
+          transform: scale(1.15) !important;
+        }
+
+        /* Search Icon Theme Contrast Fix for Night Mode */
+        .search-icon-svg {
+          color: var(--primary-color) !important;
+          opacity: 0.8 !important;
+          transition: all var(--transition-fast) !important;
+        }
+        .search-container:focus-within .search-icon-svg {
+          color: var(--primary-hover) !important;
+          opacity: 1 !important;
+          transform: scale(1.05) !important;
+        }
+        [data-theme="dark"] .search-icon-svg {
+          color: #60a5fa !important;
+          opacity: 0.95 !important;
+        }
+        [data-theme="dark"] .search-container:focus-within .search-icon-svg {
+          color: #93c5fd !important;
+          opacity: 1 !important;
         }
       `}</style>
     </div>
