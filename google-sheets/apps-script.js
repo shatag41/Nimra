@@ -221,7 +221,7 @@ function saveOrder(spreadsheet, params) {
   Logger.log("Appended Values: Appending row data to " + sheet.getName() + " sheet: " + JSON.stringify(rowData));
   sheet.appendRow(rowData);
 
-  var emailResult = sendOrderConfirmationEmail(email, name, orderId, products, totalAmount);
+  var emailResult = sendOrderConfirmationEmail(email, name, orderId, products, totalAmount, mobile);
   var response = { success: true, orderId: orderId, message: 'Order placed successfully', emailSent: emailResult.sent };
   if (!emailResult.sent && emailResult.error) {
     response.emailError = emailResult.error;
@@ -288,11 +288,25 @@ function updateOrderStatus(spreadsheet, params) {
   var statusIndex = headers.indexOf('Order Status');
   var updatedAtIndex = headers.indexOf('Updated At');
   
+  var nameIndex = headers.indexOf('Customer Name');
+  var emailIndex = headers.indexOf('Email');
+  var mobileIndex = headers.indexOf('Mobile Number');
+  
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][orderIdIndex]).trim() === String(orderId).trim()) {
       sheet.getRange(i + 1, statusIndex + 1).setValue(status);
       sheet.getRange(i + 1, updatedAtIndex + 1).setValue(new Date());
-      return { success: true, message: 'Order status updated successfully' };
+      
+      var name = nameIndex >= 0 ? data[i][nameIndex] : '';
+      var email = emailIndex >= 0 ? data[i][emailIndex] : '';
+      var mobile = mobileIndex >= 0 ? data[i][mobileIndex] : '';
+      
+      var emailResult = sendOrderStatusUpdateEmail(email, name, orderId, status, mobile);
+      var response = { success: true, message: 'Order status updated successfully', emailSent: emailResult.sent };
+      if (!emailResult.sent && emailResult.error) {
+        response.emailError = emailResult.error;
+      }
+      return response;
     }
   }
   return { success: false, message: 'Order ID ' + orderId + ' not found.' };
@@ -1396,25 +1410,65 @@ function sendWelcomeEmail(email, name) {
   return sendNimraEmail(email, subject, plainBody, htmlBody, 'NIMRA Team');
 }
 
-function sendOrderConfirmationEmail(email, name, orderId, products, totalAmount) {
+function sendOrderConfirmationEmail(email, name, orderId, products, totalAmount, mobile) {
   email = normalizeEmail(email);
   if (!email || !isValidEmail(email)) {
     Logger.log("sendOrderConfirmationEmail skipped: invalid email address provided.");
     return { sent: false };
   }
   var displayName = String(name || 'Customer').trim();
+  var trackingUrl = 'https://nimrawater.com/track?orderId=' + encodeURIComponent(orderId) + '&mobile=' + encodeURIComponent(mobile || '') + '&autoSubmit=true';
   var subject = 'NIMRA Order Confirmation - ' + orderId;
   var plainBody = 'Hello ' + displayName + ',\n\n' +
     'Thank you for your order! Your order ' + orderId + ' has been placed successfully.\n\n' +
     'Items:\n' + products + '\n\n' +
     'Total: ₹' + totalAmount + '\n\n' +
+    'You can track your order here: ' + trackingUrl + '\n\n' +
     'We will notify you once it is dispatched.\n\n' +
     'NIMRA Support';
   var htmlBody = '<p>Hello ' + escapeHtml(displayName) + ',</p>' +
     '<p>Thank you for your order! Your order <strong>' + orderId + '</strong> has been placed successfully.</p>' +
     '<p><strong>Items:</strong><br/>' + escapeHtml(products) + '</p>' +
     '<p><strong>Total:</strong> ₹' + totalAmount + '</p>' +
+    '<p>You can track your order here: <a href="' + trackingUrl + '">' + trackingUrl + '</a></p>' +
     '<p>We will notify you once it is dispatched.</p>' +
+    '<p>NIMRA Support</p>';
+
+  return sendNimraEmail(email, subject, plainBody, htmlBody, 'NIMRA Support');
+}
+
+function sendOrderStatusUpdateEmail(email, name, orderId, status, mobile) {
+  email = normalizeEmail(email);
+  if (!email || !isValidEmail(email)) {
+    Logger.log("sendOrderStatusUpdateEmail skipped: invalid email address provided.");
+    return { sent: false };
+  }
+  var displayName = String(name || 'Customer').trim();
+  var trackingUrl = 'https://nimrawater.com/track?orderId=' + encodeURIComponent(orderId) + '&mobile=' + encodeURIComponent(mobile || '') + '&autoSubmit=true';
+  var subject = 'NIMRA Order #' + orderId + ' Status Update: ' + status;
+  
+  var messageText = 'Your order status has been updated to: ' + status + '.';
+  if (status.toLowerCase() === 'dispatched' || status.toLowerCase() === 'shipped') {
+    messageText = 'Good news! Your order has been shipped and is on its way.';
+  } else if (status.toLowerCase() === 'delivered') {
+    messageText = 'Your order has been delivered successfully. Thank you for choosing NIMRA!';
+  } else if (status.toLowerCase() === 'cancelled') {
+    messageText = 'Your order has been cancelled.';
+  } else if (status.toLowerCase() === 'confirmed') {
+    messageText = 'Your order has been confirmed and is now being processed.';
+  }
+
+  var plainBody = 'Hello ' + displayName + ',\n\n' +
+    'Your order ' + orderId + ' status has been updated.\n\n' +
+    'New Status: ' + status + '\n' +
+    messageText + '\n\n' +
+    'You can track your order here: ' + trackingUrl + '\n\n' +
+    'NIMRA Support';
+  var htmlBody = '<p>Hello ' + escapeHtml(displayName) + ',</p>' +
+    '<p>Your order <strong>' + orderId + '</strong> status has been updated.</p>' +
+    '<p><strong>New Status:</strong> <span style="font-weight:bold;color:#1e3a8a;">' + escapeHtml(status) + '</span></p>' +
+    '<p>' + escapeHtml(messageText) + '</p>' +
+    '<p>You can track your order here: <a href="' + trackingUrl + '">' + trackingUrl + '</a></p>' +
     '<p>NIMRA Support</p>';
 
   return sendNimraEmail(email, subject, plainBody, htmlBody, 'NIMRA Support');

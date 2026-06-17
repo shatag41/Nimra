@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import Header from './Header';
 import Footer from './Footer';
@@ -19,8 +19,10 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (typeof window !== 'undefined') {
       const isNewTab = !sessionStorage.getItem('nimra_session_initialized');
       if (isNewTab) {
@@ -61,7 +63,7 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
     }
   }, [isAdmin, isAdminLogin, isAuthPage, isAuthenticated, isCheckout, isLoading, pathname, router, user]);
 
-  if (isLoading && isAuthOrProtected) {
+  if ((!mounted || isLoading) && isAuthOrProtected) {
     return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyItems: 'center', backgroundColor: '#0a0a0a' }}></div>;
   }
 
