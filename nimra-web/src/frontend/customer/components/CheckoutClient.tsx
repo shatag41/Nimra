@@ -4,6 +4,8 @@ import React, { FormEvent, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/frontend/customer/hooks/useCart';
 import { useAuth } from '@/frontend/customer/hooks/useAuth';
+import { useLocation } from '@/frontend/customer/contexts/LocationContext';
+import { ALL_STATES, INDIA_DATA } from '@/frontend/customer/utils/indiaData';
 import { submitOrder } from '@/utils/api';
 import { toast } from 'sonner';
 import { CheckoutForm, CheckoutSummary, CheckoutSuccess } from './portal/Checkout';
@@ -34,6 +36,8 @@ export default function CheckoutClient() {
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [status, setStatus] = useState<{ kind: 'idle' | 'loading' | 'success' | 'error'; message: string; orderId?: string }>({ kind: 'idle', message: '' });
 
+  const location = useLocation();
+
   // Pre-fill from profile on mount
   useEffect(() => {
     if (user) {
@@ -45,6 +49,40 @@ export default function CheckoutClient() {
       }));
     }
   }, [user]);
+
+  // Pre-fill from location
+  useEffect(() => {
+    if (location.city || location.pincode) {
+      setForm((f) => {
+        let matchedState = f.state || location.state;
+        let matchedCity = f.city || location.city;
+
+        // If form state is empty, try to match location.state
+        if (location.state && !f.state) {
+          const foundState = ALL_STATES.find(s => s.toLowerCase().trim() === location.state.toLowerCase().trim());
+          if (foundState) matchedState = foundState;
+        }
+
+        // If form city is empty, try to find a matching city in the state's city list
+        if (matchedState && !f.city) {
+          const cities = INDIA_DATA[matchedState] || [];
+          const searchTarget = `${location.city} ${location.address}`.toLowerCase();
+          const foundCity = cities.find(c => searchTarget.includes(c.toLowerCase()));
+          if (foundCity) {
+            matchedCity = foundCity;
+          }
+        }
+
+        return {
+          ...f,
+          city: matchedCity,
+          state: matchedState,
+          pincode: f.pincode || location.pincode,
+          locality: f.locality || (location.address ? location.address.split(',')[0].trim() : ''),
+        };
+      });
+    }
+  }, [location.city, location.state, location.pincode, location.address]);
 
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((cur) => ({ ...cur, [key]: value }));

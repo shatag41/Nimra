@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { CompanyInfo } from '@/types/cms';
 import { useCart } from '../contexts/CartProvider';
 import { useAuth } from '../contexts/AuthContext';
+import { useLocation } from '../contexts/LocationContext';
 import LogoutConfirmationModal from './LogoutConfirmationModal';
 
 interface HeaderProps {
@@ -21,6 +22,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
   const pathname = usePathname();
   const { totalItems } = useCart();
   const { user, logout } = useAuth();
+  const { city, loading, requestLocation, permissionDenied } = useLocation();
 
   const activeUser = mounted ? user : null;
   const dashboardHref = activeUser?.Role === 'Admin' ? '/admin' : '/customer-portal';
@@ -136,6 +138,20 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
               )}
             </button>
+
+            {/* Location Indicator - Desktop only */}
+            {mounted && (!activeUser || activeUser.Role === 'Customer') && (
+              <button 
+                onClick={() => requestLocation(true)} 
+                className="location-btn" 
+                title="Update Location"
+              >
+                <span className="loc-icon">📍</span>
+                <span className="loc-text">
+                  {loading ? 'Detecting...' : (city || (permissionDenied ? 'Location Denied' : 'Set Location'))}
+                </span>
+              </button>
+            )}
 
             {/* Cart — only for Customers */}
             {(!activeUser || activeUser.Role === 'Customer') && (
@@ -410,6 +426,38 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           transform: translateY(-1px);
         }
 
+        .location-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
+          padding: 0 0.75rem;
+          height: 32px;
+          border-radius: var(--radius-md);
+          background: var(--bg-primary);
+          border: 1.5px solid var(--border-color);
+          color: var(--text-secondary);
+          cursor: pointer;
+          transition: all 150ms ease;
+          font-family: var(--font-body);
+        }
+        .location-btn:hover {
+          background: rgba(37, 99, 235, 0.08);
+          border-color: var(--primary-color);
+          color: var(--primary-color);
+          transform: translateY(-1px);
+        }
+        .loc-icon {
+          font-size: 0.9rem;
+        }
+        .loc-text {
+          font-size: 0.8rem;
+          font-weight: 600;
+          white-space: nowrap;
+          max-width: 100px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
         :global(.cart-link) {
           position: relative;
           width: 32px;
@@ -539,6 +587,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           .desktop-nav { display: none; }
           .mobile-menu-btn { display: flex; }
           .header-actions .btn-outline-danger span { display: none; }
+          .location-btn .loc-text { display: none; }
         }
 
         @media (max-width: 640px) {

@@ -5,6 +5,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import './globals.css';
 import LayoutWrapper from '@/frontend/customer/components/LayoutWrapper';
 import { CartProvider } from '@/frontend/customer/contexts/CartProvider';
+import { LocationProvider } from '@/frontend/customer/contexts/LocationContext';
 import { fetchCMSData } from '@/utils/api';
 import StyledJsxRegistry from './registry';
 import { Toaster } from 'sonner';
@@ -74,11 +75,13 @@ export default async function RootLayout({
           <AuthProvider>
             <StyledJsxRegistry>
               <CartProvider>
-                <Suspense fallback={null}>
-                  <LayoutWrapper companyInfo={data.companyInfo}>
-                    {children}
-                  </LayoutWrapper>
-                </Suspense>
+                <LocationProvider>
+                  <Suspense fallback={null}>
+                    <LayoutWrapper companyInfo={data.companyInfo}>
+                      {children}
+                    </LayoutWrapper>
+                  </Suspense>
+                </LocationProvider>
               </CartProvider>
             </StyledJsxRegistry>
           </AuthProvider>

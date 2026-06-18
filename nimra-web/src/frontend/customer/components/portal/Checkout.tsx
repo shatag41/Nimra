@@ -6,6 +6,7 @@ import { useCart } from '@/frontend/customer/hooks/useCart';
 import { usePincode } from '@/frontend/customer/hooks/usePincode';
 import { formatCurrency } from '../../utils/commerce';
 import type { User } from '@/frontend/customer/contexts/AuthContext';
+import { useLocation } from '@/frontend/customer/contexts/LocationContext';
 
 // Pincode type constraint
 interface FormStateLike {
@@ -49,6 +50,8 @@ export function CheckoutForm<T extends FormStateLike>({
     availableCities,
     ALL_STATES,
   } = usePincode(form, setForm, clearError);
+
+  const { requestLocation, loading: locationLoading } = useLocation();
 
   return (
     <div className="form-card">
@@ -111,7 +114,17 @@ export function CheckoutForm<T extends FormStateLike>({
         {errors.email && <span className="co-err">{String(errors.email)}</span>}
       </div>
 
-      <div className="co-section-label" style={{ marginTop: '0.75rem' }}>Delivery Address</div>
+      <div className="co-section-label" style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span>Delivery Address</span>
+        <button 
+          type="button" 
+          className="co-loc-btn" 
+          onClick={() => requestLocation(true)}
+          disabled={locationLoading}
+        >
+          {locationLoading ? '📍 Detecting...' : '📍 Use Current Location'}
+        </button>
+      </div>
 
       <div className="co-row-2">
         <div className="co-field">
@@ -345,6 +358,9 @@ const styles = `
   .co-field input:focus, .co-select:focus, .co-field textarea:focus { outline: none; border-color: var(--primary-color); background: var(--bg-primary); box-shadow: 0 0 0 3px rgba(0, 150, 58, 0.08); }
   .co-field .req { color: #dc2626; }
   .co-field .opt { color: var(--text-muted); font-size: 0.75rem; }
+  .co-loc-btn { background: rgba(37, 99, 235, 0.08); border: 1px solid rgba(37, 99, 235, 0.2); color: var(--primary-color); border-radius: var(--radius-md); padding: 0.35rem 0.6rem; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); display: inline-flex; align-items: center; gap: 0.35rem; }
+  .co-loc-btn:hover:not(:disabled) { background: rgba(37, 99, 235, 0.15); border-color: var(--primary-color); }
+  .co-loc-btn:disabled { opacity: 0.6; cursor: not-allowed; }
   .co-invalid { border-color: #dc2626 !important; background: rgba(220,38,38,0.02) !important; }
   .co-err { color: #dc2626; font-size: 0.78rem; font-weight: 600; margin-top: 0.15rem; }
   .co-pinloader { color: var(--primary-color); font-size: 0.75rem; font-weight: 600; }
