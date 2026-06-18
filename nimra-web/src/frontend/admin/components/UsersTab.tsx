@@ -96,7 +96,7 @@ export default React.memo(function UsersTab({
               <th>Username</th>
               <th>Role</th>
               <th>Status</th>
-              <th>Actions</th>
+              <th className="sticky-action-col">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -115,7 +115,7 @@ export default React.memo(function UsersTab({
                     {u.Active !== false ? 'Active' : 'Disabled'}
                   </span>
                 </td>
-                <td>
+                <td className="sticky-action-col">
                   <div className="actions-flex">
                     <button 
                       className="btn-table btn-edit" 

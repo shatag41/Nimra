@@ -72,7 +72,7 @@ export default function InquiriesTab({
               <th>Timestamp</th>
               <th>Customer</th>
               <th>Inquiry Details</th>
-              <th>Actions</th>
+              <th className="sticky-action-col">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -88,7 +88,7 @@ export default function InquiriesTab({
                   <div style={{ fontWeight: 800, color: 'var(--primary-color)' }}>{inq.Subject}</div>
                   <p className="message-cell">{inq.Message}</p>
                 </td>
-                <td>
+                <td className="sticky-action-col">
                   <div className="actions-flex vertical">
                     <a href={`tel:${inq.Phone}`} className="btn-table btn-edit text-center">
                       📞 Call

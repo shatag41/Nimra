@@ -616,10 +616,10 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             flex: 1;
             display: flex;
             flex-direction: column;
-            padding: 1.25rem 1.5rem;
+            padding: 1rem 1.25rem;
             margin-left: 220px;
             position: relative;
-            gap: 1rem;
+            gap: 0.75rem;
           }
 
           .admin-main.fixed-page {
@@ -637,7 +637,9 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding: 0.75rem 1.25rem;
             border-bottom: 1px solid var(--border-color);
             background: var(--nav-bg);
             backdrop-filter: blur(20px) saturate(180%);
@@ -646,18 +648,20 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             position: sticky;
             top: 0;
             z-index: 150;
-            margin-left: -1.5rem;
-            margin-right: -1.5rem;
-            margin-top: -1.25rem;
-            margin-bottom: 2rem;
+            margin-left: -1.25rem;
+            margin-right: -1.25rem;
+            margin-top: -1rem;
+            margin-bottom: 1.25rem;
           }
           .main-header h1 {
-            font-size: 1.6rem;
+            font-size: 1.25rem;
+            white-space: nowrap;
           }
           .header-actions {
             display: flex;
             align-items: center;
-            gap: 1.25rem;
+            flex-wrap: wrap;
+            gap: 1rem;
             position: relative;
             z-index: 1000;
             flex-grow: 1;
@@ -666,10 +670,14 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           .btn-refresh {
             background: var(--bg-primary);
             border: 1px solid var(--border-color);
-            padding: 0.625rem 1.25rem;
-            border-radius: var(--radius-xl);
+            padding: 0 1.25rem;
+            height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
             font-weight: 700;
-            font-size: 0.875rem;
+            font-size: 0.95rem;
             cursor: pointer;
             color: var(--text-primary);
             transition: all var(--transition-normal);
@@ -705,8 +713,8 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             position: relative;
           }
           .profile-btn {
-            width: 44px;
-            height: 44px;
+            width: 38px;
+            height: 38px;
             border-radius: 50%;
             border: 2px solid var(--border-color);
             background: var(--bg-secondary);
@@ -866,20 +874,20 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             overflow: visible;
             display: flex;
             flex-direction: column;
-            gap: 1.5rem;
-            padding: 1.5rem !important;
+            gap: 1rem;
+            padding: 1rem !important;
           }
 
           /* OVERVIEW DASHBOARD */
           .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 1.5rem;
-            margin-bottom: 2.5rem;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
           }
           .stat-card {
-            padding: 1.75rem;
-            border-radius: var(--radius-2xl);
+            padding: 1rem;
+            border-radius: var(--radius-lg);
             border: 1px solid var(--glass-border);
             background: var(--glass-bg);
             backdrop-filter: blur(16px);
@@ -963,7 +971,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             overflow: auto;
             min-height: 0;
             -webkit-overflow-scrolling: touch;
-            border-radius: var(--radius-xl);
+            border-radius: var(--radius-md);
             border: 1px solid var(--border-color);
             background: var(--bg-secondary);
           }
@@ -986,8 +994,26 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             border-collapse: collapse;
             min-width: 850px; /* Force scrollbar inside table-responsive wrapper */
           }
+          .admin-table th, .admin-table td {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+          }
+          .sticky-action-col {
+            position: sticky;
+            right: 0;
+            background: var(--bg-secondary);
+            z-index: 1;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.05);
+          }
+          [data-theme="dark"] .sticky-action-col {
+            background: rgba(15, 23, 42, 0.95);
+            box-shadow: -2px 0 5px rgba(0,0,0,0.3);
+          }
+          .admin-table thead th.sticky-action-col {
+            z-index: 11;
+          }
           .stat-val {
-            font-size: 2rem;
+            font-size: 1.75rem;
             font-family: var(--font-heading);
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
             -webkit-background-clip: text;
@@ -1001,12 +1027,12 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           .charts-grid {
             display: grid;
             grid-template-columns: 1.5fr 1fr;
-            gap: 1.5rem;
-            margin-bottom: 2.5rem;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
           }
           .chart-card {
-            padding: 1.75rem;
-            border-radius: var(--radius-2xl);
+            padding: 1rem;
+            border-radius: var(--radius-lg);
             border: 1px solid var(--glass-border);
             background: var(--glass-bg);
             backdrop-filter: blur(16px);
@@ -1018,8 +1044,8 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             border-color: rgba(var(--primary-rgb), 0.2);
           }
           .chart-card h3 {
-            font-size: 1.1rem;
-            margin-bottom: 1.5rem;
+            font-size: 1.05rem;
+            margin-bottom: 1rem;
           }
           .chart-wrapper {
             width: 100%;
@@ -1064,10 +1090,10 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           .recent-activity-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 1.5rem;
+            gap: 1rem;
           }
           .activity-card {
-            padding: 1.75rem;
+            padding: 1.25rem;
             border-radius: var(--radius-xl);
             border: 1px solid var(--border-color);
             background: var(--bg-secondary);
@@ -1079,8 +1105,8 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             border-color: rgba(var(--primary-rgb), 0.2);
           }
           .activity-card h3 {
-            font-size: 1.1rem;
-            margin-bottom: 1.25rem;
+            font-size: 1.05rem;
+            margin-bottom: 1rem;
           }
           .mini-list {
             display: flex;
@@ -1121,27 +1147,53 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             flex-direction: column;
             overflow: hidden;
             min-height: 0;
-            padding: 1.5rem !important;
+            padding: 1rem !important;
           }
           .settings-tab {
             flex: 1;
             display: flex;
             flex-direction: column;
             overflow-y: auto;
-            padding: 1.5rem !important;
+            padding: 1rem !important;
+          }
+
+          /* RESPONSIVE MEDIA QUERIES */
+          @media (max-width: 1400px) {
+            .stats-grid {
+              grid-template-columns: repeat(2, 1fr);
+            }
+          }
+          @media (max-width: 1024px) {
+            .charts-grid, .recent-activity-grid {
+              grid-template-columns: 1fr;
+            }
           }
           .section-head-btn {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
             margin-bottom: 1.5rem;
           }
           .section-head-btn h3 {
-            font-size: 1.25rem;
+            font-size: 1.15rem;
+          }
+          /* Admin Portal Standardized Buttons Override */
+          .admin-container .btn, .modal-backdrop .btn {
+            height: 44px;
+            padding: 0 1.25rem;
+            font-size: 0.95rem;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .admin-container .btn svg, .modal-backdrop .btn svg {
+            width: 18px;
+            height: 18px;
           }
           .btn-add {
-            display: flex;
-            align-items: center;
             gap: 0.5rem;
           }
           .actions-flex {
@@ -1230,9 +1282,9 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           }
           .modal-card {
             background: var(--bg-secondary);
-            border-radius: var(--radius-2xl);
+            border-radius: var(--radius-xl);
             width: 95%;
-            max-width: 680px;
+            max-width: 600px;
             max-height: 90vh;
             overflow-y: auto;
             box-shadow: var(--shadow-2xl), 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
@@ -1241,7 +1293,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             transition: all var(--transition-normal);
           }
           .modal-header {
-            padding: 1.5rem;
+            padding: 1rem 1.5rem;
             border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
@@ -1270,10 +1322,10 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             color: var(--text-primary);
           }
           .modal-body {
-            padding: 1.5rem;
+            padding: 1.25rem 1.5rem;
           }
           .form-group {
-            margin-bottom: 1.25rem;
+            margin-bottom: 1rem;
           }
           .form-label, .form-group label {
             display: block;
@@ -1284,7 +1336,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           }
           .form-input, .form-select, .form-textarea, .form-group input, .form-group select, .form-group textarea {
             width: 100%;
-            padding: 0.875rem 1rem;
+            padding: 0.65rem 0.875rem;
             border: 1.5px solid var(--border-color);
             border-radius: var(--radius-md);
             background: var(--bg-primary);
@@ -1315,7 +1367,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             }
           }
           .modal-footer {
-            padding: 1.25rem 1.5rem;
+            padding: 1rem 1.5rem;
             border-top: 1px solid var(--border-color);
             display: flex;
             gap: 1rem;

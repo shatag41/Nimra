@@ -53,7 +53,7 @@ export default function Header({
       </h1>
       <div className="header-actions">
         {showSearchAndFilter && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexGrow: 1, maxWidth: '500px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexGrow: 1, maxWidth: '350px', minWidth: '200px' }}>
             <div className="search-container" style={{ position: 'relative', display: 'flex', alignItems: 'center', flexGrow: 1, width: '100%' }}>
               <input
                 type="text"
@@ -118,8 +118,9 @@ export default function Header({
                 background: showFilters ? 'var(--primary-color)' : 'var(--bg-secondary)',
                 color: showFilters ? 'white' : 'var(--text-primary)',
                 border: '1px solid var(--border-color)',
-                padding: '8px 14px',
-                borderRadius: '20px',
+                height: '44px',
+                padding: '0 1.25rem',
+                borderRadius: '12px',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',

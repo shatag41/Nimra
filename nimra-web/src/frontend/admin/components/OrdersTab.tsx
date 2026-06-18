@@ -156,7 +156,7 @@ export default React.memo(function OrdersTab({
               <th>Status</th>
               <th>Method</th>
               <th>Total</th>
-              <th>Actions</th>
+              <th className="sticky-action-col">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -173,7 +173,7 @@ export default React.memo(function OrdersTab({
                 </td>
                 <td>{o.paymentMethod}</td>
                 <td><strong>{formatCurrency(o.total)}</strong></td>
-                <td>
+                <td className="sticky-action-col">
                   <button 
                     className="btn-table btn-edit" 
                     onClick={() => {

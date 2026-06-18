@@ -63,7 +63,7 @@ export default function FAQsTab({
               <th>Question</th>
               <th>Answer</th>
               <th>Status</th>
-              <th>Actions</th>
+              <th className="sticky-action-col">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -77,7 +77,7 @@ export default function FAQsTab({
                     {f.Active !== false ? 'Active' : 'Inactive'}
                   </span>
                 </td>
-                <td>
+                <td className="sticky-action-col">
                   <div className="actions-flex">
                     <button 
                       className="btn-table btn-edit" 

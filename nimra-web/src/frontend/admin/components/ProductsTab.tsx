@@ -88,7 +88,7 @@ export default React.memo(function ProductsTab({
               <th>Volume</th>
               <th>Price</th>
               <th>Status</th>
-              <th>Actions</th>
+              <th className="sticky-action-col">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -107,7 +107,7 @@ export default React.memo(function ProductsTab({
                     {p.Active !== false ? 'Active' : 'Inactive'}
                   </span>
                 </td>
-                <td>
+                <td className="sticky-action-col">
                   <div className="actions-flex">
                     <button 
                       className="btn-table btn-edit" 

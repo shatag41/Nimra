@@ -65,7 +65,7 @@ export default function BannersTab({
               <th>Button Text</th>
               <th>Link</th>
               <th>Status</th>
-              <th>Actions</th>
+              <th className="sticky-action-col">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -84,7 +84,7 @@ export default function BannersTab({
                     {b.Active !== false ? 'Active' : 'Inactive'}
                   </span>
                 </td>
-                <td>
+                <td className="sticky-action-col">
                   <div className="actions-flex">
                     <button 
                       className="btn-table btn-edit" 
