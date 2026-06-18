@@ -66,6 +66,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
       return [
         { name: 'Portal', href: '/customer-portal' },
         { name: 'Products', href: '/products' },
+        { name: 'Orders', href: '/orders' },
         { name: 'Track', href: '/track' },
         { name: 'About', href: '/about' },
         { name: 'Contact', href: '/contact' },

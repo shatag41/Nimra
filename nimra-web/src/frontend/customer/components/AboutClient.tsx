@@ -37,14 +37,13 @@ export default function AboutClient({ companyInfo }: AboutClientProps) {
   ];
 
   return (
-    <>
-      <section className="about-hero">
-        <div className="container">
-          <span className="badge badge-primary">About Us</span>
-          <h1>Quality Sourced. Safely Sealed.</h1>
-          <p>Driven by the principles of safety, purity, and customer health under T.S. Enterprises.</p>
-        </div>
-      </section>
+    <div className="about-page container">
+      {/* Page Header */}
+      <div className="page-header animate-slide-up">
+        <span className="badge badge-primary">About Us</span>
+        <h1>Quality Sourced. Safely Sealed.</h1>
+        <p>Driven by the principles of safety, purity, and customer health under T.S. Enterprises.</p>
+      </div>
 
       {/* Navigation Sub-menu */}
       <div className="submenu-bar glass">
@@ -150,21 +149,51 @@ export default function AboutClient({ companyInfo }: AboutClientProps) {
       )}
 
       <style jsx>{`
-        .about-hero {
-          background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.05) 0%, rgba(var(--secondary-rgb), 0.02) 100%);
+        .about-page {
+          padding-top: 0.5rem;
+          padding-bottom: 4rem;
+          min-height: 90vh;
+          font-family: var(--font-body);
+        }
+
+        /* ── Page Header ── */
+        .page-header {
+          margin-bottom: 2rem;
+          padding-bottom: 1.5rem;
+          border-bottom: 1px solid var(--border-color);
           text-align: center;
-          padding: 4rem 0 2rem;
         }
-        .about-hero h1 {
-          font-size: 3rem;
-          margin-top: 1rem;
-          margin-bottom: 1rem;
+
+        .page-header h1 {
+          font-size: 1.75rem;
+          font-weight: 700;
+          margin-bottom: 0.15rem;
+          letter-spacing: -0.02em;
+          color: var(--text-primary);
         }
-        .about-hero p {
-          max-width: 600px;
-          margin: 0 auto;
-          color: var(--text-secondary);
-          font-size: 1.1rem;
+
+        .page-header p {
+          color: var(--text-muted);
+          margin: 0;
+          font-size: 0.875rem;
+          line-height: 1.4;
+        }
+
+        .badge {
+          display: inline-flex;
+          align-items: center;
+          border-radius: 999px;
+          padding: 0.3rem 0.85rem;
+          font-size: 0.75rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          margin-bottom: 0.75rem;
+        }
+        .badge-primary {
+          background: rgba(37, 99, 235, 0.1);
+          color: var(--primary-color);
+          border: 1px solid rgba(37, 99, 235, 0.2);
         }
 
         .submenu-bar {
@@ -366,6 +395,6 @@ export default function AboutClient({ companyInfo }: AboutClientProps) {
           }
         }
       `}</style>
-    </>
+    </div>
   );
 }

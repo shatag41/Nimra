@@ -61,12 +61,12 @@ export default function TrackClient() {
   }, [user, params, submit]);
 
   return (
-    <section className="track-page">
-      <div className="container">
-        <div className="track-head">
-          <span className="badge badge-primary">Order Tracking</span>
-          <h1>Track Your NIMRA Delivery</h1>
-        </div>
+    <div className="track-page container">
+      {/* Page Header */}
+      <div className="page-header animate-slide-up">
+        <span className="badge badge-primary">Order Tracking</span>
+        <h1>Track Your NIMRA Delivery</h1>
+      </div>
 
         <form className="track-form glass" onSubmit={submit}>
           <label>Order ID<input required value={orderId} onChange={(e) => setOrderId(e.target.value)} placeholder="NIMRA-..." /></label>
@@ -112,11 +112,46 @@ export default function TrackClient() {
             </div>
           </div>
         )}
-      </div>
       <style jsx>{`
-        .track-page { background: var(--bg-secondary); min-height: 70vh; padding: 2rem 0; }
-        .track-head { text-align: center; max-width: 720px; margin: 0 auto 2rem; }
-        .track-head h1 { font-size: 2.6rem; margin: 1rem 0; }
+        .track-page {
+          padding-top: 0.5rem;
+          padding-bottom: 4rem;
+          min-height: 70vh;
+          font-family: var(--font-body);
+        }
+
+        /* ── Page Header ── */
+        .page-header {
+          margin-bottom: 2rem;
+          padding-bottom: 1.5rem;
+          border-bottom: 1px solid var(--border-color);
+          text-align: center;
+        }
+
+        .page-header h1 {
+          font-size: 1.75rem;
+          font-weight: 700;
+          margin-bottom: 0.15rem;
+          letter-spacing: -0.02em;
+          color: var(--text-primary);
+        }
+
+        .badge {
+          display: inline-flex;
+          align-items: center;
+          border-radius: 999px;
+          padding: 0.3rem 0.85rem;
+          font-size: 0.75rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          margin-bottom: 0.75rem;
+        }
+        .badge-primary {
+          background: rgba(37, 99, 235, 0.1);
+          color: var(--primary-color);
+          border: 1px solid rgba(37, 99, 235, 0.2);
+        }
         .track-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 1rem; align-items: end; padding: 1.75rem; border-radius: var(--radius-xl); max-width: 900px; margin: 0 auto; background: var(--bg-primary); border: 1px solid var(--border-color); box-shadow: var(--shadow-md); }
         label { display: grid; gap: 0.45rem; color: var(--text-secondary); font-weight: 700; font-size: 0.9rem; }
         input { border: 1.5px solid var(--border-color); border-radius: var(--radius-md); padding: 0.9rem 1rem; background: var(--bg-secondary); color: var(--text-primary); font: inherit; transition: all var(--transition-fast); }
@@ -137,6 +172,6 @@ export default function TrackClient() {
         .items div { display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); padding: 0.75rem 0; }
         @media (max-width: 760px) { .track-form { grid-template-columns: 1fr; } .steps { grid-template-columns: 1fr; text-align: left; } .step { display: flex; align-items: center; gap: 0.75rem; text-align: left; } .step span { margin-bottom: 0; } }
       `}</style>
-    </section>
+    </div>
   );
 }

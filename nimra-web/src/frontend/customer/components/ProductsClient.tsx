@@ -24,12 +24,33 @@ const categoriesData = [
 
 export default function ProductsClient({ products }: ProductsClientProps) {
   const [activeTab, setActiveTab] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'outofstock'>('all');
+  const [sizeFilter, setSizeFilter] = useState<'all' | 'jar' | 'bottle'>('all');
   const [cartToast, setCartToast] = useState<{ name: string; visible: boolean }>({ name: '', visible: false });
   const { addProduct } = useCart();
 
-  const filteredProducts = products.filter((product) =>
-    activeTab === 'All' ? true : normalizeCategory(product.Category) === activeTab
-  );
+  const filteredProducts = products.filter((product) => {
+    const matchesCategory = activeTab === 'All' ? true : normalizeCategory(product.Category) === activeTab;
+    if (!matchesCategory) return false;
+
+    const matchesSearch = searchQuery
+      ? product.Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (product.Description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.Category.toLowerCase().includes(searchQuery.toLowerCase())
+      : true;
+    if (!matchesSearch) return false;
+
+    if (statusFilter === 'available' && !product.Active) return false;
+    if (statusFilter === 'outofstock' && product.Active) return false;
+
+    const volumeLower = (product.Volume || '').toLowerCase();
+    const isJar = volumeLower.includes('20l') || volumeLower.includes('jar');
+    if (sizeFilter === 'jar' && !isJar) return false;
+    if (sizeFilter === 'bottle' && isJar) return false;
+
+    return true;
+  });
 
   const handleAdd = (product: Product) => {
     addProduct(product);
@@ -56,40 +77,124 @@ export default function ProductsClient({ products }: ProductsClientProps) {
   }, [products]);
 
   return (
-    <>
+    <div className="products-page container">
       <CartToast
         visible={cartToast.visible}
         name={cartToast.name}
         onClose={() => setCartToast((t) => ({ ...t, visible: false }))}
       />
 
-      <section className="products-hero">
-        <div className="container">
-          <span className="badge badge-primary">Products</span>
-          <h1>Order NIMRA Water</h1>
-          <p>Choose packaged drinking water, mineral water, bulk jars, and future RUSH Soda products managed directly from Google Sheets.</p>
-        </div>
-      </section>
+      {/* Page Header */}
+      <div className="page-header animate-slide-up">
+        <span className="badge badge-primary">Products</span>
+        <h1>Our Products</h1>
+        <p>Choose packaged drinking water, mineral water, bulk jars, and future RUSH Soda products managed directly from Google Sheets.</p>
+      </div>
 
-      <section className="products-catalog-section">
-        <div className="container">
-          <Categories
-            categories={categoriesData}
-            activeTab={activeTab}
-            onSelectTab={setActiveTab}
-          />
+      <div className="products-layout-grid animate-fade-in">
+        {/* Sidebar Filters */}
+        <aside className="products-sidebar card">
+          <div className="sidebar-section">
+            <h3>Categories</h3>
+            <div className="filter-options">
+              {categoriesData.map((cat) => (
+                <label key={cat.id} className="filter-label">
+                  <input
+                    type="radio"
+                    name="category-filter"
+                    checked={activeTab === cat.id}
+                    onChange={() => setActiveTab(cat.id)}
+                    className="filter-radio"
+                  />
+                  <span>{cat.name}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="sidebar-section">
+            <h3>Availability</h3>
+            <div className="filter-options">
+              {(
+                [
+                  { id: 'all', label: 'All Products' },
+                  { id: 'available', label: 'Available Now' },
+                  { id: 'outofstock', label: 'Upcoming / Out of Stock' },
+                ] as const
+              ).map((opt) => (
+                <label key={opt.id} className="filter-label">
+                  <input
+                    type="radio"
+                    name="status-filter"
+                    checked={statusFilter === opt.id}
+                    onChange={() => setStatusFilter(opt.id)}
+                    className="filter-radio"
+                  />
+                  <span>{opt.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="sidebar-section">
+            <h3>Size / Capacity</h3>
+            <div className="filter-options">
+              {(
+                [
+                  { id: 'all', label: 'All Sizes' },
+                  { id: 'jar', label: 'Bulk Jars (20L)' },
+                  { id: 'bottle', label: 'Bottles (250ml - 2L)' },
+                ] as const
+              ).map((opt) => (
+                <label key={opt.id} className="filter-label">
+                  <input
+                    type="radio"
+                    name="size-filter"
+                    checked={sizeFilter === opt.id}
+                    onChange={() => setSizeFilter(opt.id)}
+                    className="filter-radio"
+                  />
+                  <span>{opt.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </aside>
+
+        {/* Main Products List */}
+        <main className="products-main-content">
+          {/* Top Search Bar */}
+          <div className="search-bar-wrapper card">
+            <svg className="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input
+              type="text"
+              placeholder="Search products by name, category or size..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
+            />
+            {searchQuery && (
+              <button className="search-clear-btn" onClick={() => setSearchQuery('')}>✕</button>
+            )}
+          </div>
 
           {activeTab === 'Upcoming RUSH Soda' ? (
             <RushSodaPromo />
-          ) : (
+          ) : filteredProducts.length > 0 ? (
             <div className="catalog-grid animate-fade-in">
               {filteredProducts.map((product) => (
                 <CatalogCard key={String(product.ID || product.Name)} product={product} onAdd={handleAdd} />
               ))}
             </div>
+          ) : (
+            <div className="empty-products card animate-scale-in">
+              <div className="empty-icon-glow">📦</div>
+              <h3>No Products Found</h3>
+              <p>We couldn't find any products matching your search query or filters. Try adjusting them!</p>
+            </div>
           )}
-        </div>
-      </section>
+        </main>
+      </div>
 
       <style jsx global>{`
         /* ── Cart Toast Banner ── */
@@ -155,71 +260,201 @@ export default function ProductsClient({ products }: ProductsClientProps) {
         }
         .toast-close:hover { color: var(--text-primary); }
 
-        /* ── Hero ── */
-        .products-hero {
-          background: linear-gradient(135deg, #172554 0%, #2563eb 55%, #3b82f6 100%);
-          text-align: center;
-          padding: 5rem 0 3rem;
-          color: white;
-          position: relative;
-          overflow: hidden;
+        .products-page {
+          padding-top: 0.5rem;
+          padding-bottom: 4rem;
+          min-height: 90vh;
+          font-family: var(--font-body);
         }
-        .products-hero::before {
-          content: '';
+
+        /* ── Page Header ── */
+        .page-header {
+          margin-bottom: 2rem;
+          padding-bottom: 1.5rem;
+          border-bottom: 1px solid var(--border-color);
+          text-align: center;
+        }
+
+        .page-header h1 {
+          font-size: 1.75rem;
+          font-weight: 700;
+          margin-bottom: 0.15rem;
+          letter-spacing: -0.02em;
+          color: var(--text-primary);
+        }
+
+        .page-header p {
+          color: var(--text-muted);
+          margin: 0;
+          font-size: 0.875rem;
+          line-height: 1.4;
+        }
+
+        .badge {
+          display: inline-flex;
+          align-items: center;
+          border-radius: 999px;
+          padding: 0.3rem 0.85rem;
+          font-size: 0.75rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          margin-bottom: 0.75rem;
+        }
+        .badge-primary {
+          background: rgba(37, 99, 235, 0.1);
+          color: var(--primary-color);
+          border: 1px solid rgba(37, 99, 235, 0.2);
+        }
+
+        /* ── Products Grid Layout ── */
+        .products-layout-grid {
+          display: grid;
+          grid-template-columns: 240px 1fr;
+          gap: 1.5rem;
+          align-items: start;
+        }
+
+        /* Sidebar Filters */
+        .products-sidebar {
+          background: var(--bg-secondary);
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-md);
+          padding: 1.25rem;
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+          position: sticky;
+          top: 85px;
+          z-index: 10;
+        }
+
+        .sidebar-section h3 {
+          font-size: 0.875rem;
+          font-weight: 700;
+          margin-bottom: 0.75rem;
+          color: var(--text-primary);
+          text-transform: uppercase;
+          letter-spacing: 0.03em;
+        }
+
+        .filter-options {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+
+        .filter-label {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 0.875rem;
+          color: var(--text-secondary);
+          cursor: pointer;
+          font-weight: 500;
+        }
+
+        .filter-radio {
+          accent-color: var(--primary-color);
+          cursor: pointer;
+        }
+
+        /* Main Area */
+        .products-main-content {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        /* Search Bar */
+        .search-bar-wrapper {
+          position: relative;
+          display: flex;
+          align-items: center;
+          padding: 0.5rem;
+          border: 1px solid var(--border-color);
+          background: var(--bg-secondary);
+          border-radius: var(--radius-md);
+          box-shadow: var(--shadow-sm);
+          margin-bottom: 0.5rem;
+        }
+
+        .search-icon {
           position: absolute;
-          top: -60px; right: -60px;
-          width: 260px; height: 260px;
-          border-radius: 50%;
-          background: rgba(255,255,255,0.06);
+          left: 1rem;
+          color: var(--text-muted);
           pointer-events: none;
         }
-        .products-hero .badge-primary {
-          background: rgba(255,255,255,0.15);
-          color: white;
-          border-color: rgba(255,255,255,0.25);
+
+        .search-input {
+          width: 100%;
+          min-height: 38px;
+          padding: 0.5rem 1rem 0.5rem 2.5rem;
+          border: none;
+          background: transparent;
+          color: var(--text-primary);
+          font-size: 0.875rem;
         }
-        .products-hero h1 {
-          font-size: clamp(2rem, 4vw, 3rem);
-          margin-top: 1rem;
-          margin-bottom: 1rem;
-          color: white !important;
+        .search-input:focus {
+          outline: none;
         }
-        .products-hero p {
-          max-width: 680px;
-          margin: 0 auto;
-          color: rgba(255,255,255,0.82);
-          font-size: 1.05rem;
+
+        .search-clear-btn {
+          position: absolute;
+          right: 1rem;
+          background: rgba(0, 0, 0, 0.05);
+          border: none;
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          color: var(--text-muted);
+          cursor: pointer;
+          font-size: 0.75rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        /* Empty State */
+        .empty-products {
+          padding: 4rem 2rem;
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 1rem;
+          border-radius: var(--radius-md);
+        }
+
+        .empty-icon-glow {
+          font-size: 2.5rem;
+          width: 60px;
+          height: 60px;
+          background: var(--bg-tertiary);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 0.25rem;
+          border: 1px solid var(--border-color);
+        }
+
+        .empty-products h3 {
+          font-size: 1.5rem;
+          font-weight: 700;
+        }
+
+        .empty-products p {
+          color: var(--text-muted);
+          max-width: 440px;
+          margin: 0 0 0.5rem 0;
+          line-height: 1.5;
         }
 
         /* ── Catalog ── */
         .products-catalog-section {
           background-color: var(--bg-secondary);
           padding: 2rem 0;
-        }
-        .catalog-tabs {
-          display: flex;
-          justify-content: center;
-          gap: 1rem;
-          margin-bottom: 3rem;
-          flex-wrap: wrap;
-        }
-        .tab-btn {
-          padding: 0.75rem 1.4rem;
-          border-radius: 999px;
-          border: 1px solid var(--border-color);
-          background: var(--bg-primary);
-          color: var(--text-secondary);
-          font-family: var(--font-heading);
-          font-weight: 600;
-          font-size: 0.9rem;
-          cursor: pointer;
-          transition: all var(--transition-fast);
-        }
-        .tab-btn:hover, .tab-btn.active {
-          background: var(--primary-color);
-          border-color: var(--primary-color);
-          color: white;
-          box-shadow: var(--shadow-md);
         }
         .catalog-grid {
           display: grid;
@@ -426,16 +661,24 @@ export default function ProductsClient({ products }: ProductsClientProps) {
         }
 
         /* ── Responsive ── */
+        @media (max-width: 900px) {
+          .products-layout-grid {
+            grid-template-columns: 1fr;
+            gap: 1.25rem;
+          }
+          .products-sidebar {
+            position: static;
+          }
+        }
         @media (max-width: 1024px) {
           .catalog-grid { grid-template-columns: repeat(2, 1fr); }
         }
         @media (max-width: 640px) {
-          .products-hero h1 { font-size: 2.2rem; }
           .catalog-grid { grid-template-columns: 1fr; }
           .cat-price-row { align-items: flex-start; flex-direction: column; }
           .cart-toast-banner { min-width: unset; width: calc(100vw - 2rem); }
         }
       `}</style>
-    </>
+    </div>
   );
 }

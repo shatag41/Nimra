@@ -12,7 +12,7 @@ export function CartItemsList() {
     <div className="cart-list">
       {items.map((item) => (
         <article key={item.productId} className="cart-row glass">
-          <img src={item.imageUrl} alt={item.name} />
+          {item.imageUrl ? <img src={item.imageUrl} alt={item.name} /> : null}
           <div className="row-main">
             <span>{item.category} / {item.volume}</span>
             <h3>{item.name}</h3>
