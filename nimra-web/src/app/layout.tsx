@@ -69,6 +69,10 @@ export default async function RootLayout({
             `,
           }}
         />
+        {/* Preload critical hero banner image for faster LCP */}
+        {data.banners[0] && (
+          <link rel="preload" href={data.banners[0].ImageUrl} as="image" />
+        )}
       </head>
       <body suppressHydrationWarning>
         <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'dummy_client_id'}>
