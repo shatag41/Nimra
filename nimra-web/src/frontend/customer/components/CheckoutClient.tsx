@@ -136,29 +136,39 @@ export default function CheckoutClient() {
 
   if (cart.items.length === 0 && status.kind !== 'success') {
     return (
-      <div className="checkout-page">
-        <div className="container empty">
-          <h1>Checkout</h1>
-          <p>Your cart is empty.</p>
-          <Link className="btn btn-primary" href="/products">Shop Products</Link>
+      <section className="checkout-page">
+        <div className="container">
+          <div className="page-header animate-slide-up">
+            <span className="badge badge-primary">Checkout</span>
+            <h1>Your Cart is Empty</h1>
+            <p>You have no items to checkout. Add NIMRA products to continue.</p>
+          </div>
+          <div className="empty-cart-action">
+             <Link href="/products" className="btn btn-primary">Continue Shopping</Link>
+          </div>
         </div>
         <style jsx>{styles}</style>
-      </div>
+      </section>
     );
   }
 
   return (
-    <div className="checkout-page">
+    <section className="checkout-page">
       <div className="container">
-        <div className="checkout-head">
+        <div className="page-header animate-slide-up">
           <span className="badge badge-primary">Secure Checkout</span>
           <h1>Delivery Details</h1>
+          <p>Please provide your shipping information to complete your order.</p>
+        </div>
+
+        <div className="checkout-actions-top">
+           <Link href="/cart" className="btn btn-secondary btn-sm">← Back to Cart</Link>
         </div>
 
         {status.kind === 'success' ? (
           <CheckoutSuccess message={status.message} orderId={status.orderId} />
         ) : (
-          <form className="checkout-grid" onSubmit={placeOrder} noValidate>
+          <form className="checkout-grid animate-fade-in" onSubmit={placeOrder} noValidate>
             <CheckoutForm
               form={form}
               setForm={setForm}
@@ -172,21 +182,57 @@ export default function CheckoutClient() {
         )}
       </div>
       <style jsx>{styles}</style>
-    </div>
+    </section>
   );
 }
 
 const styles = `
-  .checkout-page { background: var(--bg-secondary); min-height: 80vh; padding: 3rem 0; }
-  .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
-  .empty { text-align: center; max-width: 620px; margin: 0 auto; padding: 3rem 0; }
-  .empty h1, .checkout-head h1 { font-size: 2.6rem; margin: 1rem 0; }
-  .empty p { color: var(--text-secondary); margin-bottom: 2rem; }
-  .checkout-head { margin-bottom: 2.5rem; }
-  .checkout-grid { display: grid; grid-template-columns: 1fr 380px; gap: 2rem; align-items: start; }
-  .badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.3rem 0.85rem; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
-  :global(.badge-primary) { background: rgba(37,99,235, 0.1); color: var(--primary-color); border: 1px solid rgba(37,99,235, 0.2); }
+  .checkout-page { padding-top: 0.5rem; padding-bottom: 4rem; min-height: 90vh; font-family: var(--font-body); }
+  
+  /* ── Page Header ── */
+  .page-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .page-header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.15rem;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+  }
+  .page-header p {
+    color: var(--text-muted);
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.4;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.3rem 0.85rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+  }
+  .badge-primary {
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--primary-color);
+    border: 1px solid rgba(37, 99, 235, 0.2);
+  }
+
+  .empty-cart-action { text-align: center; margin-top: 2rem; }
+  .checkout-actions-top { margin-bottom: 1rem; display: flex; justify-content: flex-start; }
+
+  .checkout-grid { display: grid; grid-template-columns: 1fr 340px; gap: 2rem; align-items: start; }
 
   @media (max-width: 900px) { .checkout-grid { grid-template-columns: 1fr; } }
-  @media (max-width: 640px) { .checkout-head h1 { font-size: 2rem; } .container { padding: 0 1rem; } }
 `;

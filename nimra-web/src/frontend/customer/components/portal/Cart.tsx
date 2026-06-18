@@ -11,7 +11,7 @@ export function CartItemsList() {
   return (
     <div className="cart-list">
       {items.map((item) => (
-        <article key={item.productId} className="cart-row glass">
+        <article key={item.productId} className="cart-row">
           {item.imageUrl ? <img src={item.imageUrl} alt={item.name} /> : null}
           <div className="row-main">
             <span>{item.category} / {item.volume}</span>
@@ -34,7 +34,7 @@ export function CartSummary() {
   const { subtotal, deliveryCharge, grandTotal } = useCart();
 
   return (
-    <aside className="summary glass">
+    <aside className="summary">
       <h2>Order Summary</h2>
       <div><span>Subtotal</span><strong>{formatCurrency(subtotal)}</strong></div>
       <div><span>Delivery</span><strong>{deliveryCharge ? formatCurrency(deliveryCharge) : 'Free'}</strong></div>

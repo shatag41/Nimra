@@ -340,7 +340,8 @@ const styles = `
   .co-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
   .co-field { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
   .co-field label { font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); }
-  .co-field input, .co-select, .co-field textarea { padding: 0.75rem 0.9rem; border: 1.5px solid var(--border-color); border-radius: var(--radius-lg); background: var(--bg-secondary); color: var(--text-primary); font: inherit; font-size: 0.92rem; transition: all var(--transition-fast); }
+  .co-field input, .co-field textarea { padding: 0.75rem 0.9rem; border: 1.5px solid var(--border-color); border-radius: var(--radius-lg); background: var(--bg-secondary); color: var(--text-primary); font: inherit; font-size: 0.92rem; transition: all var(--transition-fast); }
+  .co-select { appearance: none; padding: 0.75rem 2rem 0.75rem 0.9rem; border: 1.5px solid var(--border-color); border-radius: var(--radius-lg); background: var(--bg-secondary) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>') no-repeat right 0.75rem center; background-size: 16px; color: var(--text-primary); font: inherit; font-size: 0.92rem; transition: all var(--transition-fast); cursor: pointer; min-height: 44px; }
   .co-field input:focus, .co-select:focus, .co-field textarea:focus { outline: none; border-color: var(--primary-color); background: var(--bg-primary); box-shadow: 0 0 0 3px rgba(0, 150, 58, 0.08); }
   .co-field .req { color: #dc2626; }
   .co-field .opt { color: var(--text-muted); font-size: 0.75rem; }

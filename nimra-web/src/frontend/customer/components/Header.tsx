@@ -139,7 +139,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
 
             {/* Cart — only for Customers */}
             {(!activeUser || activeUser.Role === 'Customer') && (
-              <Link href="/cart" prefetch={true} className="cart-link" aria-label={`Cart with ${mounted ? totalItems : 0} items`}>
+              <Link href="/cart" prefetch={true} className={`cart-link ${pathname === '/cart' ? 'active' : ''}`} aria-label={`Cart with ${mounted ? totalItems : 0} items`}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
                 {mounted && totalItems > 0 && <span className="cart-count">{totalItems}</span>}
               </Link>
@@ -195,7 +195,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                 <Link
                   href="/cart"
                   prefetch={true}
-                  className="btn btn-secondary"
+                  className={`btn btn-secondary ${pathname === '/cart' ? 'active' : ''}`}
                   style={{ width: '100%', justifyContent: 'center' }}
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -423,7 +423,8 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           justify-content: center;
           transition: all 150ms ease;
         }
-        :global(.cart-link:hover) {
+        :global(.cart-link:hover),
+        :global(.cart-link.active) {
           background: rgba(37, 99, 235, 0.08);
           border-color: var(--primary-color);
           color: var(--primary-color);
