@@ -35,7 +35,7 @@ export default function CartClient() {
         </div>
 
         <div className="cart-actions-top">
-           <Link href="/products" className="btn btn-secondary btn-sm">← Continue Shopping</Link>
+           <Link href="/products" className="btn btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', height: 'auto', minHeight: '0' }}>← Continue Shopping</Link>
         </div>
 
         <div className="cart-layout animate-fade-in">
@@ -53,8 +53,8 @@ const styles = `
   
   /* ── Page Header ── */
   .page-header {
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.8rem;
     border-bottom: 1px solid var(--border-color);
     text-align: center;
     display: flex;
@@ -62,7 +62,7 @@ const styles = `
     align-items: center;
   }
   .page-header h1 {
-    font-size: 1.75rem;
+    font-size: 1.4rem;
     font-weight: 700;
     margin-bottom: 0.15rem;
     letter-spacing: -0.02em;
@@ -71,19 +71,19 @@ const styles = `
   .page-header p {
     color: var(--text-muted);
     margin: 0;
-    font-size: 0.875rem;
+    font-size: 0.85rem;
     line-height: 1.4;
   }
   .badge {
     display: inline-flex;
     align-items: center;
     border-radius: 999px;
-    padding: 0.3rem 0.85rem;
-    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.4rem;
   }
   .badge-primary {
     background: rgba(37, 99, 235, 0.1);
@@ -91,20 +91,20 @@ const styles = `
     border: 1px solid rgba(37, 99, 235, 0.2);
   }
 
-  .empty-cart-action { text-align: center; margin-top: 2rem; }
-  .cart-actions-top { margin-bottom: 1rem; display: flex; justify-content: flex-start; }
+  .empty-cart-action { text-align: center; margin-top: 1.5rem; }
+  .cart-actions-top { margin-bottom: 0.5rem; display: flex; justify-content: flex-start; }
 
   /* ── Cart Layout ── */
-  .cart-layout { display: grid; grid-template-columns: 1fr 340px; gap: 2rem; align-items: start; }
+  .cart-layout { display: grid; grid-template-columns: 1fr 280px; gap: 1.5rem; align-items: start; }
   
-  .cart-list { display: flex; flex-direction: column; gap: 1rem; }
+  .cart-list { display: flex; flex-direction: column; gap: 0.75rem; }
   
   .cart-row { 
     display: grid; 
-    grid-template-columns: 80px 1fr auto auto; 
-    gap: 1.25rem; 
+    grid-template-columns: 60px 1fr auto auto; 
+    gap: 1rem; 
     align-items: center; 
-    padding: 1rem; 
+    padding: 0.75rem 1rem; 
     border-radius: var(--radius-md); 
     background: var(--bg-primary); 
     border: 1px solid var(--border-color); 
@@ -116,8 +116,8 @@ const styles = `
     box-shadow: var(--shadow-md); 
   }
   .cart-row img { 
-    width: 80px; 
-    height: 80px; 
+    width: 60px; 
+    height: 60px; 
     object-fit: contain; 
     background: var(--bg-secondary); 
     border-radius: var(--radius-sm); 
@@ -125,14 +125,14 @@ const styles = `
   }
   
   .row-main { display: flex; flex-direction: column; justify-content: center; }
-  .row-main span { color: var(--primary-color); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
-  .row-main h3 { margin: 0.25rem 0; font-size: 1.1rem; font-weight: 600; color: var(--text-primary); }
-  .row-main strong { font-size: 1.05rem; color: var(--text-primary); }
+  .row-main span { color: var(--primary-color); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+  .row-main h3 { margin: 0.25rem 0; font-size: 1rem; font-weight: 600; color: var(--text-primary); }
+  .row-main strong { font-size: 0.95rem; color: var(--text-primary); }
   
   /* ── Quantity Controls ── */
   .qty { 
     display: grid; 
-    grid-template-columns: 32px 36px 32px; 
+    grid-template-columns: 24px 30px 24px; 
     align-items: center; 
     border: 1.5px solid var(--border-color); 
     border-radius: var(--radius-md); 
@@ -148,7 +148,7 @@ const styles = `
   .qty button { 
     color: var(--text-primary); 
     font-weight: 600; 
-    height: 32px; 
+    height: 28px; 
     display: flex;
     align-items: center;
     justify-content: center;
@@ -160,14 +160,14 @@ const styles = `
   .qty span { 
     text-align: center; 
     font-weight: 600; 
-    font-size: 0.9rem;
+    font-size: 0.8rem;
   }
   
   .remove { 
     color: var(--text-muted); 
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     font-weight: 500;
-    padding: 0.5rem 0.75rem; 
+    padding: 0.4rem 0.6rem; 
     border-radius: var(--radius-sm); 
   }
   .remove:hover { 
@@ -178,7 +178,7 @@ const styles = `
   /* ── Summary ── */
   .summary { 
     border-radius: var(--radius-lg); 
-    padding: 1.5rem; 
+    padding: 1.25rem; 
     position: sticky; 
     top: 90px; 
     background: var(--bg-primary); 
@@ -186,45 +186,46 @@ const styles = `
     box-shadow: var(--shadow-sm); 
   }
   .summary h2 { 
-    margin-bottom: 1.25rem; 
-    font-size: 1.15rem; 
+    margin-bottom: 0.8rem; 
+    font-size: 1.05rem; 
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.03em;
     border-bottom: 1px solid var(--border-color);
-    padding-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
   }
   .summary div { 
     display: flex; 
     justify-content: space-between; 
-    padding: 0.6rem 0; 
-    font-size: 0.95rem;
+    padding: 0.4rem 0; 
+    font-size: 0.9rem;
   }
   .summary div span { color: var(--text-secondary); }
   .summary div strong { color: var(--text-primary); font-weight: 600; }
   .summary p { 
     color: var(--primary-color); 
-    font-size: 0.85rem; 
-    margin: 0.5rem 0 1rem; 
+    font-size: 0.8rem; 
+    margin: 0.5rem 0; 
     background: rgba(var(--primary-rgb), 0.05);
-    padding: 0.5rem;
+    padding: 0.4rem;
     border-radius: var(--radius-sm);
     text-align: center;
   }
   .summary .total { 
-    font-size: 1.15rem; 
+    font-size: 1.1rem; 
     border-top: 1px solid var(--border-color); 
-    margin-top: 0.5rem; 
-    padding-top: 1rem;
-    margin-bottom: 1.5rem; 
+    margin-top: 0.25rem; 
+    padding-top: 0.6rem;
+    margin-bottom: 1rem; 
   }
   .summary .total span { font-weight: 600; color: var(--text-primary); }
-  .summary .total strong { color: var(--primary-color); font-size: 1.25rem; }
+  .summary .total strong { color: var(--primary-color); font-size: 1.15rem; }
   .summary .btn { 
     width: 100%; 
     justify-content: center; 
     font-weight: 600;
-    padding: 0.75rem;
+    padding: 0.6rem;
+    font-size: 0.9rem;
   }
   
   /* ── Responsive ── */

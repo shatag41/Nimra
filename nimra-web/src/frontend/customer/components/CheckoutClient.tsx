@@ -155,14 +155,10 @@ export default function CheckoutClient() {
   return (
     <section className="checkout-page">
       <div className="container">
-        <div className="page-header animate-slide-up">
-          <span className="badge badge-primary">Secure Checkout</span>
-          <h1>Delivery Details</h1>
-          <p>Please provide your shipping information to complete your order.</p>
-        </div>
+
 
         <div className="checkout-actions-top">
-           <Link href="/cart" className="btn btn-secondary btn-sm">← Back to Cart</Link>
+           <Link href="/cart" className="btn btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', height: 'auto', minHeight: '0' }}>← Back to Cart</Link>
         </div>
 
         {status.kind === 'success' ? (
@@ -187,7 +183,7 @@ export default function CheckoutClient() {
 }
 
 const styles = `
-  .checkout-page { padding-top: 0.5rem; padding-bottom: 4rem; min-height: 90vh; font-family: var(--font-body); }
+  .checkout-page { padding-top: 0; padding-bottom: 2rem; min-height: 90vh; font-family: var(--font-body); }
   
   /* ── Page Header ── */
   .page-header {
@@ -230,9 +226,9 @@ const styles = `
   }
 
   .empty-cart-action { text-align: center; margin-top: 2rem; }
-  .checkout-actions-top { margin-bottom: 1rem; display: flex; justify-content: flex-start; }
+  .checkout-actions-top { margin-top: 1rem; margin-bottom: 0.5rem; display: flex; justify-content: flex-start; }
 
-  .checkout-grid { display: grid; grid-template-columns: 1fr 340px; gap: 2rem; align-items: start; }
+  .checkout-grid { display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; align-items: start; }
 
   @media (max-width: 900px) { .checkout-grid { grid-template-columns: 1fr; } }
 `;
