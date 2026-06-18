@@ -281,8 +281,8 @@ export default function ProductsClient({ products }: ProductsClientProps) {
 
         /* ── Page Header ── */
         .page-header {
-          margin-bottom: 2rem;
-          padding-bottom: 1.5rem;
+          margin-bottom: 1rem;
+          padding-bottom: 1rem;
           border-bottom: 1px solid var(--border-color);
           text-align: center;
         }
@@ -323,7 +323,7 @@ export default function ProductsClient({ products }: ProductsClientProps) {
         .products-layout-grid {
           display: grid;
           grid-template-columns: 240px 1fr;
-          gap: 1.5rem;
+          gap: 1rem;
           align-items: start;
         }
 
@@ -332,10 +332,10 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           background: var(--bg-secondary);
           border: 1px solid var(--border-color);
           border-radius: var(--radius-md);
-          padding: 1.25rem;
+          padding: 1rem;
           display: flex;
           flex-direction: column;
-          gap: 1.5rem;
+          gap: 1rem;
           position: sticky;
           top: 85px;
           z-index: 10;
@@ -471,7 +471,7 @@ export default function ProductsClient({ products }: ProductsClientProps) {
         .catalog-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 2rem;
+          gap: 1rem;
           position: relative;
           z-index: 20;
         }
@@ -479,7 +479,7 @@ export default function ProductsClient({ products }: ProductsClientProps) {
         /* ── Card ── */
         .catalog-card {
           border-radius: var(--radius-xl);
-          padding: 1.5rem;
+          padding: 1rem;
           display: flex;
           flex-direction: column;
           box-shadow: var(--shadow-md);
@@ -511,12 +511,12 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.12), var(--shadow-lg);
         }
         .cat-img-box {
-          height: 250px;
+          height: 160px;
           position: relative;
           display: flex;
           align-items: center;
           justify-content: center;
-          margin-bottom: 1.5rem;
+          margin-bottom: 1rem;
           border-radius: var(--radius-lg);
           background: var(--bg-primary);
           overflow: hidden;
@@ -559,14 +559,14 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           flex-direction: column;
         }
         .cat-info-box h3 {
-          font-size: 1.35rem;
-          margin-bottom: 0.75rem;
+          font-size: 1.15rem;
+          margin-bottom: 0.5rem;
         }
         .cat-info-box p {
-          font-size: 0.9rem;
+          font-size: 0.85rem;
           color: var(--text-secondary);
-          line-height: 1.6;
-          margin-bottom: 1rem;
+          line-height: 1.5;
+          margin-bottom: 0.75rem;
         }
         .specs {
           padding: 0.75rem;
@@ -601,10 +601,10 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 1rem;
+          gap: 0.75rem;
           margin-top: auto;
           border-top: 1px solid var(--border-color);
-          padding-top: 1.25rem;
+          padding-top: 1rem;
           position: relative;
           z-index: 3;
         }

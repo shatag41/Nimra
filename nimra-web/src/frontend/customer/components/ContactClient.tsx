@@ -181,7 +181,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
                     title="Corporate Office Map"
                     src={officeMapUrl}
                     width="100%"
-                    height="300"
+                    height="220"
                     style={{ border: 0 }}
                     allowFullScreen={false}
                     loading="lazy"
@@ -196,7 +196,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
                     title="Manufacturing Plant Map"
                     src={plantMapUrl}
                     width="100%"
-                    height="300"
+                    height="220"
                     style={{ border: 0 }}
                     allowFullScreen={false}
                     loading="lazy"
@@ -331,8 +331,8 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
 
         /* ── Page Header ── */
         .page-header {
-          margin-bottom: 2rem;
-          padding-bottom: 1.5rem;
+          margin-bottom: 1rem;
+          padding-bottom: 1rem;
           border-bottom: 1px solid var(--border-color);
           text-align: center;
         }
@@ -372,7 +372,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
         .contact-grid {
           display: grid;
           grid-template-columns: 1fr 1.1fr;
-          gap: 4rem;
+          gap: 2rem;
         }
         .details-col {
           position: relative;
@@ -392,14 +392,14 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
         .contact-info-list {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 1.5rem;
-          margin-bottom: 2rem;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
         }
         .info-card {
-          padding: 1.25rem;
+          padding: 1rem;
           border-radius: var(--radius-xl);
           display: flex;
-          gap: 1rem;
+          gap: 0.75rem;
           align-items: flex-start;
           box-shadow: var(--shadow-md);
           background: var(--bg-primary);
@@ -480,7 +480,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
           background: var(--bg-primary);
         }
         .map-loader {
-          height: 300px;
+          height: 220px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -490,7 +490,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
         /* Form styling */
         .form-col {
           border-radius: var(--radius-xl);
-          padding: 2.5rem;
+          padding: 1.5rem;
           box-shadow: var(--shadow-lg);
           height: fit-content;
           background: var(--bg-primary);
@@ -538,7 +538,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
         .form-row {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 1.25rem;
+          gap: 1rem;
         }
         label {
           font-size: 0.85rem;

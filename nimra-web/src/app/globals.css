@@ -330,7 +330,7 @@ html.theme-transition .card-glass {
 .flex-wrap { flex-wrap: wrap; }
 
 section {
-  padding: 6rem 0;
+  padding: 3rem 0;
   position: relative;
   overflow: clip;
 }
@@ -346,8 +346,8 @@ body > section[aria-label^="Notifications"] [data-sonner-toast] {
   pointer-events: auto !important;
 }
 
-.section-sm { padding: 3rem 0; }
-.section-lg { padding: 8rem 0; }
+.section-sm { padding: 1.5rem 0; }
+.section-lg { padding: 4rem 0; }
 
 /* ── Custom Scrollbar ──────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 7px; height: 7px; }
@@ -363,10 +363,10 @@ body > section[aria-label^="Notifications"] [data-sonner-toast] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.875rem 1.875rem;
+  padding: 0.6rem 1.25rem;
   font-family: var(--font-heading);
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   border-radius: var(--radius-xl);
   border: none;
   cursor: pointer;
@@ -464,9 +464,9 @@ body > section[aria-label^="Notifications"] [data-sonner-toast] {
   transform: translateY(-2px);
 }
 
-.btn-sm  { padding: 0.6rem 1.25rem; font-size: 0.875rem; }
-.btn-lg  { padding: 1.05rem 2.4rem; font-size: 1.05rem; }
-.btn-xl  { padding: 1.2rem 2.8rem; font-size: 1.1rem; }
+.btn-sm  { padding: 0.4rem 1rem; font-size: 0.8rem; }
+.btn-lg  { padding: 0.8rem 1.8rem; font-size: 1rem; }
+.btn-xl  { padding: 1rem 2.2rem; font-size: 1.05rem; }
 
 .btn:disabled {
   opacity: 0.55;
@@ -549,14 +549,14 @@ body > section[aria-label^="Notifications"] [data-sonner-toast] {
 .form-select,
 .form-textarea {
   width: 100%;
-  min-height: 48px;
-  padding: 0.875rem 1rem;
+  min-height: 42px;
+  padding: 0.6rem 1rem;
   border: 1.5px solid var(--border-color);
   border-radius: var(--radius-md);
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--font-body);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   transition: all var(--transition-fast);
 }
 

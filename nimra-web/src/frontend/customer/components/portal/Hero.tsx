@@ -30,7 +30,7 @@ export function PortalHero({ isAuthenticated, name }: PortalHeroProps) {
     <section className="portal-hero">
       <div>
         <span className="eyebrow">Customer Portal</span>
-        <h1>Welcome back, {name || 'Customer'}</h1>
+        <h1>Welcome back, {name ? (name.length > 25 ? name.slice(0, 25) + '...' : name) : 'Customer'}</h1>
         <p>Manage orders, track deliveries, and reach NIMRA support from one clean workspace.</p>
       </div>
     </section>
@@ -157,7 +157,7 @@ export function HomeHero({ banners }: HomeHeroProps) {
 
 const styles = `
   .portal-hero {
-    padding: 3.5rem 4rem 5.5rem;
+    padding: 1.5rem 2rem 2.5rem;
     background: linear-gradient(130deg, #172554 0%, #2563eb 55%, #3b82f6 100%);
     color: white;
     position: relative;
@@ -172,8 +172,8 @@ const styles = `
     background: rgba(255,255,255,0.06);
     pointer-events: none;
   }
-  .portal-hero h1 { max-width: 820px; color: white; font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 800; letter-spacing: -0.02em; margin: 0.75rem 0 0.75rem; }
-  .portal-hero p { max-width: 680px; color: rgba(255, 255, 255, 0.82); font-size: 1rem; }
+  .portal-hero h1 { max-width: 820px; color: white; font-size: clamp(1.5rem, 3vw, 2.4rem); font-weight: 800; letter-spacing: -0.02em; margin: 0.5rem 0; }
+  .portal-hero p { max-width: 680px; color: rgba(255, 255, 255, 0.82); font-size: 0.95rem; }
   
   .eyebrow { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 999px; padding: 0.3rem 0.9rem; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.9); margin-bottom: 0.5rem; }
   .hero-actions { display: flex; gap: 0.8rem; flex-wrap: wrap; margin-top: 1.5rem; }
@@ -409,7 +409,7 @@ const styles = `
   }
 
   @media (max-width: 1100px) {
-    .portal-hero { padding: 3rem 2rem 5rem; }
+    .portal-hero { padding: 1.5rem 2rem 2.5rem; }
   }
   @media (max-width: 1024px) {
     .hero-content { grid-template-columns: 1fr; gap: 2.5rem; }
@@ -420,7 +420,7 @@ const styles = `
     .scroll-indicator { display: none; }
   }
   @media (max-width: 700px) {
-    .portal-hero { padding: 2rem 1.25rem 4rem; }
+    .portal-hero { padding: 1.25rem 1.25rem 2rem; }
     .hero-actions { flex-direction: column; }
   }
 `;

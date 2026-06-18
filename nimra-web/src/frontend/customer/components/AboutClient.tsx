@@ -158,8 +158,8 @@ export default function AboutClient({ companyInfo }: AboutClientProps) {
 
         /* ── Page Header ── */
         .page-header {
-          margin-bottom: 2rem;
-          padding-bottom: 1.5rem;
+          margin-bottom: 1rem;
+          padding-bottom: 1rem;
           border-bottom: 1px solid var(--border-color);
           text-align: center;
         }
@@ -244,12 +244,12 @@ export default function AboutClient({ companyInfo }: AboutClientProps) {
         /* Detail grids */
         .story-detail-section, .quality-section-detail, .plant-section-detail {
           background-color: var(--bg-secondary);
-          padding: 5rem 0;
+          padding: 2.5rem 0;
         }
         .about-grid {
           display: grid;
           grid-template-columns: 1.2fr 0.8fr;
-          gap: 4rem;
+          gap: 2rem;
           align-items: center;
         }
         .about-content h2 {
@@ -333,7 +333,7 @@ export default function AboutClient({ companyInfo }: AboutClientProps) {
           z-index: 10;
         }
         .timeline-card {
-          padding: 1.5rem;
+          padding: 1rem;
           border-radius: var(--radius-xl);
           box-shadow: var(--shadow-md);
           background: var(--bg-primary);
@@ -358,8 +358,8 @@ export default function AboutClient({ companyInfo }: AboutClientProps) {
 
         /* Plant Map */
         .plant-info-card {
-          margin-top: 2rem;
-          padding: 1.5rem;
+          margin-top: 1.5rem;
+          padding: 1rem;
           border-radius: var(--radius-xl);
           border-left: 4px solid var(--primary-color);
           background: var(--bg-primary);

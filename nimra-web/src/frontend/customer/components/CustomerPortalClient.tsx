@@ -239,7 +239,7 @@ const portalStyles = `
   }
 
   .portal-hero {
-    padding: 3.5rem 4rem 5.5rem;
+    padding: 1.5rem 2rem 2.5rem;
     background: linear-gradient(130deg, #172554 0%, #2563eb 55%, #3b82f6 100%);
     color: white;
     position: relative;
@@ -254,25 +254,25 @@ const portalStyles = `
     background: rgba(255,255,255,0.06);
     pointer-events: none;
   }
-  .portal-hero h1 { max-width: 820px; color: white; font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 800; letter-spacing: -0.02em; margin: 0.75rem 0 0.75rem; }
-  .portal-hero p { max-width: 680px; color: rgba(255, 255, 255, 0.82); font-size: 1rem; }
+  .portal-hero h1 { max-width: 820px; color: white; font-size: clamp(1.5rem, 3vw, 2.4rem); font-weight: 800; letter-spacing: -0.02em; margin: 0.5rem 0; }
+  .portal-hero p { max-width: 680px; color: rgba(255, 255, 255, 0.82); font-size: 0.95rem; }
 
   .eyebrow { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 999px; padding: 0.3rem 0.9rem; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.9); margin-bottom: 0.5rem; }
 
   .hero-actions { display: flex; gap: 0.8rem; flex-wrap: wrap; margin-top: 1.5rem; }
 
-  .metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; max-width: 100%; margin: -2.5rem auto 0; padding: 0 2rem; position: relative; z-index: 2; }
+  .metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; max-width: 100%; margin: -1.5rem auto 0; padding: 0 1rem; position: relative; z-index: 2; }
 
-  .metric-card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); padding: 1.5rem; display: flex; flex-direction: column; gap: 0.35rem; transition: transform var(--transition-normal), box-shadow var(--transition-normal); }
+  .metric-card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); padding: 1rem; display: flex; flex-direction: column; gap: 0.35rem; transition: transform var(--transition-normal), box-shadow var(--transition-normal); }
   .metric-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-xl); border-color: rgba(0,150,58,0.3); }
   .metric-card span { text-transform: uppercase; letter-spacing: 0.04em; font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; }
   .metric-card small { color: var(--text-muted); font-size: 0.8rem; }
-  .metric-card strong { color: var(--primary-color); font-size: 2rem; font-weight: 800; line-height: 1; letter-spacing: -0.02em; font-family: var(--font-heading); }
+  .metric-card strong { color: var(--primary-color); font-size: 1.6rem; font-weight: 800; line-height: 1; letter-spacing: -0.02em; font-family: var(--font-heading); }
 
   .panel, .quick-card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-xl); box-shadow: var(--shadow-md); }
-  .panel { padding: 1.5rem; }
+  .panel { padding: 1.25rem; }
 
-  .portal-grid { max-width: 100%; margin: 1.5rem auto 0; padding: 0 2rem; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 1.25rem; align-items: start; }
+  .portal-grid { max-width: 100%; margin: 1rem auto 0; padding: 0 1rem; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 1rem; align-items: start; }
 
   .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
   .panel-head.compact { margin-bottom: 0.8rem; }
@@ -285,10 +285,10 @@ const portalStyles = `
   .table-link { display: inline-flex; align-items: center; padding: 0.4rem 0.85rem; border-radius: var(--radius-md); font-size: 0.82rem; font-weight: 700; color: var(--primary-color); background: rgba(0,150,58,0.07); border: 1px solid rgba(0,150,58,0.15); transition: all var(--transition-fast); }
   .table-link:hover { background: rgba(0,150,58,0.14); border-color: var(--primary-color); }
 
-  .table-wrap { overflow-x: auto; overflow-y: auto; max-height: 380px; border: 1px solid var(--border-color); border-radius: var(--radius-lg); }
+  .table-wrap { overflow-x: auto; overflow-y: auto; max-height: 300px; border: 1px solid var(--border-color); border-radius: var(--radius-lg); }
   .orders-table thead th { position: sticky; top: 0; z-index: 1; }
   .orders-table { width: 100%; border-collapse: collapse; min-width: 680px; }
-  .orders-table th, .orders-table td { padding: 1rem 1.1rem; border-bottom: 1px solid var(--border-color); text-align: left; white-space: nowrap; }
+  .orders-table th, .orders-table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); text-align: left; white-space: nowrap; }
   .orders-table th { background: var(--bg-tertiary); color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
   .orders-table tr:last-child td { border-bottom: 0; }
   .orders-table tbody tr { transition: background var(--transition-fast); }
@@ -351,11 +351,11 @@ const portalStyles = `
     .metric-grid, .quick-section { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .recommendations-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .portal-grid { grid-template-columns: 1fr; }
-    .portal-hero { padding: 3rem 2rem 5rem; }
+    .portal-hero { padding: 1.5rem 2rem 2.5rem; }
   }
 
   @media (max-width: 700px) {
-    .portal-hero { padding: 2rem 1.25rem 4rem; }
+    .portal-hero { padding: 1.25rem 1.25rem 2rem; }
     .metric-grid, .portal-grid, .quick-section, .recommendations-grid { grid-template-columns: 1fr; padding: 0 1rem; }
     .recommendations-section { padding: 0 1rem; }
     .metric-grid { margin-top: 1.25rem; }

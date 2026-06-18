@@ -94,7 +94,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           {/* Logo */}
           <Link href={logoHref} className="logo">
             <div className="logo-icon">
-              <svg width="28" height="28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg width="22" height="22" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M50 5C50 5 15 45 15 65C15 84.33 30.67 100 50 100C69.33 100 85 84.33 85 65C85 45 50 5 50 5Z" fill="url(#logoGrad)"/>
                 <text x="50" y="76" textAnchor="middle" fontSize="42" fontWeight="900" fontFamily="inherit" fill="white" letterSpacing="-1">N</text>
                 <defs>
@@ -277,7 +277,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           max-width: 1280px;
           margin: 0 auto;
           padding: 0 1.5rem;
-          height: 72px;
+          height: 56px;
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -295,9 +295,9 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
         :global(.logo:hover) { opacity: 0.85; }
 
         .logo-icon {
-          width: 40px;
-          height: 40px;
-          border-radius: 10px;
+          width: 30px;
+          height: 30px;
+          border-radius: 8px;
           background: linear-gradient(135deg, #eff6ff, #bfdbfe);
           display: flex;
           align-items: center;
@@ -319,7 +319,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
         .logo-text {
           font-family: var(--font-heading);
           font-weight: 800;
-          font-size: 1.25rem;
+          font-size: 1.1rem;
           letter-spacing: -0.02em;
           color: var(--text-primary);
           line-height: 1.1;
@@ -349,8 +349,8 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           align-items: center;
           gap: 0.25rem;
           flex-direction: column;
-          padding: 0.5rem 0.9rem;
-          font-size: 0.9rem;
+          padding: 0.4rem 0.75rem;
+          font-size: 0.85rem;
           font-weight: 600;
           color: var(--text-secondary);
           border-radius: var(--radius-lg);
@@ -390,8 +390,8 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
         }
 
         .icon-btn {
-          width: 40px;
-          height: 40px;
+          width: 32px;
+          height: 32px;
           border-radius: var(--radius-md);
           background: var(--bg-primary);
           border: 1.5px solid var(--border-color);
@@ -412,8 +412,8 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
 
         :global(.cart-link) {
           position: relative;
-          width: 40px;
-          height: 40px;
+          width: 32px;
+          height: 32px;
           border-radius: var(--radius-md);
           background: var(--bg-primary);
           border: 1.5px solid var(--border-color);
@@ -455,8 +455,8 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           display: inline-flex;
           align-items: center;
           gap: 0.45rem;
-          padding: 0.5rem 1rem;
-          font-size: 0.85rem;
+          padding: 0.4rem 0.85rem;
+          font-size: 0.8rem;
           font-weight: 600;
           font-family: var(--font-heading);
           border-radius: var(--radius-md);
@@ -477,8 +477,8 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
         /* Mobile Menu Button */
         .mobile-menu-btn {
           display: none;
-          width: 40px;
-          height: 40px;
+          width: 32px;
+          height: 32px;
           border-radius: var(--radius-md);
           background: var(--bg-primary);
           border: 1.5px solid var(--border-color);
