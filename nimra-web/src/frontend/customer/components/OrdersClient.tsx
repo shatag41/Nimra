@@ -509,15 +509,9 @@ export default function OrdersClient() {
                         </div>
 
                         <div className="actions-column" onClick={(e) => e.stopPropagation()}>
-                          {activeTab === 'checkout-required' ? (
-                            <Link href="/checkout" className="amazon-action-btn primary-action" style={{ textDecoration: 'none', textAlign: 'center' }}>
-                              Proceed to Checkout
-                            </Link>
-                          ) : (
-                            <button onClick={() => handleReorder(order)} className="amazon-action-btn primary-action">
-                              Reorder
-                            </button>
-                          )}
+                          <button onClick={() => handleReorder(order)} className="amazon-action-btn primary-action">
+                            Reorder
+                          </button>
                           <button onClick={() => setSelectedOrder(order)} className="amazon-action-btn">
                             View details
                           </button>
