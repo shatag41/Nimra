@@ -335,6 +335,17 @@ section {
   overflow: clip;
 }
 
+body > section[aria-label^="Notifications"] {
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  pointer-events: none !important;
+}
+
+body > section[aria-label^="Notifications"] [data-sonner-toast] {
+  pointer-events: auto !important;
+}
+
 .section-sm { padding: 3rem 0; }
 .section-lg { padding: 8rem 0; }
 

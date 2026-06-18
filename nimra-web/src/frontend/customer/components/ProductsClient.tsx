@@ -1,10 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Product } from '@/types/cms';
 import { useCart } from '@/frontend/customer/hooks/useCart';
-import { Categories } from './portal/Categories';
 import { CatalogCard } from './portal/Products';
 import { CartToast } from './portal/Notifications';
 import { normalizeCategory } from '../utils/commerce';
@@ -29,6 +27,7 @@ export default function ProductsClient({ products }: ProductsClientProps) {
   const [sizeFilter, setSizeFilter] = useState<'all' | 'jar' | 'bottle'>('all');
   const [cartToast, setCartToast] = useState<{ name: string; visible: boolean }>({ name: '', visible: false });
   const { addProduct } = useCart();
+  const cartToastTimer = useRef<number | null>(null);
 
   const filteredProducts = products.filter((product) => {
     const matchesCategory = activeTab === 'All' ? true : normalizeCategory(product.Category) === activeTab;
@@ -52,14 +51,16 @@ export default function ProductsClient({ products }: ProductsClientProps) {
     return true;
   });
 
-  const handleAdd = (product: Product) => {
-    addProduct(product);
+  const showCartToast = useCallback((product: Product) => {
     setCartToast({ name: product.Name, visible: true });
-    clearTimeout((window as any).__cartToastTimer);
-    (window as any).__cartToastTimer = window.setTimeout(() => {
+    if (cartToastTimer.current) {
+      window.clearTimeout(cartToastTimer.current);
+    }
+    cartToastTimer.current = window.setTimeout(() => {
       setCartToast((t) => ({ ...t, visible: false }));
+      cartToastTimer.current = null;
     }, 3000);
-  };
+  }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -68,13 +69,24 @@ export default function ProductsClient({ products }: ProductsClientProps) {
       if (addId) {
         const targetProduct = products.find((p) => String(p.ID) === addId);
         if (targetProduct) {
-          handleAdd(targetProduct);
+          window.setTimeout(() => {
+            addProduct(targetProduct);
+            showCartToast(targetProduct);
+          }, 0);
           const newUrl = window.location.pathname;
           window.history.replaceState({}, '', newUrl);
         }
       }
     }
-  }, [products]);
+  }, [addProduct, products, showCartToast]);
+
+  useEffect(() => {
+    return () => {
+      if (cartToastTimer.current) {
+        window.clearTimeout(cartToastTimer.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="products-page container">
@@ -183,14 +195,14 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           ) : filteredProducts.length > 0 ? (
             <div className="catalog-grid animate-fade-in">
               {filteredProducts.map((product) => (
-                <CatalogCard key={String(product.ID || product.Name)} product={product} onAdd={handleAdd} />
+                <CatalogCard key={String(product.ID || product.Name)} product={product} onAdd={showCartToast} />
               ))}
             </div>
           ) : (
             <div className="empty-products card animate-scale-in">
               <div className="empty-icon-glow">📦</div>
               <h3>No Products Found</h3>
-              <p>We couldn't find any products matching your search query or filters. Try adjusting them!</p>
+              <p>We couldn&apos;t find any products matching your search query or filters. Try adjusting them!</p>
             </div>
           )}
         </main>
@@ -460,6 +472,8 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
           gap: 2rem;
+          position: relative;
+          z-index: 20;
         }
 
         /* ── Card ── */
@@ -474,6 +488,18 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           position: relative;
           z-index: 1;
           isolation: isolate;
+          pointer-events: none;
+        }
+        .catalog-card button,
+        .catalog-card a,
+        .catalog-card [role="button"] {
+          pointer-events: auto;
+        }
+        .catalog-card .cat-price-row,
+        .catalog-card .qty-controls,
+        .catalog-card .view-cart-link,
+        .catalog-card .add-cart-btn {
+          pointer-events: auto;
         }
         .catalog-card:hover {
           transform: translateY(-6px);
@@ -579,6 +605,8 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           margin-top: auto;
           border-top: 1px solid var(--border-color);
           padding-top: 1.25rem;
+          position: relative;
+          z-index: 3;
         }
         .price-lbl {
           font-size: 0.75rem;
@@ -599,6 +627,9 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           align-items: center;
           gap: 0.45rem;
           white-space: nowrap;
+          position: relative;
+          z-index: 3;
+          pointer-events: auto;
         }
         button.btn {
           border: none;
@@ -614,6 +645,9 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           overflow: hidden;
           background: rgba(var(--primary-rgb), 0.06);
           gap: 0;
+          position: relative;
+          z-index: 3;
+          pointer-events: auto;
         }
         .qty-btn {
           width: 36px;
@@ -654,6 +688,9 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           background: rgba(var(--primary-rgb), 0.06);
           border: 1px solid rgba(var(--primary-rgb), 0.2);
           transition: all var(--transition-fast);
+          position: relative;
+          z-index: 3;
+          pointer-events: auto;
         }
         .view-cart-link:hover {
           background: rgba(var(--primary-rgb), 0.12);

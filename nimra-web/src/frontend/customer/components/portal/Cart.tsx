@@ -19,11 +19,11 @@ export function CartItemsList() {
             <strong>{formatCurrency(item.price)}</strong>
           </div>
           <div className="qty">
-            <button onClick={() => updateQuantity(item.productId, item.quantity - 1)}>-</button>
+            <button type="button" onClick={() => updateQuantity(item.productId, item.quantity - 1)} aria-label={`Decrease ${item.name} quantity`}>-</button>
             <span>{item.quantity}</span>
-            <button onClick={() => updateQuantity(item.productId, item.quantity + 1)}>+</button>
+            <button type="button" onClick={() => updateQuantity(item.productId, item.quantity + 1)} aria-label={`Increase ${item.name} quantity`}>+</button>
           </div>
-          <button className="remove" onClick={() => removeItem(item.productId)}>Remove</button>
+          <button type="button" className="remove" onClick={() => removeItem(item.productId)}>Remove</button>
         </article>
       ))}
     </div>

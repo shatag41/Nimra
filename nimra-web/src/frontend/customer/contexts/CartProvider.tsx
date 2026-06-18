@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { CartItem, Product } from '@/types/cms';
 import { useAuth } from './AuthContext';
 import { cartSubtotal, deliveryChargeFor, productToCartItem } from '../utils/commerce';
@@ -33,6 +33,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [activeStorageKey, setActiveStorageKey] = useState('');
 
+  const updateCartItems = useCallback((updater: (current: CartItem[]) => CartItem[]) => {
+    setActiveStorageKey(storageKey);
+    setHydrated(true);
+    setItems((current) => updater(activeStorageKey === storageKey ? current : []));
+  }, [activeStorageKey, storageKey]);
+
   useEffect(() => {
     if (isLoading) return;
     let cancelled = false;
@@ -59,7 +65,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           
           // 2. Fetch user's server cart (if exists)
           const cloudItems = await fetchCart(user.ID);
-          let baseItems: CartItem[] = cloudItems && cloudItems.length > 0 ? cloudItems : localItems;
+          const baseItems: CartItem[] = cloudItems && cloudItems.length > 0 ? cloudItems : localItems;
 
           // 3. Merge carts intelligently
           if (guestItems && guestItems.length > 0) {
@@ -125,11 +131,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const visibleItems = hydrated && activeStorageKey === storageKey ? items : [];
     const subtotal = cartSubtotal(visibleItems);
     const deliveryCharge = deliveryChargeFor(subtotal);
-    const updateCartItems = (updater: (current: CartItem[]) => CartItem[]) => {
-      setActiveStorageKey(storageKey);
-      setHydrated(true);
-      setItems((current) => updater(activeStorageKey === storageKey ? current : []));
-    };
 
     return {
       items: visibleItems,
@@ -203,7 +204,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setItems([]);
       },
     };
-  }, [activeStorageKey, hydrated, items, storageKey]);
+  }, [activeStorageKey, hydrated, items, storageKey, updateCartItems]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

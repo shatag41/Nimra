@@ -66,18 +66,26 @@ export const CatalogCard = React.memo(function CatalogCard({ product, onAdd }: P
 
           {orderable ? (
             inCart ? (
-              <div className="qty-controls">
+              <div className="qty-controls" onClick={(event) => event.stopPropagation()}>
                 <button
+                  type="button"
                   className="qty-btn qty-minus"
-                  onClick={handleDecrease}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    handleDecrease();
+                  }}
                   aria-label="Decrease quantity"
                 >
                   −
                 </button>
                 <span className="qty-count">{cartItem.quantity}</span>
                 <button
+                  type="button"
                   className="qty-btn qty-plus"
-                  onClick={handleIncrease}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    handleIncrease();
+                  }}
                   aria-label="Increase quantity"
                 >
                   +
@@ -85,8 +93,13 @@ export const CatalogCard = React.memo(function CatalogCard({ product, onAdd }: P
               </div>
             ) : (
               <button
+                type="button"
                 className="btn btn-primary btn-sm add-cart-btn"
-                onClick={handleAdd}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  handleAdd();
+                }}
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
@@ -103,7 +116,7 @@ export const CatalogCard = React.memo(function CatalogCard({ product, onAdd }: P
         </div>
 
         {inCart && (
-          <Link href="/cart" className="view-cart-link">
+          <Link href="/cart" className="view-cart-link" onClick={(event) => event.stopPropagation()}>
             View Cart ({cartItem.quantity} item{cartItem.quantity > 1 ? 's' : ''}) →
           </Link>
         )}
@@ -134,6 +147,7 @@ export const RecommendationCard = React.memo(function RecommendationCard({ produ
         <div className="rec-footer">
           <span className="rec-price">{formatCurrency(Number(product.Price))}</span>
           <button
+            type="button"
             className="btn btn-primary btn-sm add-btn"
             onClick={handleAdd}
             style={{ cursor: 'pointer', border: 'none' }}
@@ -147,7 +161,6 @@ export const RecommendationCard = React.memo(function RecommendationCard({ produ
 });
 
 export const PreviewCard = React.memo(function PreviewCard({ product, index }: ProductCardProps & { index: number }) {
-  const orderable = isOrderable(product);
   return (
     <div className="product-preview-card" style={{ animationDelay: `${index * 0.1}s` }}>
       <div className="prod-img-box">

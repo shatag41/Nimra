@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
 
@@ -29,23 +29,48 @@ const AuthContext = createContext<AuthContextType>({
   logout: () => {},
 });
 
+const clearBrowserSession = () => {
+  Cookies.remove('nimra_user', { path: '/' });
+  Cookies.remove('nimra_user');
+
+  if (typeof window === 'undefined') return;
+
+  window.localStorage.clear();
+  window.sessionStorage.clear();
+};
+
+const readStoredUser = (): User | null => {
+  if (typeof window === 'undefined') return null;
+
+  const storedUser = Cookies.get('nimra_user');
+  if (!storedUser) return null;
+
+  try {
+    return JSON.parse(storedUser);
+  } catch {
+    console.error('Failed to parse user session');
+    clearBrowserSession();
+    return null;
+  }
+};
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    // Check for stored user session on mount
-    const storedUser = Cookies.get('nimra_user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        console.error('Failed to parse user session');
-        Cookies.remove('nimra_user', { path: '/' });
-      }
-    }
-    setIsLoading(false);
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setUser(readStoredUser());
+      setIsLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const login = (userData: User) => {
@@ -73,8 +98,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = () => {
     setUser(null);
-    Cookies.remove('nimra_user', { path: '/' });
-    localStorage.removeItem('nimra_admin_user');
+    clearBrowserSession();
     window.location.href = '/';
   };
 

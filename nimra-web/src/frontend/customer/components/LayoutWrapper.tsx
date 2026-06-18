@@ -8,8 +8,6 @@ import { CompanyInfo } from '@/types/cms';
 import { useAuth } from '../contexts/AuthContext';
 import GlobalLoadingScreen from './GlobalLoadingScreen';
 
-import Cookies from 'js-cookie';
-
 interface LayoutWrapperProps {
   children: React.ReactNode;
   companyInfo: CompanyInfo;
@@ -21,40 +19,25 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
   const [mounted, setMounted] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    if (typeof window !== 'undefined') {
-      const isNewTab = !sessionStorage.getItem('nimra_session_initialized');
-      if (isNewTab) {
-        sessionStorage.setItem('nimra_session_initialized', 'true');
-        Cookies.remove('nimra_user', { path: '/' });
-        localStorage.removeItem('nimra_admin_user');
-        if (window.location.pathname !== '/') {
-          window.location.href = '/';
-        } else {
-          window.location.reload();
-        }
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      if (!cancelled) {
+        setMounted(true);
       }
-    }
-  }, []);
+    });
 
-  useEffect(() => {
-    if (!mounted) return;
-    setIsTransitioning(true);
-    const timer = setTimeout(() => {
-      setIsTransitioning(false);
-    }, 450); // Snappy transition timing
-    return () => clearTimeout(timer);
-  }, [pathname, searchParams, mounted]);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const isAdmin = pathname?.startsWith('/admin');
   const isAdminLogin = pathname === '/admin/login';
   const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password' || isAdminLogin;
   const isCheckout = pathname === '/checkout' || pathname?.startsWith('/checkout/');
-  const isProtected = isAdmin || pathname?.startsWith('/customer-portal') || isCheckout;
-  const isAuthOrProtected = isProtected || isAuthPage;
 
   useEffect(() => {
     if (isLoading) return;
@@ -72,7 +55,7 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
       const fullPath = window.location.pathname + window.location.search;
       router.replace(`/login?next=${encodeURIComponent(fullPath)}`);
     }
-  }, [isAdmin, isAdminLogin, isAuthPage, isAuthenticated, isCheckout, isLoading, pathname, router, user]);
+  }, [isAdmin, isAdminLogin, isAuthPage, isAuthenticated, isCheckout, isLoading, pathname, router, searchParams, user]);
 
   if (!mounted || isLoading) {
     return <GlobalLoadingScreen />;
@@ -89,7 +72,6 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
   if (isAdmin || isAuthPage) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        {isTransitioning && <GlobalLoadingScreen />}
         <main style={{ flex: '1' }}>
           {children}
         </main>
@@ -99,7 +81,6 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {isTransitioning && <GlobalLoadingScreen />}
       <Header companyInfo={companyInfo} />
       <main style={{ flex: '1', paddingTop: '80px' }}>
         {children}
