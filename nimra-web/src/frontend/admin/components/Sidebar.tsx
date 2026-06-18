@@ -17,7 +17,7 @@ export default function Sidebar({ currentUser, activeTab, setActiveTab, isProfil
     { id: 'faqs', name: 'Store FAQs', icon: '❓' },
     { id: 'inquiries', name: 'Inquiries', icon: '✉️' },
     { id: 'users', name: 'Users', icon: '👥' },
-    { id: 'notifications', name: 'Announcements', icon: '🔔' },
+    { id: 'notifications', name: 'Notifications', icon: '🔔' },
     { id: 'settings', name: 'Settings', icon: '⚙️' },
   ];
 

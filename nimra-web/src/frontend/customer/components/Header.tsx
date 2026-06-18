@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { CompanyInfo } from '@/types/cms';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { CompanyInfo, Notification } from '@/types/cms';
 import { useCart } from '../contexts/CartProvider';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocation } from '../contexts/LocationContext';
+import { fetchNotifications, saveNotification } from '@/utils/api';
 import LogoutConfirmationModal from './LogoutConfirmationModal';
 
 interface HeaderProps {
@@ -19,12 +20,18 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentTab = searchParams ? searchParams.get('tab') : null;
   const { totalItems } = useCart();
   const { user, logout } = useAuth();
   const { city, loading, requestLocation, permissionDenied } = useLocation();
 
   const activeUser = mounted ? user : null;
+  const unreadCount = notifications.filter(n => n.Read !== true && n.Read !== 'true').length;
   const dashboardHref = activeUser?.Role === 'Admin' ? '/admin' : '/customer-portal';
   const logoHref = activeUser ? dashboardHref : '/';
 
@@ -41,12 +48,64 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
     }, 150);
 
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Element;
+      if (!target.closest('.profile-menu-container')) {
+        setProfileDropdownOpen(false);
+      }
+      if (!target.closest('.notification-container')) {
+        setNotificationDropdownOpen(false);
+      }
+    };
     window.addEventListener('scroll', handleScroll);
+    document.addEventListener('click', handleClickOutside);
     return () => {
       window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('click', handleClickOutside);
       clearTimeout(transitionTimeout);
     };
   }, []);
+
+  useEffect(() => {
+    if (activeUser) {
+      fetchNotifications().then(data => {
+        const key = `nimra_read_notifs_${activeUser.ID || activeUser.Username}`;
+        let readIds: string[] = [];
+        try {
+          readIds = JSON.parse(localStorage.getItem(key) || '[]');
+        } catch {}
+        const updated = data.map(n => {
+          const isRead = readIds.includes(String(n.ID)) || n.Read === true || n.Read === 'true';
+          return { ...n, Read: isRead };
+        });
+        setNotifications(updated);
+      }).catch(console.error);
+    } else {
+      setNotifications([]);
+    }
+  }, [activeUser]);
+
+  const handleMarkAsRead = async (id: string | number, index: number) => {
+    try {
+      setNotifications(prev => prev.map((n, i) => i === index ? { ...n, Read: true } : n));
+      
+      if (activeUser) {
+        const key = `nimra_read_notifs_${activeUser.ID || activeUser.Username}`;
+        let readIds: string[] = [];
+        try {
+          readIds = JSON.parse(localStorage.getItem(key) || '[]');
+        } catch {}
+        if (!readIds.includes(String(id))) {
+          readIds.push(String(id));
+          localStorage.setItem(key, JSON.stringify(readIds));
+        }
+      }
+      
+      await saveNotification({ ID: id, Read: true }, 'update');
+    } catch (err) {
+      console.error('Failed to mark notification as read:', err);
+    }
+  };
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
@@ -130,15 +189,6 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
 
           {/* Actions */}
           <div className="header-actions">
-            {/* Theme Toggle */}
-            <button onClick={toggleTheme} className="icon-btn" aria-label="Toggle Theme" title="Toggle theme">
-              {theme === 'light' ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-              ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-              )}
-            </button>
-
             {/* Location Indicator - Desktop only */}
             {mounted && (!activeUser || activeUser.Role === 'Customer') && (
               <button 
@@ -153,6 +203,120 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
               </button>
             )}
 
+            {/* Admin Notifications Bell */}
+            {activeUser && (
+              <div className="notification-container" style={{ position: 'relative' }}>
+                <button 
+                  className="icon-btn" 
+                  onClick={() => setNotificationDropdownOpen(!notificationDropdownOpen)} 
+                  aria-label="Notifications" 
+                  title="Notifications"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                  {unreadCount > 0 && (
+                    <span className="badge-count" style={{ position: 'absolute', top: '2px', right: '2px', width: '8px', height: '8px', background: '#ef4444', borderRadius: '50%', border: '1.5px solid var(--bg-primary)' }} />
+                  )}
+                </button>
+
+                {notificationDropdownOpen && (
+                  <div className="profile-dropdown animate-fade-in-up" style={{ width: '320px', right: '-80px', maxHeight: '400px', overflowY: 'auto' }}>
+                    <div className="dropdown-header">
+                      <strong>Notifications</strong>
+                    </div>
+                    <div className="dropdown-divider"></div>
+                    {notifications.length === 0 ? (
+                      <div style={{ padding: '1.25rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                        No new notifications
+                      </div>
+                    ) : (
+                      <div className="notification-list" style={{ display: 'flex', flexDirection: 'column' }}>
+                        {/* RECENT (UNREAD) SECTION */}
+                        {(() => {
+                          const unreadNotifs = notifications.filter(n => n.Read !== true && n.Read !== 'true');
+                          return unreadNotifs.length > 0 && (
+                            <>
+                              <div style={{ padding: '0.4rem 1.25rem', background: 'rgba(37, 99, 235, 0.05)', fontSize: '0.7rem', fontWeight: 800, color: 'var(--primary-color)', letterSpacing: '0.05em', textTransform: 'uppercase', borderBottom: '1px solid var(--border-color)' }}>
+                                Recent
+                              </div>
+                              {unreadNotifs.map((n) => {
+                                const originalIdx = notifications.findIndex(item => item.ID === n.ID && item.Timestamp === n.Timestamp);
+                                return (
+                                  <div 
+                                    key={`unread-${n.ID}-${originalIdx}`} 
+                                    onClick={() => handleMarkAsRead(n.ID, originalIdx)}
+                                    style={{ 
+                                      padding: '0.75rem 1.25rem', 
+                                      borderBottom: '1px solid var(--border-color)', 
+                                      fontSize: '0.85rem',
+                                      cursor: 'pointer',
+                                      background: 'rgba(37, 99, 235, 0.06)',
+                                      transition: 'background 0.2s ease',
+                                      position: 'relative'
+                                    }}
+                                  >
+                                    <strong style={{ display: 'block', color: 'var(--text-primary)', marginBottom: '0.2rem', paddingRight: '12px' }}>{n.Title}</strong>
+                                    <p style={{ margin: 0, color: 'var(--text-secondary)', lineHeight: 1.4 }}>{n.Message}</p>
+                                    <small style={{ color: 'var(--text-muted)', fontSize: '0.7rem', marginTop: '0.4rem', display: 'block' }}>
+                                      {new Date(n.CreatedAt || n.Timestamp).toLocaleDateString()}
+                                    </small>
+                                    <span style={{
+                                      position: 'absolute',
+                                      top: '12px',
+                                      right: '12px',
+                                      width: '6px',
+                                      height: '6px',
+                                      borderRadius: '50%',
+                                      background: 'var(--primary-color)'
+                                    }} />
+                                  </div>
+                                );
+                              })}
+                            </>
+                          );
+                        })()}
+
+                        {/* EARLIEST (READ) SECTION */}
+                        {(() => {
+                          const readNotifs = notifications.filter(n => n.Read === true || n.Read === 'true');
+                          return readNotifs.length > 0 && (
+                            <>
+                              <div style={{ padding: '0.4rem 1.25rem', background: 'var(--bg-secondary)', fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase', borderBottom: '1px solid var(--border-color)' }}>
+                                Earliest
+                              </div>
+                              {readNotifs.map((n) => {
+                                const originalIdx = notifications.findIndex(item => item.ID === n.ID && item.Timestamp === n.Timestamp);
+                                return (
+                                  <div 
+                                    key={`read-${n.ID}-${originalIdx}`} 
+                                    onClick={() => handleMarkAsRead(n.ID, originalIdx)}
+                                    style={{ 
+                                      padding: '0.75rem 1.25rem', 
+                                      borderBottom: '1px solid var(--border-color)', 
+                                      fontSize: '0.85rem',
+                                      cursor: 'pointer',
+                                      background: 'transparent',
+                                      transition: 'background 0.2s ease',
+                                      position: 'relative'
+                                    }}
+                                  >
+                                    <strong style={{ display: 'block', color: 'var(--text-primary)', marginBottom: '0.2rem' }}>{n.Title}</strong>
+                                    <p style={{ margin: 0, color: 'var(--text-secondary)', lineHeight: 1.4 }}>{n.Message}</p>
+                                    <small style={{ color: 'var(--text-muted)', fontSize: '0.7rem', marginTop: '0.4rem', display: 'block' }}>
+                                      {new Date(n.CreatedAt || n.Timestamp).toLocaleDateString()}
+                                    </small>
+                                  </div>
+                                );
+                              })}
+                            </>
+                          );
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Cart — only for Customers */}
             {(!activeUser || activeUser.Role === 'Customer') && (
               <Link href="/cart" prefetch={true} className={`cart-link ${pathname === '/cart' ? 'active' : ''}`} aria-label={`Cart with ${mounted ? totalItems : 0} items`}>
@@ -161,12 +325,157 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
               </Link>
             )}
 
-            {/* Login / Logout */}
+            {/* Login / Profile */}
             {activeUser ? (
-              <button onClick={() => setIsLogoutModalOpen(true)} className="btn btn-outline-danger">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                Logout
-              </button>
+              <div className="profile-menu-container">
+                <button 
+                  onClick={() => setProfileDropdownOpen(!profileDropdownOpen)} 
+                  className={`profile-btn ${profileDropdownOpen ? 'active' : ''}`}
+                  aria-label="Profile Menu"
+                >
+                  <div className="avatar">
+                    {activeUser.Name ? activeUser.Name.charAt(0).toUpperCase() : (activeUser.Username ? activeUser.Username.charAt(0).toUpperCase() : 'U')}
+                  </div>
+                </button>
+
+                {profileDropdownOpen && (
+                  <div className="profile-dropdown animate-fade-in-up">
+                    <Link href="/customer-portal?tab=profile" className="dropdown-header-link" onClick={() => setProfileDropdownOpen(false)}>
+                      <div className="dropdown-header">
+                        <div className="dropdown-avatar-large">
+                          {activeUser.Name ? activeUser.Name.charAt(0).toUpperCase() : (activeUser.Username ? activeUser.Username.charAt(0).toUpperCase() : 'U')}
+                        </div>
+                        <div className="dropdown-user-info">
+                          <strong>{activeUser.Name || 'User'}</strong>
+                          <span>{activeUser.Username}</span>
+                        </div>
+                      </div>
+                    </Link>
+                    <div className="dropdown-divider"></div>
+                    
+                    <div className="dropdown-menu-group">
+                      <span className="dropdown-group-label">My Account</span>
+                      <ul className="dropdown-menu-items">
+                        <li>
+                          <Link 
+                            href="/customer-portal?tab=addresses" 
+                            className={`dropdown-item ${pathname === '/customer-portal' && currentTab === 'addresses' ? 'active' : ''}`} 
+                            onClick={() => setProfileDropdownOpen(false)}
+                          >
+                            <div className="menu-icon-container">
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                            </div>
+                            <span className="menu-item-text">Addresses</span>
+                          </Link>
+                        </li>
+                        <li>
+                          <Link 
+                            href="/customer-portal?tab=payments" 
+                            className={`dropdown-item ${pathname === '/customer-portal' && currentTab === 'payments' ? 'active' : ''}`} 
+                            onClick={() => setProfileDropdownOpen(false)}
+                          >
+                            <div className="menu-icon-container">
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                            </div>
+                            <span className="menu-item-text">Saved Payments</span>
+                          </Link>
+                        </li>
+                        <li>
+                          <Link 
+                            href="/customer-portal?tab=notifications" 
+                            className={`dropdown-item ${pathname === '/customer-portal' && currentTab === 'notifications' ? 'active' : ''}`} 
+                            onClick={() => setProfileDropdownOpen(false)}
+                          >
+                            <div className="menu-icon-container">
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                            </div>
+                            <span className="menu-item-text">Notifications</span>
+                          </Link>
+                        </li>
+                      </ul>
+                    </div>
+                    
+                    <div className="dropdown-divider"></div>
+                    
+                    <div className="dropdown-menu-group">
+                      <span className="dropdown-group-label">Preferences & Support</span>
+                      <ul className="dropdown-menu-items">
+                        <li>
+                          <Link 
+                            href="/contact" 
+                            className={`dropdown-item ${pathname === '/contact' ? 'active' : ''}`} 
+                            onClick={() => setProfileDropdownOpen(false)}
+                          >
+                            <div className="menu-icon-container">
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            </div>
+                            <span className="menu-item-text">Help & Support</span>
+                          </Link>
+                        </li>
+                        <li>
+                          <Link 
+                            href="/faqs" 
+                            className={`dropdown-item ${pathname === '/faqs' ? 'active' : ''}`} 
+                            onClick={() => setProfileDropdownOpen(false)}
+                          >
+                            <div className="menu-icon-container">
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                            </div>
+                            <span className="menu-item-text">FAQs</span>
+                          </Link>
+                        </li>
+                        <li>
+                          <Link 
+                            href="/settings" 
+                            className={`dropdown-item ${pathname === '/settings' ? 'active' : ''}`} 
+                            onClick={() => setProfileDropdownOpen(false)}
+                          >
+                            <div className="menu-icon-container">
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                            </div>
+                            <span className="menu-item-text">Settings</span>
+                          </Link>
+                        </li>
+                        <li className="dropdown-item-toggle">
+                          <button onClick={(e) => { e.preventDefault(); toggleTheme(); }} className="dropdown-item theme-toggle-btn">
+                            <div className="theme-toggle-label-wrap" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                              <div className="menu-icon-container">
+                                {theme === 'light' ? (
+                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                                ) : (
+                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+                                )}
+                              </div>
+                              <span className="menu-item-text">{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
+                            </div>
+                            <div className={`theme-switch ${theme === 'dark' ? 'active' : ''}`}>
+                              <div className="theme-switch-handle"></div>
+                            </div>
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
+                    
+                    <div className="dropdown-divider"></div>
+                    
+                    <div className="dropdown-menu-group logout-group">
+                      <ul className="dropdown-menu-items">
+                        <li>
+                          <button 
+                            onClick={() => { setProfileDropdownOpen(false); setIsLogoutModalOpen(true); }} 
+                            className="dropdown-item text-danger"
+                          >
+                            <div className="menu-icon-container">
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                            </div>
+                            <span className="menu-item-text">Logout</span>
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
               <Link href="/login" prefetch={true} className="btn btn-primary btn-sm">
                 Login/Register
@@ -520,6 +829,334 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           background: rgba(239,68,68,0.08);
           border-color: #ef4444;
           transform: translateY(-1px);
+        }
+
+        /* Profile Dropdown */
+        .profile-menu-container {
+          position: relative;
+        }
+
+        .profile-btn {
+          background: none;
+          border: none;
+          padding: 0;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+          transition: all 0.2s ease;
+        }
+
+        .avatar {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, var(--primary-color), #60a5fa);
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 700;
+          font-size: 1rem;
+          font-family: var(--font-heading);
+          box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+          border: 2px solid transparent;
+          transition: all 0.2s ease;
+        }
+
+        .profile-btn:hover .avatar, .profile-btn.active .avatar {
+          border-color: var(--primary-color);
+          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+          transform: translateY(-1px);
+        }
+        
+        .profile-dropdown {
+          position: absolute;
+          top: calc(100% + 8px);
+          right: 0;
+          width: 250px;
+          background: var(--bg-primary);
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-md);
+          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.02);
+          overflow: hidden;
+          z-index: 1000;
+          padding: 0.25rem 0;
+          display: flex;
+          flex-direction: column;
+          font-family: var(--font-body);
+        }
+
+        [data-theme="dark"] .profile-dropdown {
+          background: var(--bg-primary);
+          border-color: var(--border-color);
+          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .animate-fade-in-up {
+          animation: fadeInUp 0.15s ease-out;
+          transform-origin: top right;
+        }
+
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(4px) scale(0.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .dropdown-header-link {
+          display: block;
+          text-decoration: none;
+          color: inherit;
+          transition: background 0.15s ease;
+          margin: 0.15rem 0.35rem 0;
+          border-radius: var(--radius-md);
+        }
+
+        .dropdown-header-link:hover {
+          background: rgba(0, 0, 0, 0.03);
+        }
+
+        [data-theme="dark"] .dropdown-header-link:hover {
+          background: rgba(255, 255, 255, 0.04);
+        }
+
+        .dropdown-header {
+          padding: 0.5rem 0.6rem;
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+        }
+
+        .dropdown-avatar-large {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: rgba(37, 99, 235, 0.08);
+          color: var(--primary-color);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 600;
+          font-size: 0.95rem;
+          flex-shrink: 0;
+          border: 1px solid rgba(37, 99, 235, 0.12);
+        }
+
+        [data-theme="dark"] .dropdown-avatar-large {
+          background: rgba(96, 165, 250, 0.15);
+          color: #60a5fa;
+          border-color: rgba(96, 165, 250, 0.2);
+        }
+
+        .dropdown-user-info {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          min-width: 0;
+        }
+
+        .dropdown-user-info strong {
+          color: var(--text-primary);
+          font-size: 0.85rem;
+          font-weight: 600;
+          letter-spacing: -0.01em;
+          line-height: 1.2;
+        }
+
+        .dropdown-user-info span {
+          color: var(--text-muted);
+          font-size: 0.7rem;
+          margin-top: 1px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .dropdown-divider {
+          height: 1px;
+          background: var(--border-color);
+          margin: 0.35rem 0;
+          opacity: 0.5;
+        }
+
+        .dropdown-group-label {
+          display: block;
+          padding: 0.25rem 0.75rem 0.15rem;
+          font-size: 0.6rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: var(--text-muted);
+          opacity: 0.7;
+        }
+
+        .dropdown-menu-items {
+          display: flex;
+          flex-direction: column;
+          padding: 0 0.35rem;
+          list-style: none;
+          margin: 0;
+          gap: 0.05rem;
+        }
+
+        .profile-dropdown :global(.dropdown-item) {
+          display: flex;
+          align-items: center;
+          padding: 0.35rem 0.5rem;
+          color: var(--text-secondary);
+          text-decoration: none;
+          font-size: 0.8rem;
+          font-weight: 500;
+          border-radius: var(--radius-md);
+          transition: all 0.15s ease;
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          width: 100%;
+          text-align: left;
+        }
+
+        .profile-dropdown :global(.menu-item-text) {
+          flex: 1;
+          margin-left: 0.6rem;
+          font-size: 0.8rem;
+        }
+
+        .profile-dropdown :global(.menu-icon-container) {
+          width: 24px;
+          height: 24px;
+          border-radius: 4px;
+          background: rgba(0, 0, 0, 0.03);
+          color: var(--text-muted);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.15s ease;
+          flex-shrink: 0;
+        }
+
+        [data-theme="dark"] .profile-dropdown :global(.menu-icon-container) {
+          background: rgba(255, 255, 255, 0.04);
+        }
+
+        .profile-dropdown :global(.dropdown-item:hover) {
+          background: rgba(0, 0, 0, 0.03);
+          color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .profile-dropdown :global(.dropdown-item:hover) {
+          background: rgba(255, 255, 255, 0.04);
+          color: var(--text-primary);
+        }
+
+        .profile-dropdown :global(.dropdown-item:hover) :global(.menu-icon-container) {
+          background: rgba(37, 99, 235, 0.08);
+          color: var(--primary-color);
+        }
+
+        [data-theme="dark"] .profile-dropdown :global(.dropdown-item:hover) :global(.menu-icon-container) {
+          background: rgba(96, 165, 250, 0.15);
+          color: #60a5fa;
+        }
+
+        .profile-dropdown :global(.dropdown-item.active) {
+          background: rgba(37, 99, 235, 0.04);
+          color: var(--primary-color);
+          font-weight: 600;
+        }
+
+        [data-theme="dark"] .profile-dropdown :global(.dropdown-item.active) {
+          background: rgba(96, 165, 250, 0.08);
+          color: #60a5fa;
+        }
+
+        .profile-dropdown :global(.dropdown-item.active) :global(.menu-icon-container) {
+          background: var(--primary-color);
+          color: white;
+        }
+
+        [data-theme="dark"] .profile-dropdown :global(.dropdown-item.active) :global(.menu-icon-container) {
+          background: #60a5fa;
+          color: #0f172a;
+        }
+
+        .theme-toggle-btn {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          width: 100%;
+        }
+
+        .theme-switch {
+          width: 30px;
+          height: 16px;
+          background: var(--border-color);
+          border-radius: 999px;
+          position: relative;
+          transition: all 0.2s ease;
+        }
+        
+        .theme-switch.active {
+          background: var(--primary-color);
+          border-color: var(--primary-color);
+        }
+
+        .theme-switch-handle {
+          width: 10px;
+          height: 10px;
+          background: white;
+          border-radius: 50%;
+          position: absolute;
+          top: 3px;
+          left: 3px;
+          transition: transform 0.2s ease;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+        }
+
+        [data-theme="dark"] .theme-switch-handle {
+          background: #e2e8f0;
+        }
+
+        .theme-switch.active .theme-switch-handle {
+          transform: translateX(14px);
+          background: white;
+        }
+
+        .logout-group {
+          margin-top: 0.1rem;
+        }
+
+        .profile-dropdown :global(.dropdown-item.text-danger) {
+          color: #dc2626;
+        }
+
+        [data-theme="dark"] .profile-dropdown :global(.dropdown-item.text-danger) {
+          color: #ef4444;
+        }
+
+        .profile-dropdown :global(.dropdown-item.text-danger) :global(.menu-icon-container) {
+          color: currentColor;
+        }
+
+        .profile-dropdown :global(.dropdown-item.text-danger:hover) {
+          background: #fef2f2;
+          color: #b91c1c;
+        }
+
+        [data-theme="dark"] .profile-dropdown :global(.dropdown-item.text-danger:hover) {
+          background: rgba(239, 68, 68, 0.08);
+          color: #fca5a5;
+        }
+
+        .profile-dropdown :global(.dropdown-item.text-danger:hover) :global(.menu-icon-container) {
+          background: rgba(239, 68, 68, 0.08);
+          color: #b91c1c;
+        }
+
+        [data-theme="dark"] .profile-dropdown :global(.dropdown-item.text-danger:hover) :global(.menu-icon-container) {
+          background: rgba(239, 68, 68, 0.15);
+          color: #fca5a5;
         }
 
         /* Mobile Menu Button */

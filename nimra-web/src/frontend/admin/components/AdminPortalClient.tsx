@@ -60,7 +60,7 @@ const UsersTab = dynamic(() => import('./UsersTab'), {
 });
 const NotificationsTab = dynamic(() => import('./NotificationsTab'), {
   ssr: false,
-  loading: () => <div className="tab-loading-indicator">Loading Announcements...</div>,
+  loading: () => <div className="tab-loading-indicator">Loading Notifications...</div>,
 });
 const SettingsTab = dynamic(() => import('./SettingsTab'), {
   ssr: false,

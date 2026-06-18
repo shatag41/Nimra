@@ -839,6 +839,76 @@ function handleUserCRUD(spreadsheet, params) {
   return { success: false, message: 'User ID not found.' };
 }
 
+function getNotificationsData(spreadsheet) {
+  var sheet = spreadsheet.getSheetByName('Notifications');
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet('Notifications');
+    var headers = ['ID', 'Timestamp', 'Title', 'Message', 'Read', 'Status'];
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.appendRow([1, new Date().toISOString(), 'Welcome to Nimra CMS', 'Your secure Admin Portal is fully set up and ready.', false, 'Published']);
+  }
+  
+  var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return [];
+  var headers = data[0];
+  var rows = [];
+  
+  for (var i = 1; i < data.length; i++) {
+    var row = {};
+    
+    // Check if using the specific mismatched/custom layout from screenshot
+    if (headers.indexOf('NotificationID') >= 0 && headers.indexOf('Title') >= 0 && headers.indexOf('Message') >= 0 && headers.indexOf('Type') >= 0) {
+      var idVal = data[i][headers.indexOf('NotificationID')];
+      var timeVal = data[i][headers.indexOf('Title')];
+      var titleVal = data[i][headers.indexOf('Message')];
+      var msgVal = data[i][headers.indexOf('Type')];
+      var activeVal = data[i][headers.indexOf('Active')];
+      var createdVal = headers.indexOf('CreatedAt') >= 0 ? data[i][headers.indexOf('CreatedAt')] : '';
+      
+      row = {
+        ID: idVal,
+        Timestamp: toISOString(timeVal),
+        Title: String(titleVal),
+        Message: String(msgVal),
+        Read: false,
+        Status: 'Published',
+        CreatedAt: createdVal ? toISOString(createdVal) : toISOString(timeVal)
+      };
+    } else {
+      // Standard header mapping
+      var active = true;
+      for (var j = 0; j < headers.length; j++) {
+        var key = headers[j].toString().trim();
+        var val = data[i][j];
+        var valStr = val instanceof Date ? val.toISOString() : val;
+        
+        if (key === 'ID' || key === 'NotificationID') row['ID'] = valStr;
+        else if (key === 'Timestamp') row['Timestamp'] = valStr;
+        else if (key === 'Title') row['Title'] = valStr;
+        else if (key === 'Message') row['Message'] = valStr;
+        else if (key === 'Read') row['Read'] = (valStr === true || valStr === 'true' || valStr === 'TRUE');
+        else if (key === 'Status') row['Status'] = valStr;
+        else if (key === 'CreatedAt') row['CreatedAt'] = valStr;
+        else if (key === 'Active') {
+          // If the column header is actually Active (not Read), map it
+          row['Active'] = (valStr === true || valStr === 'true' || valStr === 'TRUE');
+        }
+        else row[key] = valStr;
+      }
+      if (row['Active'] !== undefined && row['Active'] === false) {
+        active = false;
+      }
+      if (!row['Status']) row['Status'] = 'Published';
+      if (!row['Timestamp']) row['Timestamp'] = new Date().toISOString();
+      if (!row['CreatedAt']) row['CreatedAt'] = row['Timestamp'];
+      
+      if (!active) continue;
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
 function handleNotificationCRUD(spreadsheet, params) {
   var action = params.action;
   var notification = params.notification;
@@ -847,26 +917,50 @@ function handleNotificationCRUD(spreadsheet, params) {
 
   var data = sheet.getDataRange().getValues();
   var headers = data[0];
-  var idIndex = headers.indexOf('ID');
+  
+  var idIndex = headers.indexOf('NotificationID');
+  if (idIndex === -1) idIndex = headers.indexOf('ID');
+  if (idIndex === -1) idIndex = 0;
 
-  var rowValues = [
-    notification.ID,
-    notification.Timestamp || new Date().toISOString(),
-    notification.Title,
-    notification.Message,
-    notification.Read !== undefined ? notification.Read : false
-  ];
+  if (action === 'create' && !notification.ID) {
+    var maxId = 0;
+    for (var i = 1; i < data.length; i++) {
+      var currId = Number(data[i][idIndex]);
+      if (!isNaN(currId) && currId > maxId) maxId = currId;
+    }
+    notification.ID = maxId + 1;
+  }
+
+  // Build row values matching spreadsheet headers dynamically
+  var rowValues = new Array(headers.length);
+  
+  // Check if user's specific custom layout is used
+  var isCustomLayout = headers.indexOf('NotificationID') >= 0 && headers.indexOf('Title') >= 0 && headers.indexOf('Message') >= 0 && headers.indexOf('Type') >= 0;
+  
+  for (var j = 0; j < headers.length; j++) {
+    var key = headers[j].toString().trim();
+    if (isCustomLayout) {
+      if (key === 'NotificationID') rowValues[j] = notification.ID;
+      else if (key === 'Title') rowValues[j] = notification.Timestamp || new Date().toISOString();
+      else if (key === 'Message') rowValues[j] = notification.Title;
+      else if (key === 'Type') rowValues[j] = notification.Message;
+      else if (key === 'Active') rowValues[j] = true; // Set to true/active so it's not filtered out
+      else if (key === 'CreatedAt') rowValues[j] = new Date().toISOString();
+      else rowValues[j] = '';
+    } else {
+      if (key === 'ID' || key === 'NotificationID') rowValues[j] = notification.ID;
+      else if (key === 'Timestamp') rowValues[j] = notification.Timestamp || new Date().toISOString();
+      else if (key === 'Title') rowValues[j] = notification.Title;
+      else if (key === 'Message') rowValues[j] = notification.Message;
+      else if (key === 'Read') rowValues[j] = notification.Read !== undefined ? notification.Read : false;
+      else if (key === 'Status') rowValues[j] = notification.Status || 'Published';
+      else if (key === 'CreatedAt') rowValues[j] = new Date().toISOString();
+      else if (key === 'Active') rowValues[j] = true;
+      else rowValues[j] = '';
+    }
+  }
 
   if (action === 'create') {
-    if (!notification.ID) {
-      var maxId = 0;
-      for (var i = 1; i < data.length; i++) {
-        var currId = Number(data[i][idIndex]);
-        if (!isNaN(currId) && currId > maxId) maxId = currId;
-      }
-      notification.ID = maxId + 1;
-      rowValues[0] = notification.ID;
-    }
     sheet.appendRow(rowValues);
     return { success: true, message: 'Notification created successfully', ID: notification.ID };
   }

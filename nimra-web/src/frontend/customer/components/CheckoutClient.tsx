@@ -5,10 +5,9 @@ import Link from 'next/link';
 import { useCart } from '@/frontend/customer/hooks/useCart';
 import { useAuth } from '@/frontend/customer/hooks/useAuth';
 import { useLocation } from '@/frontend/customer/contexts/LocationContext';
-import { ALL_STATES, INDIA_DATA } from '@/frontend/customer/utils/indiaData';
-import { submitOrder } from '@/utils/api';
+import { submitOrder, saveUser } from '@/utils/api';
 import { toast } from 'sonner';
-import { CheckoutForm, CheckoutSummary, CheckoutSuccess } from './portal/Checkout';
+import { CheckoutForm, CheckoutSummary, CheckoutSuccess, SavedAddress, WORLD_DATA } from './portal/Checkout';
 
 const initialForm = {
   name: '',
@@ -22,6 +21,7 @@ const initialForm = {
   pincode: '',
   state: '',
   city: '',
+  country: 'India',
   addressType: 'Home' as 'Home' | 'Work' | 'Other',
   instructions: '',
   saveAddress: false,
@@ -31,81 +31,219 @@ type FormState = typeof initialForm;
 
 export default function CheckoutClient() {
   const cart = useCart();
-  const { user } = useAuth();
+  const { user, login } = useAuth();
   const [form, setForm] = useState<FormState>(initialForm);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [status, setStatus] = useState<{ kind: 'idle' | 'loading' | 'success' | 'error'; message: string; orderId?: string }>({ kind: 'idle', message: '' });
+  
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [isEditingAddress, setIsEditingAddress] = useState(true);
 
   const location = useLocation();
 
-  // Pre-fill from profile on mount
+  // Load saved addresses on mount
   useEffect(() => {
-    if (user) {
-      setForm((f) => ({
-        ...f,
-        name: f.name || (user.Name ? String(user.Name) : ''),
-        mobile: f.mobile || (user.Mobile ? String(user.Mobile) : ''),
-        email: f.email || (user.Username ? String(user.Username) : ''),
-      }));
+    const storageKey = `nimra_saved_addresses_${user?.ID || 'guest'}`;
+    const saved = localStorage.getItem(storageKey);
+    if (saved) {
+      try {
+        const parsed: SavedAddress[] = JSON.parse(saved);
+        setSavedAddresses(parsed);
+        if (parsed.length > 0) {
+          // Find default address or use first one
+          const defaultAddr = parsed.find(a => a.isDefault) || parsed[0];
+          setSelectedAddressId(defaultAddr.id);
+          setIsEditingAddress(false); // Read-only by default
+
+          // Prefill form with selected address details
+          setForm({
+            name: defaultAddr.name || user?.Name || '',
+            mobile: defaultAddr.mobile || user?.Mobile || '',
+            altMobile: defaultAddr.altMobile || '',
+            email: defaultAddr.email || user?.Username || '',
+            flatNo: defaultAddr.flatNo,
+            buildingName: defaultAddr.buildingName || '',
+            locality: defaultAddr.locality,
+            landmark: defaultAddr.landmark || '',
+            pincode: defaultAddr.pincode,
+            state: defaultAddr.state,
+            city: defaultAddr.city,
+            country: defaultAddr.country || 'India',
+            addressType: defaultAddr.type,
+            instructions: defaultAddr.instructions || '',
+            saveAddress: false,
+          });
+        }
+      } catch (e) {
+        console.error('Failed to parse saved addresses', e);
+      }
     }
   }, [user]);
 
-  // Pre-fill from location
+  // Pre-detect country based on location details or timezone fallback
   useEffect(() => {
-    if (location.city || location.pincode) {
-      setForm((f) => {
-        let matchedState = f.state || location.state;
-        let matchedCity = f.city || location.city;
+    if (savedAddresses.length > 0 && selectedAddressId) return; // Don't override if using saved
 
-        // If form state is empty, try to match location.state
-        if (location.state && !f.state) {
-          const foundState = ALL_STATES.find(s => s.toLowerCase().trim() === location.state.toLowerCase().trim());
-          if (foundState) matchedState = foundState;
-        }
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    let detectedCountry = 'India';
 
-        // If form city is empty, try to find a matching city in the state's city list
-        if (matchedState && !f.city) {
-          const cities = INDIA_DATA[matchedState] || [];
-          const searchTarget = `${location.city} ${location.address}`.toLowerCase();
-          const foundCity = cities.find(c => searchTarget.includes(c.toLowerCase()));
-          if (foundCity) {
-            matchedCity = foundCity;
-          }
-        }
-
-        return {
-          ...f,
-          city: matchedCity,
-          state: matchedState,
-          pincode: f.pincode || location.pincode,
-          locality: f.locality || (location.address ? location.address.split(',')[0].trim() : ''),
-        };
-      });
+    if (tz.includes('America') || tz.includes('US/')) {
+      detectedCountry = 'United States';
+    } else if (tz.includes('Dubai') || tz.includes('Asia/Dubai')) {
+      detectedCountry = 'United Arab Emirates';
     }
-  }, [location.city, location.state, location.pincode, location.address]);
 
-  const update = <K extends keyof FormState>(key: K, value: FormState[K]) =>
+    if (location.address) {
+      const addrLower = location.address.toLowerCase();
+      if (addrLower.includes('united states') || addrLower.includes('us')) {
+        detectedCountry = 'United States';
+      } else if (addrLower.includes('united arab emirates') || addrLower.includes('uae') || addrLower.includes('dubai')) {
+        detectedCountry = 'United Arab Emirates';
+      } else if (addrLower.includes('india')) {
+        detectedCountry = 'India';
+      }
+    }
+
+    setForm(f => ({ ...f, country: detectedCountry }));
+  }, [location.address, savedAddresses, selectedAddressId]);
+
+  // Pre-fill user contact info if empty
+  useEffect(() => {
+    if (user && isEditingAddress && !selectedAddressId) {
+      setForm(f => ({
+        ...f,
+        name: f.name || String(user.Name || ''),
+        mobile: f.mobile || String(user.Mobile || ''),
+        email: f.email || String(user.Username || ''),
+      }));
+    }
+  }, [user, isEditingAddress, selectedAddressId]);
+
+  // Auto-detect address details from reverse geolocation
+  const handleDetectLocation = () => {
+    if (location.city || location.pincode) {
+      let matchedState = form.state || location.state;
+      let matchedCity = form.city || location.city;
+
+      const currentCountryData = WORLD_DATA[form.country] || {};
+      const stateKeys = Object.keys(currentCountryData);
+
+      if (location.state && !form.state) {
+        const foundState = stateKeys.find(s => s.toLowerCase().trim() === location.state.toLowerCase().trim());
+        if (foundState) matchedState = foundState;
+      }
+
+      if (matchedState && !form.city) {
+        const cities = currentCountryData[matchedState] || [];
+        const searchTarget = `${location.city} ${location.address}`.toLowerCase();
+        const foundCity = cities.find(c => searchTarget.includes(c.toLowerCase()));
+        if (foundCity) {
+          matchedCity = foundCity;
+        }
+      }
+
+      setForm((f) => ({
+        ...f,
+        city: matchedCity,
+        state: matchedState,
+        pincode: f.pincode || location.pincode,
+        locality: f.locality || (location.address ? location.address.split(',')[0].trim() : ''),
+      }));
+      toast.success('Address autofilled from current GPS location.');
+    } else {
+      toast.error('Could not detect location. Please check your GPS permissions.');
+    }
+  };
+
+  const update = (key: string, value: any) => {
     setForm((cur) => ({ ...cur, [key]: value }));
+  };
 
-  const clearError = (key: keyof FormState) =>
-    setErrors((e) => { const n = { ...e }; delete n[key]; return n; });
+  const clearError = (key: string) => {
+    setErrors((e) => {
+      const n = { ...e };
+      delete n[key as keyof FormState];
+      return n;
+    });
+  };
 
-  // Validate all required fields
+  // Validate all fields
   const validate = (): boolean => {
-    const newErrors: typeof errors = {};
-    if (!form.name.trim() && !user?.Name) newErrors.name = 'Full name is required.';
-    const mobile = form.mobile || (user?.Mobile ? String(user.Mobile) : '');
-    if (!/^\d{10}$/.test(mobile)) newErrors.mobile = 'Enter a valid 10-digit mobile number.';
-    if (form.altMobile && !/^\d{10}$/.test(form.altMobile)) newErrors.altMobile = 'Enter a valid 10-digit number.';
-    const email = form.email || (user?.Username ? String(user.Username) : '');
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) newErrors.email = 'Enter a valid email address.';
-    if (!form.flatNo.trim()) newErrors.flatNo = 'House/Flat number is required.';
-    if (!form.locality.trim()) newErrors.locality = 'Area/Locality is required.';
-    if (!/^\d{6}$/.test(form.pincode)) newErrors.pincode = 'Enter a valid 6-digit pincode.';
+    const newErrors: Record<string, string> = {};
+    if (!form.name.trim()) newErrors.name = 'Full name is required.';
+    if (!/^\d{10}$/.test(form.mobile.trim())) newErrors.mobile = 'Enter a valid 10-digit mobile number.';
+    if (form.altMobile.trim() && !/^\d{10}$/.test(form.altMobile.trim())) newErrors.altMobile = 'Enter a valid 10-digit alternate number.';
+    if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) newErrors.email = 'Enter a valid email address.';
+    if (!form.flatNo.trim()) newErrors.flatNo = 'Flat or house number is required.';
+    if (!form.locality.trim()) newErrors.locality = 'Area or locality is required.';
+    if (!form.pincode.trim()) newErrors.pincode = 'Pincode is required.';
     if (!form.state) newErrors.state = 'Please select a state.';
     if (!form.city) newErrors.city = 'Please select a city.';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSelectAddress = (id: string) => {
+    const addr = savedAddresses.find(a => a.id === id);
+    if (addr) {
+      setSelectedAddressId(id);
+      setIsEditingAddress(false);
+      setForm({
+        name: addr.name || user?.Name || '',
+        mobile: addr.mobile || user?.Mobile || '',
+        altMobile: addr.altMobile || '',
+        email: addr.email || user?.Username || '',
+        flatNo: addr.flatNo,
+        buildingName: addr.buildingName || '',
+        locality: addr.locality,
+        landmark: addr.landmark || '',
+        pincode: addr.pincode,
+        state: addr.state,
+        city: addr.city,
+        country: addr.country || 'India',
+        addressType: addr.type,
+        instructions: addr.instructions || '',
+        saveAddress: false,
+      });
+      toast.info(`Switched delivery address to ${addr.type}`);
+    }
+  };
+
+  const handleSetDefaultAddress = (id: string) => {
+    const storageKey = `nimra_saved_addresses_${user?.ID || 'guest'}`;
+    const updated = savedAddresses.map(a => ({
+      ...a,
+      isDefault: a.id === id
+    }));
+    setSavedAddresses(updated);
+    localStorage.setItem(storageKey, JSON.stringify(updated));
+    toast.success('Default delivery location updated.');
+  };
+
+  const handleAddNewClick = () => {
+    setSelectedAddressId(null);
+    setIsEditingAddress(true);
+    setForm({
+      ...initialForm,
+      name: user?.Name || '',
+      mobile: user?.Mobile || '',
+      email: user?.Username || '',
+    });
+  };
+
+  const handleEditClick = () => {
+    setIsEditingAddress(true);
+  };
+
+  const handleCancelEditClick = () => {
+    if (selectedAddressId) {
+      handleSelectAddress(selectedAddressId);
+    } else if (savedAddresses.length > 0) {
+      handleSelectAddress(savedAddresses[0].id);
+    } else {
+      setIsEditingAddress(true);
+    }
   };
 
   const placeOrder = async (event: FormEvent) => {
@@ -114,28 +252,75 @@ export default function CheckoutClient() {
       toast.error('Your cart is empty.');
       return;
     }
-    if (!validate()) {
+
+    // If they are in edit mode, validate the fields.
+    if (isEditingAddress && !validate()) {
       toast.error('Please fix the errors in the form.');
       return;
     }
 
-    const resolvedName = form.name.trim() || (user?.Name ? String(user.Name) : '');
-    const resolvedMobile = form.mobile.trim() || (user?.Mobile ? String(user.Mobile) : '');
-    const resolvedEmail = form.email.trim() || (user?.Username ? String(user.Username) : '');
+    setStatus({ kind: 'loading', message: 'Placing your order…' });
+
     const compositeAddress = [form.flatNo, form.buildingName, form.locality, form.landmark]
       .filter(Boolean).join(', ');
 
-    setStatus({ kind: 'loading', message: 'Placing your order…' });
+    // 1. Persist to Profile and local storage if saveAddress is enabled
+    if (form.saveAddress && user) {
+      const storageKey = `nimra_saved_addresses_${user.ID}`;
+      const newSavedAddr: SavedAddress = {
+        id: selectedAddressId || Date.now().toString(),
+        type: form.addressType,
+        name: form.name,
+        mobile: form.mobile,
+        altMobile: form.altMobile || undefined,
+        email: form.email || undefined,
+        flatNo: form.flatNo,
+        buildingName: form.buildingName || undefined,
+        locality: form.locality,
+        landmark: form.landmark || undefined,
+        pincode: form.pincode,
+        state: form.state,
+        city: form.city,
+        country: form.country,
+        instructions: form.instructions || undefined,
+        isDefault: true, // Auto set as default when saved
+      };
+
+      // Set others to not default
+      const listWithoutDefault = savedAddresses.map(a => ({ ...a, isDefault: false }));
+      const updatedList = selectedAddressId 
+        ? listWithoutDefault.map(a => a.id === selectedAddressId ? newSavedAddr : a)
+        : [...listWithoutDefault, newSavedAddr];
+
+      setSavedAddresses(updatedList);
+      localStorage.setItem(storageKey, JSON.stringify(updatedList));
+
+      // Persist contact details (Name, Mobile, Username/Email) to the profile backend
+      try {
+        const updatePayload = {
+          ID: user.ID,
+          Name: form.name,
+          Mobile: form.mobile,
+          Username: form.email || user.Username
+        };
+        const profileRes = await saveUser(updatePayload, 'update');
+        if (profileRes.success) {
+          login({ ...user, ...updatePayload });
+        }
+      } catch (err) {
+        console.error('Failed to auto-persist contact info to backend user profile', err);
+      }
+    }
 
     const orderData = {
       type: 'order' as const,
       userId: user?.ID,
       customer: {
         userId: user?.ID,
-        name: resolvedName,
-        mobile: resolvedMobile,
+        name: form.name,
+        mobile: form.mobile,
         altMobile: form.altMobile || undefined,
-        email: resolvedEmail,
+        email: form.email,
         flatNo: form.flatNo,
         buildingName: form.buildingName || undefined,
         locality: form.locality,
@@ -146,7 +331,7 @@ export default function CheckoutClient() {
         addressType: form.addressType,
         instructions: form.instructions || undefined,
         saveAddress: form.saveAddress,
-        address: compositeAddress,
+        address: `${compositeAddress}, ${form.city}, ${form.state} - ${form.pincode}, ${form.country}`,
       },
       items: cart.items,
       subtotal: cart.subtotal,
@@ -193,26 +378,36 @@ export default function CheckoutClient() {
   return (
     <section className="checkout-page">
       <div className="container">
-
-
         <div className="checkout-actions-top">
-           <Link href="/cart" className="btn btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', height: 'auto', minHeight: '0' }}>← Back to Cart</Link>
+           <Link href="/cart" className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', height: 'auto', minHeight: '0', borderRadius: 'var(--radius-md)' }}>← Back to Cart</Link>
         </div>
 
         {status.kind === 'success' ? (
           <CheckoutSuccess message={status.message} orderId={status.orderId} />
         ) : (
-          <form className="checkout-grid animate-fade-in" onSubmit={placeOrder} noValidate>
-            <CheckoutForm
-              form={form}
-              setForm={setForm}
-              errors={errors}
-              clearError={clearError}
-              user={user}
-              update={update}
-            />
-            <CheckoutSummary status={status} />
-          </form>
+          <div className="checkout-content-wrap">
+            <form className="checkout-grid animate-fade-in" onSubmit={placeOrder} noValidate>
+              <CheckoutForm
+                form={form}
+                setForm={setForm}
+                errors={errors as any}
+                clearError={clearError}
+                user={user}
+                update={update}
+                savedAddresses={savedAddresses}
+                selectedAddressId={selectedAddressId}
+                isEditingAddress={isEditingAddress}
+                onSelectAddress={handleSelectAddress}
+                onSetDefaultAddress={handleSetDefaultAddress}
+                onAddNewClick={handleAddNewClick}
+                onEditClick={handleEditClick}
+                onCancelEditClick={handleCancelEditClick}
+                locationLoading={location.loading}
+                onDetectLocation={handleDetectLocation}
+              />
+              <CheckoutSummary status={status} />
+            </form>
+          </div>
         )}
       </div>
       <style jsx>{styles}</style>
@@ -221,52 +416,11 @@ export default function CheckoutClient() {
 }
 
 const styles = `
-  .checkout-page { padding-top: 0; padding-bottom: 2rem; min-height: 90vh; font-family: var(--font-body); }
+  .checkout-page { padding-top: 0; padding-bottom: 4rem; min-height: 90vh; font-family: var(--font-body); }
   
-  /* ── Page Header ── */
-  .page-header {
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid var(--border-color);
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .page-header h1 {
-    font-size: 1.75rem;
-    font-weight: 700;
-    margin-bottom: 0.15rem;
-    letter-spacing: -0.02em;
-    color: var(--text-primary);
-  }
-  .page-header p {
-    color: var(--text-muted);
-    margin: 0;
-    font-size: 0.875rem;
-    line-height: 1.4;
-  }
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    border-radius: 999px;
-    padding: 0.3rem 0.85rem;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 0.75rem;
-  }
-  .badge-primary {
-    background: rgba(37, 99, 235, 0.1);
-    color: var(--primary-color);
-    border: 1px solid rgba(37, 99, 235, 0.2);
-  }
+  .checkout-actions-top { margin-top: 1rem; margin-bottom: 1rem; display: flex; justify-content: flex-start; }
 
-  .empty-cart-action { text-align: center; margin-top: 2rem; }
-  .checkout-actions-top { margin-top: 1rem; margin-bottom: 0.5rem; display: flex; justify-content: flex-start; }
-
-  .checkout-grid { display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; align-items: start; }
+  .checkout-grid { display: grid; grid-template-columns: 1fr 340px; gap: 2rem; align-items: start; }
 
   @media (max-width: 900px) { .checkout-grid { grid-template-columns: 1fr; } }
 `;

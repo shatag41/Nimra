@@ -30,7 +30,7 @@ export default function OrdersClient() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { orders, loadingOrders, refreshOrders } = useCustomerOrders();
-  const { addProduct } = useCart();
+  const { addProduct, items: cartItems, subtotal, deliveryCharge, grandTotal, totalItems } = useCart();
 
   const [activeTab, setActiveTab] = useState<OrderTab>('all');
   const [dateFilter, setDateFilter] = useState<'all' | '30days' | '6months' | 'year'>('all');
@@ -334,12 +334,108 @@ export default function OrdersClient() {
             )}
           </div>
 
+
+
           {/* Orders Cards List */}
           {loadingOrders ? (
             <div className="loading-state">
               <div className="loader"></div>
               <p>Syncing orders...</p>
             </div>
+          ) : activeTab === 'checkout-required' ? (
+            /* ── Checkout Required: show current cart items ── */
+            cartItems.length > 0 ? (
+              <div className="orders-cards-list">
+                <div className="amazon-order-card card">
+                  {/* Card Header */}
+                  <div className="amazon-card-header">
+                    <div className="header-meta-columns">
+                      <div className="meta-col">
+                        <span className="meta-label">ITEMS IN CART</span>
+                        <span className="meta-value">{totalItems} item{totalItems !== 1 ? 's' : ''}</span>
+                      </div>
+                      <div className="meta-col">
+                        <span className="meta-label">SUBTOTAL</span>
+                        <span className="meta-value highlight-price">{formatCurrency(subtotal)}</span>
+                      </div>
+                    </div>
+                    <div className="header-id-column">
+                      <span className="meta-label">STATUS</span>
+                      <span className="meta-value" style={{ color: '#f59e0b', fontWeight: 700 }}>Checkout Required</span>
+                    </div>
+                  </div>
+
+                  {/* Card Body */}
+                  <div className="amazon-card-body">
+                    <div className="card-body-content-split">
+                      <div className="items-list-column">
+                        {cartItems.map((item) => (
+                          <div key={item.productId} className="amazon-item-row">
+                            <div className="item-img-wrapper">
+                              {item.imageUrl ? (
+                                <img src={item.imageUrl} alt={item.name} className="item-img" />
+                              ) : (
+                                <span className="fallback-box">📦</span>
+                              )}
+                            </div>
+                            <div className="item-details-column">
+                              <h4 className="item-title-txt">{item.name}</h4>
+                              <span className="item-meta-txt">{item.category} | {item.volume}</span>
+                              <span className="item-price-qty">{item.quantity} × {formatCurrency(item.price)}</span>
+                            </div>
+                            <div className="item-status-column">
+                              <div className="status-label-group">
+                                <span className="status-dot-indicator pending"></span>
+                                <span className="status-header-text">In Cart</span>
+                              </div>
+                              <span className="status-desc-text">{formatCurrency(item.price * item.quantity)}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="actions-column" onClick={(e) => e.stopPropagation()}>
+                        <Link
+                          href="/checkout"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.45rem',
+                            padding: '0.65rem 1.25rem',
+                            background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                            color: '#fff',
+                            fontWeight: 700,
+                            fontSize: '0.875rem',
+                            borderRadius: '10px',
+                            textDecoration: 'none',
+                            boxShadow: '0 4px 16px rgba(37,99,235,0.35)',
+                            letterSpacing: '0.01em',
+                            transition: 'all 0.2s ease',
+                            width: '100%',
+                            boxSizing: 'border-box' as const,
+                          }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                          </svg>
+                          Proceed to Checkout
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="empty-orders card animate-scale-in">
+                <div className="empty-icon-glow">🛒</div>
+                <h3>Cart is Empty</h3>
+                <p>Add items to your cart to proceed with checkout.</p>
+                <Link href="/products" className="btn btn-primary">
+                  Shop Products
+                </Link>
+              </div>
+            )
           ) : filteredOrders.length > 0 ? (
             <div className="orders-cards-list">
               {filteredOrders.map((order) => {
@@ -413,9 +509,15 @@ export default function OrdersClient() {
                         </div>
 
                         <div className="actions-column" onClick={(e) => e.stopPropagation()}>
-                          <button onClick={() => handleReorder(order)} className="amazon-action-btn primary-action">
-                            Reorder
-                          </button>
+                          {activeTab === 'checkout-required' ? (
+                            <Link href="/checkout" className="amazon-action-btn primary-action" style={{ textDecoration: 'none', textAlign: 'center' }}>
+                              Proceed to Checkout
+                            </Link>
+                          ) : (
+                            <button onClick={() => handleReorder(order)} className="amazon-action-btn primary-action">
+                              Reorder
+                            </button>
+                          )}
                           <button onClick={() => setSelectedOrder(order)} className="amazon-action-btn">
                             View details
                           </button>
@@ -1566,6 +1668,261 @@ export default function OrdersClient() {
           .refresh-btn {
             width: 100%;
             justify-content: center;
+          }
+        }
+
+        /* ── Cart Checkout Panel (Checkout Required Tab) ── */
+        .cart-checkout-panel {
+          background: var(--bg-secondary);
+          border: 1.5px solid var(--primary-color);
+          border-radius: var(--radius-md);
+          box-shadow: 0 4px 24px rgba(37, 99, 235, 0.1);
+          overflow: hidden;
+          animation: fadeIn 0.3s ease;
+          margin-bottom: 0.5rem;
+        }
+
+        .ccp-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 1.25rem 1.5rem;
+          background: rgba(37, 99, 235, 0.05);
+          border-bottom: 1px solid var(--border-color);
+          flex-wrap: wrap;
+          gap: 1rem;
+        }
+
+        .ccp-title-group {
+          display: flex;
+          align-items: center;
+          gap: 0.85rem;
+        }
+
+        .ccp-icon {
+          font-size: 1.75rem;
+          line-height: 1;
+        }
+
+        .ccp-title {
+          font-size: 1.2rem;
+          font-weight: 800;
+          margin: 0;
+          color: var(--text-primary);
+          letter-spacing: -0.01em;
+        }
+
+        .ccp-subtitle {
+          font-size: 0.8rem;
+          color: var(--text-muted);
+          margin: 0.1rem 0 0;
+          font-weight: 500;
+        }
+
+        .ccp-checkout-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.6rem 1.4rem;
+          background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+          color: #fff !important;
+          font-weight: 700;
+          font-size: 0.875rem;
+          border-radius: 999px;
+          text-decoration: none !important;
+          box-shadow: 0 2px 12px rgba(37, 99, 235, 0.35);
+          transition: all 0.2s ease;
+          letter-spacing: 0.01em;
+          white-space: nowrap;
+        }
+
+        .ccp-checkout-btn:hover {
+          background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+          box-shadow: 0 4px 18px rgba(37, 99, 235, 0.45);
+          transform: translateY(-1px);
+        }
+
+        .ccp-items-list {
+          padding: 0.5rem 0;
+        }
+
+        .ccp-item-row {
+          display: grid;
+          grid-template-columns: 52px 1fr auto;
+          align-items: center;
+          gap: 1rem;
+          padding: 0.85rem 1.5rem;
+          border-bottom: 1px solid var(--border-light, rgba(148,163,184,0.1));
+          transition: background 0.15s;
+        }
+
+        .ccp-item-row:last-child {
+          border-bottom: none;
+        }
+
+        .ccp-item-row:hover {
+          background: rgba(37, 99, 235, 0.03);
+        }
+
+        .ccp-item-img-wrap {
+          width: 52px;
+          height: 52px;
+          border-radius: var(--radius-sm);
+          border: 1px solid var(--border-color);
+          background: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          flex-shrink: 0;
+        }
+
+        .ccp-item-img {
+          max-width: 100%;
+          max-height: 100%;
+          object-fit: contain;
+        }
+
+        .ccp-item-fallback {
+          font-size: 1.25rem;
+        }
+
+        .ccp-item-info {
+          display: flex;
+          flex-direction: column;
+          gap: 0.15rem;
+          min-width: 0;
+        }
+
+        .ccp-item-name {
+          font-size: 0.9rem;
+          font-weight: 600;
+          color: var(--text-primary);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .ccp-item-meta {
+          font-size: 0.75rem;
+          color: var(--text-muted);
+        }
+
+        .ccp-item-price-group {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 0.15rem;
+          flex-shrink: 0;
+        }
+
+        .ccp-item-qty {
+          font-size: 0.75rem;
+          color: var(--text-muted);
+          font-weight: 500;
+        }
+
+        .ccp-item-subtotal {
+          font-size: 0.925rem;
+          font-weight: 700;
+          color: var(--text-primary);
+        }
+
+        .ccp-summary {
+          border-top: 1.5px solid var(--border-color);
+          padding: 1.25rem 1.5rem;
+          background: rgba(148, 163, 184, 0.03);
+          display: flex;
+          flex-direction: column;
+          gap: 0.65rem;
+        }
+
+        .ccp-summary-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 0.875rem;
+          color: var(--text-secondary);
+          font-weight: 500;
+        }
+
+        .ccp-total-row {
+          font-size: 1rem;
+          font-weight: 700;
+          color: var(--text-primary);
+          padding-top: 0.5rem;
+          border-top: 1px solid var(--border-color);
+          margin-top: 0.25rem;
+        }
+
+        .ccp-free {
+          color: #16a34a;
+          font-weight: 700;
+        }
+
+        .ccp-checkout-btn-full {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.6rem;
+          margin-top: 0.75rem;
+          padding: 0.85rem 1.5rem;
+          background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+          color: #fff !important;
+          font-weight: 800;
+          font-size: 1rem;
+          border-radius: var(--radius-md);
+          text-decoration: none !important;
+          box-shadow: 0 4px 18px rgba(37, 99, 235, 0.35);
+          transition: all 0.2s ease;
+          letter-spacing: 0.01em;
+        }
+
+        .ccp-checkout-btn-full:hover {
+          background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+          box-shadow: 0 6px 24px rgba(37, 99, 235, 0.45);
+          transform: translateY(-2px);
+        }
+
+        .ccp-empty {
+          padding: 3rem 2rem;
+          text-align: center;
+          color: var(--text-muted);
+        }
+
+        .ccp-empty-icon {
+          font-size: 2.5rem;
+          margin-bottom: 0.75rem;
+        }
+
+        .ccp-empty p {
+          margin: 0;
+          font-size: 0.9rem;
+          line-height: 1.6;
+        }
+
+        .ccp-link {
+          color: var(--primary-color);
+          font-weight: 600;
+          text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+          .ccp-header {
+            flex-direction: column;
+            align-items: flex-start;
+          }
+          .ccp-checkout-btn {
+            width: 100%;
+            justify-content: center;
+          }
+          .ccp-item-row {
+            grid-template-columns: 44px 1fr auto;
+            padding: 0.75rem 1rem;
+            gap: 0.75rem;
+          }
+          .ccp-summary {
+            padding: 1rem;
           }
         }
       `}</style>

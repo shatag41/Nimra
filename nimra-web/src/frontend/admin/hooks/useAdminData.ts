@@ -395,7 +395,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
         return false;
       }
     } catch (err) {
-      showAlert('Failed to broadcast announcement', 'error');
+      showAlert('Failed to broadcast notification', 'error');
       return false;
     } finally {
       setSaveLoading(false);

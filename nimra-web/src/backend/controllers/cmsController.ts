@@ -207,6 +207,104 @@ export async function handlePost(req: Request) {
       }
 
       return NextResponse.json({ success: false, message: 'Unsupported user action.' }, { status: 400 });
+    } else if (payload.type === 'notificationCRUD') {
+      const action = payload.action || 'create';
+      const incomingNotif = payload.notification || {};
+      if (action === 'delete') {
+        const idToDelete = incomingNotif.ID;
+        fallbackData.notifications = fallbackData.notifications.filter((n: any) => String(n.ID) !== String(idToDelete));
+        return NextResponse.json({ success: true, message: 'Notification deleted successfully' });
+      }
+      if (action === 'update') {
+        const notifIndex = fallbackData.notifications.findIndex((n: any) => String(n.ID) === String(incomingNotif.ID));
+        if (notifIndex >= 0) {
+          fallbackData.notifications[notifIndex] = {
+            ...fallbackData.notifications[notifIndex],
+            ...incomingNotif,
+          };
+          return NextResponse.json({ success: true, message: 'Notification updated successfully', ID: fallbackData.notifications[notifIndex].ID });
+        }
+        return NextResponse.json({ success: false, message: 'Notification not found for update.' }, { status: 404 });
+      }
+      if (action === 'create') {
+        const newNotif = {
+          ID: incomingNotif.ID || Date.now(),
+          Timestamp: new Date().toISOString(),
+          CreatedAt: new Date().toISOString(),
+          Status: incomingNotif.Status || 'Published',
+          Read: false,
+          ...incomingNotif,
+        };
+        fallbackData.notifications.push(newNotif);
+        return NextResponse.json({ success: true, message: 'Notification created successfully', ID: newNotif.ID });
+      }
+      return NextResponse.json({ success: false, message: 'Unsupported notification action.' }, { status: 400 });
+    } else if (payload.type === 'productCRUD') {
+      const action = payload.action || 'create';
+      const incomingProduct = payload.product || {};
+      if (action === 'delete') {
+        const idToDelete = incomingProduct.ID;
+        fallbackData.products = fallbackData.products.filter((p: any) => String(p.ID) !== String(idToDelete));
+        return NextResponse.json({ success: true, message: 'Product deleted successfully' });
+      }
+      if (action === 'update') {
+        const idx = fallbackData.products.findIndex((p: any) => String(p.ID) === String(incomingProduct.ID));
+        if (idx >= 0) {
+          fallbackData.products[idx] = { ...fallbackData.products[idx], ...incomingProduct };
+          return NextResponse.json({ success: true, message: 'Product updated successfully', ID: fallbackData.products[idx].ID });
+        }
+        return NextResponse.json({ success: false, message: 'Product not found.' }, { status: 404 });
+      }
+      if (action === 'create') {
+        const newProduct = { ID: incomingProduct.ID || Date.now(), Active: true, ...incomingProduct };
+        fallbackData.products.push(newProduct);
+        return NextResponse.json({ success: true, message: 'Product created successfully', ID: newProduct.ID });
+      }
+      return NextResponse.json({ success: false, message: 'Unsupported product action.' }, { status: 400 });
+    } else if (payload.type === 'bannerCRUD') {
+      const action = payload.action || 'create';
+      const incomingBanner = payload.banner || {};
+      if (action === 'delete') {
+        const idToDelete = incomingBanner.ID;
+        fallbackData.banners = fallbackData.banners.filter((b: any) => String(b.ID) !== String(idToDelete));
+        return NextResponse.json({ success: true, message: 'Banner deleted successfully' });
+      }
+      if (action === 'update') {
+        const idx = fallbackData.banners.findIndex((b: any) => String(b.ID) === String(incomingBanner.ID));
+        if (idx >= 0) {
+          fallbackData.banners[idx] = { ...fallbackData.banners[idx], ...incomingBanner };
+          return NextResponse.json({ success: true, message: 'Banner updated successfully', ID: fallbackData.banners[idx].ID });
+        }
+        return NextResponse.json({ success: false, message: 'Banner not found.' }, { status: 404 });
+      }
+      if (action === 'create') {
+        const newBanner = { ID: incomingBanner.ID || Date.now(), Active: true, ...incomingBanner };
+        fallbackData.banners.push(newBanner);
+        return NextResponse.json({ success: true, message: 'Banner created successfully', ID: newBanner.ID });
+      }
+      return NextResponse.json({ success: false, message: 'Unsupported banner action.' }, { status: 400 });
+    } else if (payload.type === 'faqCRUD') {
+      const action = payload.action || 'create';
+      const incomingFAQ = payload.faq || {};
+      if (action === 'delete') {
+        const idToDelete = incomingFAQ.ID;
+        fallbackData.faqs = fallbackData.faqs.filter((f: any) => String(f.ID) !== String(idToDelete));
+        return NextResponse.json({ success: true, message: 'FAQ deleted successfully' });
+      }
+      if (action === 'update') {
+        const idx = fallbackData.faqs.findIndex((f: any) => String(f.ID) === String(incomingFAQ.ID));
+        if (idx >= 0) {
+          fallbackData.faqs[idx] = { ...fallbackData.faqs[idx], ...incomingFAQ };
+          return NextResponse.json({ success: true, message: 'FAQ updated successfully', ID: fallbackData.faqs[idx].ID });
+        }
+        return NextResponse.json({ success: false, message: 'FAQ not found.' }, { status: 404 });
+      }
+      if (action === 'create') {
+        const newFAQ = { ID: incomingFAQ.ID || Date.now(), Active: true, ...incomingFAQ };
+        fallbackData.faqs.push(newFAQ);
+        return NextResponse.json({ success: true, message: 'FAQ created successfully', ID: newFAQ.ID });
+      }
+      return NextResponse.json({ success: false, message: 'Unsupported FAQ action.' }, { status: 400 });
     } else if (payload.type === 'requestOTP') {
       return NextResponse.json(
         {

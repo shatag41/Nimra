@@ -54,6 +54,6 @@ export const fallbackData: any = {
     { ID: 1, Name: 'System Admin', Username: 'admin', Role: 'Admin', Active: true },
   ],
   notifications: [
-    { ID: 1, Timestamp: new Date(Date.now() - 3600000).toISOString(), Title: 'Welcome to NIMRA Console', Message: 'Your admin panel is ready!', Read: false },
+    { ID: 1, Timestamp: new Date(Date.now() - 3600000).toISOString(), Title: 'Welcome to NIMRA Console', Message: 'Your admin panel is ready!', Read: false, Status: 'Published' },
   ],
 };

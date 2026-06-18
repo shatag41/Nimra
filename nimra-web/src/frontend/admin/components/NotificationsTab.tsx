@@ -34,7 +34,7 @@ export default function NotificationsTab({
         <form className="notif-sender-panel glass-inner" onSubmit={onSubmit}>
           <h3>Broadcast System Update</h3>
           <div className="form-group" style={{ marginTop: '1rem' }}>
-            <label>Announcement Title</label>
+            <label>Notification Title</label>
             <input
               required
               type="text"
@@ -54,16 +54,16 @@ export default function NotificationsTab({
             />
           </div>
           <button type="submit" className="btn btn-primary" style={{ marginTop: '1.25rem', width: '100%' }} disabled={saveLoading}>
-            📢 Log announcement
+            📢 Log notification
           </button>
         </form>
 
         {/* Notifications History Log */}
         <div className="notif-logs-panel">
-          <h3>Sent Announcements Log</h3>
+          <h3>Sent Notifications Log</h3>
           <div className="logs-list">
-            {filteredNotifications.map((n) => (
-              <div key={n.ID} className="log-item glass-inner">
+            {filteredNotifications.map((n, idx) => (
+              <div key={`${n.ID}-${idx}`} className="log-item glass-inner">
                 <div className="log-header">
                   <strong>{n.Title}</strong>
                   <button className="btn-delete-log" onClick={() => void handleNotifDelete(n.ID)}>✕</button>
@@ -73,7 +73,7 @@ export default function NotificationsTab({
               </div>
             ))}
             {filteredNotifications.length === 0 && (
-              <p className="empty">No announcements found.</p>
+              <p className="empty">No notifications found.</p>
             )}
           </div>
         </div>

@@ -128,6 +128,8 @@ export interface Notification {
   Title: string;
   Message: string;
   Read?: boolean | string;
+  Status?: string;
+  CreatedAt?: string;
 }
 
 export interface Inquiry {

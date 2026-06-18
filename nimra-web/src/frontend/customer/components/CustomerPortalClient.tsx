@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/frontend/customer/hooks/useAuth';
 import { useCustomerOrders } from '@/frontend/customer/hooks/useCustomerOrders';
 import { useCMSData } from '@/frontend/customer/hooks/useCMSData';
@@ -10,7 +11,10 @@ import { isOrderable } from '../utils/commerce';
 import { PortalHero } from './portal/Hero';
 import { Orders } from './portal/Orders';
 import { Profile } from './portal/Profile';
-import { CartToast } from './portal/Notifications';
+import { Addresses } from './portal/Addresses';
+import { CartToast, PortalNotifications } from './portal/Notifications';
+import { toast } from 'sonner';
+import { saveUser } from '@/utils/api';
 
 // Lazy-loaded heavy sections for faster page loads
 const RecommendationCard = dynamic(
@@ -24,9 +28,11 @@ const RushPortalBanner = dynamic(
 );
 
 export default function CustomerPortalClient() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, login } = useAuth();
   const { products } = useCMSData();
   const { orders, loadingOrders, metrics, refreshOrders } = useCustomerOrders();
+  const searchParams = useSearchParams();
+  const tab = searchParams.get('tab');
   const [cartToast, setCartToast] = React.useState<{ name: string; visible: boolean }>({ name: '', visible: false });
 
   const handleProductAdded = (product: any) => {
@@ -92,66 +98,82 @@ export default function CustomerPortalClient() {
     <div className="portal-page">
       <PortalHero isAuthenticated={true} name={user?.Name} />
 
-      <section className="metric-grid" aria-label="Account summary">
-        <div className="metric-card">
-          <span>Total Orders</span>
-          <strong>{orders.length}</strong>
-          <small>{loadingOrders ? 'Refreshing...' : 'Synced from your account'}</small>
-        </div>
-        <div className="metric-card">
-          <span>Active Orders</span>
-          <strong>{metrics.activeOrders}</strong>
-          <small>Pending, confirmed, or in transit</small>
-        </div>
-        <div className="metric-card">
-          <span>Delivered</span>
-          <strong>{metrics.deliveredOrders}</strong>
-          <small>Completed deliveries</small>
-        </div>
-        <div className="metric-card">
-          <span>Total Spend</span>
-          <strong>₹{metrics.totalSpend.toFixed(2)}</strong>
-          <small>Cash on delivery purchases</small>
-        </div>
-      </section>
-
-      <section className="portal-grid">
-        <Orders orders={orders} loadingOrders={loadingOrders} onRefresh={refreshOrders} />
-
-        <aside className="side-stack">
-          <Profile user={user} />
-
-          <div className="panel next-card">
-            <span className="eyebrow" style={{ color: 'var(--primary-color)', background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.2)', borderRadius: '999px', padding: '0.2rem 0.75rem', fontSize: '0.7rem' }}>Next Step</span>
-            <h2>{metrics.latestOrder ? 'Continue Tracking' : 'Start Your First Order'}</h2>
-            <p>
-              {metrics.latestOrder
-                ? `Latest order ${metrics.latestOrder.orderId} is currently ${metrics.latestOrder.status}.`
-                : 'Choose bottles, cans, or bulk jars and place a delivery request in minutes.'}
-            </p>
-            <Link
-              href={metrics.latestOrder ? `/track?orderId=${metrics.latestOrder.orderId}` : '/products'}
-              className="btn btn-primary"
-            >
-              {metrics.latestOrder ? 'Open Tracker' : 'Shop Products'}
-            </Link>
-          </div>
-        </aside>
-      </section>
-
-      {recommendedProducts.length > 0 && (
-        <section className="recommendations-section">
-          <div className="section-head-left">
-            <span className="eyebrow" style={{ color: 'var(--primary-color)', background: 'rgba(0,150,58,0.1)', border: '1px solid rgba(0,150,58,0.2)', borderRadius: '999px', padding: '0.2rem 0.75rem', fontSize: '0.7rem' }}>Recommendations</span>
-            <h2>Recommended Products</h2>
-            <p>Pure hydration options curated for your regular supply.</p>
-          </div>
-          <div className="recommendations-grid">
-            {recommendedProducts.map((product) => (
-              <RecommendationCard key={product.ID} product={product} onAdd={handleProductAdded} />
-            ))}
-          </div>
+      {tab === 'addresses' ? (
+        <section className="portal-grid" style={{ gridTemplateColumns: '1fr', maxWidth: '1000px', margin: '2rem auto' }}>
+          <Addresses />
         </section>
+      ) : tab === 'profile' ? (
+        <section className="portal-grid" style={{ gridTemplateColumns: '1fr', maxWidth: '600px', margin: '2rem auto' }}>
+          <EditProfileForm user={user} onUpdate={(updatedUser) => login(updatedUser)} />
+        </section>
+      ) : tab === 'notifications' ? (
+        <section className="portal-grid" style={{ gridTemplateColumns: '1fr', maxWidth: '800px', margin: '2rem auto' }}>
+          <PortalNotifications />
+        </section>
+      ) : (
+        <>
+          <section className="metric-grid" aria-label="Account summary">
+            <div className="metric-card">
+              <span>Total Orders</span>
+              <strong>{orders.length}</strong>
+              <small>{loadingOrders ? 'Refreshing...' : 'Synced from your account'}</small>
+            </div>
+            <div className="metric-card">
+              <span>Active Orders</span>
+              <strong>{metrics.activeOrders}</strong>
+              <small>Pending, confirmed, or in transit</small>
+            </div>
+            <div className="metric-card">
+              <span>Delivered</span>
+              <strong>{metrics.deliveredOrders}</strong>
+              <small>Completed deliveries</small>
+            </div>
+            <div className="metric-card">
+              <span>Total Spend</span>
+              <strong>₹{metrics.totalSpend.toFixed(2)}</strong>
+              <small>Cash on delivery purchases</small>
+            </div>
+          </section>
+
+          <section className="portal-grid">
+            <Orders orders={orders} loadingOrders={loadingOrders} onRefresh={refreshOrders} />
+
+            <aside className="side-stack">
+              <Profile user={user} />
+
+              <div className="panel next-card">
+                <span className="eyebrow" style={{ color: 'var(--primary-color)', background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.2)', borderRadius: '999px', padding: '0.2rem 0.75rem', fontSize: '0.7rem' }}>Next Step</span>
+                <h2>{metrics.latestOrder ? 'Continue Tracking' : 'Start Your First Order'}</h2>
+                <p>
+                  {metrics.latestOrder
+                    ? `Latest order ${metrics.latestOrder.orderId} is currently ${metrics.latestOrder.status}.`
+                    : 'Choose bottles, cans, or bulk jars and place a delivery request in minutes.'}
+                </p>
+                <Link
+                  href={metrics.latestOrder ? `/track?orderId=${metrics.latestOrder.orderId}` : '/products'}
+                  className="btn btn-primary"
+                >
+                  {metrics.latestOrder ? 'Open Tracker' : 'Shop Products'}
+                </Link>
+              </div>
+            </aside>
+          </section>
+
+          {recommendedProducts.length > 0 && (
+            <section className="recommendations-section">
+              <div className="section-head-left">
+                <span className="eyebrow" style={{ color: 'var(--primary-color)', background: 'rgba(0,150,58,0.1)', border: '1px solid rgba(0,150,58,0.2)', borderRadius: '999px', padding: '0.2rem 0.75rem', fontSize: '0.7rem' }}>Recommendations</span>
+                <h2>Recommended Products</h2>
+                <p>Pure hydration options curated for your regular supply.</p>
+              </div>
+              <div className="recommendations-grid">
+                {recommendedProducts.map((product) => (
+                  <RecommendationCard key={product.ID} product={product} onAdd={handleProductAdded} />
+                ))}
+              </div>
+            </section>
+          )}
+        </>
       )}
 
       <RushPortalBanner />
@@ -363,3 +385,446 @@ const portalStyles = `
     .guest-checkout { align-items: flex-start; flex-direction: column; padding: 1.25rem; }
   }
 `;
+
+function EditProfileForm({ user, onUpdate }: { user: any; onUpdate: (user: any) => void }) {
+  const [name, setName] = React.useState(String(user?.Name || ''));
+  const [mobile, setMobile] = React.useState(String(user?.Mobile || ''));
+  const [email, setEmail] = React.useState(String(user?.Username || ''));
+  const [isVerifying, setIsVerifying] = React.useState(false);
+  const [otp, setOtp] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  
+  // Validation errors state
+  const [errors, setErrors] = React.useState<{ name?: string; mobile?: string; email?: string; otp?: string }>({});
+
+  const validateFields = (): boolean => {
+    const newErrors: typeof errors = {};
+    const nameStr = String(name).trim();
+    const mobileStr = String(mobile).trim();
+    const emailStr = String(email).trim();
+    
+    // Name validation
+    if (nameStr.length < 2) {
+      newErrors.name = 'Full Name must be at least 2 characters.';
+    } else if (!/^[a-zA-Z\s]+$/.test(nameStr)) {
+      newErrors.name = 'Full Name should only contain letters and spaces.';
+    }
+
+    // Mobile validation
+    if (!/^[0-9]{10}$/.test(mobileStr)) {
+      newErrors.mobile = 'Mobile Number must be exactly 10 digits.';
+    }
+
+    // Email validation
+    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(emailStr)) {
+      newErrors.email = 'Please enter a valid email address.';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateFields()) return;
+
+    if (email !== user?.Username) {
+      setIsVerifying(true);
+      // Simulate sending OTP
+      toast.info('OTP Sent! Use 123456 to verify.');
+    } else {
+      performUpdate();
+    }
+  };
+
+  const verifyOtp = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (otp === '123456') {
+      performUpdate();
+    } else {
+      setErrors(prev => ({ ...prev, otp: 'Invalid OTP code. Use 123456.' }));
+    }
+  };
+
+  const performUpdate = async () => {
+    setLoading(true);
+    try {
+      const updatePayload = {
+        ID: user?.ID,
+        Name: name,
+        Mobile: mobile,
+        Username: email
+      };
+      
+      const res = await saveUser(updatePayload, 'update');
+      if (res.success) {
+        onUpdate({ ...user, Name: name, Mobile: mobile, Username: email });
+        setIsVerifying(false);
+        toast.success('Profile updated successfully!');
+      } else {
+        toast.error(res.message || 'Failed to save profile changes.');
+      }
+    } catch (err) {
+      console.error('Failed to update profile:', err);
+      toast.error('An unexpected error occurred while saving profile changes.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="panel profile-edit-panel glass animate-fade-in-up">
+      <div className="profile-edit-header">
+        <h2>Edit Profile</h2>
+        <p>Update your personal account details below.</p>
+      </div>
+      
+      {!isVerifying ? (
+        <form onSubmit={handleSave} className="edit-form-content">
+          <div className="form-group">
+            <label className="form-label">Full Name</label>
+            <input 
+              type="text" 
+              value={name} 
+              onChange={e => {
+                setName(e.target.value);
+                if (errors.name) setErrors(prev => ({ ...prev, name: undefined }));
+              }} 
+              className={`form-input ${errors.name ? 'error-state' : ''}`} 
+              placeholder="Enter your full name"
+              required 
+            />
+            {errors.name && <span className="error-message">{errors.name}</span>}
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Mobile Number</label>
+            <input 
+              type="tel" 
+              value={mobile} 
+              onChange={e => {
+                setMobile(e.target.value);
+                if (errors.mobile) setErrors(prev => ({ ...prev, mobile: undefined }));
+              }} 
+              className={`form-input ${errors.mobile ? 'error-state' : ''}`} 
+              placeholder="e.g. 9876543210"
+              required 
+            />
+            {errors.mobile && <span className="error-message">{errors.mobile}</span>}
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Email Address</label>
+            <input 
+              type="email" 
+              value={email} 
+              onChange={e => {
+                setEmail(e.target.value);
+                if (errors.email) setErrors(prev => ({ ...prev, email: undefined }));
+              }} 
+              className={`form-input ${errors.email ? 'error-state' : ''}`} 
+              placeholder="e.g. name@domain.com"
+              required 
+            />
+            {errors.email && <span className="error-message">{errors.email}</span>}
+            {email !== user?.Username && !errors.email && (
+              <div className="verification-info-badge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+                  <path d="M12 16v-4M12 8h.01"/>
+                </svg>
+                <span>Changing email requires OTP verification.</span>
+              </div>
+            )}
+          </div>
+
+          <button type="submit" className="btn-save-profile" disabled={loading}>
+            {loading ? (
+              <span className="spinner-wrapper">
+                <svg className="spin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><circle cx="12" cy="12" r="10" strokeOpacity="0.25"/><path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                Saving changes...
+              </span>
+            ) : 'Save Changes'}
+          </button>
+        </form>
+      ) : (
+        <form onSubmit={verifyOtp} className="otp-verification-wrapper animate-fade-in-up">
+          <div className="otp-header-box">
+            <div className="otp-shield-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </div>
+            <h3>Verify Email Change</h3>
+            <p>We've sent a 6-digit OTP code to <strong>{email}</strong>. Enter it below to authorize this change.</p>
+          </div>
+
+          <div className="form-group">
+            <input 
+              type="text" 
+              value={otp} 
+              onChange={e => {
+                setOtp(e.target.value);
+                if (errors.otp) setErrors(prev => ({ ...prev, otp: undefined }));
+              }} 
+              placeholder="••••••" 
+              required 
+              maxLength={6} 
+              className={`form-input otp-field ${errors.otp ? 'error-state' : ''}`} 
+            />
+            {errors.otp && <span className="error-message center-align">{errors.otp}</span>}
+          </div>
+
+          <div className="otp-button-group">
+            <button type="button" className="btn-otp-cancel" onClick={() => setIsVerifying(false)}>
+              Cancel
+            </button>
+            <button type="submit" className="btn-otp-verify" disabled={loading}>
+              {loading ? 'Verifying...' : 'Confirm & Save'}
+            </button>
+          </div>
+        </form>
+      )}
+
+      <style jsx>{`
+        .profile-edit-panel {
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 2.5rem;
+          border-radius: var(--radius-2xl);
+          box-shadow: var(--shadow-xl);
+          display: flex;
+          flex-direction: column;
+          gap: 2rem;
+        }
+
+        .profile-edit-header h2 {
+          font-size: 1.75rem;
+          font-weight: 700;
+          margin: 0 0 0.35rem 0;
+          letter-spacing: -0.02em;
+          background: linear-gradient(135deg, var(--text-primary) 0%, rgba(var(--primary-rgb), 0.8) 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+
+        .profile-edit-header p {
+          color: var(--text-secondary);
+          margin: 0;
+          font-size: 0.95rem;
+        }
+
+        .edit-form-content {
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+        }
+
+        .form-group {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+
+        .form-label {
+          font-size: 0.88rem;
+          font-weight: 700;
+          color: var(--text-primary);
+          letter-spacing: 0.01em;
+        }
+
+        .form-input {
+          width: 100%;
+          padding: 0.85rem 1.1rem;
+          border-radius: var(--radius-lg);
+          border: 1.5px solid var(--border-color);
+          background: rgba(15, 23, 42, 0.25);
+          color: var(--text-primary);
+          font-family: var(--font-body);
+          font-size: 0.95rem;
+          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .form-input:focus {
+          outline: none;
+          border-color: var(--primary-color);
+          background: rgba(15, 23, 42, 0.4);
+          box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+        }
+
+        .form-input.error-state {
+          border-color: #ef4444;
+          background: rgba(239, 68, 68, 0.05);
+        }
+
+        .form-input.error-state:focus {
+          box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+        }
+
+        .error-message {
+          color: #ef4444;
+          font-size: 0.8rem;
+          font-weight: 600;
+        }
+
+        .error-message.center-align {
+          text-align: center;
+          display: block;
+          margin-top: 0.25rem;
+        }
+
+        .verification-info-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+          background: rgba(37, 99, 235, 0.08);
+          border: 1px solid rgba(37, 99, 235, 0.15);
+          color: var(--primary-color);
+          font-size: 0.8rem;
+          font-weight: 600;
+          padding: 0.4rem 0.8rem;
+          border-radius: var(--radius-md);
+          margin-top: 0.5rem;
+          align-self: start;
+        }
+
+        .btn-save-profile {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          padding: 0.85rem;
+          font-family: var(--font-heading);
+          font-weight: 600;
+          font-size: 0.95rem;
+          color: #ffffff;
+          background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+          border: none;
+          border-radius: var(--radius-lg);
+          cursor: pointer;
+          box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+          transition: all 0.25s ease;
+          margin-top: 0.5rem;
+        }
+
+        .btn-save-profile:hover:not(:disabled) {
+          transform: translateY(-1px);
+          box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+          background: linear-gradient(135deg, var(--primary-hover) 0%, var(--primary-color) 100%);
+        }
+
+        .btn-save-profile:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+
+        /* OTP Verification Styles */
+        .otp-verification-wrapper {
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+        }
+
+        .otp-header-box {
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.75rem;
+        }
+
+        .otp-shield-icon {
+          color: var(--primary-color);
+          background: rgba(37, 99, 235, 0.1);
+          padding: 0.85rem;
+          border-radius: 50%;
+          border: 1px solid rgba(37, 99, 235, 0.2);
+          margin-bottom: 0.25rem;
+        }
+
+        .otp-header-box h3 {
+          font-size: 1.3rem;
+          font-weight: 700;
+          margin: 0;
+        }
+
+        .otp-header-box p {
+          color: var(--text-secondary);
+          font-size: 0.9rem;
+          line-height: 1.5;
+          margin: 0;
+          max-width: 420px;
+        }
+
+        .otp-field {
+          text-align: center;
+          font-size: 1.5rem;
+          letter-spacing: 0.4em;
+          font-weight: 700;
+          padding: 0.9rem;
+          font-family: monospace;
+        }
+
+        .otp-button-group {
+          display: flex;
+          gap: 1rem;
+        }
+
+        .btn-otp-cancel {
+          flex: 1;
+          padding: 0.85rem;
+          font-family: var(--font-heading);
+          font-weight: 600;
+          font-size: 0.95rem;
+          background: transparent;
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-lg);
+          color: var(--text-secondary);
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .btn-otp-cancel:hover {
+          background: rgba(148, 163, 184, 0.08);
+          color: var(--text-primary);
+        }
+
+        .btn-otp-verify {
+          flex: 1;
+          padding: 0.85rem;
+          font-family: var(--font-heading);
+          font-weight: 600;
+          font-size: 0.95rem;
+          color: #ffffff;
+          background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+          border: none;
+          border-radius: var(--radius-lg);
+          cursor: pointer;
+          box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+          transition: all 0.2s ease;
+        }
+
+        .btn-otp-verify:hover:not(:disabled) {
+          transform: translateY(-1px);
+          box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+        }
+
+        .spinner-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .spin-icon {
+          animation: spin 1s linear infinite;
+          width: 16px;
+          height: 16px;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  );
+}
