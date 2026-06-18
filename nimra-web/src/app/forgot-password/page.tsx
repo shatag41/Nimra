@@ -56,6 +56,12 @@ export default function ForgotPasswordPage() {
 
   return (
     <section className="auth-page">
+      <style dangerouslySetInnerHTML={{__html: `
+        .auth-shell.glass {
+          width: clamp(300px, 60vw, 720px) !important;
+          grid-template-columns: 42% 58% !important;
+        }
+      `}} />
       <div className="auth-shell glass">
         <div className="theme-toggle-wrapper">
           <ThemeToggle />
@@ -87,7 +93,8 @@ export default function ForgotPasswordPage() {
         </aside>
 
         <div className="auth-card">
-          <div className="auth-card-header">
+          <div style={{ maxWidth: '300px', margin: '0 auto', width: '100%' }}>
+          <div className="auth-card-header" style={{ marginBottom: '0.8vh', textAlign: 'center' }}>
             <span className="auth-kicker">Account Recovery</span>
             <h2>Forgot Password</h2>
             <p>{step === 1 ? 'Enter your registered email to receive an OTP.' : 'Enter the OTP and set your new password.'}</p>
@@ -173,8 +180,9 @@ export default function ForgotPasswordPage() {
             </form>
           )}
 
-          <div className="auth-footer-link">
-            Remember your password? <Link href="/login" className="auth-link">Login</Link>
+          <div className="auth-footer-link" style={{ textAlign: 'center', marginTop: '0.8vh', fontSize: 'clamp(0.75rem, 1.6vh, 0.85rem)', color: 'var(--text-secondary)' }}>
+            Remember your password? <Link href="/login" style={{ color: 'var(--primary-color)', fontWeight: 'bold', textDecoration: 'none' }}>Login</Link>
+          </div>
           </div>
         </div>
       </div>
