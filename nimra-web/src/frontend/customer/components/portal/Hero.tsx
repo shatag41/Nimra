@@ -180,9 +180,7 @@ const styles = `
 
   /* Home Hero Carousel */
   .home-hero-section {
-    height: calc(100vh - 75px);
-    min-height: 640px;
-    max-height: 900px;
+    height: 75vh;
     position: relative;
     overflow: hidden;
     background: #001a0c;
@@ -195,7 +193,8 @@ const styles = `
     opacity: 0;
     z-index: 1;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
+    padding-top: 1rem;
     transition: opacity 700ms ease-in-out;
   }
   .hero-slide.active { opacity: 1; z-index: 2; }
@@ -205,8 +204,8 @@ const styles = `
     display: grid;
     grid-template-columns: 1.15fr 0.85fr;
     gap: 3rem;
-    align-items: center;
-    padding-top: 2rem;
+    align-items: flex-start;
+    padding-top: 0;
   }
   .hero-copy { max-width: 680px; }
   .hero-eyebrow {
@@ -296,11 +295,11 @@ const styles = `
   .hero-card {
     border-radius: var(--radius-xl);
     padding: 1.75rem;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
     max-width: 360px;
     margin-left: auto;
-    border: 1px solid rgba(255,255,255,0.2);
-    background: rgba(255,255,255,0.12) !important;
+    border: 1px solid rgba(255,255,255,0.25);
+    background: rgba(15, 23, 42, 0.75) !important;
     backdrop-filter: blur(24px) !important;
   }
   .hero-card-tag {
@@ -317,11 +316,12 @@ const styles = `
     border: 1px solid rgba(59, 130, 246, 0.3);
   }
   .hero-card h3 {
-    font-size: 1.15rem;
+    font-size: 1.2rem;
     margin-bottom: 1rem;
-    color: white !important;
-    font-weight: 700;
+    color: #ffffff !important;
+    font-weight: 800;
     line-height: 1.4;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
   }
   .hero-card-list {
     list-style: none;
@@ -333,9 +333,11 @@ const styles = `
     display: flex;
     align-items: flex-start;
     gap: 0.6rem;
-    font-size: 0.9rem;
-    color: rgba(255,255,255,0.82);
-    line-height: 1.4;
+    font-size: 0.95rem;
+    color: #ffffff;
+    font-weight: 500;
+    line-height: 1.5;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4);
   }
   .list-check {
     width: 20px;
@@ -416,7 +418,7 @@ const styles = `
     .hero-card { margin: 0 auto; max-width: 100%; }
   }
   @media (max-width: 768px) {
-    .home-hero-section { min-height: 700px; height: 100svh; }
+    .home-hero-section { height: 80svh; }
     .scroll-indicator { display: none; }
   }
   @media (max-width: 700px) {

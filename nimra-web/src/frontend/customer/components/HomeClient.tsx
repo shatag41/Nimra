@@ -623,8 +623,8 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 0.35rem;
-          padding: 2rem 1rem;
+          gap: 0.15rem;
+          padding: 1.25rem 1rem;
           text-align: center;
           border-right: 1px solid var(--border-color);
           transition: background var(--transition-fast);
@@ -632,11 +632,11 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         .stat-card:last-child { border-right: none; }
         .stat-card:hover { background: rgba(37, 99, 235, 0.04); }
 
-        .stat-emoji { font-size: 1.75rem; line-height: 1; }
+        .stat-emoji { font-size: 1.3rem; line-height: 1; margin-bottom: 0.15rem; }
 
         .stat-value {
           font-family: var(--font-heading);
-          font-size: 1.65rem;
+          font-size: 1.25rem;
           font-weight: 800;
           color: var(--primary-color);
           letter-spacing: -0.02em;
@@ -644,7 +644,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         }
 
         .stat-label {
-          font-size: 0.8rem;
+          font-size: 0.65rem;
           font-weight: 600;
           color: var(--text-secondary);
           text-transform: uppercase;
@@ -781,6 +781,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         .product-preview-section {
           background: var(--bg-primary);
           position: relative;
+          padding-bottom: 1.25rem;
         }
 
         .section-bg-dots {
@@ -832,14 +833,14 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         }
 
         .prod-img-box {
-          height: 220px;
+          height: 185px;
           display: flex;
           align-items: center;
           justify-content: center;
           background: linear-gradient(180deg, #f1f5f9, #f8fafc);
           position: relative;
           overflow: hidden;
-          padding: 1rem;
+          padding: 0.85rem;
         }
 
         .prod-img-box img {
@@ -858,39 +859,39 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           background: radial-gradient(circle at center, rgba(37,99,235,0.06) 0%, transparent 70%);
         }
 
-        .prod-info-box { padding: 1.35rem; flex: 1; display: flex; flex-direction: column; }
+        .prod-info-box { padding: 1rem; flex: 1; display: flex; flex-direction: column; }
 
         .prod-meta {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-          margin-bottom: 0.6rem;
+          gap: 0.35rem;
+          margin-bottom: 0.4rem;
         }
 
         .prod-vol {
           display: inline-block;
-          font-size: 0.72rem;
+          font-size: 0.6rem;
           font-weight: 700;
           color: var(--primary-color);
           background: rgba(37,99,235,0.1);
-          padding: 0.22rem 0.65rem;
+          padding: 0.15rem 0.5rem;
           border-radius: 999px;
           border: 1px solid rgba(37,99,235,0.2);
         }
 
         .prod-badge-best {
           display: inline-block;
-          font-size: 0.68rem;
+          font-size: 0.58rem;
           font-weight: 700;
           color: #ea6a0a;
           background: rgba(249,115,22,0.1);
-          padding: 0.22rem 0.6rem;
+          padding: 0.15rem 0.45rem;
           border-radius: 999px;
           border: 1px solid rgba(249,115,22,0.2);
         }
 
-        .prod-info-box h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.45rem; }
-        .prod-info-box p  { font-size: 0.87rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 1.25rem; flex: 1; }
+        .prod-info-box h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.3rem; }
+        .prod-info-box p  { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 0.85rem; flex: 1; }
 
         .prod-footer {
           width: 100%;
@@ -899,12 +900,12 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           justify-content: space-between;
           margin-top: auto;
           border-top: 1px solid var(--border-color);
-          padding-top: 1rem;
+          padding-top: 0.75rem;
         }
 
         .prod-price-label {
           display: block;
-          font-size: 0.7rem;
+          font-size: 0.6rem;
           font-weight: 600;
           color: var(--text-muted);
           text-transform: uppercase;
@@ -912,16 +913,37 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         }
 
         .prod-price {
-          font-size: 1.35rem;
+          font-size: 1.1rem;
           font-weight: 800;
           color: var(--primary-color);
           font-family: var(--font-heading);
           letter-spacing: -0.02em;
         }
 
+        .prod-footer .btn-sm {
+          padding: 0.35rem 0.75rem;
+          font-size: 0.7rem;
+          min-height: 28px;
+          line-height: 1;
+          border-radius: var(--radius-md);
+        }
+
         .view-all-wrap {
           text-align: center;
-          margin-top: 3rem;
+          margin-top: 1.25rem;
+        }
+        
+        .view-all-wrap .btn-lg {
+          padding: 0.55rem 1.3rem;
+          font-size: 0.82rem;
+          min-height: 36px;
+          border-radius: var(--radius-md);
+          line-height: 1;
+        }
+        
+        .view-all-wrap .btn-lg svg {
+          width: 15px;
+          height: 15px;
         }
 
         .rush-section {
