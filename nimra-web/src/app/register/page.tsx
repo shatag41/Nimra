@@ -332,7 +332,7 @@ export default function RegisterPage() {
               {errors.email && <p style={{ color: '#ef4444', fontSize: 'clamp(0.65rem, 1.5vh, 0.75rem)', marginTop: '0.5vh' }}>{errors.email}</p>}
             </div>
 
-            <div className="auth-field" style={{ gridColumn: 'span 1' }}>
+            <div className="auth-field" style={{ gridColumn: '1 / -1', width: '70%' }}>
               <label htmlFor="password">Password*</label>
               <div className="auth-input-wrapper" style={{ position: 'relative' }}>
                 <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', zIndex: 10 }}>
