@@ -181,7 +181,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
                     title="Corporate Office Map"
                     src={officeMapUrl}
                     width="100%"
-                    height="220"
+                    height="200"
                     style={{ border: 0 }}
                     allowFullScreen={false}
                     loading="lazy"
@@ -196,7 +196,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
                     title="Manufacturing Plant Map"
                     src={plantMapUrl}
                     width="100%"
-                    height="220"
+                    height="200"
                     style={{ border: 0 }}
                     allowFullScreen={false}
                     loading="lazy"
@@ -291,7 +291,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
               <textarea
                 id="message"
                 name="message"
-                rows={5}
+                rows={4}
                 value={form.message}
                 onChange={handleChange}
                 placeholder="Describe your requirements, delivery address, frequency of orders, etc..."
@@ -323,45 +323,44 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
 
       <style jsx>{`
         .contact-page {
-          padding-top: 0.5rem;
-          padding-bottom: 4rem;
-          min-height: 90vh;
+          padding-top: 0;
+          padding-bottom: 2rem;
           font-family: var(--font-body);
         }
 
         /* ── Page Header ── */
         .page-header {
           margin-bottom: 1rem;
-          padding-bottom: 1rem;
-          border-bottom: 1px solid var(--border-color);
+          padding-bottom: 0;
           text-align: center;
         }
 
         .page-header h1 {
-          font-size: 1.75rem;
+          font-size: 1.5rem;
           font-weight: 700;
-          margin-bottom: 0.15rem;
+          margin-bottom: 0.25rem;
           letter-spacing: -0.02em;
           color: var(--text-primary);
         }
 
         .page-header p {
           color: var(--text-muted);
-          margin: 0;
+          margin: 0 auto;
           font-size: 0.875rem;
           line-height: 1.4;
+          max-width: 700px;
         }
 
         .badge {
           display: inline-flex;
           align-items: center;
           border-radius: 999px;
-          padding: 0.3rem 0.85rem;
-          font-size: 0.75rem;
+          padding: 0.25rem 0.75rem;
+          font-size: 0.7rem;
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.05em;
-          margin-bottom: 0.75rem;
+          margin-bottom: 0.5rem;
         }
         .badge-primary {
           background: rgba(37, 99, 235, 0.1);
@@ -372,7 +371,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
         .contact-grid {
           display: grid;
           grid-template-columns: 1fr 1.1fr;
-          gap: 2rem;
+          gap: 1.5rem;
         }
         .details-col {
           position: relative;
@@ -380,40 +379,41 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
           pointer-events: auto;
         }
         .details-col h2, .form-col h2 {
-          font-size: 1.75rem;
-          margin-bottom: 0.5rem;
+          font-size: 1.5rem;
+          margin-bottom: 0.25rem;
         }
         .subtitle {
           color: var(--text-muted);
-          font-size: 0.95rem;
-          margin-bottom: 2rem;
+          font-size: 0.9rem;
+          margin-bottom: 1rem;
         }
 
         .contact-info-list {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 1rem;
-          margin-bottom: 1.5rem;
+          gap: 0.75rem;
+          margin-bottom: 1rem;
         }
         .info-card {
-          padding: 1rem;
-          border-radius: var(--radius-xl);
+          padding: 0.85rem;
+          border-radius: var(--radius-lg);
           display: flex;
           gap: 0.75rem;
           align-items: flex-start;
-          box-shadow: var(--shadow-md);
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
           background: var(--bg-primary);
-          border: 1px solid var(--border-color);
+          border: 1px solid rgba(150, 150, 150, 0.15);
           transition: all var(--transition-normal);
+          height: 100%;
         }
         .info-card:hover {
           border-color: var(--primary-color);
-          box-shadow: var(--shadow-lg);
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
           transform: translateY(-2px);
         }
         .info-icon {
-          width: 44px;
-          height: 44px;
+          width: 40px;
+          height: 40px;
           border-radius: var(--radius-md);
           background: rgba(var(--primary-rgb), 0.1);
           color: var(--primary-color);
@@ -423,11 +423,11 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
           flex-shrink: 0;
         }
         .info-card h4 {
-          font-size: 0.95rem;
-          margin-bottom: 0.25rem;
+          font-size: 0.9rem;
+          margin-bottom: 0.15rem;
         }
         .info-card p {
-          font-size: 0.85rem;
+          font-size: 0.8rem;
           color: var(--text-secondary);
           line-height: 1.4;
           word-break: break-all;
@@ -438,18 +438,18 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
 
         /* Maps wrapper */
         .map-wrapper {
-          border-radius: var(--radius-xl);
+          border-radius: var(--radius-lg);
           overflow: hidden;
-          box-shadow: var(--shadow-lg);
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
           background: var(--bg-primary);
-          border: 1px solid var(--border-color);
+          border: 1px solid rgba(150, 150, 150, 0.15);
           position: relative;
           z-index: 1;
           pointer-events: auto;
         }
         .map-tabs {
           display: flex;
-          border-bottom: 1px solid var(--border-color);
+          border-bottom: 1px solid rgba(150, 150, 150, 0.15);
           position: relative;
           z-index: 10;
         }
@@ -457,10 +457,10 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
           flex: 1;
           background: transparent;
           border: none;
-          padding: 0.85rem;
+          padding: 0.75rem;
           font-family: var(--font-heading);
           font-weight: 600;
-          font-size: 0.9rem;
+          font-size: 0.85rem;
           color: var(--text-secondary);
           cursor: pointer;
           transition: all var(--transition-fast);
@@ -480,7 +480,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
           background: var(--bg-primary);
         }
         .map-loader {
-          height: 220px;
+          height: 200px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -489,12 +489,12 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
 
         /* Form styling */
         .form-col {
-          border-radius: var(--radius-xl);
-          padding: 1.5rem;
-          box-shadow: var(--shadow-lg);
+          border-radius: var(--radius-lg);
+          padding: 1.25rem;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
           height: fit-content;
           background: var(--bg-primary);
-          border: 1px solid var(--border-color);
+          border: 1px solid rgba(150, 150, 150, 0.15);
           position: relative;
           z-index: 1;
           pointer-events: auto;
@@ -503,10 +503,10 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
           display: flex;
           align-items: center;
           gap: 0.75rem;
-          padding: 1rem 1.25rem;
+          padding: 0.85rem 1rem;
           border-radius: var(--radius-md);
-          font-size: 0.9rem;
-          margin-bottom: 1.5rem;
+          font-size: 0.85rem;
+          margin-bottom: 1rem;
           line-height: 1.4;
         }
         .status-banner.success {
@@ -522,7 +522,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
         .inquiry-form {
           display: flex;
           flex-direction: column;
-          gap: 1.25rem;
+          gap: 0.85rem;
           position: relative;
           z-index: 5;
           pointer-events: auto;
@@ -530,7 +530,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
         .form-group {
           display: flex;
           flex-direction: column;
-          gap: 0.5rem;
+          gap: 0.35rem;
           position: relative;
           z-index: 10;
           pointer-events: auto;
@@ -538,10 +538,10 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
         .form-row {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 1rem;
+          gap: 0.85rem;
         }
         label {
-          font-size: 0.85rem;
+          font-size: 0.8rem;
           font-weight: 600;
           color: var(--text-primary);
         }
@@ -549,13 +549,13 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
           color: #ef4444;
         }
         input, textarea {
-          padding: 0.85rem 1.1rem;
+          padding: 0.65rem 0.85rem;
           border-radius: var(--radius-md);
-          border: 1.5px solid var(--border-color);
+          border: 1px solid rgba(150, 150, 150, 0.25);
           background-color: var(--bg-secondary);
           color: var(--text-primary);
           font-family: var(--font-body);
-          font-size: 0.95rem;
+          font-size: 0.9rem;
           transition: all var(--transition-fast);
           pointer-events: auto;
           position: relative;
@@ -613,7 +613,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
         @media (max-width: 1024px) {
           .contact-grid {
             grid-template-columns: 1fr;
-            gap: 4rem;
+            gap: 2rem;
           }
         }
         @media (max-width: 600px) {

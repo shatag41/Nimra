@@ -42,7 +42,7 @@ export default function AboutClient({ companyInfo }: AboutClientProps) {
       <div className="page-header animate-slide-up">
         <span className="badge badge-primary">About Us</span>
         <h1>Quality Sourced. Safely Sealed.</h1>
-        <p>Driven by the principles of safety, purity, and customer health under T.S. Enterprises.</p>
+        <p className="hero-subtitle">Driven by the principles of safety, purity, and customer health under T.S. Enterprises.</p>
       </div>
 
       {/* Navigation Sub-menu */}
@@ -150,45 +150,45 @@ export default function AboutClient({ companyInfo }: AboutClientProps) {
 
       <style jsx>{`
         .about-page {
-          padding-top: 0.5rem;
-          padding-bottom: 4rem;
-          min-height: 90vh;
+          padding-top: 0;
+          padding-bottom: 2rem;
           font-family: var(--font-body);
         }
 
         /* ── Page Header ── */
         .page-header {
-          margin-bottom: 1rem;
-          padding-bottom: 1rem;
-          border-bottom: 1px solid var(--border-color);
+          margin-bottom: 0.5rem;
+          padding-bottom: 0;
           text-align: center;
         }
 
         .page-header h1 {
-          font-size: 1.75rem;
+          font-size: 1.5rem;
           font-weight: 700;
-          margin-bottom: 0.15rem;
+          margin-bottom: 0.85rem;
           letter-spacing: -0.02em;
           color: var(--text-primary);
         }
 
-        .page-header p {
+        .hero-subtitle {
           color: var(--text-muted);
-          margin: 0;
-          font-size: 0.875rem;
+          font-size: 0.85rem;
+          margin: 0 auto;
+          max-width: 600px;
           line-height: 1.4;
+          opacity: 0.85;
         }
 
         .badge {
           display: inline-flex;
           align-items: center;
           border-radius: 999px;
-          padding: 0.3rem 0.85rem;
-          font-size: 0.75rem;
+          padding: 0.25rem 0.75rem;
+          font-size: 0.7rem;
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.05em;
-          margin-bottom: 0.75rem;
+          margin-bottom: 0.5rem;
         }
         .badge-primary {
           background: rgba(37, 99, 235, 0.1);
@@ -200,16 +200,15 @@ export default function AboutClient({ companyInfo }: AboutClientProps) {
           position: sticky;
           top: 80px;
           z-index: 100;
-          border-top: 1px solid var(--border-color);
-          border-bottom: 1px solid var(--border-color);
+          border-bottom: 1px solid rgba(150, 150, 150, 0.15);
           background: var(--bg-secondary);
         }
         .submenu-container {
           display: flex;
           justify-content: center;
-          gap: 2rem;
-          padding-top: 0.75rem;
-          padding-bottom: 0.75rem;
+          gap: 1.5rem;
+          padding-top: 0.5rem;
+          padding-bottom: 0.5rem;
         }
         .submenu-btn {
           background: transparent;
@@ -244,33 +243,35 @@ export default function AboutClient({ companyInfo }: AboutClientProps) {
         /* Detail grids */
         .story-detail-section, .quality-section-detail, .plant-section-detail {
           background-color: var(--bg-secondary);
-          padding: 2.5rem 0;
+          padding-top: 1.5rem;
+          padding-bottom: 2rem;
         }
         .about-grid {
           display: grid;
           grid-template-columns: 1.2fr 0.8fr;
-          gap: 2rem;
-          align-items: center;
+          gap: 1.5rem;
+          align-items: flex-start;
         }
         .about-content h2 {
-          font-size: 2.2rem;
-          margin-bottom: 1.5rem;
+          font-size: 1.8rem;
+          margin-bottom: 1rem;
         }
         .about-content p {
           color: var(--text-secondary);
-          line-height: 1.7;
+          line-height: 1.6;
+          font-size: 0.95rem;
         }
         .stat-row {
           display: flex;
-          gap: 2rem;
-          margin-top: 2.5rem;
+          gap: 1.5rem;
+          margin-top: 1.5rem;
         }
         .stat-item {
           display: flex;
           flex-direction: column;
         }
         .stat-num {
-          font-size: 2rem;
+          font-size: 1.8rem;
           font-weight: 800;
           color: var(--primary-color);
           font-family: var(--font-heading);
@@ -282,23 +283,24 @@ export default function AboutClient({ companyInfo }: AboutClientProps) {
         }
         .about-img-box img {
           width: 100%;
-          border-radius: var(--radius-xl);
-          box-shadow: var(--shadow-xl);
+          border-radius: var(--radius-lg);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
         }
 
         /* Quality Timeline */
         .quality-intro {
           text-align: center;
           max-width: 700px;
-          margin: 0 auto 4rem;
+          margin: 0 auto 2rem;
         }
         .quality-intro h2 {
-          font-size: 2.2rem;
-          margin-bottom: 1rem;
+          font-size: 1.8rem;
+          margin-bottom: 0.75rem;
         }
         .quality-intro p {
           color: var(--text-secondary);
           line-height: 1.6;
+          font-size: 0.95rem;
         }
         .timeline {
           position: relative;
@@ -318,40 +320,40 @@ export default function AboutClient({ companyInfo }: AboutClientProps) {
         .timeline-item {
           position: relative;
           padding-left: 50px;
-          margin-bottom: 2rem;
+          margin-bottom: 1.5rem;
         }
         .timeline-dot {
           position: absolute;
           left: 11px;
           top: 22px;
-          width: 20px;
-          height: 20px;
+          width: 16px;
+          height: 16px;
           border-radius: 50%;
           background: var(--bg-secondary);
-          border: 4px solid var(--primary-color);
-          box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.3);
+          border: 3px solid var(--primary-color);
+          box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.2);
           z-index: 10;
         }
         .timeline-card {
           padding: 1rem;
-          border-radius: var(--radius-xl);
-          box-shadow: var(--shadow-md);
+          border-radius: var(--radius-lg);
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
           background: var(--bg-primary);
-          border: 1px solid var(--border-color);
+          border: 1px solid rgba(150, 150, 150, 0.15);
           transition: all var(--transition-normal);
         }
         .timeline-card:hover {
           transform: translateX(5px);
           border-color: var(--primary-color);
-          box-shadow: var(--shadow-lg);
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
         }
         .timeline-card h4 {
           color: var(--primary-color);
-          font-size: 1.1rem;
-          margin-bottom: 0.5rem;
+          font-size: 1rem;
+          margin-bottom: 0.25rem;
         }
         .timeline-card p {
-          font-size: 0.9rem;
+          font-size: 0.85rem;
           color: var(--text-secondary);
           line-height: 1.5;
         }
@@ -360,21 +362,21 @@ export default function AboutClient({ companyInfo }: AboutClientProps) {
         .plant-info-card {
           margin-top: 1.5rem;
           padding: 1rem;
-          border-radius: var(--radius-xl);
+          border-radius: var(--radius-lg);
           border-left: 4px solid var(--primary-color);
           background: var(--bg-primary);
-          border: 1px solid var(--border-color);
-          box-shadow: var(--shadow-md);
+          border: 1px solid rgba(150, 150, 150, 0.15);
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
         }
         .plant-info-card h4 {
           margin-bottom: 0.5rem;
         }
         .plant-map-box {
-          box-shadow: var(--shadow-xl);
-          border-radius: var(--radius-xl);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+          border-radius: var(--radius-lg);
           overflow: hidden;
           background: var(--bg-primary);
-          border: 1px solid var(--border-color);
+          border: 1px solid rgba(150, 150, 150, 0.15);
         }
         .map-placeholder {
           height: 350px;
@@ -387,7 +389,7 @@ export default function AboutClient({ companyInfo }: AboutClientProps) {
         @media (max-width: 1024px) {
           .about-grid {
             grid-template-columns: 1fr;
-            gap: 3rem;
+            gap: 2rem;
           }
           .about-img-box {
             max-width: 400px;

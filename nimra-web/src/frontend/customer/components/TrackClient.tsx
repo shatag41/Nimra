@@ -114,24 +114,22 @@ export default function TrackClient() {
         )}
       <style jsx>{`
         .track-page {
-          padding-top: 0.5rem;
-          padding-bottom: 4rem;
-          min-height: 70vh;
+          padding-top: 0;
+          padding-bottom: 2rem;
           font-family: var(--font-body);
         }
 
         /* ── Page Header ── */
         .page-header {
-          margin-bottom: 2rem;
-          padding-bottom: 1.5rem;
-          border-bottom: 1px solid var(--border-color);
+          margin-bottom: 0.75rem;
+          padding-bottom: 0;
           text-align: center;
         }
 
         .page-header h1 {
-          font-size: 1.75rem;
+          font-size: 1.5rem;
           font-weight: 700;
-          margin-bottom: 0.15rem;
+          margin-bottom: 0.25rem;
           letter-spacing: -0.02em;
           color: var(--text-primary);
         }
@@ -140,37 +138,37 @@ export default function TrackClient() {
           display: inline-flex;
           align-items: center;
           border-radius: 999px;
-          padding: 0.3rem 0.85rem;
-          font-size: 0.75rem;
+          padding: 0.25rem 0.75rem;
+          font-size: 0.7rem;
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.05em;
-          margin-bottom: 0.75rem;
+          margin-bottom: 0.5rem;
         }
         .badge-primary {
           background: rgba(37, 99, 235, 0.1);
           color: var(--primary-color);
           border: 1px solid rgba(37, 99, 235, 0.2);
         }
-        .track-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 1rem; align-items: end; padding: 1.75rem; border-radius: var(--radius-xl); max-width: 900px; margin: 0 auto; background: var(--bg-primary); border: 1px solid var(--border-color); box-shadow: var(--shadow-md); }
-        label { display: grid; gap: 0.45rem; color: var(--text-secondary); font-weight: 700; font-size: 0.9rem; }
-        input { border: 1.5px solid var(--border-color); border-radius: var(--radius-md); padding: 0.9rem 1rem; background: var(--bg-secondary); color: var(--text-primary); font: inherit; transition: all var(--transition-fast); }
+        .track-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 1rem; align-items: end; padding: 1.25rem; border-radius: var(--radius-lg); max-width: 900px; margin: 0 auto; background: var(--bg-primary); border: 1px solid rgba(150, 150, 150, 0.15); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); }
+        label { display: grid; gap: 0.35rem; color: var(--text-primary); font-weight: 600; font-size: 0.8rem; }
+        input { border: 1px solid rgba(150, 150, 150, 0.25); border-radius: var(--radius-md); padding: 0.65rem 0.85rem; height: 42px; background: var(--bg-secondary); color: var(--text-primary); font-family: var(--font-body); font-size: 0.9rem; transition: all var(--transition-fast); }
         input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.12); }
-        button { border: none; cursor: pointer; height: 48px; }
-        .message { text-align: center; margin-top: 1rem; color: #dc2626; font-weight: 700; }
-        .result { max-width: 900px; margin: 2rem auto 0; padding: 1.75rem; border-radius: var(--radius-xl); background: var(--bg-primary); border: 1px solid var(--border-color); box-shadow: var(--shadow-md); }
-        .result-head { display: flex; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; }
-        .result-head span { display: block; color: var(--text-muted); font-size: 0.85rem; }
-        .result-head strong { font-size: 1.2rem; }
-        .steps { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; margin: 2rem 0; }
-        .step { text-align: center; color: var(--text-secondary); font-size: 0.85rem; transition: all var(--transition-normal); }
-        .step span { width: 36px; height: 36px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--bg-secondary); border: 1px solid var(--border-color); font-weight: 800; margin-bottom: 0.5rem; transition: all var(--transition-normal); }
+        button { border: none; cursor: pointer; height: 42px; display: inline-flex; align-items: center; justify-content: center; }
+        .message { text-align: center; margin-top: 1rem; color: #dc2626; font-weight: 700; font-size: 0.9rem; }
+        .result { max-width: 900px; margin: 1.5rem auto 0; padding: 1.25rem; border-radius: var(--radius-lg); background: var(--bg-primary); border: 1px solid rgba(150, 150, 150, 0.15); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); }
+        .result-head { display: flex; justify-content: space-between; gap: 1rem; border-bottom: 1px solid rgba(150, 150, 150, 0.15); padding-bottom: 0.75rem; }
+        .result-head span { display: block; color: var(--text-muted); font-size: 0.8rem; font-weight: 600; margin-bottom: 0.2rem; }
+        .result-head strong { font-size: 1.1rem; }
+        .steps { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; margin: 1.5rem 0; }
+        .step { text-align: center; color: var(--text-secondary); font-size: 0.8rem; transition: all var(--transition-normal); }
+        .step span { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--bg-secondary); border: 1px solid rgba(150, 150, 150, 0.25); font-weight: 700; margin-bottom: 0.4rem; transition: all var(--transition-normal); }
         .step.active span { background: var(--primary-color); border-color: var(--primary-color); color: white; box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1); }
-        .step.active p { color: var(--text-primary); font-weight: 800; }
+        .step.active p { color: var(--text-primary); font-weight: 700; }
         .step.cancelled span { background: #ef4444; border-color: #ef4444; color: white; box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1); }
-        .step.cancelled p { color: #ef4444; font-weight: 800; }
-        .items div { display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); padding: 0.75rem 0; }
-        @media (max-width: 760px) { .track-form { grid-template-columns: 1fr; } .steps { grid-template-columns: 1fr; text-align: left; } .step { display: flex; align-items: center; gap: 0.75rem; text-align: left; } .step span { margin-bottom: 0; } }
+        .step.cancelled p { color: #ef4444; font-weight: 700; }
+        .items div { display: flex; justify-content: space-between; border-top: 1px solid rgba(150, 150, 150, 0.15); padding: 0.65rem 0; font-size: 0.9rem; }
+        @media (max-width: 760px) { .track-form { grid-template-columns: 1fr; gap: 1.25rem; } .steps { grid-template-columns: 1fr; text-align: left; } .step { display: flex; align-items: center; gap: 0.75rem; text-align: left; } .step span { margin-bottom: 0; } button { width: 100%; } }
       `}</style>
     </div>
   );
