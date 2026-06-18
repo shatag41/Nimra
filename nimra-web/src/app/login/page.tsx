@@ -138,6 +138,10 @@ export default function LoginPage() {
           transform: translateY(-2px);
           box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
         }
+        .auth-shell.glass {
+          width: clamp(300px, 60vw, 720px) !important;
+          grid-template-columns: 42% 58% !important;
+        }
         .auth-google-button {
           transition: all 0.2s ease !important;
         }
@@ -151,19 +155,19 @@ export default function LoginPage() {
         }
         .back-home-btn {
           position: absolute;
-          top: 1.25rem;
-          left: 1.25rem;
+          top: 0.35rem;
+          left: 0.8rem;
           display: flex;
           align-items: center;
           gap: 0.5rem;
           color: rgba(255,255,255,0.8);
-          font-size: 0.85rem;
+          font-size: 0.75rem;
           font-weight: 600;
           text-decoration: none;
           z-index: 100;
           transition: all 0.2s ease;
           background: rgba(255,255,255,0.1);
-          padding: 0.4rem 0.8rem;
+          padding: 0.2rem 0.5rem;
           border-radius: 999px;
           border: 1px solid rgba(255,255,255,0.15);
           backdrop-filter: blur(8px);
@@ -176,7 +180,7 @@ export default function LoginPage() {
       `}} />
       <div className="auth-shell glass">
         <Link href="/" className="back-home-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           Home
         </Link>
         <div className="theme-toggle-wrapper">
@@ -185,7 +189,7 @@ export default function LoginPage() {
         <aside className="auth-brand-panel">
           <div className="auth-brand-content">
             <div className="auth-logo">
-              <svg width="36" height="36" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg width="24" height="24" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M50 5C50 5 15 45 15 65C15 84.33 30.67 100 50 100C69.33 100 85 84.33 85 65C85 45 50 5 50 5Z" fill="url(#loginWaterGrad)"/>
                 <path d="M43 75C37 75 32 70 32 64C32 63.45 32.45 63 33 63C33.55 63 34 63.45 34 64C34 68.97 38.03 73 43 73C43.55 73 44 73.45 44 74C44 74.55 43.55 75 43 75Z" fill="white" fillOpacity="0.6"/>
                 <defs>
@@ -209,17 +213,18 @@ export default function LoginPage() {
         </aside>
 
         <div className="auth-card">
-          <div className="auth-card-header" style={{ marginBottom: '1.25rem', textAlign: 'center' }}>
-            <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '0.4rem', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
+          <div style={{ maxWidth: '300px', margin: '0 auto', width: '100%' }}>
+          <div className="auth-card-header" style={{ marginBottom: '0.8vh', textAlign: 'center' }}>
+            <h2 style={{ fontSize: 'clamp(1.2rem, 3vh, 1.4rem)', fontWeight: '800', marginBottom: '0.2vh', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
               Login to NIMRA
             </h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.5' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 'clamp(0.7rem, 1.5vh, 0.85rem)', lineHeight: '1.4' }}>
               Access your account to manage orders, track deliveries, and more.
             </p>
           </div>
 
           <form className="auth-form" onSubmit={handleSubmit}>
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', background: 'var(--bg-secondary)', padding: '0.25rem', borderRadius: 'var(--radius-lg)' }}>
+            <div style={{ display: 'flex', gap: '1vw', marginBottom: '0.8vh', background: 'var(--bg-secondary)', padding: '0.5vh', borderRadius: 'var(--radius-lg)' }}>
               <button
                 type="button"
                 onClick={() => { setActiveTab('mobile'); setError(''); }}
@@ -242,9 +247,9 @@ export default function LoginPage() {
 
           {activeTab === 'mobile' ? (
             <div className="auth-field">
-              <label htmlFor="username" style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '0.4rem', display: 'block' }}>Mobile Number*</label>
+              <label htmlFor="username" style={{ fontSize: 'clamp(0.75rem, 1.6vh, 0.85rem)', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '0.5vh', display: 'block' }}>Mobile Number*</label>
               <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', zIndex: 10 }}>
+                <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', zIndex: 10 }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg>
                 </span>
                 <input 
@@ -258,15 +263,15 @@ export default function LoginPage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value.replace(/[^0-9]/g, '').slice(0, 10))}
                   required 
-                  style={{ paddingLeft: '2.5rem', width: '100%', boxSizing: 'border-box' }}
+                  style={{ paddingLeft: '1.8rem', width: '100%', boxSizing: 'border-box' }}
                 />
               </div>
             </div>
           ) : (
             <div className="auth-field">
-              <label htmlFor="email" style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '0.4rem', display: 'block' }}>Email Address*</label>
+              <label htmlFor="email" style={{ fontSize: 'clamp(0.75rem, 1.6vh, 0.85rem)', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '0.5vh', display: 'block' }}>Email Address*</label>
               <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', zIndex: 10 }}>
+                <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', zIndex: 10 }}>
                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
                 </span>
                 <input 
@@ -277,19 +282,19 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required 
-                  style={{ paddingLeft: '2.5rem', width: '100%', boxSizing: 'border-box' }}
+                  style={{ paddingLeft: '1.8rem', width: '100%', boxSizing: 'border-box' }}
                 />
               </div>
             </div>
           )}
           
-          <div className="auth-field" style={{ marginTop: '0.85rem' }}>
-            <div className="auth-field-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
-              <label htmlFor="password" style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)' }}>Password*</label>
-              <Link href="/forgot-password" style={{ fontSize: '0.8rem', color: 'var(--primary-color)', textDecoration: 'none', fontWeight: '600' }}>Forgot password?</Link>
+          <div className="auth-field" style={{ marginTop: '1vh' }}>
+            <div className="auth-field-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5vh' }}>
+              <label htmlFor="password" style={{ fontSize: 'clamp(0.75rem, 1.6vh, 0.85rem)', fontWeight: '600', color: 'var(--text-secondary)' }}>Password*</label>
+              <Link href="/forgot-password" style={{ fontSize: 'clamp(0.7rem, 1.5vh, 0.8rem)', color: 'var(--primary-color)', textDecoration: 'none', fontWeight: '600' }}>Forgot password?</Link>
             </div>
             <div className="auth-input-wrapper" style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', zIndex: 10 }}>
+              <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', zIndex: 10 }}>
                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               </span>
               <input 
@@ -300,7 +305,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required 
-                style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem', width: '100%', boxSizing: 'border-box' }}
+                style={{ paddingLeft: '1.8rem', paddingRight: '2.5rem', width: '100%', boxSizing: 'border-box' }}
               />
               <button 
                 type="button"
@@ -318,8 +323,8 @@ export default function LoginPage() {
             </div>
           </div>
           
-          <div style={{ marginTop: '1.25rem' }}>
-            <button className="btn btn-primary auth-submit" type="submit" disabled={isLoading} style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', fontSize: '0.95rem' }}>
+          <div style={{ marginTop: '0.8vh' }}>
+            <button className="btn btn-primary auth-submit" type="submit" disabled={isLoading} style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1vw', padding: '0.8vh', fontSize: 'clamp(0.8rem, 1.8vh, 0.95rem)' }}>
               {isLoading ? (
                 <>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
@@ -334,7 +339,7 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <div className="auth-divider" style={{ display: 'flex', alignItems: 'center', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 'bold', margin: '1.25rem 0' }}>
+          <div className="auth-divider" style={{ display: 'flex', alignItems: 'center', textAlign: 'center', color: 'var(--text-muted)', fontSize: 'clamp(0.6rem, 1.4vh, 0.75rem)', fontWeight: 'bold', margin: '0.8vh 0' }}>
              <span style={{ flex: 1, borderBottom: '1px solid var(--border-color)' }}></span>
              <span style={{ padding: '0 1rem' }}>OR</span>
              <span style={{ flex: 1, borderBottom: '1px solid var(--border-color)' }}></span>
@@ -353,12 +358,13 @@ export default function LoginPage() {
              </button>
           </div>
 
-          <div className="auth-footer-link" style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+          <div className="auth-footer-link" style={{ textAlign: 'center', marginTop: '0.8vh', fontSize: 'clamp(0.75rem, 1.6vh, 0.85rem)', color: 'var(--text-secondary)' }}>
             Don&apos;t have an account? <Link href="/register" style={{ color: 'var(--primary-color)', fontWeight: 'bold', textDecoration: 'none' }}>Create account →</Link>
           </div>
         </form>
+        </div>
       </div>
-      </div>
+    </div>
     </section>
   );
 }

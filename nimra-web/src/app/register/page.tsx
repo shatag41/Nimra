@@ -168,7 +168,7 @@ export default function RegisterPage() {
           border-radius: var(--radius-md);
         }
         .auth-field label {
-          font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.15rem; display: block;
+          font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.1rem; display: block;
         }
         .auth-shell {
           grid-template-columns: 1fr minmax(360px, 420px) !important;
@@ -204,8 +204,8 @@ export default function RegisterPage() {
         }
         .back-home-btn {
           position: absolute;
-          top: 1.25rem;
-          left: 1.25rem;
+          top: 1rem;
+          left: 1rem;
           display: flex;
           align-items: center;
           gap: 0.5rem;
@@ -216,7 +216,7 @@ export default function RegisterPage() {
           z-index: 100;
           transition: all 0.2s ease;
           background: rgba(255,255,255,0.1);
-          padding: 0.4rem 0.8rem;
+          padding: 0.3rem 0.6rem;
           border-radius: 999px;
           border: 1px solid rgba(255,255,255,0.15);
           backdrop-filter: blur(8px);
@@ -229,7 +229,7 @@ export default function RegisterPage() {
       `}} />
       <div className="auth-shell glass">
         <Link href="/" className="back-home-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           Home
         </Link>
         <div className="theme-toggle-wrapper">
@@ -238,7 +238,7 @@ export default function RegisterPage() {
         <aside className="auth-brand-panel">
           <div className="auth-brand-content">
             <div className="auth-logo">
-              <svg width="36" height="36" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg width="24" height="24" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M50 5C50 5 15 45 15 65C15 84.33 30.67 100 50 100C69.33 100 85 84.33 85 65C85 45 50 5 50 5Z" fill="url(#registerWaterGrad)"/>
                 <path d="M43 75C37 75 32 70 32 64C32 63.45 32.45 63 33 63C33.55 63 34 63.45 34 64C34 68.97 38.03 73 43 73C43.55 73 44 73.45 44 74C44 74.55 43.55 75 43 75Z" fill="white" fillOpacity="0.6"/>
                 <defs>
@@ -271,12 +271,12 @@ export default function RegisterPage() {
         <form className="auth-form" onSubmit={handleSubmit}>
           {error && <div className="auth-alert error">{error}</div>}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-            <div className="auth-field">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6vh 1vw' }}>
+            <div className="auth-field" style={{ gridColumn: 'span 1' }}>
               <label htmlFor="name">Full Name*</label>
               <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', zIndex: 10 }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', zIndex: 10 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 </span>
                 <input
                   id="name"
@@ -286,36 +286,17 @@ export default function RegisterPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
-                  style={{ paddingLeft: '2.5rem', width: '100%', boxSizing: 'border-box' }}
+                  style={{ paddingLeft: '1.8rem', width: '100%', boxSizing: 'border-box', textOverflow: 'ellipsis' }}
                 />
               </div>
-              {errors.name && <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem' }}>{errors.name}</p>}
+              {errors.name && <p style={{ color: '#ef4444', fontSize: 'clamp(0.65rem, 1.5vh, 0.75rem)', marginTop: '0.5vh' }}>{errors.name}</p>}
             </div>
 
-            <div className="auth-field">
-              <label htmlFor="email">Email Address*</label>
-              <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', zIndex: 10 }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                </span>
-                <input
-                  id="email"
-                  type="email"
-                  placeholder="john@example.com"
-                  className="auth-input"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  style={{ paddingLeft: '2.5rem', width: '100%', boxSizing: 'border-box' }}
-                />
-              </div>
-              {errors.email && <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem' }}>{errors.email}</p>}
-            </div>
-
-            <div className="auth-field">
+            <div className="auth-field" style={{ gridColumn: 'span 1' }}>
               <label htmlFor="mobile">Mobile Number</label>
               <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', zIndex: 10 }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg>
+                <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', zIndex: 10 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg>
                 </span>
                 <input
                   id="mobile"
@@ -326,51 +307,66 @@ export default function RegisterPage() {
                   value={mobile}
                   onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
                   maxLength={10}
-                  style={{ paddingLeft: '2.5rem', width: '100%', boxSizing: 'border-box' }}
+                  style={{ paddingLeft: '1.8rem', width: '100%', boxSizing: 'border-box', textOverflow: 'ellipsis' }}
                 />
               </div>
-              {errors.mobile && <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem' }}>{errors.mobile}</p>}
+              {errors.mobile && <p style={{ color: '#ef4444', fontSize: 'clamp(0.65rem, 1.5vh, 0.75rem)', marginTop: '0.5vh' }}>{errors.mobile}</p>}
             </div>
 
-
-          </div>
-          
-          {/* <p className="auth-help" style={{ marginTop: '0.15rem', fontSize: '0.75rem', marginBottom: '0.4rem' }}>Either email or mobile is required.</p> */}
-
-          <div className="auth-field">
-            <label htmlFor="password">Password*</label>
-            <div className="auth-input-wrapper" style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', zIndex: 10 }}>
-                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              </span>
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Secure password"
-                className="auth-input"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem', width: '100%', boxSizing: 'border-box' }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="password-toggle-btn"
-                aria-label={showPassword ? "Hide password" : "Show password"}
-                style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}
-              >
-                {showPassword ? (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22"/></svg>
-                ) : (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                )}
-              </button>
+            <div className="auth-field" style={{ gridColumn: '1 / -1' }}>
+              <label htmlFor="email">Email Address*</label>
+              <div style={{ position: 'relative' }}>
+                <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', zIndex: 10 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                </span>
+                <input
+                  id="email"
+                  type="email"
+                  placeholder="john@example.com"
+                  className="auth-input"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  style={{ paddingLeft: '1.8rem', width: '100%', boxSizing: 'border-box', textOverflow: 'ellipsis' }}
+                />
+              </div>
+              {errors.email && <p style={{ color: '#ef4444', fontSize: 'clamp(0.65rem, 1.5vh, 0.75rem)', marginTop: '0.5vh' }}>{errors.email}</p>}
             </div>
-            {errors.password && <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem' }}>{errors.password}</p>}
+
+            <div className="auth-field" style={{ gridColumn: 'span 1' }}>
+              <label htmlFor="password">Password*</label>
+              <div className="auth-input-wrapper" style={{ position: 'relative' }}>
+                <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', zIndex: 10 }}>
+                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </span>
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Secure password"
+                  className="auth-input"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  style={{ paddingLeft: '1.8rem', paddingRight: '2.5rem', width: '100%', boxSizing: 'border-box', textOverflow: 'ellipsis' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="password-toggle-btn"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}
+                >
+                  {showPassword ? (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22"/></svg>
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  )}
+                </button>
+              </div>
+              {errors.password && <p style={{ color: '#ef4444', fontSize: 'clamp(0.65rem, 1.5vh, 0.75rem)', marginTop: '0.5vh' }}>{errors.password}</p>}
+            </div>
           </div>
 
-          <div style={{ marginTop: '0.65rem' }}>
+          <div style={{ marginTop: '0.8vh' }}>
             <button className="btn btn-primary auth-submit" type="submit" disabled={isLoading}>
               {isLoading ? (
                 <>
@@ -386,7 +382,7 @@ export default function RegisterPage() {
             </button>
           </div>
 
-          <div className="auth-divider" style={{ display: 'flex', alignItems: 'center', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.7rem', fontWeight: 'bold', margin: '0.65rem 0' }}>
+          <div className="auth-divider" style={{ display: 'flex', alignItems: 'center', textAlign: 'center', color: 'var(--text-muted)', fontSize: 'clamp(0.6rem, 1.4vh, 0.7rem)', fontWeight: 'bold', margin: '0.8vh 0' }}>
              <span style={{ flex: 1, borderBottom: '1px solid var(--border-color)' }}></span>
              <span style={{ padding: '0 1rem' }}>OR</span>
              <span style={{ flex: 1, borderBottom: '1px solid var(--border-color)' }}></span>
@@ -404,7 +400,7 @@ export default function RegisterPage() {
              </button>
           </div>
 
-          <div className="auth-footer-link" style={{ textAlign: 'center', marginTop: '0.65rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+          <div className="auth-footer-link" style={{ textAlign: 'center', marginTop: '0.8vh', fontSize: 'clamp(0.75rem, 1.6vh, 0.8rem)', color: 'var(--text-secondary)' }}>
             Already have an account? <Link href="/login" className="auth-link">Login</Link>
           </div>
         </form>
