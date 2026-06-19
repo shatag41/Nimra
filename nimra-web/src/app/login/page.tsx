@@ -118,8 +118,73 @@ export default function LoginPage() {
   return (
     <section className="auth-page">
       <style dangerouslySetInnerHTML={{__html: `
+        .auth-page {
+          padding: clamp(0.75rem, 2vw, 1.25rem) !important;
+        }
+        .auth-shell.glass {
+          width: min(100%, 880px) !important;
+          min-height: 0 !important;
+          max-height: calc(100svh - 1.5rem) !important;
+          grid-template-columns: minmax(280px, 0.8fr) minmax(360px, 1fr) !important;
+          border-radius: var(--radius-xl) !important;
+        }
+        .auth-brand-panel {
+          padding: clamp(1rem, 2.5vw, 1.5rem) !important;
+          min-height: 0 !important;
+        }
+        .auth-logo {
+          margin-bottom: 0.75rem !important;
+          font-size: 0.95rem !important;
+        }
+        .auth-brand-panel h1 {
+          max-width: 280px !important;
+          margin-bottom: 0.5rem !important;
+          font-size: clamp(1.15rem, 2.4vw, 1.45rem) !important;
+          line-height: 1.12 !important;
+        }
+        .auth-brand-panel p {
+          max-width: 280px !important;
+          font-size: 0.78rem !important;
+          line-height: 1.45 !important;
+        }
+        .auth-highlights {
+          grid-template-columns: 1fr !important;
+          gap: 0.45rem !important;
+          margin-top: 1rem !important;
+        }
+        .auth-highlight {
+          padding: 0.55rem 0.7rem !important;
+        }
+        .auth-highlight strong,
+        .auth-highlight span {
+          font-size: 0.68rem !important;
+        }
+        .auth-brand-footer {
+          font-size: 0.65rem !important;
+        }
+        .auth-card {
+          padding: clamp(1rem, 2.4vw, 1.35rem) !important;
+          justify-content: center !important;
+        }
+        .auth-card > div {
+          max-width: 400px !important;
+        }
+        .auth-card-header {
+          margin-bottom: 0.75rem !important;
+        }
+        .auth-card-header h2 {
+          font-size: clamp(1.18rem, 2.6vw, 1.35rem) !important;
+          margin-bottom: 0.2rem !important;
+        }
+        .auth-card-header p {
+          font-size: 0.78rem !important;
+          line-height: 1.35 !important;
+        }
+        .auth-form {
+          gap: 0.65rem !important;
+        }
         .auth-tab-btn {
-          flex: 1; padding: 0.5rem; border: none; border-radius: var(--radius-md); cursor: pointer; font-weight: 700; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.85rem;
+          flex: 1; min-height: 36px; padding: 0.4rem 0.55rem; border: none; border-radius: var(--radius-md); cursor: pointer; font-weight: 700; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 0.4rem; font-size: 0.78rem;
         }
         .auth-tab-btn:hover:not(.active) {
           background: var(--primary-color);
@@ -131,18 +196,21 @@ export default function LoginPage() {
         .auth-tab-btn:not(.active) {
           background: transparent; color: var(--text-secondary);
         }
+        .auth-input {
+          min-height: 40px !important;
+          font-size: 0.85rem !important;
+        }
         .auth-submit {
+          min-height: 40px !important;
           transition: all 0.2s ease;
         }
         .auth-submit:hover:not(:disabled) {
           transform: translateY(-2px);
           box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
         }
-        .auth-shell.glass {
-          width: clamp(300px, 60vw, 720px) !important;
-          grid-template-columns: 42% 58% !important;
-        }
         .auth-google-button {
+          min-height: 40px !important;
+          font-size: 0.85rem !important;
           transition: all 0.2s ease !important;
         }
         .auth-google-button:hover:not(:disabled) {
@@ -176,6 +244,24 @@ export default function LoginPage() {
           color: white;
           background: rgba(255,255,255,0.2);
           transform: translateX(-3px);
+        }
+        @media (max-width: 760px) {
+          .auth-shell.glass {
+            width: min(100%, 380px) !important;
+            max-height: none !important;
+            grid-template-columns: 1fr !important;
+          }
+          .auth-brand-panel {
+            display: none !important;
+          }
+          .auth-card {
+            padding: 1rem !important;
+          }
+          .back-home-btn {
+            color: var(--primary-color);
+            background: rgba(37,99,235,0.08);
+            border-color: rgba(37,99,235,0.16);
+          }
         }
       `}} />
       <div className="auth-shell glass">
@@ -213,7 +299,7 @@ export default function LoginPage() {
         </aside>
 
         <div className="auth-card">
-          <div style={{ maxWidth: '300px', margin: '0 auto', width: '100%' }}>
+          <div style={{ maxWidth: '400px', margin: '0 auto', width: '100%' }}>
           <div className="auth-card-header" style={{ marginBottom: '0.8vh', textAlign: 'center' }}>
             <h2 style={{ fontSize: 'clamp(1.2rem, 3vh, 1.4rem)', fontWeight: '800', marginBottom: '0.2vh', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
               Login to NIMRA

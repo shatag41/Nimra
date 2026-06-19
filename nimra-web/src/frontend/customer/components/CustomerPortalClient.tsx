@@ -49,7 +49,21 @@ export default function CustomerPortalClient() {
   }, [products]);
 
   if (isLoading) {
-    return <div className="loading-state">Loading your portal...</div>;
+    return (
+      <div className="portal-page">
+        <div className="portal-hero" style={{ minHeight: '200px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <div style={{ width: '250px', height: '40px', background: 'rgba(255,255,255,0.2)', borderRadius: '8px', animation: 'pulse 2s infinite' }} />
+          <div style={{ width: '400px', height: '20px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', marginTop: '1rem', animation: 'pulse 2s infinite' }} />
+        </div>
+        <section className="portal-grid" style={{ opacity: 0.5 }}>
+          <div className="empty-state">
+             <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '3px solid var(--primary-color)', borderTopColor: 'transparent', animation: 'spin 1s linear infinite' }} />
+             <p>Loading your portal...</p>
+          </div>
+        </section>
+        <style jsx global>{portalStyles}</style>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {

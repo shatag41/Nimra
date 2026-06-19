@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocation } from '@/frontend/customer/contexts/LocationContext';
 import { useAuth } from '@/frontend/customer/hooks/useAuth';
 import { WORLD_DATA } from './Checkout';
@@ -27,6 +28,8 @@ interface Address {
 
 export function Addresses() {
   const { user } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const storageKey = `nimra_saved_addresses_${user?.ID || 'guest'}`;
 
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -173,6 +176,11 @@ export function Addresses() {
     setAddresses(updatedList);
     setIsAdding(false);
     setEditId(null);
+
+    const redirectPath = searchParams ? searchParams.get('redirect') : null;
+    if (redirectPath) {
+      router.push(redirectPath);
+    }
   };
 
   const handleEdit = (address: Address) => {
@@ -454,14 +462,17 @@ export function Addresses() {
             </div>
           ) : (
             addresses.map(address => (
-              <div key={address.id} className="address-card glass animate-scale-in">
-                <div className="address-card-header">
-                  <div className="badge-row">
-                    <span className={`address-badge type-${address.type.toLowerCase()}`}>
-                      {address.type}
-                    </span>
-                    {address.isDefault && <span className="default-pill">Default</span>}
-                  </div>
+              <div key={address.id} className="card address-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="address-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div className="address-meta" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <span className={`address-type-badge ${address.type.toLowerCase()}`} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.35rem 0.85rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: '700', backgroundColor: 'var(--primary-light)', color: 'var(--primary-color)', border: '1px solid var(--border-color)' }}>
+                    {address.type === 'Home' && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>}
+                    {address.type === 'Work' && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>}
+                    {address.type === 'Other' && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>}
+                    {address.type}
+                  </span>
+                  {address.isDefault && <span className="badge badge-accent">Default</span>}
+                </div>
                   <div className="address-actions">
                     <button onClick={() => handleEdit(address)} className="action-btn edit" title="Edit Address" aria-label="Edit Address">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -475,8 +486,8 @@ export function Addresses() {
                     </button>
                   </div>
                 </div>
-                <div className="address-card-body">
-                  <p className="full-address">
+                <div className="address-card-body" style={{ marginTop: '0.2rem' }}>
+                  <p className="full-address" style={{ fontSize: '0.95rem', color: 'var(--text-primary)', lineHeight: '1.5', fontWeight: '500', marginBottom: '0.5rem' }}>
                     {address.flatNo ? (
                       <>
                         {address.flatNo}{address.buildingName ? `, ${address.buildingName}` : ''}, {address.locality}{address.landmark ? `, ${address.landmark}` : ''}
@@ -485,12 +496,12 @@ export function Addresses() {
                       address.fullAddress
                     )}
                   </p>
-                  <div className="city-pin-row">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="pin-marker">
+                  <div className="city-pin-row" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary)' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="pin-marker">
                       <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
                       <circle cx="12" cy="10" r="3" />
                     </svg>
-                    <span className="city-pin-text">{address.city}, {address.state ? `${address.state} - ` : ''}{address.pincode} {address.country && `(${address.country})`}</span>
+                    <span className="city-pin-text" style={{ fontSize: '0.85rem' }}>{address.city}, {address.state ? `${address.state} - ` : ''}{address.pincode} {address.country && `(${address.country})`}</span>
                   </div>
                 </div>
               </div>

@@ -195,22 +195,50 @@ const readJsonResponse = async <T>(res: Response, fallback: T): Promise<T> => {
 
 // Compatibility wrapper used by auth pages.
 export const sendRequest = async (payload: AuthRequest): Promise<AuthResponse> => {
-  const res = await fetch('/api/cms', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
+  try {
+    if (payload.type === 'login') {
+      const username = payload.username.trim();
+      if (!username || !payload.password) {
+        return { success: false, message: 'Enter your login ID and password.' };
+      }
+      if (!/^\d{10}$/.test(username) && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username) && username.toLowerCase() !== 'admin') {
+        return { success: false, message: 'Enter a valid mobile number or email address.' };
+      }
+    }
 
-  const data = await res.json();
+    const res = await fetch('/api/cms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(payload),
+    });
 
-  if (!res.ok) {
+    const text = await res.text();
+    let data: AuthResponse = { success: false, message: 'Unexpected server response.' };
+    try {
+      data = text ? JSON.parse(text) : data;
+    } catch {
+      return { success: false, message: 'Authentication service returned an invalid response.' };
+    }
+
+    if (!res.ok) {
+      return {
+        success: false,
+        message: data.message || String(data.error || '') || 'Request failed.',
+      };
+    }
+
+    if (data.success && (payload.type === 'login' || payload.type === 'googleSignIn' || payload.type === 'register') && !data.user) {
+      return { success: false, message: 'Authentication succeeded but no user session was returned.' };
+    }
+
+    return data;
+  } catch (err) {
+    console.error('Auth request failed:', err);
     return {
       success: false,
-      message: data.message || data.error || 'Request failed.',
+      message: 'Unable to reach authentication service. Please try again.',
     };
   }
-
-  return data as AuthResponse;
 };
 
 let clientCMSCache: CMSData | null = null;

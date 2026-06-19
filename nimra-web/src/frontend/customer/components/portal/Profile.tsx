@@ -52,25 +52,34 @@ export function Profile({ user }: ProfileProps) {
   const profilePercent = Math.round((completedProfileFields / profileFields.length) * 100);
 
   return (
-    <div className="panel profile-card">
-      <div className="panel-head compact" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <span className="eyebrow" style={{ color: 'var(--primary-color)', background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.2)', borderRadius: '999px', padding: '0.2rem 0.75rem', fontSize: '0.7rem' }}>Profile</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <h2>Account Details</h2>
+    <div className="card profile-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary-color), var(--accent-color))', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem', fontWeight: '800' }}>
+            {name ? name.charAt(0).toUpperCase() : user?.Username?.charAt(0).toUpperCase() || 'U'}
+          </div>
+          <div>
+            <h2 style={{ fontSize: '1.25rem', marginBottom: '0.1rem' }}>{name || 'Account Details'}</h2>
+            <span className="badge badge-primary">Customer</span>
           </div>
         </div>
-        <span className="completion">{profilePercent}%</span>
+        <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--primary-color)' }}>{profilePercent}% Complete</span>
       </div>
-      <div className="progress-track"><span style={{ width: `${profilePercent}%` }} /></div>
-      <dl className="profile-list">
+      
+      <div style={{ width: '100%', height: '6px', background: 'var(--border-color)', borderRadius: '999px', overflow: 'hidden' }}>
+        <div style={{ width: `${profilePercent}%`, height: '100%', background: 'var(--primary-color)', borderRadius: '999px', transition: 'width 0.5s ease-out' }} />
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.5rem' }}>
         {profileFields.map((field) => (
-          <div key={field.label}>
-            <dt>{field.label}</dt>
-            <dd>{field.value || 'Not provided'}</dd>
+          <div key={field.label} style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>{field.label}</span>
+            <span style={{ fontSize: '0.95rem', color: field.value && field.value !== 'Not provided' ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: '500' }}>
+              {field.value || 'Not provided'}
+            </span>
           </div>
         ))}
-      </dl>
+      </div>
     </div>
   );
 }

@@ -57,16 +57,20 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
     }
   }, [isAdmin, isAdminLogin, isAuthPage, isAuthenticated, isCheckout, isLoading, pathname, router, searchParams, user]);
 
-  if (!mounted || isLoading) {
+  // Only show full-screen loader on protected routes during authentication check
+  const isProtectedRoute = (isAdmin && !isAdminLogin) || isCheckout;
+
+  if (isLoading && isProtectedRoute) {
     return <GlobalLoadingScreen />;
   }
 
+  // Also block access if not authenticated
   if (isAdmin && !isAdminLogin && (!isAuthenticated || user?.Role !== 'Admin')) {
-    return null;
+    return isLoading ? <GlobalLoadingScreen /> : null;
   }
 
   if (!isAuthenticated && isCheckout) {
-    return null;
+    return isLoading ? <GlobalLoadingScreen /> : null;
   }
 
   if (isAdmin || isAuthPage) {

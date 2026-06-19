@@ -114,6 +114,23 @@ export async function handlePost(req: Request) {
     const payload = { ...body };
     let backendError = '';
 
+    if (payload.type === 'login') {
+      const username = String(payload.username || '').trim();
+      const password = String(payload.password || '');
+      const isValidIdentifier =
+        /^\d{10}$/.test(username) ||
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username) ||
+        username.toLowerCase() === 'admin';
+
+      if (!username || !password) {
+        return NextResponse.json({ success: false, message: 'Username and password are required.' }, { status: 400 });
+      }
+
+      if (!isValidIdentifier) {
+        return NextResponse.json({ success: false, message: 'Enter a valid mobile number or email address.' }, { status: 400 });
+      }
+    }
+
     if (APPS_SCRIPT_URL) {
       try {
         const res = await fetch(APPS_SCRIPT_URL, {

@@ -27,7 +27,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
   const searchParams = useSearchParams();
   const currentTab = searchParams ? searchParams.get('tab') : null;
   const { totalItems } = useCart();
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading: isAuthLoading } = useAuth();
   const { city, loading, requestLocation, permissionDenied } = useLocation();
 
   const activeUser = mounted ? user : null;
@@ -326,7 +326,9 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
             )}
 
             {/* Login / Profile */}
-            {activeUser ? (
+            {!mounted || isAuthLoading ? (
+              <div className="skeleton-btn" style={{ width: '110px', height: '36px', borderRadius: 'var(--radius-md)', background: 'var(--bg-secondary)', border: '1.5px solid var(--border-color)', animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
+            ) : activeUser ? (
               <div className="profile-menu-container">
                 <button 
                   onClick={() => setProfileDropdownOpen(!profileDropdownOpen)} 
@@ -529,7 +531,9 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                 </Link>
               )}
 
-              {activeUser ? (
+              {isAuthLoading ? (
+                <div style={{ width: '100%', height: '44px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
+              ) : activeUser ? (
                 <button
                   className="btn btn-outline-danger"
                   style={{ width: '100%', justifyContent: 'center' }}

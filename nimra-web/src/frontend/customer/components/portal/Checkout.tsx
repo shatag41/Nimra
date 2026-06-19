@@ -124,7 +124,7 @@ export function CheckoutForm({
             
             <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
               <Link
-                href="/customer-portal?tab=addresses"
+                href="/customer-portal?tab=addresses&redirect=/checkout"
                 aria-label="Edit address details"
                 style={{
                   display: 'inline-flex',
@@ -150,7 +150,7 @@ export function CheckoutForm({
                 Edit Address
               </Link>
               <Link
-                href="/customer-portal?tab=addresses&add=true"
+                href="/customer-portal?tab=addresses&add=true&redirect=/checkout"
                 aria-label="Add a new address"
                 style={{
                   display: 'inline-flex',
