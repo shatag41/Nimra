@@ -35,7 +35,7 @@ export default function CartClient() {
         </div>
 
         <div className="cart-actions-top">
-           <Link href="/products" className="btn btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', height: 'auto', minHeight: '0' }}>← Continue Shopping</Link>
+           <Link href="/products" className="btn btn-secondary btn-sm">← Continue Shopping</Link>
         </div>
 
         <div className="cart-layout animate-fade-in">

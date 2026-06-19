@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '../styles/theme';
+import { ds, radius, space, typography, useResponsive } from '../styles/designSystem';
 import { OrderRecord } from '../types/cms';
 import { formatCurrency } from '../utils/commerce';
 import { trackOrder } from '../utils/api';
@@ -16,6 +17,7 @@ const statusSteps: OrderRecord['status'][] = ['Pending', 'Confirmed', 'Processin
 
 export default function TrackOrderScreen({ isDark, initialOrderId, onNavigate }: TrackOrderScreenProps) {
   const theme = isDark ? COLORS.dark : COLORS.light;
+  const responsive = useResponsive();
   const { user } = useAuth();
   const [orderId, setOrderId] = useState(initialOrderId || '');
   const [mobile, setMobile] = useState(user?.Mobile || '');
@@ -69,7 +71,7 @@ export default function TrackOrderScreen({ isDark, initialOrderId, onNavigate }:
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: theme.background }]}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { padding: responsive.pagePadding, paddingBottom: responsive.bottomInset, maxWidth: responsive.maxContentWidth }]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={COLORS.primary} />}
     >
       <Text style={[styles.title, { color: theme.text }]}>Track Your Order</Text>
@@ -118,7 +120,7 @@ export default function TrackOrderScreen({ isDark, initialOrderId, onNavigate }:
               const showRed = isStepCancelled && isCancelled;
               
               return (
-                <View key={step} style={styles.progressStep}>
+                <View key={step} style={[styles.progressStep, { width: responsive.isTablet ? '13%' : '22%' }]}>
                   <View style={[
                     styles.stepDot, 
                     active && styles.stepDotActive,
@@ -174,36 +176,36 @@ export default function TrackOrderScreen({ isDark, initialOrderId, onNavigate }:
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: 16, paddingBottom: 120, gap: 16 },
-  title: { fontSize: 28, fontWeight: '800' },
-  subtitle: { fontSize: 13, lineHeight: 20 },
-  formCard: { borderWidth: 1, borderRadius: 24, padding: 16, gap: 14 },
-  group: { gap: 6 },
-  label: { fontSize: 12, fontWeight: '700' },
-  input: { minHeight: 48, borderRadius: 14, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14 },
-  primaryBtn: { minHeight: 50, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
-  primaryBtnText: { color: 'white', fontSize: 14, fontWeight: '800' },
-  errorBox: { backgroundColor: 'rgba(239, 68, 68, 0.1)', borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.2)', borderRadius: 16, padding: 12 },
-  errorText: { color: '#dc2626', fontSize: 12, lineHeight: 16, fontWeight: '700' },
-  resultCard: { borderWidth: 1, borderRadius: 24, padding: 16, gap: 14 },
-  resultHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
-  metaLabel: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 },
-  metaValue: { fontSize: 15, fontWeight: '800' },
-  statusPill: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: COLORS.primaryLight },
-  statusPillText: { color: COLORS.primary, fontSize: 11, fontWeight: '800' },
-  progressRow: { flexDirection: 'row', justifyContent: 'flex-start', gap: 8, flexWrap: 'wrap', marginVertical: 8 },
-  progressStep: { alignItems: 'center', gap: 6, width: '22%', marginVertical: 6 },
+  content: { width: '100%', alignSelf: 'center', gap: space[4] },
+  title: { ...typography.display },
+  subtitle: { ...typography.body },
+  formCard: { ...ds.cardLarge },
+  group: { ...ds.group },
+  label: { ...ds.label },
+  input: { ...ds.input },
+  primaryBtn: { ...ds.button, minHeight: 50 },
+  primaryBtnText: { ...ds.buttonText },
+  errorBox: { backgroundColor: 'rgba(239, 68, 68, 0.1)', borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.2)', borderRadius: radius.lg, padding: space[3] },
+  errorText: { color: '#dc2626', ...typography.smallStrong },
+  resultCard: { ...ds.cardLarge },
+  resultHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[3], flexWrap: 'wrap' },
+  metaLabel: { ...typography.micro, textTransform: 'uppercase' },
+  metaValue: { fontSize: 15, lineHeight: 21, fontWeight: '800' },
+  statusPill: { ...ds.pill, paddingVertical: space[2], backgroundColor: COLORS.primaryLight },
+  statusPillText: { color: COLORS.primary, ...typography.micro },
+  progressRow: { flexDirection: 'row', justifyContent: 'flex-start', gap: space[2], flexWrap: 'wrap', marginVertical: space[2] },
+  progressStep: { alignItems: 'center', gap: space[2], marginVertical: space[2], minWidth: 64 },
   stepDot: { width: 28, height: 28, borderRadius: 14, borderWidth: 1, borderColor: '#cbd5e1', alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' },
   stepDotActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   stepDotText: { fontSize: 10, fontWeight: '800', color: '#64748b' },
   stepDotTextActive: { color: 'white' },
   stepLabel: { fontSize: 9, fontWeight: '700', textAlign: 'center', lineHeight: 12 },
-  detailGrid: { gap: 10 },
+  detailGrid: { gap: space[3] },
   detailBlock: { gap: 2 },
-  sectionTitle: { fontSize: 16, fontWeight: '800', marginTop: 4 },
-  itemRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
-  itemText: { fontSize: 13, fontWeight: '700', flex: 1 },
-  addressText: { fontSize: 13, lineHeight: 20 },
-  secondaryBtn: { minHeight: 48, borderRadius: 999, borderWidth: 1, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
-  secondaryBtnText: { fontSize: 14, fontWeight: '800' },
+  sectionTitle: { ...typography.h3, marginTop: space[1] },
+  itemRow: { flexDirection: 'row', justifyContent: 'space-between', gap: space[3] },
+  itemText: { ...typography.smallStrong, flex: 1 },
+  addressText: { ...typography.body },
+  secondaryBtn: { ...ds.secondaryButton, marginTop: space[1] },
+  secondaryBtnText: { ...typography.bodyStrong, textAlign: 'center' },
 });

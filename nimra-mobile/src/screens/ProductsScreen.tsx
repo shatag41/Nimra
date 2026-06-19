@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FlatList, Image, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '../styles/theme';
+import { ds, radius, space, typography, useResponsive } from '../styles/designSystem';
 import { Product } from '../types/cms';
 import { formatCurrency, isOrderable, normalizeCategory } from '../utils/commerce';
 
@@ -16,6 +17,7 @@ export default function ProductsScreen({ products, isDark, onNavigate, onAddToCa
   const [activeTab, setActiveTab] = useState<'Water' | 'Bulk' | 'Soda'>('Water');
   const [refreshing, setRefreshing] = useState(false);
   const theme = isDark ? COLORS.dark : COLORS.light;
+  const responsive = useResponsive();
 
   const filteredProducts = products.filter((product) => {
     const category = normalizeCategory(product.Category);
@@ -44,9 +46,19 @@ export default function ProductsScreen({ products, isDark, onNavigate, onAddToCa
       </View>
 
       <FlatList
+        key={`products-${responsive.columns}`}
         data={filteredProducts}
+        numColumns={responsive.columns}
+        columnWrapperStyle={responsive.columns > 1 ? styles.columnWrapper : undefined}
         keyExtractor={(item) => String(item.ID || item.Name)}
-        contentContainerStyle={styles.listContainer}
+        contentContainerStyle={[
+          styles.listContainer,
+          {
+            padding: responsive.pagePadding,
+            paddingBottom: responsive.bottomInset,
+            maxWidth: responsive.maxContentWidth,
+          },
+        ]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={COLORS.primary} />}
         ListEmptyComponent={<Text style={[styles.emptyText, { color: theme.textMuted }]}>Products added in Google Sheets will appear here.</Text>}
         renderItem={({ item }) => {
@@ -92,26 +104,27 @@ export default function ProductsScreen({ products, isDark, onNavigate, onAddToCa
 const styles = StyleSheet.create({
   container: { flex: 1 },
   tabContainer: { flexDirection: 'row', borderBottomWidth: 1 },
-  tabButton: { flex: 1, paddingVertical: 14, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
+  tabButton: { flex: 1, minHeight: 48, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
   activeTabButton: { borderBottomColor: COLORS.primary },
-  tabText: { fontSize: 13, fontWeight: 'bold' },
-  listContainer: { padding: 16, gap: 16, paddingBottom: 120 },
-  emptyText: { textAlign: 'center', marginTop: 40, fontWeight: '600' },
-  productCard: { flexDirection: 'row', borderRadius: 8, borderWidth: 1, padding: 12, alignItems: 'center', elevation: 1 },
-  imageContainer: { width: 90, height: 90, borderRadius: 8, backgroundColor: '#f1f5f9', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  tabText: { ...typography.smallStrong },
+  listContainer: { width: '100%', alignSelf: 'center', gap: space[4] },
+  columnWrapper: { gap: space[4] },
+  emptyText: { textAlign: 'center', marginTop: space[10], fontWeight: '600' },
+  productCard: { ...ds.card, flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', elevation: 1 },
+  imageContainer: { width: 96, aspectRatio: 1, borderRadius: radius.md, backgroundColor: '#f1f5f9', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   productImage: { width: '84%', height: '84%', resizeMode: 'contain' },
-  infoContainer: { flex: 1, paddingLeft: 12 },
-  metaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4, gap: 8 },
-  volumeText: { color: COLORS.primary, fontSize: 10, fontWeight: 'bold', backgroundColor: COLORS.primaryLight, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 50 },
-  categoryText: { fontSize: 10, flex: 1, textAlign: 'right' },
-  productName: { fontSize: 14, fontWeight: 'bold', marginBottom: 4 },
-  productDesc: { fontSize: 11, lineHeight: 15, marginBottom: 8 },
-  footerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  priceText: { fontSize: 16, fontWeight: '800' },
-  actionRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  detailBtn: { paddingVertical: 7, paddingHorizontal: 12, borderRadius: 50, borderWidth: 1, backgroundColor: 'transparent' },
-  detailBtnText: { fontSize: 11, fontWeight: 'bold' },
-  orderBtn: { backgroundColor: COLORS.primary, paddingVertical: 7, paddingHorizontal: 16, borderRadius: 50 },
+  infoContainer: { flex: 1, paddingLeft: space[3], gap: space[2], minWidth: 0 },
+  metaRow: { ...ds.rowBetween },
+  volumeText: { color: COLORS.primary, ...typography.micro, backgroundColor: COLORS.primaryLight, paddingHorizontal: space[2], paddingVertical: 2, borderRadius: radius.pill },
+  categoryText: { ...typography.micro, flex: 1, textAlign: 'right' },
+  productName: { ...typography.bodyStrong },
+  productDesc: { ...typography.small, marginBottom: space[1] },
+  footerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[3], flexWrap: 'wrap' },
+  priceText: { fontSize: 16, lineHeight: 22, fontWeight: '800' },
+  actionRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  detailBtn: { ...ds.secondaryButton, minHeight: 36, paddingVertical: space[2], paddingHorizontal: space[3] },
+  detailBtnText: { ...typography.smallStrong },
+  orderBtn: { ...ds.button, minHeight: 36, backgroundColor: COLORS.primary, paddingVertical: space[2], paddingHorizontal: space[4] },
   notifyBtn: { backgroundColor: COLORS.orange },
-  orderBtnText: { color: 'white', fontSize: 11, fontWeight: 'bold' },
+  orderBtnText: { color: 'white', ...typography.smallStrong },
 });

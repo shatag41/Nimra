@@ -1,6 +1,7 @@
 import React from 'react';
 import { Image, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '../styles/theme';
+import { ds, radius, space, typography, useResponsive } from '../styles/designSystem';
 import { CompanyInfo } from '../types/cms';
 import { formatCurrency, FREE_DELIVERY_MINIMUM } from '../utils/commerce';
 import { useCart } from '../context/CartContext';
@@ -14,6 +15,7 @@ interface CartScreenProps {
 
 export default function CartScreen({ companyInfo, isDark, onNavigate, onOpenWhatsApp }: CartScreenProps) {
   const theme = isDark ? COLORS.dark : COLORS.light;
+  const responsive = useResponsive();
   const cart = useCart();
 
   const callNow = () => {
@@ -33,8 +35,8 @@ export default function CartScreen({ companyInfo, isDark, onNavigate, onOpenWhat
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.background }]} contentContainerStyle={styles.content}>
-      <View style={styles.topActions}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.background }]} contentContainerStyle={[styles.content, { padding: responsive.pagePadding, paddingBottom: responsive.bottomInset, maxWidth: responsive.maxContentWidth }]}>
+      <View style={[styles.topActions, responsive.isTablet && styles.topActionsWide]}>
         <TouchableOpacity style={[styles.actionBtn, { backgroundColor: COLORS.primary }]} onPress={() => onNavigate('Checkout')}>
           <Text style={styles.actionText}>Proceed to Checkout</Text>
         </TouchableOpacity>
@@ -49,7 +51,7 @@ export default function CartScreen({ companyInfo, isDark, onNavigate, onOpenWhat
       <View style={[styles.sectionCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
         <Text style={[styles.sectionTitle, { color: theme.text }]}>Cart Items</Text>
         {cart.items.map((item) => (
-          <View key={item.productId} style={[styles.itemRow, { borderBottomColor: theme.border }]}>
+          <View key={item.productId} style={[styles.itemRow, !responsive.isTablet && styles.itemRowMobile, { borderBottomColor: theme.border }]}>
             <Image source={{ uri: item.imageUrl }} style={styles.image} />
             <View style={styles.itemBody}>
               <Text style={[styles.itemName, { color: theme.text }]}>{item.name}</Text>
@@ -90,32 +92,34 @@ export default function CartScreen({ companyInfo, isDark, onNavigate, onOpenWhat
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: 16, paddingBottom: 120, gap: 16 },
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 14 },
-  emptyTitle: { fontSize: 22, fontWeight: '800' },
-  emptyText: { fontSize: 14, lineHeight: 20, textAlign: 'center' },
-  primaryBtn: { minHeight: 48, borderRadius: 999, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18 },
-  primaryBtnText: { color: 'white', fontSize: 14, fontWeight: '800' },
-  topActions: { gap: 10 },
-  actionBtn: { minHeight: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
-  actionText: { color: 'white', fontSize: 14, fontWeight: '800' },
-  sectionCard: { borderWidth: 1, borderRadius: 24, padding: 16, gap: 12 },
-  summaryCard: { borderWidth: 1, borderRadius: 24, padding: 16, gap: 12 },
-  sectionTitle: { fontSize: 18, fontWeight: '800' },
-  itemRow: { flexDirection: 'row', gap: 12, paddingBottom: 12, borderBottomWidth: 1 },
-  image: { width: 84, height: 84, borderRadius: 16, backgroundColor: '#f8fafc', resizeMode: 'contain' },
-  itemBody: { flex: 1, gap: 6 },
-  itemName: { fontSize: 15, fontWeight: '800' },
-  itemMeta: { fontSize: 12 },
-  itemPrice: { fontSize: 14, fontWeight: '800' },
-  qtyRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  qtyBtn: { width: 34, height: 34, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  content: { width: '100%', alignSelf: 'center', gap: space[4] },
+  empty: { ...ds.empty },
+  emptyTitle: { ...typography.h2 },
+  emptyText: { ...typography.body, textAlign: 'center' },
+  primaryBtn: { ...ds.button },
+  primaryBtnText: { ...ds.buttonText },
+  topActions: { gap: space[3] },
+  topActionsWide: { flexDirection: 'row' },
+  actionBtn: { ...ds.button, flex: 1, borderRadius: radius.lg },
+  actionText: { ...ds.buttonText },
+  sectionCard: { ...ds.cardLarge },
+  summaryCard: { ...ds.cardLarge },
+  sectionTitle: { ...typography.h3 },
+  itemRow: { flexDirection: 'row', gap: space[3], paddingBottom: space[3], borderBottomWidth: 1 },
+  itemRowMobile: { alignItems: 'flex-start' },
+  image: { width: 84, aspectRatio: 1, borderRadius: radius.lg, backgroundColor: '#f8fafc', resizeMode: 'contain' },
+  itemBody: { flex: 1, gap: space[2], minWidth: 0 },
+  itemName: { fontSize: 15, lineHeight: 21, fontWeight: '800' },
+  itemMeta: { ...typography.small },
+  itemPrice: { ...typography.bodyStrong, fontWeight: '800' },
+  qtyRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], flexWrap: 'wrap' },
+  qtyBtn: { width: 36, height: 36, borderRadius: radius.md, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   qtyBtnText: { fontSize: 18, fontWeight: '800' },
   qtyValue: { minWidth: 20, textAlign: 'center', fontSize: 14, fontWeight: '800' },
   removeBtn: { marginLeft: 'auto' },
   removeText: { color: '#dc2626', fontSize: 12, fontWeight: '800' },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  summaryTotalLabel: { fontSize: 15, fontWeight: '800' },
-  summaryTotalValue: { fontSize: 18, fontWeight: '800' },
-  note: { fontSize: 12, lineHeight: 18 },
+  summaryTotalLabel: { ...typography.bodyStrong, fontWeight: '800' },
+  summaryTotalValue: { ...typography.h3 },
+  note: { ...typography.small },
 });

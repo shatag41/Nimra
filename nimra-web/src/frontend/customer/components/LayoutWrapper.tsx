@@ -71,8 +71,8 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
 
   if (isAdmin || isAuthPage) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <main style={{ flex: '1' }}>
+      <div className="ds-app-shell">
+        <main className="ds-main">
           {children}
         </main>
       </div>
@@ -80,9 +80,9 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="ds-app-shell">
       <Header companyInfo={companyInfo} />
-      <main style={{ flex: '1', paddingTop: '80px' }}>
+      <main className="ds-main with-site-header">
         {children}
       </main>
       <Footer companyInfo={companyInfo} />

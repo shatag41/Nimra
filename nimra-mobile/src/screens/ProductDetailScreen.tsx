@@ -1,6 +1,7 @@
 import React from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '../styles/theme';
+import { ds, radius, space, typography, useResponsive } from '../styles/designSystem';
 import { Product } from '../types/cms';
 import { formatCurrency, isOrderable, normalizeCategory } from '../utils/commerce';
 import { useCart } from '../context/CartContext';
@@ -13,6 +14,7 @@ interface ProductDetailScreenProps {
 
 export default function ProductDetailScreen({ product, isDark, onNavigate }: ProductDetailScreenProps) {
   const theme = isDark ? COLORS.dark : COLORS.light;
+  const responsive = useResponsive();
   const cart = useCart();
 
   if (!product) {
@@ -43,9 +45,9 @@ export default function ProductDetailScreen({ product, isDark, onNavigate }: Pro
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.background }]} contentContainerStyle={styles.content}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.background }]} contentContainerStyle={[styles.content, { padding: responsive.pagePadding, paddingBottom: responsive.bottomInset, maxWidth: responsive.isLaptop ? 860 : responsive.maxContentWidth }]}>
       <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
-        <Image source={{ uri: product.ImageUrl }} style={styles.image} />
+        <Image source={{ uri: product.ImageUrl }} style={[styles.image, { height: responsive.isTablet ? 360 : 260 }]} />
         <View style={styles.metaRow}>
           <Text style={styles.volume}>{product.Volume}</Text>
           <Text style={[styles.category, { color: theme.textMuted }]}>{normalizeCategory(product.Category)}</Text>
@@ -88,24 +90,24 @@ export default function ProductDetailScreen({ product, isDark, onNavigate }: Pro
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: 16, paddingBottom: 120 },
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 16 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
-  card: { borderWidth: 1, borderRadius: 24, padding: 16, gap: 14 },
-  image: { width: '100%', height: 260, resizeMode: 'contain', backgroundColor: '#f8fafc', borderRadius: 18 },
-  metaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  volume: { color: COLORS.primary, fontSize: 11, fontWeight: '800', backgroundColor: COLORS.primaryLight, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
-  category: { fontSize: 11, fontWeight: '600' },
-  title: { fontSize: 24, fontWeight: '800', lineHeight: 30 },
-  price: { fontSize: 22, fontWeight: '800' },
-  desc: { fontSize: 14, lineHeight: 21 },
-  qtyRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 8 },
-  qtyBtn: { width: 52, height: 52, borderRadius: 16, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  content: { width: '100%', alignSelf: 'center' },
+  empty: { ...ds.empty },
+  emptyTitle: { ...typography.h3, textAlign: 'center' },
+  card: { ...ds.cardLarge },
+  image: { width: '100%', resizeMode: 'contain', backgroundColor: '#f8fafc', borderRadius: radius.lg },
+  metaRow: { ...ds.rowBetween, flexWrap: 'wrap' },
+  volume: { color: COLORS.primary, ...typography.micro, backgroundColor: COLORS.primaryLight, paddingHorizontal: space[3], paddingVertical: space[1], borderRadius: radius.pill },
+  category: { ...typography.smallStrong },
+  title: { ...typography.h1 },
+  price: { ...typography.h2 },
+  desc: { ...typography.body },
+  qtyRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[3], marginTop: space[2] },
+  qtyBtn: { width: 52, height: 52, borderRadius: radius.lg, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   qtyBtnText: { fontSize: 24, fontWeight: '800' },
   qtyValue: { minWidth: 84, height: 52, borderRadius: 16, borderWidth: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12 },
   qtyValueText: { fontSize: 18, fontWeight: '800' },
-  primaryBtn: { minHeight: 50, borderRadius: 999, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
-  primaryBtnText: { color: 'white', fontSize: 14, fontWeight: '800' },
-  secondaryBtn: { minHeight: 48, borderRadius: 999, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
-  secondaryBtnText: { fontSize: 14, fontWeight: '800' },
+  primaryBtn: { ...ds.button, minHeight: 50, marginTop: space[1] },
+  primaryBtnText: { ...ds.buttonText },
+  secondaryBtn: { ...ds.secondaryButton },
+  secondaryBtnText: { ...typography.bodyStrong, textAlign: 'center' },
 });

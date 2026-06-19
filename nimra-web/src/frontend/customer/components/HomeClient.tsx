@@ -103,7 +103,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
                     Fast, dependable service across the city
                   </li>
                 </ul>
-                <Link href="/products" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: '1rem' }}>
+                <Link href="/products" className="btn btn-primary ds-btn-full hero-card-cta">
                   Explore Products
                 </Link>
               </div>
@@ -217,7 +217,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
                   </div>
                 ))}
               </div>
-              <Link href="/about" className="btn btn-primary" style={{ marginTop: '2rem', display: 'inline-flex' }}>
+              <Link href="/about" className="btn btn-primary story-cta">
                 Discover Our Standards
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </Link>
@@ -303,7 +303,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
                   <span key={f} className="rush-pill">{f}</span>
                 ))}
               </div>
-              <Link href="/contact" className="btn btn-rush" style={{ background: 'linear-gradient(135deg, #f97316, #ea580c)', color: 'white', border: 'none' }}>
+              <Link href="/contact" className="btn btn-rush">
                 Get Notified on Launch
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
               </Link>

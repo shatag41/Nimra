@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLORS } from '../styles/theme';
+import { ds, radius, space, typography, useResponsive } from '../styles/designSystem';
 import { useAuth } from '../context/AuthContext';
 import {
   OrderRecord,
@@ -46,6 +47,7 @@ type SubTab = 'Dashboard' | 'Orders' | 'Products' | 'Inquiries' | 'Users' | 'Ann
 
 export default function AdminPortalScreen({ isDark, companyInfo, onRefresh, onNavigate }: AdminPortalScreenProps) {
   const theme = isDark ? COLORS.dark : COLORS.light;
+  const responsive = useResponsive();
   const { user, logout } = useAuth();
 
   // Session & Auth States
@@ -350,7 +352,7 @@ export default function AdminPortalScreen({ isDark, companyInfo, onRefresh, onNa
   // RENDER ACCESS DENIED SCREEN
   if (!currentUser) {
     return (
-      <ScrollView style={[styles.container, { backgroundColor: theme.background }]} contentContainerStyle={styles.centerContent}>
+      <ScrollView style={[styles.container, { backgroundColor: theme.background }]} contentContainerStyle={[styles.centerContent, { padding: responsive.pagePadding }]}>
         <View style={[styles.loginCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.loginTitle, { color: theme.text }]}>🔑 NIMRA ADMIN</Text>
           <Text style={[styles.loginSubtitle, { color: theme.textMuted }]}>Log in with an Admin account to access this dashboard.</Text>
@@ -397,7 +399,7 @@ export default function AdminPortalScreen({ isDark, companyInfo, onRefresh, onNa
       </View>
 
       {/* CORE VIEWPORT */}
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={[styles.scrollContent, { padding: responsive.pagePadding, paddingBottom: responsive.bottomInset, maxWidth: responsive.maxContentWidth }]}>
         
         {/* ==================================================== */}
         {/* DASHBOARD PANEL */}
@@ -605,7 +607,7 @@ export default function AdminPortalScreen({ isDark, companyInfo, onRefresh, onNa
       {/* STATUS EDIT MODAL */}
       {/* ==================================================== */}
       <Modal visible={statusModalVisible} animationType="slide" transparent>
-        <View style={styles.modalBackdrop}>
+        <View style={[styles.modalBackdrop, { padding: responsive.pagePadding }]}>
           <View style={[styles.modalCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <Text style={[styles.modalTitle, { color: theme.text }]}>Order Status Selector</Text>
             {selectedOrder && (
@@ -648,7 +650,7 @@ export default function AdminPortalScreen({ isDark, companyInfo, onRefresh, onNa
       {/* USER CRUD MODAL */}
       {/* ==================================================== */}
       <Modal visible={userModalVisible} animationType="slide" transparent>
-        <View style={styles.modalBackdrop}>
+        <View style={[styles.modalBackdrop, { padding: responsive.pagePadding }]}>
           <ScrollView style={[styles.modalCard, { backgroundColor: theme.card, borderColor: theme.border }]} contentContainerStyle={{ paddingBottom: 30 }}>
             <Text style={[styles.modalTitle, { color: theme.text }]}>Register System User</Text>
             {editingUser && (
@@ -727,73 +729,73 @@ export default function AdminPortalScreen({ isDark, companyInfo, onRefresh, onNa
 const styles = StyleSheet.create({
   container: { flex: 1 },
   loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  centerContent: { flexGrow: 1, justifyContent: 'center', padding: 20 },
-  scrollContent: { padding: 16, paddingBottom: 100 },
+  centerContent: { flexGrow: 1, justifyContent: 'center', width: '100%', alignSelf: 'center', maxWidth: 560 },
+  scrollContent: { width: '100%', alignSelf: 'center' },
   
   // LOGIN SCREEN
-  loginCard: { borderWidth: 1, borderRadius: 24, padding: 20, gap: 14 },
-  loginTitle: { fontSize: 24, fontWeight: '800', textAlign: 'center' },
-  loginSubtitle: { fontSize: 13, textAlign: 'center', marginBottom: 10 },
-  group: { gap: 6 },
-  label: { fontSize: 12, fontWeight: '700' },
-  input: { minHeight: 48, borderRadius: 14, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14 },
-  primaryBtn: { minHeight: 48, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
-  primaryBtnText: { color: 'white', fontSize: 14, fontWeight: '800' },
-  backBtn: { marginTop: 10, alignItems: 'center' },
-  backBtnText: { fontSize: 13, fontWeight: '600' },
+  loginCard: { ...ds.cardLarge },
+  loginTitle: { ...typography.h1, textAlign: 'center' },
+  loginSubtitle: { ...typography.body, textAlign: 'center', marginBottom: space[3] },
+  group: { ...ds.group },
+  label: { ...ds.label },
+  input: { ...ds.input },
+  primaryBtn: { ...ds.button },
+  primaryBtnText: { ...ds.buttonText },
+  backBtn: { marginTop: space[3], alignItems: 'center' },
+  backBtnText: { ...typography.smallStrong },
 
   // PORTAL SHELL
-  portalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1 },
-  portalTitle: { fontSize: 18, fontWeight: '800' },
-  portalUser: { fontSize: 12 },
-  logoutBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#ef4444' },
-  logoutBtnText: { color: '#ef4444', fontSize: 12, fontWeight: '800' },
+  portalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: space[4], borderBottomWidth: 1, gap: space[3] },
+  portalTitle: { ...typography.h3 },
+  portalUser: { ...typography.small },
+  logoutBtn: { paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.sm, borderWidth: 1, borderColor: '#ef4444' },
+  logoutBtnText: { color: '#ef4444', ...typography.smallStrong },
   
-  tabsBar: { paddingHorizontal: 16, borderBottomWidth: 1, paddingVertical: 4 },
-  tabItem: { paddingHorizontal: 16, paddingVertical: 8, marginRight: 8, borderRadius: 8 },
+  tabsBar: { paddingHorizontal: space[4], borderBottomWidth: 1, paddingVertical: space[1] },
+  tabItem: { ...ds.tabButton, marginRight: space[2] },
   tabItemActive: { backgroundColor: 'rgba(0, 162, 153, 0.08)' },
-  tabLabel: { fontSize: 12, fontWeight: '800' },
+  tabLabel: { ...typography.smallStrong },
 
-  tabContent: { gap: 12 },
-  sectionTitle: { fontSize: 16, fontWeight: '800', marginTop: 12, marginBottom: 4 },
-  emptyText: { textAlign: 'center', fontSize: 13, marginVertical: 20 },
+  tabContent: { gap: space[3] },
+  sectionTitle: { ...typography.h3, marginTop: space[3], marginBottom: space[1] },
+  emptyText: { textAlign: 'center', ...typography.body, marginVertical: space[5] },
 
   // STATS GRID
-  statsGrid: { flexDirection: 'row', gap: 12 },
-  statCard: { flex: 1, borderWidth: 1, borderRadius: 16, padding: 16, gap: 4 },
-  statLabel: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
-  statVal: { fontSize: 22, fontWeight: '800' },
+  statsGrid: { flexDirection: 'row', gap: space[3], flexWrap: 'wrap' },
+  statCard: { flex: 1, minWidth: 220, ...ds.card },
+  statLabel: { ...typography.micro, textTransform: 'uppercase' },
+  statVal: { ...typography.h2 },
 
   // ITEMS LISTS
-  itemCard: { borderWidth: 1, borderRadius: 20, padding: 16, gap: 6 },
-  itemHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  itemId: { fontSize: 14, fontWeight: '800' },
-  itemDetails: { fontSize: 13, fontWeight: '700' },
-  itemAddress: { fontSize: 12, lineHeight: 16 },
-  itemTotal: { fontSize: 14, fontWeight: '800', alignSelf: 'flex-end' },
+  itemCard: { ...ds.card },
+  itemHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[3] },
+  itemId: { ...typography.bodyStrong, fontWeight: '800', flexShrink: 1 },
+  itemDetails: { ...typography.smallStrong },
+  itemAddress: { ...typography.small },
+  itemTotal: { ...typography.bodyStrong, fontWeight: '800', alignSelf: 'flex-end' },
   
-  miniBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999 },
-  miniBadgeText: { color: 'white', fontSize: 9, fontWeight: '800' },
+  miniBadge: { ...ds.pill },
+  miniBadgeText: { color: 'white', ...typography.micro },
 
-  userRoleBadge: { fontSize: 12, fontWeight: '800' },
+  userRoleBadge: { ...typography.smallStrong },
 
   // INQUIRIES SPECIFIC
-  inqSubject: { fontSize: 13, fontWeight: '800' },
-  inqMessage: { fontSize: 13, lineHeight: 18 },
-  btnRow: { flexDirection: 'row', gap: 8, marginTop: 4 },
-  actionBtn: { flex: 1, minHeight: 38, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  actionBtnText: { fontSize: 12, fontWeight: '800' },
+  inqSubject: { ...typography.smallStrong },
+  inqMessage: { ...typography.body },
+  btnRow: { flexDirection: 'row', gap: space[2], marginTop: space[1], flexWrap: 'wrap' },
+  actionBtn: { ...ds.secondaryButton, flex: 1, minHeight: 40, minWidth: 120, borderRadius: radius.md },
+  actionBtnText: { ...typography.smallStrong, textAlign: 'center' },
 
   // ANNOUNCEMENTS SENDER
-  formCard: { borderWidth: 1, borderRadius: 20, padding: 16, gap: 12 },
+  formCard: { ...ds.card },
 
   // MODALS
-  modalBackdrop: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', padding: 20 },
-  modalCard: { borderWidth: 1, borderRadius: 24, padding: 20, gap: 16 },
-  modalTitle: { fontSize: 18, fontWeight: '800', textAlign: 'center', marginBottom: 10 },
-  modalDetails: { gap: 10, marginVertical: 10 },
-  modalLabel: { fontSize: 13, fontWeight: '700' },
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center' },
+  modalCard: { ...ds.cardLarge, maxWidth: 620, width: '100%', alignSelf: 'center', maxHeight: '92%' },
+  modalTitle: { ...typography.h3, textAlign: 'center', marginBottom: space[3] },
+  modalDetails: { gap: space[3], marginVertical: space[3] },
+  modalLabel: { ...typography.smallStrong },
 
-  pickerItem: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10, borderWidth: 1, borderColor: '#e2e8f0', marginVertical: 4, alignItems: 'center' },
-  pickerItemText: { fontSize: 13, fontWeight: '800' },
+  pickerItem: { paddingVertical: space[3], paddingHorizontal: space[4], borderRadius: radius.md, borderWidth: 1, borderColor: '#e2e8f0', marginVertical: space[1], alignItems: 'center' },
+  pickerItemText: { ...typography.smallStrong },
 });

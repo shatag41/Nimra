@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '../styles/theme';
+import { ds, space, typography, useResponsive } from '../styles/designSystem';
 import { CompanyInfo, OrderSubmission } from '../types/cms';
 import { submitOrder } from '../utils/api';
 import { formatCurrency } from '../utils/commerce';
@@ -27,6 +28,7 @@ const initialForm = {
 
 export default function CheckoutScreen({ companyInfo, isDark, onNavigate }: CheckoutScreenProps) {
   const theme = isDark ? COLORS.dark : COLORS.light;
+  const responsive = useResponsive();
   const cart = useCart();
   const { user } = useAuth();
   const [form, setForm] = useState(initialForm);
@@ -131,7 +133,7 @@ export default function CheckoutScreen({ companyInfo, isDark, onNavigate }: Chec
 
   if (status.type === 'success') {
     return (
-      <ScrollView style={[styles.container, { backgroundColor: theme.background }]} contentContainerStyle={styles.content}>
+      <ScrollView style={[styles.container, { backgroundColor: theme.background }]} contentContainerStyle={[styles.content, { padding: responsive.pagePadding, paddingBottom: responsive.bottomInset, maxWidth: responsive.maxContentWidth }]}>
         <View style={[styles.successCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.successTitle, { color: theme.text }]}>Order placed successfully</Text>
           <Text style={[styles.successText, { color: theme.textMuted }]}>{status.message}</Text>
@@ -151,7 +153,7 @@ export default function CheckoutScreen({ companyInfo, isDark, onNavigate }: Chec
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.background }]} contentContainerStyle={styles.content}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.background }]} contentContainerStyle={[styles.content, { padding: responsive.pagePadding, paddingBottom: responsive.bottomInset, maxWidth: responsive.maxContentWidth }]}>
       <Text style={[styles.title, { color: theme.text }]}>Checkout</Text>
       <Text style={[styles.subtitle, { color: theme.textMuted }]}>Fill in the delivery details and place your order securely.</Text>
 
@@ -178,7 +180,7 @@ export default function CheckoutScreen({ companyInfo, isDark, onNavigate }: Chec
           <Text style={[styles.label, { color: theme.text }]}>Address *</Text>
           <TextInput style={[styles.input, styles.textArea, { backgroundColor: theme.background, borderColor: theme.border, color: theme.text }]} value={form.address} onChangeText={(value) => update('address', value)} placeholder="Delivery address" placeholderTextColor={theme.textMuted} multiline />
         </View>
-        <View style={styles.splitRow}>
+        <View style={[styles.splitRow, !responsive.isTablet && styles.stackRow]}>
           <View style={[styles.group, styles.flex1]}>
             <Text style={[styles.label, { color: theme.text }]}>City *</Text>
             <TextInput style={[styles.input, { backgroundColor: theme.background, borderColor: theme.border, color: theme.text }]} value={form.city} onChangeText={(value) => update('city', value)} placeholder="City" placeholderTextColor={theme.textMuted} />
@@ -219,33 +221,34 @@ export default function CheckoutScreen({ companyInfo, isDark, onNavigate }: Chec
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: 16, paddingBottom: 120, gap: 16 },
-  title: { fontSize: 28, fontWeight: '800' },
-  subtitle: { fontSize: 13, lineHeight: 20 },
-  errorBox: { backgroundColor: 'rgba(239, 68, 68, 0.1)', borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.2)', borderRadius: 16, padding: 12 },
-  errorText: { color: '#dc2626', fontSize: 12, lineHeight: 16, fontWeight: '700' },
-  formCard: { borderWidth: 1, borderRadius: 24, padding: 16, gap: 14 },
-  group: { gap: 6 },
-  splitRow: { flexDirection: 'row', gap: 12 },
+  content: { width: '100%', alignSelf: 'center', gap: space[4] },
+  title: { ...typography.display },
+  subtitle: { ...typography.body },
+  errorBox: { backgroundColor: 'rgba(239, 68, 68, 0.1)', borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.2)', borderRadius: 16, padding: space[3] },
+  errorText: { color: '#dc2626', ...typography.smallStrong },
+  formCard: { ...ds.cardLarge },
+  group: { ...ds.group },
+  splitRow: { flexDirection: 'row', gap: space[3] },
+  stackRow: { flexDirection: 'column' },
   flex1: { flex: 1 },
-  label: { fontSize: 12, fontWeight: '700' },
-  input: { minHeight: 48, borderRadius: 14, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14 },
-  textArea: { minHeight: 96, textAlignVertical: 'top' },
-  summaryCard: { borderWidth: 1, borderRadius: 24, padding: 16, gap: 10 },
-  sectionTitle: { fontSize: 18, fontWeight: '800' },
-  summaryItem: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
+  label: { ...ds.label },
+  input: { ...ds.input },
+  textArea: { ...ds.textArea },
+  summaryCard: { ...ds.cardLarge },
+  sectionTitle: { ...typography.h3 },
+  summaryItem: { flexDirection: 'row', justifyContent: 'space-between', gap: space[3] },
   summaryItemText: { flex: 1, fontWeight: '700' },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  totalLabel: { fontSize: 15, fontWeight: '800' },
-  totalValue: { fontSize: 18, fontWeight: '800' },
-  primaryBtn: { minHeight: 50, borderRadius: 999, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
-  primaryBtnText: { color: 'white', fontSize: 14, fontWeight: '800' },
-  secondaryBtn: { minHeight: 48, borderRadius: 999, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  secondaryBtnText: { fontSize: 14, fontWeight: '800' },
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 14 },
-  emptyTitle: { fontSize: 22, fontWeight: '800' },
-  successCard: { borderWidth: 1, borderRadius: 24, padding: 20, gap: 12, alignItems: 'center' },
-  successTitle: { fontSize: 24, fontWeight: '800', textAlign: 'center' },
-  successText: { fontSize: 13, lineHeight: 20, textAlign: 'center' },
-  orderId: { fontSize: 16, fontWeight: '800' },
+  totalLabel: { ...typography.bodyStrong, fontWeight: '800' },
+  totalValue: { ...typography.h3 },
+  primaryBtn: { ...ds.button, minHeight: 50, marginTop: space[1] },
+  primaryBtnText: { ...ds.buttonText },
+  secondaryBtn: { ...ds.secondaryButton },
+  secondaryBtnText: { ...typography.bodyStrong, textAlign: 'center' },
+  empty: { ...ds.empty },
+  emptyTitle: { ...typography.h2 },
+  successCard: { ...ds.cardLarge, alignItems: 'center' },
+  successTitle: { ...typography.h1, textAlign: 'center' },
+  successText: { ...typography.body, textAlign: 'center' },
+  orderId: { fontSize: 16, lineHeight: 22, fontWeight: '800' },
 });

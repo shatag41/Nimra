@@ -6,14 +6,13 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
-  Dimensions,
+  useWindowDimensions,
   NativeScrollEvent,
   NativeSyntheticEvent
 } from 'react-native';
 import { COLORS } from '../styles/theme';
+import { ds, radius, space, typography, useResponsive } from '../styles/designSystem';
 import { Banner, FAQ, CompanyInfo } from '../types/cms';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface HomeScreenProps {
   banners: Banner[];
@@ -27,6 +26,8 @@ export default function HomeScreen({ banners, faqs, companyInfo, isDark, onNavig
   const [activeBanner, setActiveBanner] = useState(0);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const theme = isDark ? COLORS.dark : COLORS.light;
+  const { width } = useWindowDimensions();
+  const responsive = useResponsive();
   
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const slideSize = event.nativeEvent.layoutMeasurement.width;
@@ -50,7 +51,7 @@ export default function HomeScreen({ banners, faqs, companyInfo, isDark, onNavig
           scrollEventThrottle={16}
         >
           {banners.map((banner, index) => (
-            <View key={banner.ID || index} style={styles.slide}>
+            <View key={banner.ID || index} style={[styles.slide, { width }]}>
               <Image source={{ uri: banner.ImageUrl }} style={styles.slideImage} />
               <View style={styles.overlay}>
                 <View style={styles.badge}>
@@ -85,7 +86,7 @@ export default function HomeScreen({ banners, faqs, companyInfo, isDark, onNavig
       </View>
 
       {/* 2. BRAND STORY */}
-      <View style={styles.section}>
+      <View style={[styles.section, { paddingHorizontal: responsive.pagePadding, maxWidth: responsive.maxContentWidth }]}>
         <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <View style={styles.badgePrimary}>
             <Text style={styles.badgePrimaryText}>About NIMRA</Text>
@@ -95,7 +96,7 @@ export default function HomeScreen({ banners, faqs, companyInfo, isDark, onNavig
             {companyInfo.AboutStory || "At NIMRA, we believe pure drinking water is the cornerstone of robust health. MERGING advanced purification technologies with mineral balancing to ensure safety."}
           </Text>
           
-          <View style={styles.row}>
+          <View style={[styles.row, !responsive.isTablet && styles.stackRow]}>
             <View style={styles.iconBullet}>
               <Text style={styles.bulletTitle}>ISI Certified</Text>
               <Text style={[styles.bulletDesc, { color: theme.textMuted }]}>Bureau of Indian Standards IS 14543</Text>
@@ -116,7 +117,7 @@ export default function HomeScreen({ banners, faqs, companyInfo, isDark, onNavig
       </View>
 
       {/* 3. RUSH SODA "COMING SOON" */}
-      <View style={styles.section}>
+      <View style={[styles.section, { paddingHorizontal: responsive.pagePadding, maxWidth: responsive.maxContentWidth }]}>
         <View style={styles.rushCard}>
           <View style={styles.badgeOrange}>
             <Text style={styles.badgeOrangeText}>Coming Soon</Text>
@@ -139,7 +140,7 @@ export default function HomeScreen({ banners, faqs, companyInfo, isDark, onNavig
       </View>
 
       {/* 4. FAQs ACCORDION */}
-      <View style={[styles.section, { marginBottom: 80 }]}>
+      <View style={[styles.section, { paddingHorizontal: responsive.pagePadding, maxWidth: responsive.maxContentWidth, marginBottom: responsive.bottomInset }]}>
         <Text style={[styles.sectionTitle, { color: theme.text }]}>Frequently Asked Questions</Text>
         <View style={styles.faqList}>
           {faqs.map((faq, index) => {
@@ -182,7 +183,6 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   slide: {
-    width: SCREEN_WIDTH,
     height: 320,
     position: 'relative',
   },
@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: 'rgba(15, 23, 42, 0.65)',
     justifyContent: 'center',
-    padding: 24,
+    padding: space[6],
   },
   badge: {
     backgroundColor: COLORS.primary,
@@ -260,24 +260,19 @@ const styles = StyleSheet.create({
     width: 20,
   },
   section: {
-    paddingHorizontal: 16,
-    paddingTop: 24,
+    width: '100%',
+    alignSelf: 'center',
+    paddingTop: space[6],
   },
   card: {
-    borderRadius: 20,
-    borderWidth: 1,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
+    ...ds.cardLarge,
+    ...ds.shadow,
   },
   badgePrimary: {
     backgroundColor: COLORS.primaryLight,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 50,
+    paddingHorizontal: space[3],
+    paddingVertical: space[1],
+    borderRadius: radius.pill,
     alignSelf: 'flex-start',
     marginBottom: 12,
   },
@@ -287,21 +282,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   cardHeading: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 10,
+    ...typography.h2,
+    marginBottom: space[2],
   },
   cardDesc: {
-    fontSize: 13,
-    lineHeight: 20,
-    marginBottom: 20,
+    ...typography.body,
+    marginBottom: space[5],
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 12,
-    marginBottom: 20,
+    gap: space[3],
+    marginBottom: space[5],
   },
+  stackRow: { flexDirection: 'column' },
   iconBullet: {
     flex: 1,
   },
@@ -316,15 +310,10 @@ const styles = StyleSheet.create({
     lineHeight: 14,
   },
   btn: {
-    paddingVertical: 12,
-    borderRadius: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
+    ...ds.button,
   },
   btnText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: 'bold',
+    ...ds.buttonText,
   },
 
   /* Rush Soda styling */
@@ -332,8 +321,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#0c0f16',
     borderWidth: 1,
     borderColor: '#3a2010',
-    borderRadius: 24,
-    padding: 24,
+    borderRadius: radius['2xl'],
+    padding: space[6],
     shadowColor: '#f97316',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -385,9 +374,7 @@ const styles = StyleSheet.create({
   },
   rushBtn: {
     backgroundColor: COLORS.orange,
-    paddingVertical: 12,
-    borderRadius: 50,
-    alignItems: 'center',
+    ...ds.button,
   },
   rushBtnText: {
     color: 'white',

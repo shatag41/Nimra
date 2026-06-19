@@ -2217,6 +2217,128 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             opacity: 1 !important;
           }
         `}</style>
+
+        <style jsx global>{`
+          .admin-container {
+            min-height: 100vh;
+            background: var(--bg-primary);
+          }
+
+          .admin-sidebar {
+            width: var(--ds-sidebar-w) !important;
+            min-width: var(--ds-sidebar-w) !important;
+          }
+
+          .admin-main {
+            margin-left: var(--ds-sidebar-w) !important;
+            width: calc(100% - var(--ds-sidebar-w));
+            min-width: 0;
+            padding: clamp(1rem, 2vw, 1.75rem) !important;
+          }
+
+          .tab-viewport,
+          .dashboard-content,
+          .admin-content,
+          .table-section {
+            width: 100%;
+            max-width: 1360px;
+            margin-inline: auto;
+            min-width: 0;
+          }
+
+          .stats-grid {
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)) !important;
+            gap: var(--ds-gap-md) !important;
+          }
+
+          .charts-grid,
+          .recent-activity-grid {
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)) !important;
+            gap: var(--ds-gap-lg) !important;
+          }
+
+          .filter-bar {
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)) !important;
+            padding: var(--ds-card-pad) !important;
+          }
+
+          .main-header,
+          .section-head,
+          .section-head-btn,
+          .header-actions,
+          .modal-actions {
+            gap: var(--ds-gap-sm) !important;
+          }
+
+          .modal-backdrop,
+          .admin-modal-backdrop {
+            padding: var(--ds-page-pad) !important;
+          }
+
+          .modal-card,
+          .admin-modal,
+          .profile-panel {
+            width: min(100%, 44rem) !important;
+            max-height: min(90vh, 52rem);
+            border-radius: var(--ds-modal-radius) !important;
+            overflow: auto;
+          }
+
+          .table-wrapper,
+          .orders-table-wrap,
+          .admin-table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+          }
+
+          table {
+            width: 100%;
+            min-width: 44rem;
+          }
+
+          @media (max-width: 768px) {
+            .admin-container {
+              flex-direction: column !important;
+            }
+
+            .admin-sidebar {
+              position: sticky !important;
+              top: 0;
+              width: 100% !important;
+              min-width: 0 !important;
+              height: auto !important;
+              max-height: 42vh;
+              border-right: 0 !important;
+              border-bottom: 1px solid var(--border-color);
+            }
+
+            .admin-main {
+              margin-left: 0 !important;
+              width: 100%;
+              padding: 1rem !important;
+            }
+
+            .sidebar-nav {
+              flex-direction: row !important;
+              overflow-x: auto;
+              padding-bottom: 0.25rem;
+            }
+
+            .nav-btn {
+              white-space: nowrap;
+              flex: 0 0 auto;
+            }
+
+            .main-header,
+            .section-head,
+            .section-head-btn,
+            .header-actions {
+              flex-direction: column !important;
+              align-items: stretch !important;
+            }
+          }
+        `}</style>
       </div>
     </>
   );

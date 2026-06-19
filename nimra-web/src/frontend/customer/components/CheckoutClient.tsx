@@ -379,7 +379,7 @@ export default function CheckoutClient() {
     <section className="checkout-page">
       <div className="container">
         <div className="checkout-actions-top">
-           <Link href="/cart" className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', height: 'auto', minHeight: '0', borderRadius: 'var(--radius-md)' }}>← Back to Cart</Link>
+           <Link href="/cart" className="btn btn-secondary btn-sm">← Back to Cart</Link>
         </div>
 
         {status.kind === 'success' ? (

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { COLORS } from './src/styles/theme';
+import { radius, space, typography } from './src/styles/designSystem';
 import { fetchCMSData } from './src/utils/api';
 import { CMSData, Product } from './src/types/cms';
 import { CartProvider, useCart } from './src/context/CartContext';
@@ -459,12 +460,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   header: {
-    height: 56,
+    minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: space[4],
+    paddingVertical: space[2],
     borderBottomWidth: 1,
+    gap: space[3],
   },
   logoBox: {
     flexDirection: 'row',
@@ -472,19 +475,22 @@ const styles = StyleSheet.create({
   },
   logoText: {
     fontSize: 20,
+    lineHeight: 26,
     fontWeight: 'bold',
     fontFamily: 'sans-serif-medium',
-    letterSpacing: -0.5,
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    justifyContent: 'flex-end',
+    gap: space[2],
+    flex: 1,
+    flexWrap: 'wrap',
   },
   headerBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -513,7 +519,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 60,
+    minHeight: 64,
     borderTopWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -527,32 +533,35 @@ const styles = StyleSheet.create({
   tabItem: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
+    paddingVertical: space[2],
+    paddingHorizontal: space[1],
     flex: 1,
+    minWidth: 0,
   },
   tabIcon: {
     fontSize: 18,
     marginBottom: 2,
   },
   tabLabel: {
-    fontSize: 10,
+    ...typography.micro,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
 
   /* Floating Action Buttons */
   fabContainer: {
     position: 'absolute',
-    bottom: 76,
-    right: 16,
-    gap: 8,
+    bottom: 82,
+    right: space[4],
+    gap: space[2],
     zIndex: 99,
   },
   fab: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 50,
+    paddingVertical: space[3],
+    paddingHorizontal: space[4],
+    borderRadius: radius.pill,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
@@ -567,7 +576,7 @@ const styles = StyleSheet.create({
   },
   fabText: {
     color: 'white',
-    fontSize: 12,
+    ...typography.smallStrong,
     fontWeight: 'bold',
   },
 });
