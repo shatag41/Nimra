@@ -38,7 +38,8 @@ export function useCustomerOrders() {
     const deliveredOrders = orders.filter((order) => /delivered/i.test(order.status)).length;
     const cancelledOrders = orders.filter((order) => /cancelled/i.test(order.status)).length;
     const latestOrder = orders[0];
-    return { totalSpend, activeOrders, deliveredOrders, cancelledOrders, latestOrder };
+    const latestCancelOrder = orders.find((order) => order.cancellationStatus || /cancelled/i.test(order.status));
+    return { totalSpend, activeOrders, deliveredOrders, cancelledOrders, latestOrder, latestCancelOrder };
   }, [orders]);
 
   return {

@@ -143,9 +143,20 @@ export default function CustomerPortalClient() {
               <small>Completed deliveries</small>
             </div>
             <div className="metric-card">
-              <span>Cancelled Orders</span>
-              <strong>{metrics.cancelledOrders}</strong>
-              <small>Cancelled by user or admin</small>
+              <span>Recent Cancel Order Status</span>
+              {metrics.latestCancelOrder ? (
+                <>
+                  <strong style={{ color: /pending/i.test(metrics.latestCancelOrder.cancellationStatus || '') ? 'red' : 'green' }}>
+                    {metrics.latestCancelOrder.cancellationStatus || 'Cancelled'}
+                  </strong>
+                  <small>Order #{metrics.latestCancelOrder.orderId}</small>
+                </>
+              ) : (
+                <>
+                  <strong>N/A</strong>
+                  <small>No cancel requests</small>
+                </>
+              )}
             </div>
           </section>
 
