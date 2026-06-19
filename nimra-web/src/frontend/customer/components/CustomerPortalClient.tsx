@@ -7,6 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/frontend/customer/hooks/useAuth';
 import { useCustomerOrders } from '@/frontend/customer/hooks/useCustomerOrders';
 import { useCMSData } from '@/frontend/customer/hooks/useCMSData';
+import { useCart } from '@/frontend/customer/contexts/CartProvider';
 import { isOrderable } from '../utils/commerce';
 import { PortalHero } from './portal/Hero';
 import { Orders } from './portal/Orders';
@@ -31,6 +32,7 @@ export default function CustomerPortalClient() {
   const { user, isAuthenticated, isLoading, login } = useAuth();
   const { products } = useCMSData();
   const { orders, loadingOrders, metrics, refreshOrders } = useCustomerOrders();
+  const cart = useCart();
   const searchParams = useSearchParams();
   const tab = searchParams.get('tab');
   const [cartToast, setCartToast] = React.useState<{ name: string; visible: boolean }>({ name: '', visible: false });
@@ -168,17 +170,17 @@ export default function CustomerPortalClient() {
 
               <div className="panel next-card">
                 <span className="eyebrow" style={{ color: 'var(--primary-color)', background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.2)', borderRadius: '999px', padding: '0.2rem 0.75rem', fontSize: '0.7rem' }}>Next Step</span>
-                <h2>{metrics.latestOrder ? 'Continue Tracking' : 'Start Your First Order'}</h2>
+                <h2>{cart.totalItems > 0 ? 'Continue to Checkout' : 'Start Your First Order'}</h2>
                 <p>
-                  {metrics.latestOrder
-                    ? `Latest order ${metrics.latestOrder.orderId} is currently ${metrics.latestOrder.status}.`
+                  {cart.totalItems > 0
+                    ? `You have ${cart.totalItems} item(s) in your cart ready for checkout.`
                     : 'Choose bottles, cans, or bulk jars and place a delivery request in minutes.'}
                 </p>
                 <Link
-                  href={metrics.latestOrder ? `/track?orderId=${metrics.latestOrder.orderId}` : '/products'}
+                  href={cart.totalItems > 0 ? '/checkout' : '/products'}
                   className="btn btn-primary"
                 >
-                  {metrics.latestOrder ? 'Open Tracker' : 'Shop Products'}
+                  {cart.totalItems > 0 ? 'Checkout' : 'Shop Products'}
                 </Link>
               </div>
             </aside>

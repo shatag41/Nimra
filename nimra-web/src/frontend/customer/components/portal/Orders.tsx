@@ -48,7 +48,10 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
               </tr>
             </thead>
             <tbody>
-              {orders.slice(0, 6).map((order) => (
+              {orders
+                .filter(o => !/cancelled/i.test(o.status))
+                .slice(0, 6)
+                .map((order) => (
                 <tr key={order.orderId}>
                   <td className="order-id">{order.orderId}</td>
                   <td>{formatDate(order.createdAt)}</td>
