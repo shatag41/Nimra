@@ -20,6 +20,8 @@ function doGet(e) {
     return jsonResponse(trackOrder(spreadsheet, e.parameter.orderId, e.parameter.mobile, e.parameter.userId, e.parameter.email));
   } else if (action === 'getOrders') {
     return jsonResponse(getAllOrders(spreadsheet, e.parameter.userId, e.parameter.mobile, e.parameter.email));
+  } else if (action === 'getCancellationRequests') {
+    return jsonResponse(getCancellationRequests(spreadsheet));
   } else if (action === 'getInquiries') {
     return jsonResponse(getSheetData(spreadsheet.getSheetByName('Inquiries')));
   } else if (action === 'getUsers') {
@@ -59,6 +61,12 @@ function doPost(e) {
     } else if (params.type === 'updateOrderStatus') {
       Logger.log("doPost: Routing to updateOrderStatus()");
       return jsonResponse(updateOrderStatus(spreadsheet, params));
+    } else if (params.type === 'requestOrderCancellation') {
+      Logger.log("doPost: Routing to requestOrderCancellation()");
+      return jsonResponse(requestOrderCancellation(spreadsheet, params));
+    } else if (params.type === 'reviewCancellationRequest') {
+      Logger.log("doPost: Routing to reviewCancellationRequest()");
+      return jsonResponse(reviewCancellationRequest(spreadsheet, params));
     } else if (params.type === 'productCRUD') {
       Logger.log("doPost: Routing to productCRUD()");
       return jsonResponse(handleProductCRUD(spreadsheet, params));
@@ -339,6 +347,134 @@ function updateOrderStatus(spreadsheet, params) {
   return { success: false, message: 'Order ID ' + orderId + ' not found.' };
 }
 
+function requestOrderCancellation(spreadsheet, params) {
+  var orderId = String(params.orderId || '').trim();
+  var reason = String(params.reason || 'Customer requested cancellation').trim();
+  if (!orderId) return { success: false, message: 'Order ID is required.' };
+
+  var orderSheet = spreadsheet.getSheetByName('Orders');
+  if (!orderSheet) return { success: false, message: 'Orders sheet not found.' };
+
+  var orderData = orderSheet.getDataRange().getValues();
+  var orderHeaders = orderData[0] || [];
+  var orderIdIndex = orderHeaders.indexOf('Order ID');
+  var statusIndex = orderHeaders.indexOf('Order Status');
+  var cancellationStatusIndex = ensureColumn(orderSheet, orderHeaders, 'Cancellation Status');
+  var cancellationRequestIdIndex = ensureColumn(orderSheet, orderHeaders, 'Cancellation Request ID');
+  var statusHistoryIndex = ensureColumn(orderSheet, orderHeaders, 'Status History');
+  orderHeaders = orderSheet.getRange(1, 1, 1, orderSheet.getLastColumn()).getValues()[0] || [];
+
+  for (var i = 1; i < orderData.length; i++) {
+    if (String(orderData[i][orderIdIndex]).trim() !== orderId) continue;
+
+    var currentStatus = String(orderData[i][statusIndex] || '').trim();
+    if (currentStatus === 'Cancelled') return { success: false, message: 'This order is already cancelled.' };
+    if (String(orderData[i][cancellationStatusIndex] || '').trim() === 'Pending') {
+      return { success: false, message: 'A cancellation request is already pending for this order.' };
+    }
+
+    var order = rowToOrder(orderHeaders, orderSheet.getRange(i + 1, 1, 1, orderSheet.getLastColumn()).getValues()[0]);
+    var now = new Date();
+    var requestId = 'CAN-' + Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyyMMdd-HHmmss') + '-' + Math.floor(Math.random() * 900 + 100);
+    var history = [{ status: 'Pending', at: now.toISOString(), by: 'Customer', remarks: reason }];
+    var refundStatus = getRefundStatus(order.paymentMethod, 'Pending');
+
+    var requestSheet = ensureCancellationRequestsSheet(spreadsheet);
+    requestSheet.appendRow([
+      requestId,
+      orderId,
+      order.customer.name,
+      order.customer.mobile,
+      order.customer.email || '',
+      order.total,
+      order.paymentMethod || '',
+      reason,
+      now,
+      '',
+      '',
+      '',
+      refundStatus,
+      'Pending',
+      JSON.stringify(history)
+    ]);
+
+    orderSheet.getRange(i + 1, cancellationStatusIndex + 1).setValue('Pending');
+    orderSheet.getRange(i + 1, cancellationRequestIdIndex + 1).setValue(requestId);
+    orderSheet.getRange(i + 1, statusHistoryIndex + 1).setValue(appendStatusHistory(orderData[i][statusHistoryIndex], history[0]));
+
+    var adminEmail = Session.getEffectiveUser().getEmail() || NIMRA_OVERRIDE_TEST_EMAIL || 'tsenterprises.nat@gmail.com';
+    sendNimraEmail(
+      adminEmail,
+      'NIMRA Cancellation Approval Needed: ' + orderId,
+      'Cancellation request ' + requestId + ' is pending for order ' + orderId + '. Reason: ' + reason,
+      '<p>Cancellation request <strong>' + requestId + '</strong> is pending for order <strong>' + orderId + '</strong>.</p><p><strong>Customer:</strong> ' + escapeHtml(order.customer.name) + '</p><p><strong>Reason:</strong> ' + escapeHtml(reason) + '</p>',
+      'NIMRA Admin Alerts'
+    );
+
+    return { success: true, message: 'Cancellation request submitted for admin approval.', request: cancellationRequestRowToObject(requestSheet.getRange(requestSheet.getLastRow(), 1, 1, requestSheet.getLastColumn()).getValues()[0]) };
+  }
+
+  return { success: false, message: 'Order ID ' + orderId + ' not found.' };
+}
+
+function reviewCancellationRequest(spreadsheet, params) {
+  var requestId = String(params.requestId || '').trim();
+  var decision = String(params.decision || '').trim();
+  var adminName = String(params.adminName || 'Admin').trim();
+  var adminRemarks = String(params.adminRemarks || '').trim();
+  if (!requestId || (decision !== 'Approved' && decision !== 'Rejected')) {
+    return { success: false, message: 'Valid request ID and decision are required.' };
+  }
+  if (!adminRemarks) return { success: false, message: 'Admin remarks are required.' };
+
+  var requestSheet = ensureCancellationRequestsSheet(spreadsheet);
+  var requestData = requestSheet.getDataRange().getValues();
+  var requestHeaders = requestData[0] || [];
+  var idIndex = requestHeaders.indexOf('Request ID');
+  var statusIndex = requestHeaders.indexOf('Status');
+  var approvalDateIndex = requestHeaders.indexOf('Approval Date');
+  var adminNameIndex = requestHeaders.indexOf('Admin Name');
+  var remarksIndex = requestHeaders.indexOf('Admin Remarks');
+  var refundIndex = requestHeaders.indexOf('Refund Status');
+  var historyIndex = requestHeaders.indexOf('Status History');
+  var orderIdIndex = requestHeaders.indexOf('Order ID');
+  var emailIndex = requestHeaders.indexOf('Customer Email');
+  var nameIndex = requestHeaders.indexOf('Customer Name');
+  var mobileIndex = requestHeaders.indexOf('Customer Mobile');
+  var paymentMethodIndex = requestHeaders.indexOf('Payment Method');
+
+  for (var i = 1; i < requestData.length; i++) {
+    if (String(requestData[i][idIndex]).trim() !== requestId) continue;
+    if (String(requestData[i][statusIndex]).trim() !== 'Pending') {
+      return { success: false, message: 'This cancellation request has already been reviewed.' };
+    }
+
+    var now = new Date();
+    var orderId = requestData[i][orderIdIndex];
+    var historyItem = { status: decision, at: now.toISOString(), by: adminName, remarks: adminRemarks };
+    var refundStatus = decision === 'Approved' ? getRefundStatus(requestData[i][paymentMethodIndex], 'Processed') : 'Not applicable';
+
+    requestSheet.getRange(i + 1, statusIndex + 1).setValue(decision);
+    requestSheet.getRange(i + 1, approvalDateIndex + 1).setValue(now);
+    requestSheet.getRange(i + 1, adminNameIndex + 1).setValue(adminName);
+    requestSheet.getRange(i + 1, remarksIndex + 1).setValue(adminRemarks);
+    requestSheet.getRange(i + 1, refundIndex + 1).setValue(refundStatus);
+    requestSheet.getRange(i + 1, historyIndex + 1).setValue(appendStatusHistory(requestData[i][historyIndex], historyItem));
+
+    updateOrderCancellationAudit(spreadsheet, orderId, requestId, decision, historyItem);
+    if (decision === 'Approved') {
+      updateOrderStatus(spreadsheet, { orderId: orderId, status: 'Cancelled' });
+      sendCancellationDecisionEmail(requestData[i][emailIndex], requestData[i][nameIndex], orderId, decision, adminRemarks, refundStatus, requestData[i][mobileIndex]);
+      return { success: true, message: 'Cancellation approved. Order cancelled and customer notified.' };
+    }
+
+    sendCancellationDecisionEmail(requestData[i][emailIndex], requestData[i][nameIndex], orderId, decision, adminRemarks, refundStatus, requestData[i][mobileIndex]);
+    return { success: true, message: 'Cancellation request rejected and customer notified.' };
+  }
+
+  return { success: false, message: 'Cancellation request not found.' };
+}
+
 function toISOString(date) {
   if (!date) return '';
   if (typeof date === 'string') return date;
@@ -396,8 +532,129 @@ function rowToOrder(headers, row) {
     deliveryCharge:Number(value('Delivery Charge')|| 0),
     total:         Number(value('Total Amount')   || 0),
     paymentMethod: value('Payment Method') || 'Cash on Delivery',
-    source:        value('Source')         || 'Website'
+    source:        value('Source')         || 'Website',
+    cancellationStatus: value('Cancellation Status') || '',
+    cancellationRequestId: value('Cancellation Request ID') || '',
+    statusHistory: parseStatusHistory(value('Status History'))
   };
+}
+
+function ensureColumn(sheet, headers, columnName) {
+  var index = headers.indexOf(columnName);
+  if (index >= 0) return index;
+  var nextColumn = sheet.getLastColumn() + 1;
+  sheet.getRange(1, nextColumn).setValue(columnName);
+  return nextColumn - 1;
+}
+
+function parseStatusHistory(value) {
+  if (!value) return [];
+  try {
+    var parsed = JSON.parse(String(value));
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function appendStatusHistory(existing, item) {
+  var history = parseStatusHistory(existing);
+  history.push(item);
+  return JSON.stringify(history);
+}
+
+function ensureCancellationRequestsSheet(spreadsheet) {
+  var requiredHeaders = [
+    'Request ID',
+    'Order ID',
+    'Customer Name',
+    'Customer Mobile',
+    'Customer Email',
+    'Order Total',
+    'Payment Method',
+    'Reason',
+    'Request Date',
+    'Approval Date',
+    'Admin Name',
+    'Admin Remarks',
+    'Refund Status',
+    'Status',
+    'Status History'
+  ];
+  var sheet = spreadsheet.getSheetByName('CancellationRequests');
+  if (!sheet) sheet = spreadsheet.insertSheet('CancellationRequests');
+  var existingHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn() || requiredHeaders.length).getValues()[0] || [];
+  if (existingHeaders.slice(0, requiredHeaders.length).join('|') !== requiredHeaders.join('|')) {
+    sheet.getRange(1, 1, 1, requiredHeaders.length).setValues([requiredHeaders]);
+  }
+  return sheet;
+}
+
+function cancellationRequestRowToObject(row) {
+  return {
+    requestId: row[0],
+    orderId: row[1],
+    customerName: row[2],
+    customerMobile: row[3],
+    customerEmail: row[4],
+    orderTotal: Number(row[5] || 0),
+    paymentMethod: row[6],
+    reason: row[7],
+    requestDate: toISOString(row[8]),
+    approvalDate: toISOString(row[9]),
+    adminName: row[10],
+    adminRemarks: row[11],
+    refundStatus: row[12],
+    status: row[13] || 'Pending',
+    statusHistory: parseStatusHistory(row[14])
+  };
+}
+
+function getCancellationRequests(spreadsheet) {
+  var sheet = ensureCancellationRequestsSheet(spreadsheet);
+  var data = sheet.getDataRange().getValues();
+  var requests = [];
+  for (var i = 1; i < data.length; i++) {
+    requests.push(cancellationRequestRowToObject(data[i]));
+  }
+  return requests.reverse();
+}
+
+function getRefundStatus(paymentMethod, approvedState) {
+  var method = String(paymentMethod || '').toLowerCase();
+  if (method.indexOf('cash') >= 0 || method.indexOf('cod') >= 0) return 'No online refund required';
+  return approvedState === 'Processed' ? 'Refund processed or queued via payment provider' : 'Pending admin approval';
+}
+
+function updateOrderCancellationAudit(spreadsheet, orderId, requestId, decision, historyItem) {
+  var sheet = spreadsheet.getSheetByName('Orders');
+  if (!sheet) return;
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0] || [];
+  var orderIdIndex = headers.indexOf('Order ID');
+  var cancellationStatusIndex = ensureColumn(sheet, headers, 'Cancellation Status');
+  var cancellationRequestIdIndex = ensureColumn(sheet, sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0], 'Cancellation Request ID');
+  var statusHistoryIndex = ensureColumn(sheet, sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0], 'Status History');
+  var updatedAtIndex = headers.indexOf('Updated At');
+  data = sheet.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][orderIdIndex]).trim() === String(orderId).trim()) {
+      sheet.getRange(i + 1, cancellationStatusIndex + 1).setValue(decision);
+      sheet.getRange(i + 1, cancellationRequestIdIndex + 1).setValue(requestId);
+      var updatedHistory = appendStatusHistory(data[i][statusHistoryIndex], historyItem);
+      if (decision === 'Approved') {
+        updatedHistory = appendStatusHistory(updatedHistory, {
+          status: 'Cancelled',
+          at: historyItem.at,
+          by: historyItem.by,
+          remarks: historyItem.remarks
+        });
+      }
+      sheet.getRange(i + 1, statusHistoryIndex + 1).setValue(updatedHistory);
+      if (updatedAtIndex >= 0) sheet.getRange(i + 1, updatedAtIndex + 1).setValue(new Date());
+      return;
+    }
+  }
 }
 
 function ensureOrdersSheet(spreadsheet) {
@@ -429,7 +686,10 @@ function ensureOrdersSheet(spreadsheet) {
     'Source',                    // col 24
     'Created At',                // col 25
     'Updated At',                // col 26
-    'Customer User ID'           // col 27
+    'Customer User ID',          // col 27
+    'Cancellation Status',       // col 28
+    'Cancellation Request ID',   // col 29
+    'Status History'             // col 30
   ];
 
   var sheet = spreadsheet.getSheetByName('Orders');
@@ -1615,6 +1875,28 @@ function sendOrderStatusUpdateEmail(email, name, orderId, status, mobile) {
     '<p>You can track your order here: <a href="' + trackingUrl + '">' + trackingUrl + '</a></p>' +
     '<p>NIMRA Support</p>';
 
+  return sendNimraEmail(email, subject, plainBody, htmlBody, 'NIMRA Support');
+}
+
+function sendCancellationDecisionEmail(email, name, orderId, decision, adminRemarks, refundStatus, mobile) {
+  email = normalizeEmail(email);
+  if (!email || !isValidEmail(email)) return { sent: false };
+  var displayName = String(name || 'Customer').trim();
+  var approved = decision === 'Approved';
+  var trackingUrl = 'https://nimrawater.com/track?orderId=' + encodeURIComponent(orderId) + '&mobile=' + encodeURIComponent(mobile || '') + '&autoSubmit=true';
+  var subject = approved ? 'NIMRA Order #' + orderId + ' Cancellation Confirmed' : 'NIMRA Order #' + orderId + ' Cancellation Request Update';
+  var plainBody = 'Hello ' + displayName + ',\n\n' +
+    (approved ? 'Your cancellation request has been approved and your order is now Cancelled.' : 'Your cancellation request was reviewed and rejected.') + '\n\n' +
+    'Admin remarks: ' + adminRemarks + '\n' +
+    'Refund status: ' + refundStatus + '\n\n' +
+    'Track your order here: ' + trackingUrl + '\n\n' +
+    'NIMRA Support';
+  var htmlBody = '<p>Hello ' + escapeHtml(displayName) + ',</p>' +
+    '<p>' + (approved ? 'Your cancellation request has been approved and your order is now <strong>Cancelled</strong>.' : 'Your cancellation request was reviewed and rejected.') + '</p>' +
+    '<p><strong>Admin remarks:</strong> ' + escapeHtml(adminRemarks) + '</p>' +
+    '<p><strong>Refund status:</strong> ' + escapeHtml(refundStatus) + '</p>' +
+    '<p>You can track your order here: <a href="' + trackingUrl + '">' + trackingUrl + '</a></p>' +
+    '<p>NIMRA Support</p>';
   return sendNimraEmail(email, subject, plainBody, htmlBody, 'NIMRA Support');
 }
 

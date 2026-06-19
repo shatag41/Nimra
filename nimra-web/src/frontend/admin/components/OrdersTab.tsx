@@ -1,5 +1,5 @@
-import React from 'react';
-import { OrderRecord } from '@/types/cms';
+import React, { useState } from 'react';
+import { CancellationRequest, OrderRecord } from '@/types/cms';
 import { formatCurrency } from '@/frontend/customer/utils/commerce';
 import CustomSelect from './CustomSelect';
 
@@ -19,6 +19,10 @@ interface OrdersTabProps {
   handleClearOrderFilters: () => void;
   setSelectedOrder: (order: OrderRecord | null) => void;
   setOrderStatusVal: (val: string) => void;
+  cancellationRequests: CancellationRequest[];
+  onReviewCancellation: (requestId: string, decision: 'Approved' | 'Rejected', adminRemarks: string) => Promise<boolean>;
+  ordersView: 'active' | 'cancellations';
+  setOrdersView: (view: 'active' | 'cancellations') => void;
 }
 
 export default React.memo(function OrdersTab({
@@ -37,7 +41,13 @@ export default React.memo(function OrdersTab({
   handleClearOrderFilters,
   setSelectedOrder,
   setOrderStatusVal,
+  cancellationRequests,
+  onReviewCancellation,
+  ordersView,
+  setOrdersView,
 }: OrdersTabProps) {
+  const [remarksByRequest, setRemarksByRequest] = useState<Record<string, string>>({});
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'Pending': return 'badge-orange';
@@ -56,9 +66,123 @@ export default React.memo(function OrdersTab({
     orderSort !== 'latest' || 
     orderStartDate !== '' || 
     orderEndDate !== '';
+  const activeOrders = filteredOrders.filter((order) => order.status !== 'Delivered' && order.status !== 'Cancelled');
+  const pendingCancellationCount = cancellationRequests.filter((request) => request.status === 'Pending').length;
+
+  const reviewCancellation = async (request: CancellationRequest, decision: 'Approved' | 'Rejected') => {
+    const success = await onReviewCancellation(request.requestId, decision, remarksByRequest[request.requestId] || '');
+    if (success) {
+      setRemarksByRequest((prev) => {
+        const next = { ...prev };
+        delete next[request.requestId];
+        return next;
+      });
+    }
+  };
 
   return (
     <div className="orders-tab card glass">
+      <div className="orders-mode-tabs" style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+        <button
+          type="button"
+          className={`btn ${ordersView === 'active' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
+          onClick={() => setOrdersView('active')}
+        >
+          Active Orders ({activeOrders.length})
+        </button>
+        <button
+          type="button"
+          className={`btn ${ordersView === 'cancellations' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
+          onClick={() => setOrdersView('cancellations')}
+        >
+          Cancellation Requests ({pendingCancellationCount})
+        </button>
+      </div>
+
+      {ordersView === 'cancellations' ? (
+        <div className="table-responsive">
+          <table className="admin-table compact-table">
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th>Order</th>
+                <th>Customer</th>
+                <th>Requested</th>
+                <th>Payment / Refund</th>
+                <th>Reason</th>
+                <th>Admin Remarks</th>
+                <th className="sticky-action-col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {cancellationRequests.map((request) => {
+                const isPending = request.status === 'Pending';
+                return (
+                  <tr key={request.requestId}>
+                    <td>
+                      <span className={`badge ${isPending ? 'badge-orange' : request.status === 'Approved' ? 'badge-primary' : 'badge-cancelled'}`}>{request.status}</span>
+                    </td>
+                    <td>
+                      <strong style={{ color: 'var(--primary-color)' }}>{request.orderId}</strong>
+                      <br />
+                      <small>{formatCurrency(request.orderTotal)}</small>
+                    </td>
+                    <td>
+                      <div>{request.customerName}</div>
+                      <small>{request.customerMobile} - {request.customerEmail || 'No email'}</small>
+                    </td>
+                    <td>
+                      {new Date(request.requestDate).toLocaleString('en-IN')}
+                      {request.approvalDate ? <><br /><small>Reviewed: {new Date(request.approvalDate).toLocaleString('en-IN')}</small></> : null}
+                    </td>
+                    <td>
+                      <div>{request.paymentMethod || 'Cash on Delivery'}</div>
+                      <small>{request.refundStatus || 'Pending approval'}</small>
+                    </td>
+                    <td style={{ maxWidth: 220 }}>{request.reason || 'Not specified'}</td>
+                    <td style={{ minWidth: 240 }}>
+                      {isPending ? (
+                        <textarea
+                          className="form-input"
+                          value={remarksByRequest[request.requestId] || ''}
+                          onChange={(event) => setRemarksByRequest((prev) => ({ ...prev, [request.requestId]: event.target.value }))}
+                          placeholder="Audit remarks"
+                          rows={2}
+                          style={{ width: '100%', resize: 'vertical', minHeight: 54, padding: '0.55rem 0.7rem', borderColor: 'rgba(37, 99, 235, 0.28)', background: 'rgba(255,255,255,0.72)' }}
+                        />
+                      ) : (
+                        <small>{request.adminRemarks || 'No remarks recorded'}</small>
+                      )}
+                    </td>
+                    <td className="sticky-action-col">
+                      {isPending ? (
+                        <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
+                          <button type="button" className="btn-table btn-edit" onClick={() => reviewCancellation(request, 'Rejected')}>
+                            Reject
+                          </button>
+                          <button type="button" className="btn-table btn-view" onClick={() => reviewCancellation(request, 'Approved')}>
+                            Approve
+                          </button>
+                        </div>
+                      ) : (
+                        <small>
+                          {request.statusHistory?.map((item) => `${item.status} ${new Date(item.at).toLocaleDateString('en-IN')}`).join(' -> ') || 'Reviewed'}
+                        </small>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+              {cancellationRequests.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="empty-td">No cancellation requests found.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <>
       {showFilters && (
         <div className="filter-bar animate-fade-in">
           <div className="filter-group">
@@ -160,7 +284,7 @@ export default React.memo(function OrdersTab({
             </tr>
           </thead>
           <tbody>
-            {filteredOrders.map((o, idx) => (
+            {activeOrders.map((o, idx) => (
               <tr key={o.orderId || idx}>
                 <td><strong>{o.orderId}</strong></td>
                 <td>{o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'N/A'}</td>
@@ -186,14 +310,16 @@ export default React.memo(function OrdersTab({
                 </td>
               </tr>
             ))}
-            {filteredOrders.length === 0 && (
+            {activeOrders.length === 0 && (
               <tr>
-                <td colSpan={7} className="empty-td">No orders found.</td>
+                <td colSpan={7} className="empty-td">No active orders found.</td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
+        </>
+      )}
     </div>
   );
 });

@@ -36,8 +36,9 @@ export function useCustomerOrders() {
     const totalSpend = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
     const activeOrders = orders.filter((order) => !/delivered|cancelled/i.test(order.status)).length;
     const deliveredOrders = orders.filter((order) => /delivered/i.test(order.status)).length;
+    const cancelledOrders = orders.filter((order) => /cancelled/i.test(order.status)).length;
     const latestOrder = orders[0];
-    return { totalSpend, activeOrders, deliveredOrders, latestOrder };
+    return { totalSpend, activeOrders, deliveredOrders, cancelledOrders, latestOrder };
   }, [orders]);
 
   return {

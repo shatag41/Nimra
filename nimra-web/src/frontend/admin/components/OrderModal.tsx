@@ -62,7 +62,6 @@ export default function OrderModal({
                 { value: 'Dispatched', label: 'Dispatched' },
                 { value: 'Out for Delivery', label: 'Out for Delivery' },
                 { value: 'Delivered', label: 'Delivered' },
-                { value: 'Cancelled', label: 'Cancelled' },
               ]}
             />
           </div>

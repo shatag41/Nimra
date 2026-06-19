@@ -441,6 +441,54 @@ export const updateOrderStatus = async (orderId: string, status: string): Promis
   }
 };
 
+export const requestOrderCancellation = async (
+  orderId: string,
+  reason = 'Customer requested cancellation'
+): Promise<{ success: boolean; message: string }> => {
+  try {
+    const res = await fetch('/api/cms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'requestOrderCancellation', orderId, reason }),
+    });
+    const data = await res.json();
+    return { success: data.success, message: data.message || 'Cancellation request submitted' };
+  } catch (err) {
+    console.error('Error requesting cancellation:', err);
+    return { success: false, message: 'Failed to submit cancellation request' };
+  }
+};
+
+export const fetchCancellationRequests = async (): Promise<import('@/types/cms').CancellationRequest[]> => {
+  const res = await fetch(`/api/cms?action=getCancellationRequests&_t=${Date.now()}`, {
+    method: 'GET',
+    cache: 'no-store',
+    headers: { 'Accept': 'application/json' },
+  });
+  const data = await readJsonResponse<{ requests?: import('@/types/cms').CancellationRequest[] } | import('@/types/cms').CancellationRequest[]>(res, []);
+  return Array.isArray(data) ? data : (data.requests || []);
+};
+
+export const reviewCancellationRequest = async (
+  requestId: string,
+  decision: 'Approved' | 'Rejected',
+  adminName: string,
+  adminRemarks: string
+): Promise<{ success: boolean; message: string }> => {
+  try {
+    const res = await fetch('/api/cms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'reviewCancellationRequest', requestId, decision, adminName, adminRemarks }),
+    });
+    const data = await res.json();
+    return { success: data.success, message: data.message || 'Cancellation request updated' };
+  } catch (err) {
+    console.error('Error reviewing cancellation request:', err);
+    return { success: false, message: 'Failed to review cancellation request' };
+  }
+};
+
 export const fetchInquiries = async (): Promise<Inquiry[]> => {
   const res = await fetch(`/api/cms?action=getInquiries&_t=${Date.now()}`, { 
     method: 'GET', 

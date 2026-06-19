@@ -102,6 +102,33 @@ export interface OrderRecord extends OrderSubmission {
   status: 'Pending' | 'Confirmed' | 'Processing' | 'Dispatched' | 'Out for Delivery' | 'Delivered' | 'Cancelled';
   createdAt: string;
   updatedAt?: string;
+  cancellationStatus?: CancellationRequest['status'];
+  cancellationRequestId?: string;
+}
+
+export interface CancellationStatusHistoryItem {
+  status: 'Requested' | 'Pending' | 'Approved' | 'Rejected' | 'Cancelled';
+  at: string;
+  by?: string;
+  remarks?: string;
+}
+
+export interface CancellationRequest {
+  requestId: string;
+  orderId: string;
+  customerName: string;
+  customerMobile: string;
+  customerEmail?: string;
+  orderTotal: number;
+  paymentMethod?: string;
+  reason?: string;
+  requestDate: string;
+  approvalDate?: string;
+  adminName?: string;
+  adminRemarks?: string;
+  refundStatus?: string;
+  status: 'Pending' | 'Approved' | 'Rejected';
+  statusHistory: CancellationStatusHistoryItem[];
 }
 
 export interface AdminUser {

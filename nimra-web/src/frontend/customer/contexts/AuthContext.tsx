@@ -11,6 +11,8 @@ export interface User {
   Mobile?: string;
   Role: string; // 'Admin' | 'Customer'
   Active: boolean;
+  CreatedAt?: string;
+  createdAt?: string;
 }
 
 type StoredSession = {
@@ -41,6 +43,8 @@ const AuthContext = createContext<AuthContextType>({
 const SESSION_DAYS = 7;
 const SESSION_COOKIE = 'nimra_session';
 const USER_COOKIE = 'nimra_user';
+const TAB_SESSION_KEY = 'nimra_live_tab_session';
+const SAVED_ADDRESS_PREFIX = 'nimra_saved_addresses_';
 
 const createSessionToken = () => {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -59,33 +63,26 @@ export const clearBrowserSession = () => {
 
   if (typeof window === 'undefined') return;
 
-  const preservedTheme = window.localStorage.getItem('theme');
-  const keysToRemove = [
-    USER_COOKIE,
-    SESSION_COOKIE,
-    'nimra_admin_user',
-    'nimra_admin_active_tab',
-    'nimra_profile',
-    'nimra_auth',
-    'nimra_session',
-    'nimra_token',
-  ];
+  window.document.cookie.split(';').forEach((cookie) => {
+    const name = cookie.split('=')[0]?.trim();
+    if (!name) return;
+    const hostParts = window.location.hostname.split('.');
+    const domains = hostParts.length > 1
+      ? [window.location.hostname, `.${hostParts.slice(-2).join('.')}`]
+      : [window.location.hostname];
 
-  keysToRemove.forEach((key) => window.localStorage.removeItem(key));
+    window.document.cookie = `${name}=; Max-Age=0; path=/`;
+    domains.forEach((domain) => {
+      window.document.cookie = `${name}=; Max-Age=0; path=/; domain=${domain}`;
+    });
+  });
+
   Object.keys(window.localStorage).forEach((key) => {
-    if (
-      key.toLowerCase().includes('auth') ||
-      key.toLowerCase().includes('token') ||
-      key.toLowerCase().includes('session')
-    ) {
+    if (!key.startsWith(SAVED_ADDRESS_PREFIX)) {
       window.localStorage.removeItem(key);
     }
   });
   window.sessionStorage.clear();
-
-  if (preservedTheme) {
-    window.localStorage.setItem('theme', preservedTheme);
-  }
 };
 
 const readStoredUser = (): User | null => {
@@ -93,7 +90,8 @@ const readStoredUser = (): User | null => {
 
   const storedUser = Cookies.get(USER_COOKIE);
   const storedSession = Cookies.get(SESSION_COOKIE);
-  if (!storedUser || !storedSession) {
+  const liveTabSession = window.sessionStorage.getItem(TAB_SESSION_KEY);
+  if (!storedUser || !storedSession || !liveTabSession) {
     clearBrowserSession();
     return null;
   }
@@ -102,7 +100,12 @@ const readStoredUser = (): User | null => {
     const parsedUser = JSON.parse(storedUser) as User;
     const parsedSession = JSON.parse(storedSession) as StoredSession;
 
-    if (!parsedSession.token || !parsedSession.expiresAt || Date.now() >= Number(parsedSession.expiresAt)) {
+    if (
+      !parsedSession.token ||
+      parsedSession.token !== liveTabSession ||
+      !parsedSession.expiresAt ||
+      Date.now() >= Number(parsedSession.expiresAt)
+    ) {
       clearBrowserSession();
       return null;
     }
@@ -166,10 +169,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     setUser(userData);
-    Cookies.set(USER_COOKIE, JSON.stringify(userData), { path: '/', sameSite: 'lax', expires: SESSION_DAYS });
-    Cookies.set(SESSION_COOKIE, JSON.stringify(session), { path: '/', sameSite: 'lax', expires: SESSION_DAYS });
+    Cookies.set(USER_COOKIE, JSON.stringify(userData), { path: '/', sameSite: 'lax' });
+    Cookies.set(SESSION_COOKIE, JSON.stringify(session), { path: '/', sameSite: 'lax' });
 
     if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem(TAB_SESSION_KEY, session.token);
+
       try {
         const guestAddrs = localStorage.getItem('nimra_saved_addresses_guest');
         if (guestAddrs) {
@@ -218,6 +223,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(null);
     clearBrowserSession();
   }, []);
+
+  useEffect(() => {
+    if (!user || typeof window === 'undefined') return;
+
+    const expireIfNeeded = () => {
+      const currentUser = readStoredUser();
+      if (!currentUser) {
+        setUser(null);
+        router.replace('/');
+      }
+    };
+
+    let timeoutId: number | null = null;
+    try {
+      const storedSession = Cookies.get(SESSION_COOKIE);
+      const parsedSession = storedSession ? JSON.parse(storedSession) as StoredSession : null;
+      const delay = Number(parsedSession?.expiresAt || 0) - Date.now();
+
+      if (delay <= 0) {
+        expireIfNeeded();
+      } else {
+        timeoutId = window.setTimeout(expireIfNeeded, delay);
+      }
+    } catch {
+      expireIfNeeded();
+    }
+
+    window.addEventListener('focus', expireIfNeeded);
+    document.addEventListener('visibilitychange', expireIfNeeded);
+
+    return () => {
+      if (timeoutId) window.clearTimeout(timeoutId);
+      window.removeEventListener('focus', expireIfNeeded);
+      document.removeEventListener('visibilitychange', expireIfNeeded);
+    };
+  }, [router, user]);
 
   const logout = useCallback(() => {
     clearSession();

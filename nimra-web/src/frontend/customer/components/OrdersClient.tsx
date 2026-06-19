@@ -8,7 +8,7 @@ import { useCustomerOrders } from '@/frontend/customer/hooks/useCustomerOrders';
 import { useCart } from '../contexts/CartProvider';
 import { OrderRecord, Product } from '@/types/cms';
 import { formatCurrency } from '../utils/commerce';
-import { updateOrderStatus } from '@/utils/api';
+import { requestOrderCancellation } from '@/utils/api';
 import { toast } from 'sonner';
 
 type OrderTab = 'all' | 'active' | 'completed' | 'cancelled' | 'checkout-required';
@@ -49,12 +49,12 @@ export default function OrdersClient() {
     if (!orderToCancel) return;
     setCancelling(true);
     try {
-      const res = await updateOrderStatus(orderToCancel.orderId, 'Cancelled');
+      const res = await requestOrderCancellation(orderToCancel.orderId);
       if (res.success) {
-        toast.success(`Order ${orderToCancel.orderId} cancelled successfully.`);
+        toast.success(`Cancellation request for ${orderToCancel.orderId} submitted for admin approval.`);
         refreshOrders();
         if (selectedOrder && selectedOrder.orderId === orderToCancel.orderId) {
-          setSelectedOrder({ ...selectedOrder, status: 'Cancelled' });
+          setSelectedOrder({ ...selectedOrder, cancellationStatus: 'Pending' });
         }
       } else {
         toast.error(res.message || 'Failed to cancel the order. Please try again.');
@@ -439,7 +439,8 @@ export default function OrdersClient() {
           ) : filteredOrders.length > 0 ? (
             <div className="orders-cards-list">
               {filteredOrders.map((order) => {
-                const isCancelable = ['pending', 'confirmed'].includes(order.status.toLowerCase());
+                const hasPendingCancellation = order.cancellationStatus === 'Pending';
+                const isCancelable = ['pending', 'confirmed'].includes(order.status.toLowerCase()) && !hasPendingCancellation;
                 const statusLower = order.status.toLowerCase();
 
                 return (
@@ -519,6 +520,9 @@ export default function OrdersClient() {
                             <button onClick={() => setOrderToCancel(order)} className="amazon-action-btn danger-action">
                               Cancel Order
                             </button>
+                          )}
+                          {hasPendingCancellation && (
+                            <span className="status-desc-text">Cancellation pending admin approval</span>
                           )}
                         </div>
                       </div>
@@ -649,7 +653,9 @@ export default function OrdersClient() {
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M16 3h5v5M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 21H3v-5"/></svg>
                 Reorder Order
               </button>
-              {['pending', 'confirmed'].includes(selectedOrder.status.toLowerCase()) && (
+              {selectedOrder.cancellationStatus === 'Pending' ? (
+                <span className="status-desc-text">Cancellation pending admin approval</span>
+              ) : ['pending', 'confirmed'].includes(selectedOrder.status.toLowerCase()) && (
                 <button
                   onClick={() => {
                     setOrderToCancel(selectedOrder);
@@ -673,14 +679,14 @@ export default function OrdersClient() {
           <div className="modal-content card alert-modal animate-scale-in" onClick={(e) => e.stopPropagation()}>
             <h2 className="modal-title text-red">Cancel Order</h2>
             <p className="modal-description">
-              Are you sure you want to cancel Order <strong>#{orderToCancel.orderId}</strong>? This action will set your status to cancelled and cannot be reversed.
+              Submit a cancellation request for Order <strong>#{orderToCancel.orderId}</strong>? Your order will remain active until an admin approves it.
             </p>
             <div className="modal-actions">
               <button className="btn btn-secondary" onClick={() => setOrderToCancel(null)} disabled={cancelling}>
                 No, Keep Order
               </button>
               <button className="btn btn-error" onClick={handleCancelOrder} disabled={cancelling}>
-                {cancelling ? 'Cancelling...' : 'Yes, Cancel Order'}
+                {cancelling ? 'Submitting...' : 'Submit Request'}
               </button>
             </div>
           </div>

@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { sendRequest } from '@/utils/api';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import ThemeToggle from '@/frontend/customer/components/ThemeToggle';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -63,9 +62,6 @@ export default function ForgotPasswordPage() {
         }
       `}} />
       <div className="auth-shell glass">
-        <div className="theme-toggle-wrapper">
-          <ThemeToggle />
-        </div>
         <aside className="auth-brand-panel">
           <div className="auth-brand-content">
             <div className="auth-logo">

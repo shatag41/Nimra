@@ -143,9 +143,9 @@ export default function CustomerPortalClient() {
               <small>Completed deliveries</small>
             </div>
             <div className="metric-card">
-              <span>Total Spend</span>
-              <strong>₹{metrics.totalSpend.toFixed(2)}</strong>
-              <small>Cash on delivery purchases</small>
+              <span>Cancelled Orders</span>
+              <strong>{metrics.cancelledOrders}</strong>
+              <small>Cancelled by user or admin</small>
             </div>
           </section>
 

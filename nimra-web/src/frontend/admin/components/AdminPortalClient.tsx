@@ -83,6 +83,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
     inquiries,
     users,
     notifications,
+    cancellationRequests,
     products,
     banners,
     faqs,
@@ -94,6 +95,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
     refreshData,
     performLogout,
     handleUpdateStatusSubmit,
+    handleCancellationReview,
     handleProductSubmit,
     handleProductDelete,
     handleBannerSubmit,
@@ -119,6 +121,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
   const [orderStatusVal, setOrderStatusVal] = useState('');
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [ordersView, setOrdersView] = useState<'active' | 'cancellations'>('active');
 
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
   const [productFormOpen, setProductFormOpen] = useState(false);
@@ -235,7 +238,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         />
 
         {/* MAIN VIEW */}
-        <main className={`admin-main animate-fade-in ${activeTab === 'dashboard' ? 'scrollable-page' : 'fixed-page'} ${profile.isProfilePanelOpen ? 'blur-background' : ''}`}>
+        <main className={`admin-main animate-fade-in fixed-page ${profile.isProfilePanelOpen ? 'blur-background' : ''}`}>
           {/* HEADER */}
           <Header
             activeTab={activeTab}
@@ -272,6 +275,12 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                   orders={orders}
                   filteredInquiries={filteredInquiries}
                   filteredOrders={filteredOrders}
+                  cancellationRequests={cancellationRequests}
+                  onReviewCancellation={handleCancellationReview}
+                  onOpenCancellationRequests={() => {
+                    setOrdersView('cancellations');
+                    setActiveTab('orders');
+                  }}
                 />
               )}
 
@@ -292,6 +301,10 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                   handleClearOrderFilters={filters.handleClearOrderFilters}
                   setSelectedOrder={setSelectedOrder}
                   setOrderStatusVal={setOrderStatusVal}
+                  cancellationRequests={cancellationRequests}
+                  onReviewCancellation={handleCancellationReview}
+                  ordersView={ordersView}
+                  setOrdersView={setOrdersView}
                 />
               )}
 
@@ -871,29 +884,29 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
 
           .overview-tab {
             flex: 1;
-            overflow: visible;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            gap: 1rem;
-            padding: 1rem !important;
+            gap: 0.7rem;
+            padding: 0.8rem !important;
           }
 
           /* OVERVIEW DASHBOARD */
           .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
-            margin-bottom: 1.5rem;
+            gap: 0.8rem;
+            margin-bottom: 0.65rem;
           }
           .stat-card {
-            padding: 1rem;
-            border-radius: var(--radius-lg);
+            padding: 0.85rem 0.95rem;
+            border-radius: var(--radius-md);
             border: 1px solid var(--glass-border);
             background: var(--glass-bg);
             backdrop-filter: blur(16px);
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 0.32rem;
             transition: all var(--transition-normal);
             box-shadow: var(--shadow-md);
             position: relative;
@@ -914,7 +927,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           .stat-card:hover::after { opacity: 1; }
           .stat-label {
             color: var(--text-secondary);
-            font-size: 0.875rem;
+            font-size: 0.78rem;
             font-weight: 700;        
           }
           /* SETTINGS TAB STYLING */
@@ -1013,7 +1026,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             z-index: 11;
           }
           .stat-val {
-            font-size: 1.75rem;
+            font-size: 1.42rem;
             font-family: var(--font-heading);
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
             -webkit-background-clip: text;
@@ -1021,18 +1034,18 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           }
           .stat-desc {
             color: var(--text-muted);
-            font-size: 0.8rem;
+            font-size: 0.74rem;
           }
 
           .charts-grid {
             display: grid;
             grid-template-columns: 1.5fr 1fr;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
+            gap: 0.8rem;
+            margin-bottom: 0.65rem;
           }
           .chart-card {
-            padding: 1rem;
-            border-radius: var(--radius-lg);
+            padding: 0.85rem;
+            border-radius: var(--radius-md);
             border: 1px solid var(--glass-border);
             background: var(--glass-bg);
             backdrop-filter: blur(16px);
@@ -1044,12 +1057,12 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             border-color: rgba(var(--primary-rgb), 0.2);
           }
           .chart-card h3 {
-            font-size: 1.05rem;
-            margin-bottom: 1rem;
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
           }
           .chart-wrapper {
             width: 100%;
-            height: 200px;
+            height: 165px;
           }
           .svg-chart {
             width: 100%;
@@ -1059,15 +1072,15 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           .donut-chart-flex {
             display: flex;
             align-items: center;
-            gap: 2.5rem;
-            height: 200px;
+            gap: 1.25rem;
+            height: 165px;
             justify-content: center;
           }
           .legend-list {
             display: flex;
             flex-direction: column;
-            gap: 0.875rem;
-            font-size: 0.875rem;
+            gap: 0.45rem;
+            font-size: 0.8rem;
             font-weight: 700;
           }
           .legend-dot {
@@ -1089,12 +1102,12 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
 
           .recent-activity-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
           }
           .activity-card {
-            padding: 1.25rem;
-            border-radius: var(--radius-xl);
+            padding: 0.9rem;
+            border-radius: var(--radius-md);
             border: 1px solid var(--border-color);
             background: var(--bg-secondary);
             box-shadow: var(--shadow-sm);
@@ -1105,16 +1118,16 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             border-color: rgba(var(--primary-rgb), 0.2);
           }
           .activity-card h3 {
-            font-size: 1.05rem;
-            margin-bottom: 1rem;
+            font-size: 1rem;
+            margin-bottom: 0.45rem;
           }
           .mini-list {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 0.65rem;
           }
           .mini-item {
-            padding: 1rem;
+            padding: 0.8rem;
             border-radius: var(--radius-md);
             background: var(--bg-primary);
             border: 1px solid var(--border-light);
@@ -2215,6 +2228,28 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           [data-theme="dark"] .search-container:focus-within .search-icon-svg {
             color: #93c5fd !important;
             opacity: 1 !important;
+          }
+          .compact-table {
+            font-size: 0.8rem;
+            min-width: 760px;
+          }
+          .compact-table th,
+          .compact-table td {
+            padding: 0.42rem 0.58rem;
+            font-size: 0.8rem;
+            line-height: 1.32;
+            vertical-align: top;
+          }
+          .compact-table small {
+            font-size: 0.72rem;
+          }
+          .compact-table textarea.form-input {
+            font-size: 0.8rem;
+          }
+          .compact-table .btn-table {
+            padding: 0.4rem 0.62rem;
+            font-size: 0.74rem;
+            border-radius: var(--radius-sm);
           }
         `}</style>
 

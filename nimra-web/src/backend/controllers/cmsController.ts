@@ -14,7 +14,7 @@ export async function handleGet(req: Request) {
   const userId = requestUrl.searchParams.get('userId') || '';
   const mobile = requestUrl.searchParams.get('mobile') || '';
   const email = requestUrl.searchParams.get('email') || '';
-  const liveActions = new Set(['trackOrder', 'getOrders', 'getInquiries', 'getUsers', 'getNotifications']);
+  const liveActions = new Set(['trackOrder', 'getOrders', 'getCancellationRequests', 'getInquiries', 'getUsers', 'getNotifications']);
   const shouldUseLiveData = Boolean(action && liveActions.has(action));
   const cacheHeaders = shouldUseLiveData
     ? { 'Cache-Control': 'no-store' }
@@ -92,6 +92,8 @@ export async function handleGet(req: Request) {
     );
   } else if (action === 'getInquiries') {
     return NextResponse.json(fallbackData.inquiries, { headers: cacheHeaders });
+  } else if (action === 'getCancellationRequests') {
+    return NextResponse.json([], { headers: cacheHeaders });
   } else if (action === 'getUsers') {
     return NextResponse.json(fallbackData.users, { headers: cacheHeaders });
   } else if (action === 'getNotifications') {
@@ -172,6 +174,16 @@ export async function handlePost(req: Request) {
         success: true,
         message: 'Order placed successfully (local fallback mode)',
         orderId: orderId
+      });
+    } else if (payload.type === 'requestOrderCancellation') {
+      return NextResponse.json({
+        success: true,
+        message: 'Cancellation request submitted for admin approval (local fallback mode)'
+      });
+    } else if (payload.type === 'reviewCancellationRequest') {
+      return NextResponse.json({
+        success: true,
+        message: `Cancellation request ${String(payload.decision || '').toLowerCase()} (local fallback mode)`
       });
     } else if (payload.type === 'inquiry') {
       return NextResponse.json({

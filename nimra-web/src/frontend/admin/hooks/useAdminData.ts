@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Cookies from 'js-cookie';
 import {
   CMSData,
   OrderRecord,
@@ -11,6 +10,7 @@ import {
   Banner,
   FAQ,
   CompanyInfo,
+  CancellationRequest,
 } from '@/types/cms';
 import {
   fetchOrders,
@@ -24,8 +24,10 @@ import {
   saveBanner,
   saveFAQ,
   saveCompanyInfo,
+  fetchCancellationRequests,
+  reviewCancellationRequest,
 } from '@/utils/api';
-import { useAuth } from '@/frontend/customer/contexts/AuthContext';
+import { clearBrowserSession, useAuth } from '@/frontend/customer/contexts/AuthContext';
 
 export interface CurrentUser {
   id?: string | number;
@@ -38,7 +40,7 @@ export interface CurrentUser {
 
 export const useAdminData = (initialCMSData: CMSData) => {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
 
   // Auth state
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
@@ -63,6 +65,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [cancellationRequests, setCancellationRequests] = useState<CancellationRequest[]>([]);
   const [products, setProducts] = useState<Product[]>(initialCMSData.products || []);
   const [banners, setBanners] = useState<Banner[]>(initialCMSData.banners || []);
   const [faqs, setFaqs] = useState<FAQ[]>(initialCMSData.faqs || []);
@@ -81,60 +84,27 @@ export const useAdminData = (initialCMSData: CMSData) => {
 
   // Check auth on mount
   useEffect(() => {
-    const session = localStorage.getItem('nimra_admin_user');
-    if (session) {
-      try {
-        const parsedSession = JSON.parse(session);
-        const appSession = Cookies.get('nimra_user');
-        const parsedCookieUser = appSession ? JSON.parse(appSession) : null;
-        const role = parsedSession.role || parsedCookieUser?.Role;
-        if (role !== 'Admin') {
-          localStorage.removeItem('nimra_admin_user');
-          Cookies.remove('nimra_user', { path: '/' });
-          router.replace('/login');
-          return;
-        }
-        const adminSession: CurrentUser = {
-          id: parsedSession.id || parsedSession.ID || parsedCookieUser?.ID || '',
-          username: parsedSession.username || parsedSession.email || parsedCookieUser?.Username || '',
-          role: 'Admin' as const,
-          name: parsedSession.name || parsedCookieUser?.Name || '',
-          email: parsedSession.email || parsedSession.username || parsedCookieUser?.Username || '',
-          phone: parsedSession.phone || parsedCookieUser?.Mobile || '',
-        };
-        setCurrentUser(adminSession);
-        setAuthChecked(true);
-        return;
-      } catch {
-        localStorage.removeItem('nimra_admin_user');
-      }
+    if (authLoading) return;
+
+    if (isAuthenticated && user?.Role === 'Admin') {
+      const adminSession: CurrentUser = {
+        id: user.ID,
+        username: user.Username,
+        role: 'Admin',
+        name: user.Name,
+        email: user.Username,
+        phone: user.Mobile || '',
+      };
+      setCurrentUser(adminSession);
+      setAuthChecked(true);
+      return;
     }
 
-    const appSession = Cookies.get('nimra_user');
-    if (appSession) {
-      try {
-        const user = JSON.parse(appSession);
-        if (user?.Role === 'Admin') {
-          const adminSession: CurrentUser = {
-            id: user.ID,
-            username: user.Username,
-            role: user.Role,
-            name: user.Name,
-            email: user.Username,
-            phone: user.Mobile || '',
-          };
-          localStorage.setItem('nimra_admin_user', JSON.stringify(adminSession));
-          setCurrentUser(adminSession);
-          setAuthChecked(true);
-          return;
-        }
-      } catch {
-        Cookies.remove('nimra_user', { path: '/' });
-      }
-    }
-
-    router.replace('/login');
-  }, [router]);
+    clearBrowserSession();
+    setCurrentUser(null);
+    setAuthChecked(false);
+    router.replace('/');
+  }, [authLoading, isAuthenticated, router, user]);
 
   // Load all dashboard databases
   const refreshData = async () => {
@@ -144,11 +114,13 @@ export const useAdminData = (initialCMSData: CMSData) => {
       const fetchedInquiries = await fetchInquiries();
       const fetchedUsers = await fetchUsers();
       const fetchedNotifs = await fetchNotifications();
+      const fetchedCancellationRequests = await fetchCancellationRequests();
 
       setOrders(fetchedOrders);
       setInquiries(fetchedInquiries);
       setUsers(fetchedUsers);
       setNotifications(fetchedNotifs);
+      setCancellationRequests(fetchedCancellationRequests);
     } catch (err) {
       console.error('Failed to load admin databases', err);
       showAlert('Error updating real-time databases. Local fallback remains active.', 'error');
@@ -182,6 +154,35 @@ export const useAdminData = (initialCMSData: CMSData) => {
       }
     } catch (err) {
       showAlert('Failed to connect to backend api.', 'error');
+      return false;
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
+  const handleCancellationReview = async (
+    requestId: string,
+    decision: 'Approved' | 'Rejected',
+    adminRemarks: string
+  ) => {
+    if (!adminRemarks.trim()) {
+      showAlert('Admin remarks are required for the cancellation audit trail.', 'error');
+      return false;
+    }
+    setSaveLoading(true);
+    try {
+      const res = await reviewCancellationRequest(requestId, decision, currentUser?.name || 'Admin', adminRemarks);
+      if (res.success) {
+        showAlert(decision === 'Approved' ? 'Request approved. Order cancelled successfully.' : 'Cancellation request rejected.');
+        const [updatedOrders, updatedRequests] = await Promise.all([fetchOrders(), fetchCancellationRequests()]);
+        setOrders(updatedOrders);
+        setCancellationRequests(updatedRequests);
+        return true;
+      }
+      showAlert(res.message, 'error');
+      return false;
+    } catch (err) {
+      showAlert('Failed to review cancellation request.', 'error');
       return false;
     } finally {
       setSaveLoading(false);
@@ -462,6 +463,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
     inquiries,
     users,
     notifications,
+    cancellationRequests,
     products,
     banners,
     faqs,
@@ -473,6 +475,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
     refreshData,
     performLogout,
     handleUpdateStatusSubmit,
+    handleCancellationReview,
     handleProductSubmit,
     handleProductDelete,
     handleBannerSubmit,

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Alert, View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { COLORS } from '../styles/theme';
 import { useAuth } from '../context/AuthContext';
-import { fetchCustomerOrders } from '../utils/api';
+import { fetchCustomerOrders, requestOrderCancellation } from '../utils/api';
 import { OrderRecord } from '../types/cms';
 
 interface CustomerPortalProps {
@@ -42,6 +42,31 @@ export default function CustomerPortalScreen({ isDark, onNavigate }: CustomerPor
     if (s.includes('delivered')) return '#22c55e';
     if (s.includes('cancel')) return '#ef4444';
     return '#64748b';
+  };
+
+  const handleRequestCancellation = (order: OrderRecord) => {
+    Alert.alert(
+      'Request cancellation',
+      `Submit this cancellation request for admin approval?\n\nOrder: ${order.orderId}`,
+      [
+        { text: 'Keep Order', style: 'cancel' },
+        {
+          text: 'Submit Request',
+          style: 'destructive',
+          onPress: async () => {
+            setLoading(true);
+            const res = await requestOrderCancellation(order);
+            setLoading(false);
+            if (res.success) {
+              Alert.alert('Request submitted', 'Your cancellation request is pending admin approval.');
+              loadOrders();
+            } else {
+              Alert.alert('Unable to submit', res.message);
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -91,6 +116,13 @@ export default function CustomerPortalScreen({ isDark, onNavigate }: CustomerPor
                 <Text style={[styles.statusText, { color: getStatusColor(order.status) }]}>{order.status}</Text>
               </View>
             </View>
+            {order.cancellationStatus === 'Pending' ? (
+              <Text style={[styles.pendingCancellationText, { color: theme.textMuted }]}>Cancellation requested. Awaiting admin approval.</Text>
+            ) : ['Pending', 'Confirmed'].includes(order.status) ? (
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => handleRequestCancellation(order)}>
+                <Text style={styles.cancelBtnText}>Request Cancellation</Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
         ))
       ) : (
@@ -204,6 +236,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
+  },
+  pendingCancellationText: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: 12,
+  },
+  cancelBtn: {
+    alignSelf: 'flex-start',
+    borderColor: '#ef4444',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginTop: 12,
+  },
+  cancelBtnText: {
+    color: '#ef4444',
+    fontSize: 13,
+    fontWeight: '800',
   },
   emptyState: {
     padding: 32,

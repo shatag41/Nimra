@@ -23,6 +23,7 @@ import {
   Notification,
   Product,
   CompanyInfo,
+  CancellationRequest,
 } from '../types/cms';
 import {
   fetchOrders,
@@ -33,6 +34,8 @@ import {
   fetchNotifications,
   saveNotification,
   saveProduct,
+  fetchCancellationRequests,
+  reviewCancellationRequest,
 } from '../utils/api';
 import { formatCurrency } from '../utils/commerce';
 
@@ -67,6 +70,8 @@ export default function AdminPortalScreen({ isDark, companyInfo, onRefresh, onNa
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [cancellationRequests, setCancellationRequests] = useState<CancellationRequest[]>([]);
+  const [reviewRemarks, setReviewRemarks] = useState<Record<string, string>>({});
 
   // Modals / Form States
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
@@ -110,6 +115,7 @@ export default function AdminPortalScreen({ isDark, companyInfo, onRefresh, onNa
       const fetchedInquiries = await fetchInquiries();
       const fetchedUsers = await fetchUsers();
       const fetchedNotifs = await fetchNotifications();
+      const fetchedCancellationRequests = await fetchCancellationRequests();
       
       // On mobile, also load catalog items to CRUD them
       // We can grab them by parsing the Sheets API data directly or fetching users
@@ -127,6 +133,7 @@ export default function AdminPortalScreen({ isDark, companyInfo, onRefresh, onNa
       setInquiries(fetchedInquiries);
       setUsers(fetchedUsers);
       setNotifications(fetchedNotifs);
+      setCancellationRequests(fetchedCancellationRequests);
     } catch (err) {
       console.warn('Failed to load admin collections', err);
     } finally {
@@ -340,6 +347,37 @@ export default function AdminPortalScreen({ isDark, companyInfo, onRefresh, onNa
   const deliveredOrders = orders.filter((o) => o.status === 'Delivered');
   const revenueVal = deliveredOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
   const activeOrdersCount = orders.filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled').length;
+  const pendingCancellationRequests = cancellationRequests.filter((request) => request.status === 'Pending');
+
+  const handleCancellationReview = async (request: CancellationRequest, decision: 'Approved' | 'Rejected') => {
+    const remarks = reviewRemarks[request.requestId]?.trim();
+    if (!remarks) {
+      Alert.alert('Admin remarks required', 'Please enter remarks before approving or rejecting this request.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await reviewCancellationRequest(request.requestId, decision, currentUser?.name || 'Admin', remarks);
+      if (res.success) {
+        Alert.alert('Success', res.message);
+        const [updatedOrders, updatedRequests] = await Promise.all([fetchOrders(), fetchCancellationRequests()]);
+        setOrders(updatedOrders);
+        setCancellationRequests(updatedRequests);
+        setReviewRemarks((prev) => {
+          const next = { ...prev };
+          delete next[request.requestId];
+          return next;
+        });
+      } else {
+        Alert.alert('Error', res.message);
+      }
+    } catch (err) {
+      Alert.alert('Error', 'Failed to review cancellation request.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!authChecked) {
     return (
@@ -416,35 +454,50 @@ export default function AdminPortalScreen({ isDark, companyInfo, onRefresh, onNa
                 <Text style={[styles.statLabel, { color: theme.textMuted }]}>Active Orders</Text>
                 <Text style={[styles.statVal, { color: theme.text }]}>{activeOrdersCount}</Text>
               </View>
+              <View style={[styles.statCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+                <Text style={[styles.statLabel, { color: theme.textMuted }]}>Cancellation Requests</Text>
+                <Text style={[styles.statVal, { color: theme.text }]}>{pendingCancellationRequests.length}</Text>
+              </View>
             </View>
 
-            {/* Recent Orders List */}
-            <Text style={[styles.sectionTitle, { color: theme.text }]}>Recent Active Orders</Text>
-            {orders
-              .filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled')
-              .slice(0, 5)
-              .map((o) => (
-                <TouchableOpacity
-                  key={o.orderId}
-                  style={[styles.itemCard, { backgroundColor: theme.card, borderColor: theme.border }]}
-                  onPress={() => {
-                    setSelectedOrder(o);
-                    setOrderStatusVal(o.status);
-                    setStatusModalVisible(true);
-                  }}
-                >
-                  <View style={styles.itemHeader}>
-                    <Text style={[styles.itemId, { color: theme.text }]}>#{o.orderId.slice(-6)}</Text>
-                    <View style={[styles.miniBadge, { backgroundColor: getStatusColor(o.status) }]}>
-                      <Text style={styles.miniBadgeText}>{o.status}</Text>
-                    </View>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Pending Cancellation Approvals</Text>
+            {pendingCancellationRequests.slice(0, 5).map((request) => (
+              <View key={request.requestId} style={[styles.itemCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+                <View style={styles.itemHeader}>
+                  <Text style={[styles.itemId, { color: theme.text }]}>{request.orderId}</Text>
+                  <View style={[styles.miniBadge, { backgroundColor: '#f97316' }]}>
+                    <Text style={styles.miniBadgeText}>{request.status}</Text>
                   </View>
-                  <Text style={[styles.itemDetails, { color: theme.text }]}>{o.customer.name} - {o.customer.mobile}</Text>
-                  <Text style={[styles.itemTotal, { color: COLORS.primary }]}>{formatCurrency(o.total)}</Text>
-                </TouchableOpacity>
-              ))}
-            {orders.filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled').length === 0 && (
-              <Text style={[styles.emptyText, { color: theme.textMuted }]}>No active deliveries at this time.</Text>
+                </View>
+                <Text style={[styles.itemDetails, { color: theme.text }]}>{request.customerName} - {request.customerMobile}</Text>
+                <Text style={[styles.itemAddress, { color: theme.textMuted }]}>Requested: {new Date(request.requestDate).toLocaleString()}</Text>
+                <Text style={[styles.itemAddress, { color: theme.textMuted }]}>Reason: {request.reason || 'Not specified'}</Text>
+                <Text style={[styles.itemTotal, { color: COLORS.primary }]}>{formatCurrency(request.orderTotal)}</Text>
+                <TextInput
+                  style={[styles.input, { backgroundColor: theme.background, borderColor: theme.border, color: theme.text, minHeight: 72 }]}
+                  value={reviewRemarks[request.requestId] || ''}
+                  onChangeText={(value) => setReviewRemarks((prev) => ({ ...prev, [request.requestId]: value }))}
+                  placeholder="Admin remarks for audit trail"
+                  placeholderTextColor={theme.textMuted}
+                  multiline
+                />
+                <View style={styles.btnRow}>
+                  <TouchableOpacity style={[styles.actionBtn, { borderColor: '#ef4444' }]} onPress={() => handleCancellationReview(request, 'Rejected')}>
+                    <Text style={{ color: '#ef4444', fontSize: 12, fontWeight: '800', textAlign: 'center' }}>Reject</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: COLORS.primary, flex: 1, minHeight: 40 }]} onPress={() => handleCancellationReview(request, 'Approved')}>
+                    <Text style={styles.primaryBtnText}>Approve & Cancel</Text>
+                  </TouchableOpacity>
+                </View>
+                {request.statusHistory?.length ? (
+                  <Text style={[styles.itemAddress, { color: theme.textMuted }]}>
+                    History: {request.statusHistory.map((item) => `${item.status} ${new Date(item.at).toLocaleDateString()}`).join(' -> ')}
+                  </Text>
+                ) : null}
+              </View>
+            ))}
+            {pendingCancellationRequests.length === 0 && (
+              <Text style={[styles.emptyText, { color: theme.textMuted }]}>No cancellation requests awaiting approval.</Text>
             )}
           </View>
         )}
@@ -464,16 +517,19 @@ export default function AdminPortalScreen({ isDark, companyInfo, onRefresh, onNa
                   setStatusModalVisible(true);
                 }}
               >
-                <View style={styles.itemHeader}>
-                  <Text style={[styles.itemId, { color: theme.text }]}>{o.orderId}</Text>
-                  <View style={[styles.miniBadge, { backgroundColor: getStatusColor(o.status) }]}>
-                    <Text style={styles.miniBadgeText}>{o.status}</Text>
+                  <View style={styles.itemHeader}>
+                    <Text style={[styles.itemId, { color: theme.text }]}>{o.orderId}</Text>
+                    <View style={[styles.miniBadge, { backgroundColor: getStatusColor(o.status) }]}>
+                      <Text style={styles.miniBadgeText}>{o.status}</Text>
+                    </View>
                   </View>
-                </View>
                 <Text style={[styles.itemDetails, { color: theme.text }]}>{o.customer.name} ({o.customer.mobile})</Text>
                 <Text style={[styles.itemAddress, { color: theme.textMuted }]}>{o.customer.address}, {o.customer.city}</Text>
-                <Text style={[styles.itemTotal, { color: COLORS.primary }]}>{formatCurrency(o.total)}</Text>
-              </TouchableOpacity>
+                {o.cancellationStatus === 'Pending' && (
+                  <Text style={[styles.itemAddress, { color: '#f97316', fontWeight: '800' }]}>Cancellation pending admin approval</Text>
+                )}
+                  <Text style={[styles.itemTotal, { color: COLORS.primary }]}>{formatCurrency(o.total)}</Text>
+                </TouchableOpacity>
             ))}
             {orders.length === 0 && <Text style={[styles.emptyText, { color: theme.textMuted }]}>No store orders registered.</Text>}
           </View>
@@ -619,7 +675,7 @@ export default function AdminPortalScreen({ isDark, companyInfo, onRefresh, onNa
                 <Text style={[styles.sectionTitle, { color: theme.text, fontSize: 14, marginBottom: 8 }]}>Select Status</Text>
                 
                 {/* Status Options */}
-                {(['Pending', 'Confirmed', 'Processing', 'Dispatched', 'Out for Delivery', 'Delivered', 'Cancelled'] as OrderRecord['status'][]).map((status) => {
+                {(['Pending', 'Confirmed', 'Processing', 'Dispatched', 'Out for Delivery', 'Delivered'] as OrderRecord['status'][]).map((status) => {
                   const selected = orderStatusVal === status;
                   return (
                     <TouchableOpacity

@@ -1,4 +1,4 @@
-import { CMSData, InquirySubmission, OrderRecord, OrderSubmission, AdminUser, Notification, Inquiry, Product, Banner, FAQ, CompanyInfo, CartItem } from '../types/cms';
+import { CMSData, InquirySubmission, OrderRecord, OrderSubmission, AdminUser, Notification, Inquiry, Product, Banner, FAQ, CompanyInfo, CartItem, CancellationRequest } from '../types/cms';
 import type { User } from '../context/AuthContext';
 
 export const mockCMSData: CMSData = {
@@ -395,6 +395,79 @@ export const updateOrderStatus = async (orderId: string, status: string): Promis
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'updateOrderStatus', orderId, status }),
+    });
+    return await res.json();
+  } catch (err) {
+    console.error(err);
+    return { success: false, message: 'Connection error' };
+  }
+};
+
+export const requestOrderCancellation = async (
+  order: OrderRecord,
+  reason = 'Customer requested cancellation'
+): Promise<{ success: boolean; message: string; request?: CancellationRequest }> => {
+  const url = getAPIUrl();
+  const requestDate = new Date().toISOString();
+  if (!url) {
+    return {
+      success: true,
+      message: 'Cancellation request mock-submitted for admin approval.',
+      request: {
+        requestId: `CAN-MOCK-${Date.now()}`,
+        orderId: order.orderId,
+        customerName: order.customer.name,
+        customerMobile: order.customer.mobile,
+        customerEmail: order.customer.email,
+        orderTotal: Number(order.total || 0),
+        paymentMethod: order.paymentMethod,
+        reason,
+        requestDate,
+        status: 'Pending',
+        refundStatus: 'Pending admin approval',
+        statusHistory: [{ status: 'Pending', at: requestDate, by: 'Customer', remarks: reason }],
+      },
+    };
+  }
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'requestOrderCancellation', orderId: order.orderId, reason }),
+    });
+    return await res.json();
+  } catch (err) {
+    console.error(err);
+    return { success: false, message: 'Connection error' };
+  }
+};
+
+export const fetchCancellationRequests = async (): Promise<CancellationRequest[]> => {
+  const url = getAPIUrl();
+  if (!url) return [];
+  try {
+    const res = await fetch(`${url}?action=getCancellationRequests`);
+    const data = await res.json();
+    return Array.isArray(data) ? data : (data.requests || []);
+  } catch (err) {
+    console.error(err);
+    return [];
+  }
+};
+
+export const reviewCancellationRequest = async (
+  requestId: string,
+  decision: 'Approved' | 'Rejected',
+  adminName: string,
+  adminRemarks: string
+): Promise<{ success: boolean; message: string; request?: CancellationRequest }> => {
+  const url = getAPIUrl();
+  if (!url) return { success: true, message: `Mock ${decision.toLowerCase()} cancellation request.` };
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'reviewCancellationRequest', requestId, decision, adminName, adminRemarks }),
     });
     return await res.json();
   } catch (err) {

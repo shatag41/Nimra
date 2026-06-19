@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { OrderRecord, Inquiry } from '@/types/cms';
+import { OrderRecord, Inquiry, CancellationRequest } from '@/types/cms';
 import { formatCurrency } from '@/frontend/customer/utils/commerce';
 import { calculateDonutStats, calculateLineChartData, formatDateLabel, ChartPoint } from '../utils/chartUtils';
 
@@ -7,10 +7,14 @@ interface DashboardTabProps {
   orders: OrderRecord[];
   filteredInquiries: Inquiry[];
   filteredOrders: OrderRecord[];
+  cancellationRequests: CancellationRequest[];
+  onReviewCancellation: (requestId: string, decision: 'Approved' | 'Rejected', adminRemarks: string) => Promise<boolean>;
+  onOpenCancellationRequests: () => void;
 }
 
-export default function DashboardTab({ orders, filteredInquiries, filteredOrders }: DashboardTabProps) {
+export default function DashboardTab({ orders, filteredInquiries, filteredOrders, cancellationRequests, onReviewCancellation, onOpenCancellationRequests }: DashboardTabProps) {
   const [hoveredPoint, setHoveredPoint] = useState<ChartPoint | null>(null);
+  const [remarksByRequest, setRemarksByRequest] = useState<Record<string, string>>({});
 
   // Stats calculations
   const deliveredOrders = orders.filter(o => o.status === 'Delivered');
@@ -22,6 +26,18 @@ export default function DashboardTab({ orders, filteredInquiries, filteredOrders
   // Chart calculations
   const { statusStats, totalOrdersCount } = calculateDonutStats(orders);
   const { linePoints, linePathD, areaPathD, chartMax } = calculateLineChartData(orders);
+  const pendingCancellationRequests = cancellationRequests.filter((request) => request.status === 'Pending');
+
+  const reviewCancellation = async (request: CancellationRequest, decision: 'Approved' | 'Rejected') => {
+    const success = await onReviewCancellation(request.requestId, decision, remarksByRequest[request.requestId] || '');
+    if (success) {
+      setRemarksByRequest((prev) => {
+        const next = { ...prev };
+        delete next[request.requestId];
+        return next;
+      });
+    }
+  };
 
   const handleMouseMove = (e: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
     if (!linePoints || linePoints.length === 0) return;
@@ -235,38 +251,85 @@ export default function DashboardTab({ orders, filteredInquiries, filteredOrders
         </div>
       </div>
 
-      {/* Recent Inquiries and Orders lists */}
+      {/* Cancellation approvals and Orders lists */}
       <div className="recent-activity-grid">
         <div className="activity-card glass">
-          <h3>Recent Inquiries</h3>
-          <div className="mini-list">
-            {filteredInquiries.slice(0, 3).map((inq, i) => (
-              <div key={i} className="mini-item">
-                <div>
-                  <strong>{inq.Name}</strong> - <span className="topic">{inq.Subject}</span>
-                </div>
-                <p>{String(inq.Message || '').slice(0, 80)}...</p>
-              </div>
-            ))}
-            {filteredInquiries.length === 0 && <p className="empty">No inquiries found.</p>}
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', marginBottom: '0.75rem' }}>
+            <div>
+              <h3 style={{ marginBottom: '0.25rem' }}>Cancellation Approvals</h3>
+              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.82rem' }}>
+                Review customer requests before an order is cancelled.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="badge badge-orange"
+              onClick={onOpenCancellationRequests}
+              style={{ border: 0, cursor: 'pointer' }}
+              title="Open cancellation requests"
+            >
+              {pendingCancellationRequests.length} Pending
+            </button>
+          </div>
+          <div className="table-responsive">
+            <table className="admin-table compact-table">
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Order</th>
+                  <th>Customer</th>
+                  <th>Requested</th>
+                  <th>Payment / Refund</th>
+                  <th>Admin Remarks</th>
+                  <th className="sticky-action-col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingCancellationRequests.slice(0, 1).map((request) => (
+                  <tr key={request.requestId}>
+                    <td><span className="badge badge-orange">{request.status}</span></td>
+                    <td>
+                      <strong style={{ color: 'var(--primary-color)' }}>{request.orderId}</strong>
+                      <br />
+                      <small>{formatCurrency(request.orderTotal)}</small>
+                    </td>
+                    <td>
+                      <div>{request.customerName}</div>
+                      <small>{request.customerMobile} - {request.customerEmail || 'No email'}</small>
+                    </td>
+                    <td>{new Date(request.requestDate).toLocaleString('en-IN')}</td>
+                    <td>
+                      <div>{request.paymentMethod || 'Cash on Delivery'}</div>
+                      <small>{request.refundStatus || 'Pending approval'}</small>
+                    </td>
+                    <td style={{ minWidth: 220 }}>
+                      <textarea
+                        className="form-input"
+                        value={remarksByRequest[request.requestId] || ''}
+                        onChange={(event) => setRemarksByRequest((prev) => ({ ...prev, [request.requestId]: event.target.value }))}
+                        placeholder="Audit remarks"
+                        rows={2}
+                        style={{ width: '100%', resize: 'vertical', minHeight: 54, padding: '0.55rem 0.7rem', borderColor: 'rgba(37, 99, 235, 0.28)', background: 'rgba(255,255,255,0.72)' }}
+                      />
+                    </td>
+                    <td className="sticky-action-col">
+                      <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
+                        <button type="button" className="btn-table btn-edit" onClick={() => reviewCancellation(request, 'Rejected')}>Reject</button>
+                        <button type="button" className="btn-table btn-view" onClick={() => reviewCancellation(request, 'Approved')}>Approve</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {pendingCancellationRequests.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="empty-td">No pending cancellation requests.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <div className="activity-card glass">
-          <h3>Pending Deliveries</h3>
-          <div className="mini-list">
-            {filteredOrders.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled').slice(0, 3).map((o) => (
-              <div key={o.orderId} className="mini-item row-flex">
-                <div>
-                  <strong>{o.customer.name}</strong> ({String(o.orderId || '').slice(-6)})
-                  <span className={`badge ${getStatusBadge(o.status)}`} style={{ marginLeft: '8px', scale: '0.85' }}>{o.status}</span>
-                </div>
-                <strong>{formatCurrency(o.total)}</strong>
-              </div>
-            ))}
-            {filteredOrders.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled').length === 0 && <p className="empty">All orders completed!</p>}
-          </div>
-        </div>
       </div>
     </div>
   );

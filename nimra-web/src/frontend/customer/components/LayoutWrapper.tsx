@@ -47,8 +47,7 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
       const safeNextPath = nextPath?.startsWith('/') && !nextPath.startsWith('//') ? nextPath : null;
       router.replace(safeNextPath || (user?.Role === 'Admin' ? '/admin' : '/customer-portal'));
     } else if (isAdmin && !isAdminLogin && !isAuthenticated) {
-      const fullPath = window.location.pathname + window.location.search;
-      router.replace(`/login?next=${encodeURIComponent(fullPath)}`);
+      router.replace('/');
     } else if (isAdmin && !isAdminLogin && user?.Role !== 'Admin') {
       router.replace('/customer-portal');
     } else if (!isAuthenticated && isCheckout) {
@@ -57,30 +56,36 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
     }
   }, [isAdmin, isAdminLogin, isAuthPage, isAuthenticated, isCheckout, isLoading, pathname, router, searchParams, user]);
 
+  const renderBareShell = (content: React.ReactNode) => (
+    <div className="ds-app-shell">
+      <main className="ds-main">
+        {content}
+      </main>
+    </div>
+  );
+
   // Only show full-screen loader on protected routes during authentication check
   const isProtectedRoute = (isAdmin && !isAdminLogin) || isCheckout;
 
+  if (!mounted && isProtectedRoute) {
+    return renderBareShell(<GlobalLoadingScreen />);
+  }
+
   if (isLoading && isProtectedRoute) {
-    return <GlobalLoadingScreen />;
+    return renderBareShell(<GlobalLoadingScreen />);
   }
 
   // Also block access if not authenticated
   if (isAdmin && !isAdminLogin && (!isAuthenticated || user?.Role !== 'Admin')) {
-    return isLoading ? <GlobalLoadingScreen /> : null;
+    return renderBareShell(isLoading ? <GlobalLoadingScreen /> : null);
   }
 
   if (!isAuthenticated && isCheckout) {
-    return isLoading ? <GlobalLoadingScreen /> : null;
+    return renderBareShell(isLoading ? <GlobalLoadingScreen /> : null);
   }
 
   if (isAdmin || isAuthPage) {
-    return (
-      <div className="ds-app-shell">
-        <main className="ds-main">
-          {children}
-        </main>
-      </div>
-    );
+    return renderBareShell(children);
   }
 
   return (

@@ -479,9 +479,68 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                 )}
               </div>
             ) : (
-              <Link href="/login" prefetch={true} className="btn btn-primary btn-sm">
-                Login/Register
-              </Link>
+              <div className="profile-menu-container">
+                <button 
+                  onClick={() => setProfileDropdownOpen(!profileDropdownOpen)} 
+                  className={`profile-btn ${profileDropdownOpen ? 'active' : ''}`}
+                  aria-label="Profile Menu"
+                >
+                  <div className="avatar" style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  </div>
+                </button>
+
+                {profileDropdownOpen && (
+                  <div className="profile-dropdown animate-fade-in-up">
+                    <Link href="/login" className="dropdown-header-link" onClick={() => setProfileDropdownOpen(false)}>
+                      <div className="dropdown-header">
+                        <div className="dropdown-avatar-large" style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        </div>
+                        <div className="dropdown-user-info">
+                          <strong>Guest</strong>
+                          <span style={{ color: 'var(--primary-color)' }}>Login or Register</span>
+                        </div>
+                      </div>
+                    </Link>
+                    <div className="dropdown-divider"></div>
+                    
+                    <div className="dropdown-menu-group">
+                      <ul className="dropdown-menu-items">
+                        <li>
+                          <Link 
+                            href="/login" 
+                            className="dropdown-item" 
+                            onClick={() => setProfileDropdownOpen(false)}
+                          >
+                            <div className="menu-icon-container">
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                            </div>
+                            <span className="menu-item-text">Login / Register</span>
+                          </Link>
+                        </li>
+                        <li className="dropdown-item-toggle">
+                          <button onClick={(e) => { e.preventDefault(); toggleTheme(); }} className="dropdown-item theme-toggle-btn">
+                            <div className="theme-toggle-label-wrap" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                              <div className="menu-icon-container">
+                                {theme === 'light' ? (
+                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                                ) : (
+                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+                                )}
+                              </div>
+                              <span className="menu-item-text">{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
+                            </div>
+                            <div className={`theme-switch ${theme === 'dark' ? 'active' : ''}`}>
+                              <div className="theme-switch-handle"></div>
+                            </div>
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Mobile Hamburger */}

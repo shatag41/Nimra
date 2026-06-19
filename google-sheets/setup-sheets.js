@@ -101,29 +101,61 @@ function setupNIMRASheets() {
 
   var ordersSheet = getOrCreateSheet(ss, 'Orders');
   if (ordersSheet.getLastRow() === 0) {
-    ordersSheet.getRange(1, 1, 1, 21).setValues([[
+    var orderHeaders = [
       'Order ID',
       'Order Date',
       'Customer Name',
       'Mobile Number',
+      'Alternate Mobile Number',
       'Email',
-      'Address',
+      'House/Flat No.',
+      'Building/Society Name',
+      'Area/Locality',
+      'Landmark',
+      'Full Address',
       'City',
       'State',
       'Pincode',
-      'Special Instructions',
+      'Address Type',
+      'Delivery Instructions',
       'Products',
       'Quantities',
       'Subtotal',
-      'Delivery Charges',
+      'Delivery Charge',
       'Total Amount',
       'Payment Method',
       'Order Status',
       'Source',
       'Created At',
       'Updated At',
-      'Customer User ID'
-    ]]);
+      'Customer User ID',
+      'Cancellation Status',
+      'Cancellation Request ID',
+      'Status History'
+    ];
+    ordersSheet.getRange(1, 1, 1, orderHeaders.length).setValues([orderHeaders]);
+  }
+
+  var cancellationSheet = getOrCreateSheet(ss, 'CancellationRequests');
+  if (cancellationSheet.getLastRow() === 0) {
+    var cancellationHeaders = [
+      'Request ID',
+      'Order ID',
+      'Customer Name',
+      'Customer Mobile',
+      'Customer Email',
+      'Order Total',
+      'Payment Method',
+      'Reason',
+      'Request Date',
+      'Approval Date',
+      'Admin Name',
+      'Admin Remarks',
+      'Refund Status',
+      'Status',
+      'Status History'
+    ];
+    cancellationSheet.getRange(1, 1, 1, cancellationHeaders.length).setValues([cancellationHeaders]);
   }
 
   // Set up Users sheet

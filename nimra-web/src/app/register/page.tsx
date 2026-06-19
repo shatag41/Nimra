@@ -6,7 +6,6 @@ import { useGoogleLogin } from '@react-oauth/google';
 import Link from 'next/link';
 import { sendRequest } from '@/utils/api';
 import { toast } from 'sonner';
-import ThemeToggle from '@/frontend/customer/components/ThemeToggle';
 
 export default function RegisterPage() {
   const { login } = useAuth();
@@ -202,39 +201,8 @@ export default function RegisterPage() {
         .auth-google-button {
           padding: 0.5rem !important;
         }
-        .back-home-btn {
-          position: absolute;
-          top: 1rem;
-          left: 1rem;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          color: rgba(255,255,255,0.8);
-          font-size: 0.85rem;
-          font-weight: 600;
-          text-decoration: none;
-          z-index: 100;
-          transition: all 0.2s ease;
-          background: rgba(255,255,255,0.1);
-          padding: 0.3rem 0.6rem;
-          border-radius: 999px;
-          border: 1px solid rgba(255,255,255,0.15);
-          backdrop-filter: blur(8px);
-        }
-        .back-home-btn:hover {
-          color: white;
-          background: rgba(255,255,255,0.2);
-          transform: translateX(-3px);
-        }
       `}} />
       <div className="auth-shell glass">
-        <Link href="/" className="back-home-btn">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-          Home
-        </Link>
-        <div className="theme-toggle-wrapper">
-          <ThemeToggle />
-        </div>
         <aside className="auth-brand-panel">
           <div className="auth-brand-content">
             <div className="auth-logo">

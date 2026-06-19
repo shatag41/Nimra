@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '../styles/theme';
 import { ds, radius, space, typography, useResponsive } from '../styles/designSystem';
 import { OrderRecord } from '../types/cms';
 import { formatCurrency } from '../utils/commerce';
-import { trackOrder } from '../utils/api';
+import { requestOrderCancellation, trackOrder } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 
 interface TrackOrderScreenProps {
@@ -67,6 +67,28 @@ export default function TrackOrderScreen({ isDark, initialOrderId, onNavigate }:
   };
 
   const activeIndex = order ? statusSteps.indexOf(order.status) : -1;
+
+  const submitCancellationRequest = () => {
+    if (!order) return;
+    Alert.alert('Request cancellation', 'Your order will stay active until an admin approves the request.', [
+      { text: 'Keep Order', style: 'cancel' },
+      {
+        text: 'Submit Request',
+        style: 'destructive',
+        onPress: async () => {
+          setLoading(true);
+          const result = await requestOrderCancellation(order);
+          setLoading(false);
+          if (result.success) {
+            setOrder((prev) => prev ? { ...prev, cancellationStatus: 'Pending' } : prev);
+            Alert.alert('Request submitted', 'Admin has been notified. We will confirm once the request is reviewed.');
+          } else {
+            Alert.alert('Unable to submit', result.message);
+          }
+        },
+      },
+    ]);
+  };
 
   return (
     <ScrollView
@@ -168,6 +190,13 @@ export default function TrackOrderScreen({ isDark, initialOrderId, onNavigate }:
           <TouchableOpacity style={[styles.secondaryBtn, { borderColor: theme.border }]} onPress={() => onNavigate('Products')}>
             <Text style={[styles.secondaryBtnText, { color: theme.text }]}>Order More Products</Text>
           </TouchableOpacity>
+          {order.cancellationStatus === 'Pending' ? (
+            <Text style={[styles.auditNote, { color: theme.textMuted }]}>Cancellation requested. Awaiting admin approval.</Text>
+          ) : ['Pending', 'Confirmed'].includes(order.status) ? (
+            <TouchableOpacity style={[styles.secondaryBtn, { borderColor: '#ef4444' }]} onPress={submitCancellationRequest}>
+              <Text style={[styles.secondaryBtnText, { color: '#ef4444' }]}>Request Cancellation</Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
       )}
     </ScrollView>
@@ -208,4 +237,5 @@ const styles = StyleSheet.create({
   addressText: { ...typography.body },
   secondaryBtn: { ...ds.secondaryButton, marginTop: space[1] },
   secondaryBtnText: { ...typography.bodyStrong, textAlign: 'center' },
+  auditNote: { ...typography.smallStrong, marginTop: space[2] },
 });

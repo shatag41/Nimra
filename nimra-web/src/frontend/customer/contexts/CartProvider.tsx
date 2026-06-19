@@ -41,6 +41,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (isLoading) return;
+
     let cancelled = false;
     queueMicrotask(async () => {
       if (cancelled) return;
@@ -126,6 +127,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
     }
   }, [activeStorageKey, hydrated, items, storageKey, user]);
+
+  useEffect(() => {
+    const clearStoredCart = () => {
+      Object.keys(localStorage).forEach((key) => {
+        if (key === 'nimra-cart' || key.startsWith('nimra-cart-') || key.startsWith('nimra-cart-v2:')) {
+          localStorage.removeItem(key);
+        }
+      });
+    };
+
+    window.addEventListener('pagehide', clearStoredCart);
+    return () => window.removeEventListener('pagehide', clearStoredCart);
+  }, []);
 
   const value = useMemo<CartContextValue>(() => {
     const visibleItems = hydrated && activeStorageKey === storageKey ? items : [];

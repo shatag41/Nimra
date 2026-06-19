@@ -2,12 +2,12 @@
 
 import React, { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Cookies from 'js-cookie';
 import { sendRequest } from '@/utils/api';
-import { AdminUser } from '@/types/cms';
+import { useAuth } from '@/frontend/customer/contexts/AuthContext';
 
 export default function LoginClient() {
   const router = useRouter();
+  const { user, isLoading: authLoading, login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -15,35 +15,10 @@ export default function LoginClient() {
 
   // Redirect if already logged in
   useEffect(() => {
-    const session = localStorage.getItem('nimra_admin_user');
-    if (session) {
-      try {
-        const adminSession = JSON.parse(session);
-        if (adminSession.role !== 'Admin') {
-          localStorage.removeItem('nimra_admin_user');
-          Cookies.remove('nimra_user', { path: '/' });
-          return;
-        }
-        if (!Cookies.get('nimra_user')) {
-          Cookies.set(
-            'nimra_user',
-            JSON.stringify({
-              ID: 0,
-              Name: adminSession.name,
-              Username: adminSession.username,
-              Mobile: '',
-              Role: adminSession.role,
-              Active: true,
-            }),
-            { expires: 7 }
-          );
-        }
-        router.replace('/admin');
-      } catch {
-        localStorage.removeItem('nimra_admin_user');
-      }
+    if (!authLoading && user?.Role === 'Admin') {
+      router.replace('/admin');
     }
-  }, [router]);
+  }, [authLoading, router, user]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -66,18 +41,7 @@ export default function LoginClient() {
           Role: matchedUser.Role,
           Active: true,
         };
-        // Save user session
-        Cookies.set('nimra_user', JSON.stringify(userSession), { path: '/', sameSite: 'lax' });
-        localStorage.setItem(
-          'nimra_admin_user',
-          JSON.stringify({
-            username: matchedUser.Username,
-            role: matchedUser.Role,
-            name: matchedUser.Name,
-          })
-        );
-        localStorage.setItem('nimra_admin_active_tab', 'dashboard');
-        router.replace('/admin');
+        login(userSession);
       } else {
         setError(res.message || 'Invalid username or password. Please try again.');
       }

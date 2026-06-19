@@ -6,7 +6,6 @@ import { useGoogleLogin } from '@react-oauth/google';
 import Link from 'next/link';
 import { sendRequest } from '@/utils/api';
 import { toast } from 'sonner';
-import ThemeToggle from '@/frontend/customer/components/ThemeToggle';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -221,29 +220,36 @@ export default function LoginPage() {
         .auth-input-wrapper:focus-within {
           border-radius: var(--radius-md);
         }
-        .back-home-btn {
-          position: absolute;
-          top: 0.35rem;
-          left: 0.8rem;
+        .enhanced-back-btn {
+          position: fixed;
+          top: 1.5rem;
+          left: 1.5rem;
           display: flex;
           align-items: center;
           gap: 0.5rem;
-          color: rgba(255,255,255,0.8);
-          font-size: 0.75rem;
-          font-weight: 600;
+          color: var(--text-primary);
+          font-size: 0.95rem;
+          font-weight: 700;
           text-decoration: none;
-          z-index: 100;
+          z-index: 1000;
           transition: all 0.2s ease;
-          background: rgba(255,255,255,0.1);
-          padding: 0.2rem 0.5rem;
+          background: var(--bg-secondary);
+          padding: 0.6rem 1.2rem;
           border-radius: 999px;
-          border: 1px solid rgba(255,255,255,0.15);
-          backdrop-filter: blur(8px);
+          border: 1px solid var(--border-color);
+          box-shadow: var(--shadow-md);
         }
-        .back-home-btn:hover {
-          color: white;
-          background: rgba(255,255,255,0.2);
-          transform: translateX(-3px);
+        .enhanced-back-btn:hover {
+          color: var(--primary-color);
+          transform: translateY(-2px);
+          box-shadow: var(--shadow-lg);
+          border-color: var(--primary-color);
+        }
+        .auth-brand-panel {
+          padding: clamp(1rem, 2.5vw, 1.5rem) !important;
+          min-height: 0 !important;
+          background: var(--bg-tertiary);
+          border-right: 1px solid var(--border-color);
         }
         @media (max-width: 760px) {
           .auth-shell.glass {
@@ -257,21 +263,13 @@ export default function LoginPage() {
           .auth-card {
             padding: 1rem !important;
           }
-          .back-home-btn {
-            color: var(--primary-color);
-            background: rgba(37,99,235,0.08);
-            border-color: rgba(37,99,235,0.16);
-          }
         }
       `}} />
+      <Link href="/" className="enhanced-back-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        Home
+      </Link>
       <div className="auth-shell glass">
-        <Link href="/" className="back-home-btn">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-          Home
-        </Link>
-        <div className="theme-toggle-wrapper">
-          <ThemeToggle />
-        </div>
         <aside className="auth-brand-panel">
           <div className="auth-brand-content">
             <div className="auth-logo">

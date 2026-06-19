@@ -42,10 +42,7 @@ export function proxy(request: NextRequest) {
 
   if ((userCookie || sessionCookie) && (!user || !session || !session.token || sessionExpired || sessionMismatch)) {
     const isProtectedPath = (isAdminPath && pathname !== '/admin/login') || isProtectedCustomerPath;
-    const redirectUrl = isProtectedPath ? new URL('/login', request.url) : new URL(request.nextUrl.pathname, request.url);
-    if (isProtectedPath) {
-      redirectUrl.searchParams.set('next', pathname);
-    }
+    const redirectUrl = isProtectedPath ? new URL('/', request.url) : new URL(request.nextUrl.pathname, request.url);
     const response = NextResponse.redirect(redirectUrl);
     response.cookies.delete('nimra_user');
     response.cookies.delete('nimra_session');
@@ -61,7 +58,7 @@ export function proxy(request: NextRequest) {
 
   if (isAdminPath && pathname !== '/admin/login') {
     if (!user) {
-      return NextResponse.redirect(new URL('/login', request.url));
+      return NextResponse.redirect(new URL('/', request.url));
     }
 
     if (!isAdminUser) {
