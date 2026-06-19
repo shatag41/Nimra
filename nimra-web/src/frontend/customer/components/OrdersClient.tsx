@@ -138,7 +138,10 @@ export default function OrdersClient() {
     });
   }, [orders, searchQuery, activeTab, dateFilter]);
 
-  if (authLoading) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted || authLoading) {
     return (
       <div className="loading-state">
         <div className="loader"></div>

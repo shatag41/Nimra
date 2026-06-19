@@ -13,3 +13,4 @@ export const metadata = {
 export default function CustomerPortalPage() {
   return <CustomerPortalClient />;
 }
+

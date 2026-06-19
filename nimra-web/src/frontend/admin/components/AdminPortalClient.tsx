@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 
 import { CMSData, OrderRecord, Product, Banner, FAQ, AdminUser } from '@/types/cms';
@@ -72,6 +72,9 @@ interface AdminPortalClientProps {
 }
 
 export default function AdminPortalClient({ initialCMSData }: AdminPortalClientProps) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   // 1. Data hook
   const {
     currentUser,
@@ -116,6 +119,15 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
 
   // 3. Profile hook
   const profile = useProfile(currentUser, setCurrentUser, showAlert);
+
+  if (!mounted) {
+    return (
+      <div className="main-loading-overlay">
+        <div className="spinner"></div>
+        <p>Loading Admin Portal...</p>
+      </div>
+    );
+  }
 
   // Local Modal States
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);

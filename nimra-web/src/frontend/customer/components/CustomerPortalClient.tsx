@@ -36,6 +36,11 @@ export default function CustomerPortalClient() {
   const searchParams = useSearchParams();
   const tab = searchParams.get('tab');
   const [cartToast, setCartToast] = React.useState<{ name: string; visible: boolean }>({ name: '', visible: false });
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleProductAdded = (product: any) => {
     setCartToast({ name: product.Name, visible: true });
@@ -50,7 +55,7 @@ export default function CustomerPortalClient() {
     return orderable.slice(0, 4);
   }, [products]);
 
-  if (isLoading) {
+  if (!mounted || isLoading) {
     return (
       <div className="portal-page">
         <div className="portal-hero" style={{ minHeight: '200px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>

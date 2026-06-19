@@ -357,6 +357,13 @@ export default function CheckoutClient() {
     }
   };
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) {
+    return <div className="loading-state" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>Loading Checkout...</div>;
+  }
+
   if (cart.items.length === 0 && status.kind !== 'success') {
     return (
       <section className="checkout-page">
