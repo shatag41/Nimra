@@ -120,15 +120,6 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
   // 3. Profile hook
   const profile = useProfile(currentUser, setCurrentUser, showAlert);
 
-  if (!mounted) {
-    return (
-      <div className="main-loading-overlay">
-        <div className="spinner"></div>
-        <p>Loading Admin Portal...</p>
-      </div>
-    );
-  }
-
   // Local Modal States
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
   const [orderStatusVal, setOrderStatusVal] = useState('');
@@ -236,7 +227,14 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
     }
   };
 
-  if (!currentUser) return null;
+  if (!currentUser || !mounted) {
+    return (
+      <div className="main-loading-overlay">
+        <div className="spinner"></div>
+        <p>Loading Admin Portal...</p>
+      </div>
+    );
+  }
 
   return (
     <>
