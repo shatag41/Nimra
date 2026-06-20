@@ -31,6 +31,13 @@ export default function RegisterPage() {
     if (!name.trim()) {
       newErrors.name = 'Full name is required';
       isValid = false;
+    } else if (name.length > 26) {
+      newErrors.name = 'Full Name cannot exceed 26 characters';
+      isValid = false;
+    }
+
+    if (name.length === 26) {
+      newErrors.name = 'Full Name cannot exceed 26 characters';
     }
 
     if (!email.trim() && !mobile.trim()) {
@@ -252,7 +259,18 @@ export default function RegisterPage() {
                   placeholder="John Doe"
                   className="auth-input"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value.length <= 26) {
+                      setName(value);
+                      if (value.length === 26) {
+                        setErrors(prev => ({ ...prev, name: 'Full Name cannot exceed 26 characters' }));
+                      } else {
+                        setErrors(prev => ({ ...prev, name: '' }));
+                      }
+                    }
+                  }}
+                  maxLength={26}
                   required
                   style={{ paddingLeft: '1.8rem', width: '100%', boxSizing: 'border-box', textOverflow: 'ellipsis' }}
                 />
