@@ -571,7 +571,13 @@ export const fetchNotifications = async (): Promise<Notification[]> => {
     },
   });
   const data = await readJsonResponse<{ notifications?: Notification[] } | Notification[]>(res, []);
-  return Array.isArray(data) ? data : (data.notifications || []);
+  const notifications = Array.isArray(data) ? data : (data.notifications || []);
+  return notifications.map((notification, index) => ({
+    ...notification,
+    ID: notification.ID === undefined || notification.ID === null || String(notification.ID).trim() === ''
+      ? `missing-${index}-${notification.Timestamp || notification.CreatedAt || ''}`
+      : notification.ID,
+  }));
 };
 
 export const fetchProducts = async (): Promise<Product[]> => {
@@ -607,6 +613,10 @@ export const fetchFAQs = async (): Promise<FAQ[]> => {
 };
 
 export const saveNotification = async (notification: Partial<Notification>, action: 'create' | 'update' | 'delete'): Promise<{ success: boolean; message: string; ID?: string | number }> => {
+  if ((action === 'delete' || action === 'update') && (notification.ID === undefined || notification.ID === null || String(notification.ID).trim() === '')) {
+    return { success: false, message: 'Notification ID is required.' };
+  }
+
   try {
     const res = await fetch('/api/cms', {
       method: 'POST',

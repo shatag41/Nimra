@@ -409,13 +409,18 @@ export const useAdminData = (initialCMSData: CMSData) => {
   };
 
   const handleNotifDelete = async (id: string | number) => {
+    if (id === undefined || id === null || String(id).trim() === '') {
+      showAlert('Cannot delete notification because its ID is missing.', 'error');
+      return false;
+    }
+
     if (!confirm('Are you sure you want to delete this notification log?')) return false;
     setSaveLoading(true);
     try {
       const res = await saveNotification({ ID: id }, 'delete');
       if (res.success) {
         showAlert(res.message);
-        setNotifications(prev => prev.filter(n => n.ID !== id));
+        setNotifications(prev => prev.filter(n => String(n.ID) !== String(id)));
         return true;
       } else {
         showAlert(res.message, 'error');

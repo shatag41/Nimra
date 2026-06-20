@@ -261,9 +261,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [router, user]);
 
   const logout = useCallback(() => {
-    clearSession();
-    window.location.href = '/';
-  }, [clearSession]);
+    clearBrowserSession();
+
+    if (typeof window !== 'undefined') {
+      window.location.replace('/');
+      return;
+    }
+
+    setUser(null);
+    router.replace('/');
+  }, [router]);
 
   return (
     <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout, clearSession }}>

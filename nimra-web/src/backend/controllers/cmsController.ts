@@ -249,10 +249,16 @@ export async function handlePost(req: Request) {
       const incomingNotif = payload.notification || {};
       if (action === 'delete') {
         const idToDelete = incomingNotif.ID;
+        if (idToDelete === undefined || idToDelete === null || String(idToDelete).trim() === '') {
+          return NextResponse.json({ success: false, message: 'Notification ID is required.' }, { status: 400 });
+        }
         fallbackData.notifications = fallbackData.notifications.filter((n: any) => String(n.ID) !== String(idToDelete));
         return NextResponse.json({ success: true, message: 'Notification deleted successfully' });
       }
       if (action === 'update') {
+        if (incomingNotif.ID === undefined || incomingNotif.ID === null || String(incomingNotif.ID).trim() === '') {
+          return NextResponse.json({ success: false, message: 'Notification ID is required.' }, { status: 400 });
+        }
         const notifIndex = fallbackData.notifications.findIndex((n: any) => String(n.ID) === String(incomingNotif.ID));
         if (notifIndex >= 0) {
           fallbackData.notifications[notifIndex] = {

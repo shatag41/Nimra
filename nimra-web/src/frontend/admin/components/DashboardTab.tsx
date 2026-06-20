@@ -253,25 +253,24 @@ export default function DashboardTab({ orders, filteredInquiries, filteredOrders
 
       {/* Cancellation approvals and Orders lists */}
       <div className="recent-activity-grid">
-        <div className="activity-card glass">
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', marginBottom: '0.75rem' }}>
+        <div className="activity-card glass cancellation-card">
+          <div className="activity-card-header">
             <div>
-              <h3 style={{ marginBottom: '0.25rem' }}>Cancellation Approvals</h3>
-              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.82rem' }}>
+              <h3>Cancellation Approvals</h3>
+              <p>
                 Review customer requests before an order is cancelled.
               </p>
             </div>
             <button
               type="button"
-              className="badge badge-orange"
+              className="badge badge-orange cancellation-count-btn"
               onClick={onOpenCancellationRequests}
-              style={{ border: 0, cursor: 'pointer' }}
               title="Open cancellation requests"
             >
               {pendingCancellationRequests.length} Pending
             </button>
           </div>
-          <div className="table-responsive">
+          <div className="table-responsive dashboard-cancellation-table">
             <table className="admin-table compact-table">
               <thead>
                 <tr>
@@ -285,7 +284,7 @@ export default function DashboardTab({ orders, filteredInquiries, filteredOrders
                 </tr>
               </thead>
               <tbody>
-                {pendingCancellationRequests.slice(0, 1).map((request) => (
+                {pendingCancellationRequests.slice(0, 3).map((request) => (
                   <tr key={request.requestId}>
                     <td><span className="badge badge-orange">{request.status}</span></td>
                     <td>
@@ -309,7 +308,7 @@ export default function DashboardTab({ orders, filteredInquiries, filteredOrders
                         onChange={(event) => setRemarksByRequest((prev) => ({ ...prev, [request.requestId]: event.target.value }))}
                         placeholder="Audit remarks"
                         rows={2}
-                        style={{ width: '100%', resize: 'vertical', minHeight: 54, padding: '0.55rem 0.7rem', borderColor: 'rgba(37, 99, 235, 0.28)', background: 'rgba(255,255,255,0.72)' }}
+                        style={{ width: '100%', resize: 'vertical', minHeight: 54, padding: '0.55rem 0.7rem', borderColor: 'rgba(37, 99, 235, 0.28)' }}
                       />
                     </td>
                     <td className="sticky-action-col">
@@ -327,6 +326,41 @@ export default function DashboardTab({ orders, filteredInquiries, filteredOrders
                 )}
               </tbody>
             </table>
+          </div>
+
+          <div className="cancellation-mobile-list">
+            {pendingCancellationRequests.slice(0, 3).map((request) => (
+              <div key={request.requestId} className="cancellation-mobile-item">
+                <div className="cancellation-mobile-top">
+                  <span className="badge badge-orange">{request.status}</span>
+                  <strong>{request.orderId}</strong>
+                </div>
+                <div className="cancellation-mobile-grid">
+                  <span>Customer</span>
+                  <strong>{request.customerName}</strong>
+                  <span>Mobile</span>
+                  <strong>{request.customerMobile}</strong>
+                  <span>Total</span>
+                  <strong>{formatCurrency(request.orderTotal)}</strong>
+                  <span>Requested</span>
+                  <strong>{new Date(request.requestDate).toLocaleDateString('en-IN')}</strong>
+                </div>
+                <textarea
+                  className="form-input"
+                  value={remarksByRequest[request.requestId] || ''}
+                  onChange={(event) => setRemarksByRequest((prev) => ({ ...prev, [request.requestId]: event.target.value }))}
+                  placeholder="Audit remarks"
+                  rows={2}
+                />
+                <div className="cancellation-mobile-actions">
+                  <button type="button" className="btn-table btn-edit" onClick={() => reviewCancellation(request, 'Rejected')}>Reject</button>
+                  <button type="button" className="btn-table btn-view" onClick={() => reviewCancellation(request, 'Approved')}>Approve</button>
+                </div>
+              </div>
+            ))}
+            {pendingCancellationRequests.length === 0 && (
+              <div className="empty-td">No pending cancellation requests.</div>
+            )}
           </div>
         </div>
 

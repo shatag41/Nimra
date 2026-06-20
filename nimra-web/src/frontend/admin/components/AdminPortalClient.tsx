@@ -2585,6 +2585,217 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             white-space: nowrap !important;
           }
 
+          .admin-main.fixed-page {
+            height: 100vh !important;
+            padding-top: 0 !important;
+            overflow-x: clip !important;
+            overflow-y: auto !important;
+            scrollbar-width: thin;
+            overscroll-behavior: contain;
+          }
+
+          .fixed-page .tab-viewport,
+          .overview-tab {
+            overflow: visible !important;
+          }
+
+          .overview-tab {
+            gap: 0.85rem !important;
+            padding: 0 !important;
+            padding-bottom: 1.25rem !important;
+          }
+
+          .main-header {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 900 !important;
+            min-height: auto !important;
+            padding: 0.6rem 1.25rem !important;
+            margin-top: 0 !important;
+            margin-left: -1.25rem !important;
+            margin-right: -1.25rem !important;
+            margin-bottom: 0.75rem !important;
+            background: var(--bg-primary) !important;
+            background-image: var(--app-bg-gradient) !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            box-shadow: 0 10px 24px rgba(2, 6, 23, 0.18) !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            isolation: isolate;
+            overflow: visible !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+          }
+
+          .main-header h1 {
+            font-size: clamp(1.05rem, 1.6vw, 1.35rem) !important;
+            line-height: 1.15 !important;
+            flex: 0 1 auto !important;
+            margin-right: 1rem !important;
+          }
+
+          .main-header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            background: var(--bg-primary);
+            background-image: var(--app-bg-gradient);
+          }
+
+          .main-header::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -1px;
+            height: 1px;
+            background: var(--border-color);
+            pointer-events: none;
+          }
+
+          .main-header .header-actions {
+            flex: 1 1 auto !important;
+            margin-left: auto !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            gap: 0.75rem !important;
+            min-width: 0 !important;
+          }
+
+          .main-header .btn-refresh {
+            flex: 0 0 auto !important;
+          }
+
+          .main-header .db-indicator {
+            flex: 0 1 auto !important;
+            white-space: nowrap !important;
+          }
+
+          .stats-grid {
+            margin-bottom: 0 !important;
+          }
+
+          .stat-card {
+            min-height: 6.7rem !important;
+            padding: 0.9rem 1rem !important;
+          }
+
+          .charts-grid,
+          .recent-activity-grid {
+            margin-top: 0 !important;
+          }
+
+          .chart-card {
+            min-height: 17.5rem !important;
+          }
+
+          .chart-wrapper,
+          .donut-chart-flex {
+            min-height: 12rem !important;
+          }
+
+          .activity-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 0.8rem;
+          }
+
+          .activity-card-header h3 {
+            margin: 0 0 0.2rem !important;
+          }
+
+          .activity-card-header p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            line-height: 1.45;
+          }
+
+          .cancellation-card {
+            overflow: visible !important;
+          }
+
+          .cancellation-count-btn {
+            border: 0 !important;
+            cursor: pointer !important;
+            flex-shrink: 0;
+            text-transform: uppercase;
+          }
+
+          .dashboard-cancellation-table {
+            max-height: clamp(14rem, 36vh, 24rem) !important;
+            min-height: 0 !important;
+            overflow: auto !important;
+            overscroll-behavior: contain;
+          }
+
+          .dashboard-cancellation-table .admin-table thead th {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 20 !important;
+          }
+
+          .dashboard-cancellation-table .sticky-action-col {
+            z-index: 12 !important;
+          }
+
+          .dashboard-cancellation-table .admin-table thead th.sticky-action-col {
+            z-index: 24 !important;
+          }
+
+          .cancellation-mobile-list {
+            display: none;
+          }
+
+          .cancellation-mobile-item {
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            border-radius: var(--admin-radius);
+            padding: 0.9rem;
+          }
+
+          .cancellation-mobile-top,
+          .cancellation-mobile-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.65rem;
+            flex-wrap: wrap;
+          }
+
+          .cancellation-mobile-top {
+            margin-bottom: 0.8rem;
+          }
+
+          .cancellation-mobile-grid {
+            display: grid;
+            grid-template-columns: max-content minmax(0, 1fr);
+            gap: 0.35rem 0.85rem;
+            margin-bottom: 0.8rem;
+            font-size: 0.82rem;
+          }
+
+          .cancellation-mobile-grid span {
+            color: var(--text-muted);
+          }
+
+          .cancellation-mobile-grid strong {
+            color: var(--text-primary);
+            overflow-wrap: anywhere;
+          }
+
+          .cancellation-mobile-item textarea {
+            width: 100%;
+            min-height: 4.5rem;
+            resize: vertical;
+            margin-bottom: 0.75rem;
+          }
+
           @media (min-width: 1180px) {
             :root {
               --admin-sidebar-width: 15.5rem;
@@ -2610,6 +2821,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
 
             .admin-main {
               padding: 1rem !important;
+              padding-top: 0 !important;
             }
 
             .charts-grid,
@@ -2643,7 +2855,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             .admin-main {
               width: 100% !important;
               margin-left: 0 !important;
-              padding: 0.85rem !important;
+              padding: 0 0.85rem 0.85rem !important;
             }
 
             .stats-grid {
@@ -2660,6 +2872,41 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             .section-head-btn > *,
             .header-actions > * {
               width: 100% !important;
+            }
+
+            .main-header {
+              position: sticky !important;
+              top: 0 !important;
+              z-index: 900 !important;
+              margin-left: -0.85rem !important;
+              margin-right: -0.85rem !important;
+              margin-top: 0 !important;
+              padding: 0.75rem !important;
+            }
+
+            .main-header .header-actions {
+              align-items: stretch !important;
+              flex-direction: column !important;
+              justify-content: flex-start !important;
+              margin-left: 0 !important;
+            }
+
+            .main-header .db-indicator {
+              white-space: normal !important;
+            }
+
+            .overview-tab {
+              padding-bottom: 1rem !important;
+            }
+
+            .activity-card-header {
+              align-items: stretch;
+              flex-direction: column;
+              gap: 0.75rem;
+            }
+
+            .cancellation-count-btn {
+              width: fit-content !important;
             }
 
           }
@@ -2679,6 +2926,20 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
 
             .admin-table {
               min-width: 42rem !important;
+            }
+
+            .dashboard-cancellation-table {
+              display: none !important;
+            }
+
+            .cancellation-mobile-list {
+              display: flex;
+              flex-direction: column;
+              gap: 0.75rem;
+            }
+
+            .cancellation-mobile-actions .btn-table {
+              flex: 1 1 8rem;
             }
           }
         `}</style>

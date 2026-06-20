@@ -1107,6 +1107,8 @@ function getNotificationsData(spreadsheet) {
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     sheet.appendRow([1, new Date().toISOString(), 'Welcome to Nimra CMS', 'Your secure Admin Portal is fully set up and ready.', false, 'Published']);
   }
+
+  ensureNotificationIds(sheet);
   
   var data = sheet.getDataRange().getValues();
   if (data.length <= 1) return [];
@@ -1174,6 +1176,11 @@ function handleNotificationCRUD(spreadsheet, params) {
   var notification = params.notification;
   var sheet = spreadsheet.getSheetByName('Notifications');
   if (!sheet) return { success: false, message: 'Notifications sheet not found.' };
+  if ((action === 'delete' || action === 'update') && (!notification || notification.ID === undefined || notification.ID === null || String(notification.ID).trim() === '')) {
+    return { success: false, message: 'Notification ID is required.' };
+  }
+
+  ensureNotificationIds(sheet);
 
   var data = sheet.getDataRange().getValues();
   var headers = data[0];
@@ -1237,6 +1244,41 @@ function handleNotificationCRUD(spreadsheet, params) {
     }
   }
   return { success: false, message: 'Notification ID not found.' };
+}
+
+function ensureNotificationIds(sheet) {
+  var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return;
+
+  var headers = data[0];
+  var idIndex = headers.indexOf('NotificationID');
+  if (idIndex === -1) idIndex = headers.indexOf('ID');
+
+  if (idIndex === -1) {
+    idIndex = headers.length;
+    sheet.getRange(1, idIndex + 1).setValue('ID');
+    headers.push('ID');
+  }
+
+  var seen = {};
+  var maxId = 0;
+  for (var i = 1; i < data.length; i++) {
+    var current = String(data[i][idIndex] || '').trim();
+    var numeric = Number(current);
+    if (current && !isNaN(numeric) && numeric > maxId) maxId = numeric;
+    if (current) seen[current] = (seen[current] || 0) + 1;
+  }
+
+  var used = {};
+  for (var row = 1; row < data.length; row++) {
+    var id = String(data[row][idIndex] || '').trim();
+    if (!id || seen[id] > 1 || used[id]) {
+      maxId += 1;
+      id = String(maxId);
+      sheet.getRange(row + 1, idIndex + 1).setValue(id);
+    }
+    used[id] = true;
+  }
 }
 
 function jsonResponse(data) {

@@ -2468,6 +2468,14 @@ body,
   min-height: 100%;
 }
 
+.ds-app-shell {
+  min-height: 100vh;
+}
+
+.ds-main {
+  flex: 1 0 auto;
+}
+
 section,
 .card,
 .card-glass,
