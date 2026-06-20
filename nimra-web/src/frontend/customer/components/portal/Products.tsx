@@ -45,7 +45,7 @@ export const CatalogCard = React.memo(function CatalogCard({ product, onAdd }: P
   return (
     <article className={`catalog-card glass ${inCart ? 'in-cart' : ''}`}>
       <div className="cat-img-box">
-        <img src={product.ImageUrl} alt={product.Name} />
+        <img src={product.ImageUrl} alt={product.Name} loading="lazy" decoding="async" />
         {inCart && (
           <div className="cart-count-badge">{cartItem.quantity}</div>
         )}
@@ -138,7 +138,7 @@ export const RecommendationCard = React.memo(function RecommendationCard({ produ
   return (
     <div className="rec-card">
       <div className="rec-img-box">
-        <img src={product.ImageUrl} alt={product.Name} />
+        <img src={product.ImageUrl} alt={product.Name} loading="lazy" decoding="async" />
       </div>
       <div className="rec-info">
         <span className="rec-vol">{product.Volume}</span>
@@ -164,7 +164,7 @@ export const PreviewCard = React.memo(function PreviewCard({ product, index }: P
   return (
     <div className="product-preview-card" style={{ animationDelay: `${index * 0.1}s` }}>
       <div className="prod-img-box">
-        <img src={product.ImageUrl} alt={product.Name} loading="lazy" />
+        <img src={product.ImageUrl} alt={product.Name} loading="lazy" decoding="async" />
         <div className="prod-img-overlay" />
       </div>
       <div className="prod-info-box">

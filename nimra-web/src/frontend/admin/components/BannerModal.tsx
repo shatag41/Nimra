@@ -1,6 +1,7 @@
 import React from 'react';
 import { Banner } from '@/types/cms';
 import CustomSelect from './CustomSelect';
+import ImageUploadField from './ImageUploadField';
 
 interface BannerModalProps {
   editingBanner: Partial<Banner>;
@@ -72,12 +73,14 @@ export default function BannerModal({
 
           <div className="form-row" style={{ zIndex: 12, position: 'relative' }}>
             <div className="form-group">
-              <label>Slide Image URL</label>
-              <input
+              <ImageUploadField
+                label="Slide Image"
                 required
-                type="url"
+                scope="banners"
+                aspect="wide"
                 value={editingBanner.ImageUrl || ''}
-                onChange={(e) => setEditingBanner(prev => prev ? ({ ...prev, ImageUrl: e.target.value }) : null)}
+                onChange={(url) => setEditingBanner(prev => prev ? ({ ...prev, ImageUrl: url }) : null)}
+                disabled={saveLoading}
               />
             </div>
             <div className="form-group">

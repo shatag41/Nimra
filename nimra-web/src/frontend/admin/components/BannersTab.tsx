@@ -73,7 +73,7 @@ export default function BannersTab({
               <tr key={b.ID}>
                 <td>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={b.ImageUrl} alt={b.Title} className="table-thumbnail wide" />
+                  <img src={b.ImageUrl} alt={b.Title} className="table-thumbnail wide" loading="lazy" decoding="async" />
                 </td>
                 <td><strong>{b.Title}</strong></td>
                 <td className="max-cell-width">{b.Subtitle}</td>

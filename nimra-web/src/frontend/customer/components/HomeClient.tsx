@@ -240,7 +240,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
             {spotlightProducts.map((product, i) => (
               <div key={product.ID} className="product-preview-card" style={{ animationDelay: `${i * 0.1}s` }}>
                 <div className="prod-img-box">
-                  <img src={product.ImageUrl} alt={product.Name} loading="lazy" />
+                  <img src={product.ImageUrl} alt={product.Name} loading="lazy" decoding="async" />
                   <div className="prod-img-overlay" />
                 </div>
                 <div className="prod-info-box">

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Product } from '@/types/cms';
 import CustomSelect from './CustomSelect';
+import ImageUploadField from './ImageUploadField';
 
 interface ProductModalProps {
   editingProduct: Partial<Product>;
@@ -89,13 +90,13 @@ export default function ProductModal({
           </div>
 
           <div className="form-group">
-            <label>Product Image Unsplash/Web URL</label>
-            <input
+            <ImageUploadField
+              label="Product Image"
               required
-              type="url"
+              scope="products"
               value={editingProduct.ImageUrl || ''}
-              onChange={(e) => setEditingProduct(prev => prev ? ({ ...prev, ImageUrl: e.target.value }) : null)}
-              placeholder="https://images.unsplash.com/..."
+              onChange={(url) => setEditingProduct(prev => prev ? ({ ...prev, ImageUrl: url }) : null)}
+              disabled={saveLoading}
             />
           </div>
 

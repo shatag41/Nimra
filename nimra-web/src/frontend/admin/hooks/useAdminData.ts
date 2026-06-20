@@ -20,7 +20,9 @@ import {
   saveUser,
   fetchNotifications,
   saveNotification,
+  fetchProducts,
   saveProduct,
+  fetchBanners,
   saveBanner,
   saveFAQ,
   saveCompanyInfo,
@@ -115,12 +117,16 @@ export const useAdminData = (initialCMSData: CMSData) => {
       const fetchedUsers = await fetchUsers();
       const fetchedNotifs = await fetchNotifications();
       const fetchedCancellationRequests = await fetchCancellationRequests();
+      const fetchedProducts = await fetchProducts();
+      const fetchedBanners = await fetchBanners();
 
       setOrders(fetchedOrders);
       setInquiries(fetchedInquiries);
       setUsers(fetchedUsers);
       setNotifications(fetchedNotifs);
       setCancellationRequests(fetchedCancellationRequests);
+      setProducts(fetchedProducts);
+      setBanners(fetchedBanners);
     } catch (err) {
       console.error('Failed to load admin databases', err);
       showAlert('Error updating real-time databases. Local fallback remains active.', 'error');
@@ -197,11 +203,9 @@ export const useAdminData = (initialCMSData: CMSData) => {
       const res = await saveProduct(editingProduct, action);
       if (res.success) {
         showAlert(res.message);
-        if (action === 'create') {
-          setProducts(prev => [...prev, { ...editingProduct, ID: res.ID } as Product]);
-        } else {
-          setProducts(prev => prev.map(p => p.ID === editingProduct.ID ? editingProduct as Product : p));
-        }
+        const updatedProducts = await fetchProducts();
+        setProducts(updatedProducts);
+        router.refresh();
         return true;
       } else {
         showAlert(res.message, 'error');
@@ -244,11 +248,9 @@ export const useAdminData = (initialCMSData: CMSData) => {
       const res = await saveBanner(editingBanner, action);
       if (res.success) {
         showAlert(res.message);
-        if (action === 'create') {
-          setBanners(prev => [...prev, { ...editingBanner, ID: res.ID } as Banner]);
-        } else {
-          setBanners(prev => prev.map(b => b.ID === editingBanner.ID ? editingBanner as Banner : b));
-        }
+        const updatedBanners = await fetchBanners();
+        setBanners(updatedBanners);
+        router.refresh();
         return true;
       } else {
         showAlert(res.message, 'error');

@@ -7,6 +7,11 @@ let cachedCMSData: any = null;
 let lastFetchTime = 0;
 const CACHE_TTL = 300000; // 5 minutes cache
 
+function invalidateCMSCache() {
+  cachedCMSData = null;
+  lastFetchTime = 0;
+}
+
 // Proxy GET requests to Google Apps Script
 export async function handleGet(req: Request) {
   const requestUrl = new URL(req.url);
@@ -116,6 +121,8 @@ export async function handlePost(req: Request) {
     const payload = { ...body };
     let backendError = '';
 
+    invalidateCMSCache();
+
     if (payload.type === 'login') {
       const username = String(payload.username || '').trim();
       const password = String(payload.password || '');
@@ -148,6 +155,7 @@ export async function handlePost(req: Request) {
         const text = await res.text();
         if (!text.trim().startsWith('<')) {
           const data = JSON.parse(text);
+          invalidateCMSCache();
           return NextResponse.json(data);
         }
         backendError = 'Apps Script returned a non-JSON response. Check the Web App deployment URL and access settings.';

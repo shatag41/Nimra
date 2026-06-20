@@ -96,7 +96,7 @@ export default React.memo(function ProductsTab({
               <tr key={p.ID}>
                 <td>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={p.ImageUrl || '/favicon.ico'} alt={p.Name} className="table-thumbnail" />
+                  <img src={p.ImageUrl || '/favicon.ico'} alt={p.Name} className="table-thumbnail" loading="lazy" decoding="async" />
                 </td>
                 <td><strong>{p.Name}</strong></td>
                 <td>{p.Category}</td>

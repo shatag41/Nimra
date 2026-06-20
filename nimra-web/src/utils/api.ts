@@ -241,20 +241,56 @@ export const sendRequest = async (payload: AuthRequest): Promise<AuthResponse> =
   }
 };
 
+export const clearCMSDataCache = () => {
+  clientCMSCache = null;
+};
+
 let clientCMSCache: CMSData | null = null;
+
+const normalizeImageUrl = (url: unknown): string => {
+  const value = String(url || '').trim();
+  if (!value) return '';
+  if (value.startsWith('/uploads/')) return `/api${value}`;
+  if (/^(https?:|data:|blob:|\/)/i.test(value)) return value;
+  if (value.startsWith('uploads/')) return `/api/${value}`;
+  return `/${value.replace(/^\/+/, '')}`;
+};
+
+const normalizeCMSData = (data: any): CMSData => ({
+  banners: (data.banners || []).map((banner: Banner) => ({
+    ...banner,
+    ImageUrl: normalizeImageUrl(banner.ImageUrl),
+  })),
+  products: (data.products || []).map((product: Product) => ({
+    ...product,
+    ImageUrl: normalizeImageUrl(product.ImageUrl),
+  })),
+  faqs: data.faqs || [],
+  companyInfo: data.companyInfo || {},
+});
+
+const isNextDynamicSignal = (err: unknown) => {
+  return Boolean(
+    err &&
+    typeof err === 'object' &&
+    'digest' in err &&
+    String((err as { digest?: unknown }).digest).includes('DYNAMIC_SERVER_USAGE')
+  );
+};
 
 // Fetch CMS Data via internal proxy
 export const fetchCMSData = async (): Promise<CMSData> => {
-  if (typeof window !== 'undefined' && clientCMSCache) {
-    return clientCMSCache;
-  }
   try {
     const fetchOptions: RequestInit & { next?: { revalidate: number } } =
       typeof window === 'undefined'
-        ? { next: { revalidate: 300 } }
-        : { cache: 'default' };
+        ? { cache: 'no-store' }
+        : { cache: 'no-store' };
 
-    const res = await fetch(getProxyUrl(), {
+    const url = typeof window === 'undefined'
+      ? getProxyUrl()
+      : `${getProxyUrl()}?_t=${Date.now()}`;
+
+    const res = await fetch(url, {
       method: 'GET',
       ...fetchOptions,
     });
@@ -263,18 +299,16 @@ export const fetchCMSData = async (): Promise<CMSData> => {
 
     if (data.error) throw new Error(data.error);
 
-    const cmsData = {
-      banners: data.banners || [],
-      products: data.products || [],
-      faqs: data.faqs || [],
-      companyInfo: data.companyInfo || {},
-    };
+    const cmsData = normalizeCMSData(data);
 
     if (typeof window !== 'undefined') {
       clientCMSCache = cmsData;
     }
     return cmsData;
   } catch (err) {
+    if (isNextDynamicSignal(err)) {
+      throw err;
+    }
     console.error('Error loading CMS data.', err);
     return {
       banners: [],
@@ -540,6 +574,28 @@ export const fetchNotifications = async (): Promise<Notification[]> => {
   return Array.isArray(data) ? data : (data.notifications || []);
 };
 
+export const fetchProducts = async (): Promise<Product[]> => {
+  const res = await fetch(`/api/cms?action=getProducts&_t=${Date.now()}`, {
+    method: 'GET',
+    cache: 'no-store',
+    headers: { Accept: 'application/json' },
+  });
+  const data = await readJsonResponse<{ products?: Product[] } | Product[]>(res, []);
+  const products = Array.isArray(data) ? data : (data.products || []);
+  return products.map((product) => ({ ...product, ImageUrl: normalizeImageUrl(product.ImageUrl) }));
+};
+
+export const fetchBanners = async (): Promise<Banner[]> => {
+  const res = await fetch(`/api/cms?action=getBanners&_t=${Date.now()}`, {
+    method: 'GET',
+    cache: 'no-store',
+    headers: { Accept: 'application/json' },
+  });
+  const data = await readJsonResponse<{ banners?: Banner[] } | Banner[]>(res, []);
+  const banners = Array.isArray(data) ? data : (data.banners || []);
+  return banners.map((banner) => ({ ...banner, ImageUrl: normalizeImageUrl(banner.ImageUrl) }));
+};
+
 export const saveNotification = async (notification: Partial<Notification>, action: 'create' | 'update' | 'delete'): Promise<{ success: boolean; message: string; ID?: string | number }> => {
   try {
     const res = await fetch('/api/cms', {
@@ -563,6 +619,7 @@ export const saveProduct = async (product: Partial<Product>, action: 'create' | 
       body: JSON.stringify({ type: 'productCRUD', action, product }),
     });
     const data = await res.json();
+    if (data.success) clearCMSDataCache();
     return { success: data.success, message: data.message || 'Product saved successfully', ID: data.ID };
   } catch (err) {
     console.error('Error saving product:', err);
@@ -578,6 +635,7 @@ export const saveBanner = async (banner: Partial<Banner>, action: 'create' | 'up
       body: JSON.stringify({ type: 'bannerCRUD', action, banner }),
     });
     const data = await res.json();
+    if (data.success) clearCMSDataCache();
     return { success: data.success, message: data.message || 'Banner saved successfully', ID: data.ID };
   } catch (err) {
     console.error('Error saving banner:', err);

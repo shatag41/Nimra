@@ -4,6 +4,7 @@
 # Next.js build output
 **/nimra-web/.next/
 **/nimra-web/out/
+nimra-web/public/uploads/
 
 # Expo build output and local config
 **/nimra-mobile/.expo/
