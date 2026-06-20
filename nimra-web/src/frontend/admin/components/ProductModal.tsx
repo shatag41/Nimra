@@ -26,78 +26,70 @@ export default function ProductModal({
           <button className="close-btn" onClick={onClose}>✕</button>
         </div>
         
-        <form onSubmit={onSubmit} className="modal-body enterprise-modal-body">
-          <section className="modal-section">
-            <div className="modal-section-head">
-              <span>Catalog Details</span>
-            </div>
+        <form onSubmit={onSubmit} className="modal-body">
+          <div className="form-group">
+            <label>Product Catalog Name</label>
+            <input
+              required
+              type="text"
+              value={editingProduct.Name || ''}
+              onChange={(e) => setEditingProduct(prev => prev ? ({ ...prev, Name: e.target.value }) : null)}
+              placeholder="e.g. NIMRA 1 Litre Bottle"
+            />
+          </div>
+
+          <div className="form-row">
             <div className="form-group">
-              <label>Product Catalog Name</label>
+              <label>Volume Format</label>
               <input
                 required
                 type="text"
-                value={editingProduct.Name || ''}
-                onChange={(e) => setEditingProduct(prev => prev ? ({ ...prev, Name: e.target.value }) : null)}
-                placeholder="e.g. NIMRA 1 Litre Bottle"
+                value={editingProduct.Volume || ''}
+                onChange={(e) => setEditingProduct(prev => prev ? ({ ...prev, Volume: e.target.value }) : null)}
+                placeholder="e.g. 1L, 20L Jar, 500ml"
               />
             </div>
-
-            <div className="form-row modal-grid-2">
-              <div className="form-group">
-                <label>Volume Format</label>
-                <input
-                  required
-                  type="text"
-                  value={editingProduct.Volume || ''}
-                  onChange={(e) => setEditingProduct(prev => prev ? ({ ...prev, Volume: e.target.value }) : null)}
-                  placeholder="e.g. 1L, 20L Jar, 500ml"
-                />
-              </div>
-              <div className="form-group">
-                <label>Unit Price (Rs)</label>
-                <input
-                  required
-                  type="number"
-                  step="0.01"
-                  value={editingProduct.Price || ''}
-                  onChange={(e) => setEditingProduct(prev => prev ? ({ ...prev, Price: e.target.value }) : null)}
-                  placeholder="e.g. 20.00"
-                />
-              </div>
+            <div className="form-group">
+              <label>Unit Price (Rs)</label>
+              <input
+                required
+                type="number"
+                step="0.01"
+                value={editingProduct.Price || ''}
+                onChange={(e) => setEditingProduct(prev => prev ? ({ ...prev, Price: e.target.value }) : null)}
+                placeholder="e.g. 20.00"
+              />
             </div>
+          </div>
 
-            <div className="form-row modal-grid-2 modal-select-row">
-              <div className="form-group">
-                <label>Product Category</label>
-                <CustomSelect
-                  value={editingProduct.Category || 'Packaged Water'}
-                  onChange={(val) => setEditingProduct(prev => prev ? ({ ...prev, Category: val }) : null)}
-                  options={[
-                    { value: 'Packaged Water', label: 'Packaged Water' },
-                    { value: 'Mineral Water', label: 'Mineral Water' },
-                    { value: 'Bulk Water', label: 'Bulk Water' },
-                    { value: 'Upcoming RUSH Soda', label: 'Upcoming RUSH Soda' },
-                  ]}
-                />
-              </div>
-              <div className="form-group">
-                <label>Catalog Status</label>
-                <CustomSelect
-                  value={editingProduct.Active !== false ? 'true' : 'false'}
-                  onChange={(val) => setEditingProduct(prev => prev ? ({ ...prev, Active: val === 'true' }) : null)}
-                  options={[
-                    { value: 'true', label: 'Active & Visible' },
-                    { value: 'false', label: 'Hidden / Inactive' },
-                  ]}
-                />
-              </div>
+          <div className="form-row" style={{ zIndex: 12, position: 'relative' }}>
+            <div className="form-group">
+              <label>Product Category</label>
+              <CustomSelect
+                value={editingProduct.Category || 'Packaged Water'}
+                onChange={(val) => setEditingProduct(prev => prev ? ({ ...prev, Category: val }) : null)}
+                options={[
+                  { value: 'Packaged Water', label: 'Packaged Water' },
+                  { value: 'Mineral Water', label: 'Mineral Water' },
+                  { value: 'Bulk Water', label: 'Bulk Water' },
+                  { value: 'Upcoming RUSH Soda', label: 'Upcoming RUSH Soda' },
+                ]}
+              />
             </div>
-          </section>
+            <div className="form-group">
+              <label>Catalog Status</label>
+              <CustomSelect
+                value={editingProduct.Active !== false ? 'true' : 'false'}
+                onChange={(val) => setEditingProduct(prev => prev ? ({ ...prev, Active: val === 'true' }) : null)}
+                options={[
+                  { value: 'true', label: 'Active & Visible' },
+                  { value: 'false', label: 'Hidden / Inactive' },
+                ]}
+              />
+            </div>
+          </div>
 
-          <section className="modal-section modal-section-media">
-            <div className="modal-section-head">
-              <span>Product Media</span>
-            </div>
+          <div className="form-group">
             <ImageUploadField
               label="Product Image"
               required
@@ -106,33 +98,28 @@ export default function ProductModal({
               onChange={(url) => setEditingProduct(prev => prev ? ({ ...prev, ImageUrl: url }) : null)}
               disabled={saveLoading}
             />
-          </section>
+          </div>
 
-          <section className="modal-section">
-            <div className="modal-section-head">
-              <span>Customer Copy</span>
-            </div>
-            <div className="form-group">
-              <label>Specification Details</label>
-              <input
-                type="text"
-                value={editingProduct.Specifications || ''}
-                onChange={(e) => setEditingProduct(prev => prev ? ({ ...prev, Specifications: e.target.value }) : null)}
-                placeholder="e.g. Balanced minerals, UV ozone treated"
-              />
-            </div>
+          <div className="form-group">
+            <label>Specification Details</label>
+            <input
+              type="text"
+              value={editingProduct.Specifications || ''}
+              onChange={(e) => setEditingProduct(prev => prev ? ({ ...prev, Specifications: e.target.value }) : null)}
+              placeholder="e.g. Balanced minerals, UV ozone treated"
+            />
+          </div>
 
-            <div className="form-group">
-              <label>Product Summary Description</label>
-              <textarea
-                required
-                rows={3}
-                value={editingProduct.Description || ''}
-                onChange={(e) => setEditingProduct(prev => prev ? ({ ...prev, Description: e.target.value }) : null)}
-                placeholder="Describe the product for customers..."
-              />
-            </div>
-          </section>
+          <div className="form-group">
+            <label>Product Summary Description</label>
+            <textarea
+              required
+              rows={3}
+              value={editingProduct.Description || ''}
+              onChange={(e) => setEditingProduct(prev => prev ? ({ ...prev, Description: e.target.value }) : null)}
+              placeholder="Describe the product for customers..."
+            />
+          </div>
 
           <div className="modal-footer">
             <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
