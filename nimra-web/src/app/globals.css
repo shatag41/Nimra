@@ -19,6 +19,20 @@
   --bg-secondary: #FFFFFF;
   --bg-tertiary: #f1f5f9;
   --nav-bg: rgba(255, 255, 255, 0.96);
+  --app-bg: #f8fafc;
+  --app-bg-rgb: 248, 250, 252;
+  --app-bg-gradient:
+    radial-gradient(circle at 8% 12%, rgba(37, 99, 235, 0.12), transparent 28rem),
+    radial-gradient(circle at 92% 82%, rgba(59, 130, 246, 0.10), transparent 28rem),
+    linear-gradient(135deg, #eef8ff 0%, #f8fafc 48%, #ffffff 100%);
+  --surface-1: #ffffff;
+  --surface-2: #f8fafc;
+  --surface-3: #f1f5f9;
+  --surface-elevated: rgba(255, 255, 255, 0.94);
+  --surface-muted: rgba(37, 99, 235, 0.06);
+  --overlay-bg: rgba(15, 23, 42, 0.5);
+  --input-bg: #ffffff;
+  --input-bg-focus: #ffffff;
 
   /* Text */
   --text-primary: #0f172a;
@@ -65,6 +79,20 @@
   --bg-secondary: #0f172a;
   --bg-tertiary: #1e293b;
   --nav-bg: rgba(15, 23, 42, 0.92);
+  --app-bg: #020617;
+  --app-bg-rgb: 2, 6, 23;
+  --app-bg-gradient:
+    radial-gradient(circle at 10% 14%, rgba(37, 99, 235, 0.2), transparent 30rem),
+    radial-gradient(circle at 86% 82%, rgba(14, 165, 233, 0.12), transparent 28rem),
+    linear-gradient(135deg, #020617 0%, #0f172a 55%, #111827 100%);
+  --surface-1: #0f172a;
+  --surface-2: #111827;
+  --surface-3: #1e293b;
+  --surface-elevated: rgba(15, 23, 42, 0.94);
+  --surface-muted: rgba(59, 130, 246, 0.12);
+  --overlay-bg: rgba(0, 0, 0, 0.62);
+  --input-bg: #111827;
+  --input-bg-focus: #1e293b;
   --text-primary: #eff6ff;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
@@ -88,7 +116,9 @@
 html, body {
   height: 100%;
   width: 100%;
-  background-color: var(--bg-primary);
+  background-color: var(--app-bg);
+  background-image: var(--app-bg-gradient);
+  background-attachment: fixed;
   color: var(--text-primary);
   font-family: var(--font-body);
   scroll-behavior: smooth;
@@ -104,6 +134,11 @@ body {
   flex-direction: column;
   min-height: 100vh;
   line-height: 1.65;
+  color-scheme: light;
+}
+
+[data-theme="dark"] body {
+  color-scheme: dark;
 }
 
 main {
@@ -419,8 +454,28 @@ html.theme-transition,
 html.theme-transition body,
 html.theme-transition .glass,
 html.theme-transition .card,
-html.theme-transition .card-glass {
+html.theme-transition .card-glass,
+html.theme-transition .ds-app-shell,
+html.theme-transition .ds-main,
+html.theme-transition .admin-container,
+html.theme-transition .admin-main,
+html.theme-transition section,
+html.theme-transition header,
+html.theme-transition footer,
+html.theme-transition .modal-card,
+html.theme-transition .modal-backdrop,
+html.theme-transition .admin-modal,
+html.theme-transition .auth-page,
+html.theme-transition .auth-shell,
+html.theme-transition .auth-card,
+html.theme-transition input,
+html.theme-transition textarea,
+html.theme-transition select,
+html.theme-transition .custom-select-trigger,
+html.theme-transition .table-responsive,
+html.theme-transition .footer-inner {
   transition: background-color var(--transition-normal),
+              background-image var(--transition-normal),
               color var(--transition-normal),
               border-color var(--transition-normal),
               box-shadow var(--transition-normal);
@@ -1032,10 +1087,8 @@ body > section[aria-label^="Notifications"] [data-sonner-toast] {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   z-index: 1;
-  background:
-    radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.12), transparent 30rem),
-    radial-gradient(circle at 88% 80%, rgba(59, 130, 246, 0.10), transparent 28rem),
-    linear-gradient(135deg, #F0FAF4 0%, #FFFFFF 100%);
+  background-color: var(--app-bg);
+  background-image: var(--app-bg-gradient);
 }
 
 .auth-shell {
@@ -1046,7 +1099,7 @@ body > section[aria-label^="Notifications"] [data-sonner-toast] {
   overflow: hidden !important;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-2xl);
-  background: var(--glass-bg);
+  background: var(--surface-elevated);
   box-shadow: var(--shadow-2xl);
   max-height: 85vh;
   position: relative;
@@ -1068,10 +1121,10 @@ body > section[aria-label^="Notifications"] [data-sonner-toast] {
   min-height: 100%;
   height: 100%;
   padding: 3vh 3vw;
-  color: white;
+  color: var(--text-primary);
   background:
-    linear-gradient(160deg, rgba(0, 30, 15, 0.55) 0%, rgba(0, 60, 25, 0.65) 100%),
-    linear-gradient(135deg, #2563eb 0%, #1e3a8a 60%, #1e40af 100%);
+    radial-gradient(circle at 96% 4%, rgba(37, 99, 235, 0.12), transparent 10rem),
+    linear-gradient(135deg, var(--surface-1) 0%, var(--surface-2) 100%);
   overflow: hidden !important;
 }
 
@@ -1107,7 +1160,7 @@ body > section[aria-label^="Notifications"] [data-sonner-toast] {
   display: inline-flex;
   align-items: center;
   gap: 0.5vw;
-  color: white;
+  color: var(--text-primary);
   font-family: var(--font-heading);
   font-size: clamp(1rem, 2vw, 1.15rem);
   font-weight: 800;
@@ -1117,14 +1170,14 @@ body > section[aria-label^="Notifications"] [data-sonner-toast] {
 .auth-brand-panel h1 {
   max-width: 400px;
   margin-bottom: 1vh;
-  color: white;
+  color: var(--text-primary);
   font-size: clamp(1.2rem, 3vh, 1.8rem);
   line-height: 1.1;
 }
 
 .auth-brand-panel p {
   max-width: 380px;
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--text-secondary);
   font-size: clamp(0.75rem, 1.8vh, 0.85rem);
   line-height: 1.4;
 }
@@ -1138,26 +1191,26 @@ body > section[aria-label^="Notifications"] [data-sonner-toast] {
 
 .auth-highlight {
   padding: 1.2vh 1vw;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-muted);
   backdrop-filter: blur(12px);
   transition: background var(--transition-fast), transform var(--transition-fast);
 }
 .auth-highlight:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(var(--primary-rgb), 0.1);
   transform: translateY(-4px);
 }
 .auth-highlight strong {
   display: block;
   margin-bottom: 0.5vh;
-  color: white;
+  color: var(--text-primary);
   font-family: var(--font-heading);
   font-size: clamp(0.7rem, 1.5vh, 0.8rem);
 }
 .auth-highlight span,
 .auth-brand-footer {
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--text-secondary);
   font-size: clamp(0.6rem, 1.5vh, 0.7rem);
   line-height: 1.2;
 }
@@ -1167,7 +1220,7 @@ body > section[aria-label^="Notifications"] [data-sonner-toast] {
   flex-direction: column;
   justify-content: center;
   padding: 1.5vh 2vw;
-  background: var(--bg-secondary);
+  background: var(--surface-1);
   overflow-y: hidden !important;
   overflow-x: hidden !important;
   height: 100%;
@@ -1192,6 +1245,35 @@ body > section[aria-label^="Notifications"] [data-sonner-toast] {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   border: 1px solid rgba(37, 99, 235, 0.2);
+}
+
+[data-theme="dark"] .auth-shell {
+  border-color: rgba(148, 163, 184, 0.22);
+  background: rgba(15, 23, 42, 0.94);
+}
+
+[data-theme="dark"] .auth-brand-panel {
+  color: #f8fafc;
+  background:
+    linear-gradient(160deg, rgba(15, 23, 42, 0.75) 0%, rgba(30, 41, 59, 0.62) 100%),
+    linear-gradient(135deg, #1e293b 0%, #0f172a 58%, #111827 100%);
+}
+
+[data-theme="dark"] .auth-logo,
+[data-theme="dark"] .auth-brand-panel h1,
+[data-theme="dark"] .auth-highlight strong {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .auth-brand-panel p,
+[data-theme="dark"] .auth-highlight span,
+[data-theme="dark"] .auth-brand-footer {
+  color: rgba(255, 255, 255, 0.76);
+}
+
+[data-theme="dark"] .auth-highlight {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .auth-card h2 { margin-bottom: 0.1rem; font-size: clamp(1.2rem, 3vh, 1.5rem); }
@@ -2349,6 +2431,213 @@ table {
   width: 100% !important;
   max-width: none !important;
   overflow-x: hidden !important;
+}
+
+/* Global Theme Surfaces */
+html,
+body,
+.ds-app-shell,
+.ds-main,
+.admin-container,
+.admin-main,
+.portal-page,
+.orders-page,
+.track-page,
+.contact-page,
+.products-page,
+.cart-page,
+.checkout-page,
+.customer-portal-page {
+  background-color: var(--app-bg) !important;
+  background-image: var(--app-bg-gradient);
+  color: var(--text-primary);
+}
+
+.ds-app-shell,
+.ds-main,
+.admin-container,
+.admin-main,
+.portal-page,
+.orders-page,
+.track-page,
+.contact-page,
+.products-page,
+.cart-page,
+.checkout-page,
+.customer-portal-page {
+  min-height: 100%;
+}
+
+section,
+.card,
+.card-glass,
+.glass,
+.panel,
+.quick-card,
+.metric-card,
+.profile-edit-panel,
+.track-form,
+.result,
+.contact-card,
+.orders-card,
+.products-sidebar,
+.search-bar-wrapper,
+.catalog-card,
+.product-preview-card,
+.modal-card,
+.admin-modal,
+.profile-panel,
+.filter-bar,
+.table-responsive,
+.auth-card,
+.auth-shell,
+.co-summary,
+.summary,
+.form-card {
+  color: var(--text-primary);
+}
+
+.card,
+.card-glass,
+.panel,
+.quick-card,
+.metric-card,
+.profile-edit-panel,
+.track-form,
+.result,
+.contact-card,
+.orders-card,
+.products-sidebar,
+.search-bar-wrapper,
+.catalog-card,
+.product-preview-card,
+.modal-card,
+.admin-modal,
+.profile-panel,
+.filter-bar,
+.table-responsive,
+.co-summary,
+.summary,
+.form-card {
+  background: var(--surface-1) !important;
+  border-color: var(--border-color) !important;
+}
+
+.glass,
+.auth-shell.glass {
+  background: var(--surface-elevated) !important;
+  border-color: var(--glass-border) !important;
+}
+
+.modal-backdrop,
+.admin-modal-backdrop,
+.main-loading-overlay {
+  background: var(--overlay-bg) !important;
+}
+
+input,
+textarea,
+select,
+.form-input,
+.form-select,
+.form-textarea,
+.modal-select,
+.filter-input,
+.filter-select,
+.auth-input,
+.auth-select,
+.co-select,
+.checkout-page input,
+.checkout-page textarea,
+.search-input,
+.search-bar-glass,
+.custom-select-trigger {
+  background: var(--input-bg) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus,
+.modal-select:focus,
+.filter-input:focus,
+.filter-select:focus,
+.auth-input:focus,
+.auth-select:focus,
+.co-select:focus,
+.checkout-page input:focus,
+.checkout-page textarea:focus,
+.search-input:focus,
+.search-bar-glass:focus,
+.custom-select-trigger.open {
+  background: var(--input-bg-focus) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted) !important;
+}
+
+.admin-table,
+.table-wrap table,
+.orders-table {
+  background: var(--surface-1);
+  color: var(--text-primary);
+}
+
+.admin-table thead,
+.admin-table thead th {
+  background: var(--surface-3) !important;
+  color: var(--text-secondary) !important;
+}
+
+.admin-table td,
+.orders-table td {
+  border-color: var(--border-light) !important;
+}
+
+.custom-select-options-list,
+.dropdown-menu,
+.notification-dropdown,
+.search-results,
+.cart-dropdown {
+  background: var(--surface-1) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+.footer,
+.footer-inner {
+  background: var(--surface-2) !important;
+  color: var(--text-secondary) !important;
+}
+
+.footer-wave {
+  color: var(--surface-2) !important;
+}
+
+.footer-col h3,
+.footer-logo-text {
+  color: var(--text-primary) !important;
+}
+
+.brand-pitch,
+.footer-links a,
+.contact-details li,
+.contact-details a,
+.address-block p,
+.footer-copy,
+.footer-bottom-links,
+.footer-bottom-links a {
+  color: var(--text-secondary) !important;
+}
+
+.footer-bottom {
+  border-color: var(--border-color) !important;
 }
 
 .portal-page > section:not(.portal-hero),

@@ -42,6 +42,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
     const activeTheme = savedTheme || systemTheme;
     setTheme(activeTheme);
     document.documentElement.setAttribute('data-theme', activeTheme);
+    document.body.setAttribute('data-theme', activeTheme);
 
     const transitionTimeout = setTimeout(() => {
       document.documentElement.classList.add('theme-transition');
@@ -112,6 +113,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
     document.documentElement.setAttribute('data-theme', newTheme);
+    document.body.setAttribute('data-theme', newTheme);
   };
 
   const getNavLinks = () => {

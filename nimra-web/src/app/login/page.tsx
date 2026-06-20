@@ -248,7 +248,6 @@ export default function LoginPage() {
         .auth-brand-panel {
           padding: clamp(1rem, 2.5vw, 1.5rem) !important;
           min-height: 0 !important;
-          background: var(--bg-tertiary);
           border-right: 1px solid var(--border-color);
         }
         @media (max-width: 760px) {

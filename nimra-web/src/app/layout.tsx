@@ -64,6 +64,7 @@ export default async function RootLayout({
                     savedTheme = systemTheme;
                   }
                   document.documentElement.setAttribute('data-theme', savedTheme);
+                  document.body && document.body.setAttribute('data-theme', savedTheme);
                 } catch (e) {}
               })();
             `,
