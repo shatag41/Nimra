@@ -32,9 +32,20 @@ export default function UserModal({
               required
               type="text"
               value={editingUser.Name || ''}
-              onChange={(e) => setEditingUser(prev => prev ? ({ ...prev, Name: e.target.value }) : null)}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value.length <= 26) {
+                  setEditingUser(prev => prev ? ({ ...prev, Name: value }) : null);
+                }
+              }}
+              maxLength={26}
               placeholder="e.g. John Doe"
             />
+            {editingUser.Name && editingUser.Name.length === 26 && (
+              <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                Display Name cannot exceed 26 characters.
+              </p>
+            )}
           </div>
 
           <div className="form-row">
