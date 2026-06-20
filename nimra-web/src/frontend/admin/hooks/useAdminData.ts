@@ -24,6 +24,7 @@ import {
   saveProduct,
   fetchBanners,
   saveBanner,
+  fetchFAQs,
   saveFAQ,
   saveCompanyInfo,
   fetchCancellationRequests,
@@ -119,6 +120,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
       const fetchedCancellationRequests = await fetchCancellationRequests();
       const fetchedProducts = await fetchProducts();
       const fetchedBanners = await fetchBanners();
+      const fetchedFaqs = await fetchFAQs();
 
       setOrders(fetchedOrders);
       setInquiries(fetchedInquiries);
@@ -127,6 +129,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
       setCancellationRequests(fetchedCancellationRequests);
       setProducts(fetchedProducts);
       setBanners(fetchedBanners);
+      setFaqs(fetchedFaqs);
     } catch (err) {
       console.error('Failed to load admin databases', err);
       showAlert('Error updating real-time databases. Local fallback remains active.', 'error');
@@ -293,11 +296,9 @@ export const useAdminData = (initialCMSData: CMSData) => {
       const res = await saveFAQ(editingFAQ, action);
       if (res.success) {
         showAlert(res.message);
-        if (action === 'create') {
-          setFaqs(prev => [...prev, { ...editingFAQ, ID: res.ID } as FAQ]);
-        } else {
-          setFaqs(prev => prev.map(f => f.ID === editingFAQ.ID ? editingFAQ as FAQ : f));
-        }
+        const updatedFaqs = await fetchFAQs();
+        setFaqs(updatedFaqs);
+        router.refresh();
         return true;
       } else {
         showAlert(res.message, 'error');
@@ -318,7 +319,9 @@ export const useAdminData = (initialCMSData: CMSData) => {
       const res = await saveFAQ({ ID: id }, 'delete');
       if (res.success) {
         showAlert(res.message);
-        setFaqs(prev => prev.filter(f => f.ID !== id));
+        const updatedFaqs = await fetchFAQs();
+        setFaqs(updatedFaqs);
+        router.refresh();
         return true;
       } else {
         showAlert(res.message, 'error');

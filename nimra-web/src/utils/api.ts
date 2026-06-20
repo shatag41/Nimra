@@ -596,6 +596,16 @@ export const fetchBanners = async (): Promise<Banner[]> => {
   return banners.map((banner) => ({ ...banner, ImageUrl: normalizeImageUrl(banner.ImageUrl) }));
 };
 
+export const fetchFAQs = async (): Promise<FAQ[]> => {
+  const res = await fetch(`/api/cms?action=getFAQs&_t=${Date.now()}`, {
+    method: 'GET',
+    cache: 'no-store',
+    headers: { Accept: 'application/json' },
+  });
+  const data = await readJsonResponse<{ faqs?: FAQ[] } | FAQ[]>(res, []);
+  return Array.isArray(data) ? data : (data.faqs || []);
+};
+
 export const saveNotification = async (notification: Partial<Notification>, action: 'create' | 'update' | 'delete'): Promise<{ success: boolean; message: string; ID?: string | number }> => {
   try {
     const res = await fetch('/api/cms', {
@@ -651,6 +661,7 @@ export const saveFAQ = async (faq: Partial<FAQ>, action: 'create' | 'update' | '
       body: JSON.stringify({ type: 'faqCRUD', action, faq }),
     });
     const data = await res.json();
+    if (data.success) clearCMSDataCache();
     return { success: data.success, message: data.message || 'FAQ saved successfully', ID: data.ID };
   } catch (err) {
     console.error('Error saving FAQ:', err);

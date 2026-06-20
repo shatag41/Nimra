@@ -2384,6 +2384,480 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             }
           }
         `}</style>
+
+        <style jsx global>{`
+          :root {
+            --admin-sidebar-width: 15rem;
+            --admin-content-max: 88rem;
+            --admin-gap: 1rem;
+            --admin-panel-pad: 1rem;
+            --admin-control-height: 2.75rem;
+            --admin-radius: 0.75rem;
+          }
+
+          .admin-container {
+            align-items: stretch !important;
+            min-width: 0 !important;
+            overflow-x: clip !important;
+          }
+
+          .admin-sidebar {
+            width: var(--admin-sidebar-width) !important;
+            min-width: var(--admin-sidebar-width) !important;
+          }
+
+          .admin-main {
+            width: calc(100% - var(--admin-sidebar-width)) !important;
+            margin-left: var(--admin-sidebar-width) !important;
+            min-width: 0 !important;
+            padding: 1.25rem !important;
+            overflow-x: clip !important;
+          }
+
+          .tab-viewport,
+          .overview-tab,
+          .dashboard-content,
+          .admin-content,
+          .products-tab,
+          .banners-tab,
+          .faqs-tab,
+          .orders-tab,
+          .users-tab,
+          .notifications-tab,
+          .settings-tab {
+            width: min(100%, var(--admin-content-max)) !important;
+            max-width: var(--admin-content-max) !important;
+            margin-inline: auto !important;
+            min-width: 0 !important;
+          }
+
+          .stats-grid {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fit, minmax(13.5rem, 1fr)) !important;
+            gap: var(--admin-gap) !important;
+            align-items: stretch !important;
+          }
+
+          .stat-card,
+          .chart-card,
+          .activity-card,
+          .products-tab.card,
+          .banners-tab.card,
+          .faqs-tab.card,
+          .orders-tab.card,
+          .users-tab.card,
+          .notifications-tab.card,
+          .settings-tab.card {
+            min-width: 0 !important;
+            border-radius: var(--admin-radius) !important;
+            padding: var(--admin-panel-pad) !important;
+            box-shadow: var(--shadow-sm) !important;
+            transform: none !important;
+          }
+
+          .stat-card {
+            min-height: 8rem !important;
+            display: grid !important;
+            align-content: space-between !important;
+            gap: 0.55rem !important;
+          }
+
+          .stat-label,
+          .stat-desc {
+            line-height: 1.35 !important;
+          }
+
+          .stat-val {
+            font-size: 1.65rem !important;
+            line-height: 1.05 !important;
+            letter-spacing: 0 !important;
+            overflow-wrap: anywhere !important;
+          }
+
+          .charts-grid,
+          .recent-activity-grid {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)) !important;
+            gap: var(--admin-gap) !important;
+            align-items: stretch !important;
+            margin-top: var(--admin-gap) !important;
+          }
+
+          .chart-card {
+            display: flex !important;
+            flex-direction: column !important;
+            min-height: 20rem !important;
+          }
+
+          .chart-wrapper {
+            width: 100% !important;
+            min-height: 14rem !important;
+            display: grid !important;
+            place-items: center !important;
+          }
+
+          .svg-chart {
+            width: 100% !important;
+            height: auto !important;
+            max-height: 16rem !important;
+          }
+
+          .donut-chart-flex {
+            display: grid !important;
+            grid-template-columns: auto minmax(0, 1fr) !important;
+            gap: 1rem !important;
+            align-items: center !important;
+          }
+
+          .section-head-btn,
+          .main-header,
+          .header-actions {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: var(--admin-gap) !important;
+            min-width: 0 !important;
+          }
+
+          .section-head-btn h3,
+          .main-header h1 {
+            min-width: 0 !important;
+            overflow-wrap: anywhere !important;
+          }
+
+          .filter-bar {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)) !important;
+            gap: 0.75rem !important;
+            align-items: end !important;
+            margin-bottom: var(--admin-gap) !important;
+          }
+
+          .filter-group,
+          .form-group {
+            min-width: 0 !important;
+          }
+
+          .custom-select-trigger,
+          input,
+          textarea,
+          select {
+            min-height: var(--admin-control-height) !important;
+            border-radius: var(--admin-radius) !important;
+          }
+
+          .table-responsive {
+            width: 100% !important;
+            max-width: 100% !important;
+            overflow-x: auto !important;
+            border-radius: var(--admin-radius) !important;
+          }
+
+          .admin-table {
+            min-width: 48rem !important;
+            table-layout: auto !important;
+            font-size: 0.875rem !important;
+          }
+
+          .admin-table th,
+          .admin-table td {
+            padding: 0.8rem 0.9rem !important;
+            vertical-align: top !important;
+            line-height: 1.4 !important;
+          }
+
+          .max-cell-width {
+            max-width: 24rem !important;
+            white-space: normal !important;
+            overflow-wrap: anywhere !important;
+          }
+
+          .actions-flex {
+            display: flex !important;
+            gap: 0.5rem !important;
+            flex-wrap: wrap !important;
+          }
+
+          .btn,
+          .btn-table {
+            min-height: 2.5rem !important;
+            border-radius: var(--admin-radius) !important;
+            white-space: nowrap !important;
+          }
+
+          .modal-backdrop {
+            display: grid !important;
+            place-items: center !important;
+            padding: 1rem !important;
+            overflow-y: auto !important;
+          }
+
+          .modal-card {
+            width: min(100%, 52rem) !important;
+            max-height: calc(100dvh - 2rem) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+            border-radius: 1rem !important;
+            border: 1px solid var(--border-color) !important;
+            background: var(--bg-secondary) !important;
+            box-shadow: var(--shadow-xl) !important;
+          }
+
+          .modal-header {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 20 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 1rem !important;
+            padding: 1rem 1.25rem !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            background: var(--bg-secondary) !important;
+          }
+
+          .modal-header h2 {
+            font-size: 1.2rem !important;
+            line-height: 1.2 !important;
+            letter-spacing: 0 !important;
+          }
+
+          .close-btn {
+            width: 2.4rem !important;
+            height: 2.4rem !important;
+            display: inline-grid !important;
+            place-items: center !important;
+            flex: 0 0 auto !important;
+          }
+
+          .modal-body {
+            flex: 1 1 auto !important;
+            overflow-y: auto !important;
+            padding: 1rem 1.25rem 0 !important;
+            display: grid !important;
+            gap: 1rem !important;
+          }
+
+          .enterprise-modal-body {
+            background: var(--bg-primary) !important;
+          }
+
+          .modal-section {
+            display: grid !important;
+            gap: 0.85rem !important;
+            padding: 1rem !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: var(--admin-radius) !important;
+            background: var(--bg-secondary) !important;
+            min-width: 0 !important;
+          }
+
+          .modal-section-media {
+            background: linear-gradient(180deg, rgba(var(--primary-rgb), 0.04), var(--bg-secondary)) !important;
+          }
+
+          .modal-section-head {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            padding-bottom: 0.35rem !important;
+            border-bottom: 1px solid var(--border-light) !important;
+            color: var(--text-secondary) !important;
+            font-size: 0.78rem !important;
+            font-weight: 800 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.06em !important;
+          }
+
+          .modal-grid-2 {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 0.85rem !important;
+          }
+
+          .modal-grid-3 {
+            display: grid !important;
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            gap: 0.85rem !important;
+          }
+
+          .modal-select-row {
+            position: relative !important;
+            z-index: 30 !important;
+          }
+
+          .modal-body label,
+          .image-upload-empty strong {
+            font-size: 0.86rem !important;
+            line-height: 1.25 !important;
+          }
+
+          .modal-body input,
+          .modal-body textarea {
+            width: 100% !important;
+            font-size: 0.92rem !important;
+          }
+
+          .image-upload {
+            border-radius: var(--admin-radius) !important;
+            min-width: 0 !important;
+          }
+
+          .image-upload-preview {
+            max-height: 19rem !important;
+          }
+
+          .modal-footer {
+            position: sticky !important;
+            bottom: 0 !important;
+            z-index: 25 !important;
+            margin: 0 -1.25rem !important;
+            padding: 1rem 1.25rem !important;
+            display: flex !important;
+            justify-content: flex-end !important;
+            gap: 0.75rem !important;
+            border-top: 1px solid var(--border-color) !important;
+            background: color-mix(in srgb, var(--bg-secondary) 94%, transparent) !important;
+            backdrop-filter: blur(10px) !important;
+          }
+
+          @media (min-width: 1180px) {
+            :root {
+              --admin-sidebar-width: 15.5rem;
+              --admin-gap: 1.1rem;
+              --admin-panel-pad: 1.15rem;
+            }
+
+            .stat-val {
+              font-size: 1.85rem !important;
+            }
+
+            .admin-table {
+              font-size: 0.9rem !important;
+            }
+          }
+
+          @media (max-width: 1100px) {
+            :root {
+              --admin-sidebar-width: 13rem;
+              --admin-gap: 0.85rem;
+              --admin-panel-pad: 0.9rem;
+            }
+
+            .admin-main {
+              padding: 1rem !important;
+            }
+
+            .charts-grid,
+            .recent-activity-grid {
+              grid-template-columns: 1fr !important;
+            }
+
+            .modal-grid-3 {
+              grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            }
+          }
+
+          @media (max-width: 820px) {
+            :root {
+              --admin-sidebar-width: 100%;
+              --admin-gap: 0.75rem;
+              --admin-panel-pad: 0.85rem;
+              --admin-control-height: 2.6rem;
+            }
+
+            .admin-container {
+              display: block !important;
+            }
+
+            .admin-sidebar {
+              position: sticky !important;
+              top: 0 !important;
+              width: 100% !important;
+              min-width: 0 !important;
+              height: auto !important;
+              max-height: 44vh !important;
+            }
+
+            .admin-main {
+              width: 100% !important;
+              margin-left: 0 !important;
+              padding: 0.85rem !important;
+            }
+
+            .stats-grid {
+              grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            }
+
+            .section-head-btn,
+            .main-header,
+            .header-actions {
+              align-items: stretch !important;
+              flex-direction: column !important;
+            }
+
+            .section-head-btn > *,
+            .header-actions > * {
+              width: 100% !important;
+            }
+
+            .modal-card {
+              width: 100% !important;
+              max-height: calc(100dvh - 1rem) !important;
+            }
+
+            .modal-grid-2,
+            .modal-grid-3 {
+              grid-template-columns: 1fr !important;
+            }
+
+            .modal-footer {
+              display: grid !important;
+              grid-template-columns: 1fr !important;
+            }
+
+            .modal-footer .btn {
+              width: 100% !important;
+              justify-content: center !important;
+            }
+          }
+
+          @media (max-width: 520px) {
+            .stats-grid {
+              grid-template-columns: 1fr !important;
+            }
+
+            .stat-card {
+              min-height: 7rem !important;
+            }
+
+            .stat-val {
+              font-size: 1.45rem !important;
+            }
+
+            .modal-backdrop {
+              padding: 0.5rem !important;
+            }
+
+            .modal-header,
+            .modal-body,
+            .modal-section,
+            .modal-footer {
+              padding-left: 0.85rem !important;
+              padding-right: 0.85rem !important;
+            }
+
+            .modal-footer {
+              margin-left: -0.85rem !important;
+              margin-right: -0.85rem !important;
+            }
+
+            .admin-table {
+              min-width: 42rem !important;
+            }
+          }
+        `}</style>
       </div>
     </>
   );

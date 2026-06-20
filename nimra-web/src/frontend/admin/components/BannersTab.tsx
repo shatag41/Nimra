@@ -69,42 +69,50 @@ export default function BannersTab({
             </tr>
           </thead>
           <tbody>
-            {filteredBanners.map((b) => (
-              <tr key={b.ID}>
-                <td>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={b.ImageUrl} alt={b.Title} className="table-thumbnail wide" loading="lazy" decoding="async" />
-                </td>
-                <td><strong>{b.Title}</strong></td>
-                <td className="max-cell-width">{b.Subtitle}</td>
-                <td>{b.ButtonText}</td>
-                <td><code>{b.ButtonLink}</code></td>
-                <td>
-                  <span className={`badge ${b.Active !== false ? 'badge-primary' : 'badge-cancelled'}`}>
-                    {b.Active !== false ? 'Active' : 'Inactive'}
-                  </span>
-                </td>
-                <td className="sticky-action-col">
-                  <div className="actions-flex">
-                    <button 
-                      className="btn-table btn-edit" 
-                      onClick={() => {
-                        setEditingBanner(b);
-                        setBannerFormOpen(true);
-                      }}
-                    >
-                      Edit
-                    </button>
-                    <button 
-                      className="btn-table btn-delete" 
-                      onClick={() => void handleBannerDelete(b.ID)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {filteredBanners.map((b) => {
+              const imageUrl = String(b.ImageUrl || '').trim();
+
+              return (
+                <tr key={b.ID}>
+                  <td>
+                    {imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={imageUrl} alt={b.Title} className="table-thumbnail wide" loading="lazy" decoding="async" />
+                    ) : (
+                      <span className="table-thumbnail wide thumbnail-placeholder">No image</span>
+                    )}
+                  </td>
+                  <td><strong>{b.Title}</strong></td>
+                  <td className="max-cell-width">{b.Subtitle}</td>
+                  <td>{b.ButtonText}</td>
+                  <td><code>{b.ButtonLink}</code></td>
+                  <td>
+                    <span className={`badge ${b.Active !== false ? 'badge-primary' : 'badge-cancelled'}`}>
+                      {b.Active !== false ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
+                  <td className="sticky-action-col">
+                    <div className="actions-flex">
+                      <button 
+                        className="btn-table btn-edit" 
+                        onClick={() => {
+                          setEditingBanner(b);
+                          setBannerFormOpen(true);
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        className="btn-table btn-delete" 
+                        onClick={() => void handleBannerDelete(b.ID)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
             {filteredBanners.length === 0 && (
               <tr>
                 <td colSpan={7} className="empty-td">No banners found.</td>
