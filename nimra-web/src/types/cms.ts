@@ -73,6 +73,7 @@ export interface CartItem {
 
 export interface OrderCustomer {
   userId?: string | number;
+  savedAddressId?: string;
   name: string;
   mobile: string;
   altMobile?: string;
@@ -147,6 +148,7 @@ export interface AdminUser {
   Role: 'Admin' | 'Manager' | 'Customer';
   Name: string;
   Active?: boolean | string;
+  SavedAddresses?: string;
 }
 
 export interface Notification {

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocation } from '@/frontend/customer/contexts/LocationContext';
 import { useAuth } from '@/frontend/customer/hooks/useAuth';
 import { WORLD_DATA } from './Checkout';
+import { migrateLegacyLocalAddresses, normalizeSavedAddresses, persistUserSavedAddresses } from '@/frontend/customer/utils/userAddresses';
 
 interface Address {
   id: string;
@@ -27,14 +28,14 @@ interface Address {
 }
 
 export function Addresses() {
-  const { user } = useAuth();
+  const { user, updateUserSession } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const storageKey = `nimra_saved_addresses_${user?.ID || 'guest'}`;
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   
   const [formData, setFormData] = useState<Omit<Address, 'id' | 'fullAddress'>>({
     type: 'Home',
@@ -57,38 +58,26 @@ export function Addresses() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    const saved = localStorage.getItem(storageKey);
-    if (saved) {
-      try {
-        setAddresses(JSON.parse(saved));
-      } catch (e) {
-        console.error('Failed to parse saved addresses', e);
-      }
-    } else {
-      // Default placeholder address
-      setAddresses([{ 
-        id: '1', 
-        type: 'Home', 
-        name: user?.Name || 'Shata G',
-        mobile: user?.Mobile || '1234567890',
-        flatNo: '123 Main St',
-        buildingName: 'Apartment 4B',
-        locality: 'Colaba',
-        pincode: '400001',
-        city: 'Mumbai',
-        state: 'Maharashtra',
-        country: 'India',
-        fullAddress: '123 Main St, Apartment 4B, Colaba',
-        isDefault: true
-      }]);
+    if (!user) {
+      setAddresses([]);
+      return;
     }
-  }, [storageKey, user]);
 
-  useEffect(() => {
-    if (addresses.length > 0) {
-      localStorage.setItem(storageKey, JSON.stringify(addresses));
-    }
-  }, [addresses, storageKey]);
+    let cancelled = false;
+    const loadAddresses = async () => {
+      const migrated = await migrateLegacyLocalAddresses(user);
+      if (cancelled) return;
+      setAddresses(migrated.addresses as Address[]);
+      if (migrated.migrated) {
+        updateUserSession({ ...user, SavedAddresses: JSON.stringify(migrated.addresses) });
+      }
+    };
+    void loadAddresses();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [updateUserSession, user]);
   
   const { city: locationCity, address: locationAddress, state: locationState, pincode: locationPincode, requestLocation, loading: locationLoading } = useLocation();
 
@@ -147,7 +136,24 @@ export function Addresses() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const saveAddressList = async (nextAddresses: Address[]) => {
+    if (!user) return false;
+    setSaving(true);
+    try {
+      const { result, addresses: normalized } = await persistUserSavedAddresses(user, nextAddresses);
+      if (!result.success) {
+        setErrors({ form: result.message || 'Failed to save address.' });
+        return false;
+      }
+      setAddresses(normalized as Address[]);
+      updateUserSession({ ...user, SavedAddresses: JSON.stringify(normalized) });
+      return true;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
@@ -173,7 +179,9 @@ export function Addresses() {
         : [...addresses, newSavedAddr];
     }
 
-    setAddresses(updatedList);
+    updatedList = normalizeSavedAddresses(updatedList) as Address[];
+    const saved = await saveAddressList(updatedList);
+    if (!saved) return;
     setIsAdding(false);
     setEditId(null);
 
@@ -206,11 +214,7 @@ export function Addresses() {
   };
 
   const handleDelete = (id: string) => {
-    const updated = addresses.filter(a => a.id !== id);
-    setAddresses(updated);
-    if (updated.length === 0) {
-      localStorage.removeItem(storageKey);
-    }
+    void saveAddressList(addresses.filter(a => a.id !== id) as Address[]);
   };
 
   const handleAddNew = () => {
@@ -438,8 +442,8 @@ export function Addresses() {
               <button type="button" onClick={() => setIsAdding(false)} className="btn-cancel">
                 Cancel
               </button>
-              <button type="submit" className="btn-submit">
-                <span>Save Address</span>
+              <button type="submit" className="btn-submit" disabled={saving}>
+                <span>{saving ? 'Saving...' : 'Save Address'}</span>
               </button>
             </div>
           </form>

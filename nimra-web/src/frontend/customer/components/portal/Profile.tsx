@@ -2,17 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import type { User } from '@/frontend/customer/contexts/AuthContext';
+import { getUserSavedAddresses } from '@/frontend/customer/utils/userAddresses';
 
 interface ProfileProps {
   user: User | null;
-}
-
-interface SavedAddress {
-  id: string;
-  type: 'Home' | 'Work' | 'Other';
-  fullAddress: string;
-  city: string;
-  pincode: string;
 }
 
 export function Profile({ user }: ProfileProps) {
@@ -21,21 +14,10 @@ export function Profile({ user }: ProfileProps) {
   const name = user?.Name || '';
 
   useEffect(() => {
-    const storageKey = `nimra_saved_addresses_${user?.ID || 'guest'}`;
-    const saved = localStorage.getItem(storageKey);
-    if (saved) {
-      try {
-        const parsed: SavedAddress[] = JSON.parse(saved);
-        if (parsed && parsed.length > 0) {
-          const first = parsed[0];
-          setAddressDisplay(`${first.fullAddress}, ${first.city} - ${first.pincode} (${first.type})`);
-        } else {
-          setAddressDisplay('Not provided');
-        }
-      } catch (e) {
-        console.error('Failed to parse saved addresses in profile card', e);
-        setAddressDisplay('Not provided');
-      }
+    const parsed = getUserSavedAddresses(user as any);
+    if (parsed.length > 0) {
+      const first = parsed.find((address) => address.isDefault) || parsed[0];
+      setAddressDisplay(`${first.fullAddress || first.locality}, ${first.city} - ${first.pincode} (${first.type})`);
     } else {
       setAddressDisplay('Not provided');
     }

@@ -173,6 +173,27 @@ function saveOrder(spreadsheet, params) {
   var instructions   = String(customer.instructions|| '').trim();
   var totalAmount    = Number(params.total         || 0);
   var userId         = String(params.userId || customer.userId || customer.userID || customer.ID || '').trim();
+  var savedAddressId = String(customer.savedAddressId || params.savedAddressId || '').trim();
+
+  if (userId && savedAddressId) {
+    var savedAddress = findUserSavedAddress(spreadsheet, userId, savedAddressId);
+    if (!savedAddress) {
+      return { success: false, message: 'Selected saved address was not found on this user account.' };
+    }
+    name = String(savedAddress.name || name || '').trim();
+    mobile = String(savedAddress.mobile || mobile || '').trim();
+    altMobile = String(savedAddress.altMobile || altMobile || '').trim();
+    email = normalizeEmail(savedAddress.email || email);
+    flatNo = String(savedAddress.flatNo || '').trim();
+    buildingName = String(savedAddress.buildingName || '').trim();
+    locality = String(savedAddress.locality || '').trim();
+    landmark = String(savedAddress.landmark || '').trim();
+    city = String(savedAddress.city || '').trim();
+    state = String(savedAddress.state || '').trim();
+    pincode = String(savedAddress.pincode || '').trim();
+    addressType = String(savedAddress.type || addressType || 'Home').trim();
+    instructions = String(savedAddress.instructions || instructions || '').trim();
+  }
 
   // Build composite Full Address from granular fields (also accept legacy address field)
   var fullAddress = String(customer.address || '').trim();
@@ -249,7 +270,8 @@ function saveOrder(spreadsheet, params) {
     source,           // Source
     createdAt,        // Created At
     updatedAt,        // Updated At
-    userId            // Customer User ID
+    userId,           // Customer User ID
+    savedAddressId    // Saved Address ID
   ];
 
   Logger.log("Appended Values: Appending row data to " + sheet.getName() + " sheet: " + JSON.stringify(rowData));
@@ -533,6 +555,7 @@ function rowToOrder(headers, row) {
     total:         Number(value('Total Amount')   || 0),
     paymentMethod: value('Payment Method') || 'Cash on Delivery',
     source:        value('Source')         || 'Website',
+    savedAddressId: value('Saved Address ID') || '',
     cancellationStatus: value('Cancellation Status') || '',
     cancellationRequestId: value('Cancellation Request ID') || '',
     statusHistory: parseStatusHistory(value('Status History'))
@@ -687,9 +710,10 @@ function ensureOrdersSheet(spreadsheet) {
     'Created At',                // col 25
     'Updated At',                // col 26
     'Customer User ID',          // col 27
-    'Cancellation Status',       // col 28
-    'Cancellation Request ID',   // col 29
-    'Status History'             // col 30
+    'Saved Address ID',          // col 28
+    'Cancellation Status',       // col 29
+    'Cancellation Request ID',   // col 30
+    'Status History'             // col 31
   ];
 
   var sheet = spreadsheet.getSheetByName('Orders');
@@ -785,7 +809,7 @@ function getUsersData(spreadsheet) {
   var sheet = spreadsheet.getSheetByName('Users');
   if (!sheet) {
     sheet = spreadsheet.insertSheet('Users');
-    var headers = ['User ID', 'Full Name', 'Mobile', 'Email', 'Password (hashed)', 'Role (Admin/Customer)', 'Status', 'Registration Date', 'Last Login'];
+    var headers = ['User ID', 'Full Name', 'Mobile', 'Email', 'Password (hashed)', 'Role (Admin/Customer)', 'Status', 'Registration Date', 'Last Login', 'SavedAddresses'];
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     
     // Seed default users with hashed password
@@ -816,6 +840,7 @@ function getUsersData(spreadsheet) {
         row['Active'] = isActive;
         active = isActive;
       }
+      else if (key === 'SavedAddresses' || key === 'Saved Addresses') row['SavedAddresses'] = val;
       else {
         row[key] = val;
       }
@@ -1019,6 +1044,12 @@ function handleUserCRUD(spreadsheet, params) {
   var data = sheet.getDataRange().getValues();
   var headers = data[0];
   Logger.log('handleUserCRUD - headers: ' + JSON.stringify(headers));
+  if (user && user.SavedAddresses !== undefined && headers.indexOf('SavedAddresses') === -1 && headers.indexOf('Saved Addresses') === -1) {
+    var savedAddressColumn = sheet.getLastColumn() + 1;
+    sheet.getRange(1, savedAddressColumn).setValue('SavedAddresses');
+    data = sheet.getDataRange().getValues();
+    headers = data[0];
+  }
   
   // Find ID index (check both possible column names)
   var idIndex = headers.indexOf('User ID');
@@ -1037,6 +1068,7 @@ function handleUserCRUD(spreadsheet, params) {
     else if (key === 'Role (Admin/Customer)' || key === 'Role') rowValues[j] = user.Role || 'Customer';
     else if (key === 'Status' || key === 'Active') rowValues[j] = (user.Active !== false) ? 'Active' : 'Inactive';
     else if (key === 'Registration Date') rowValues[j] = action === 'create' ? new Date().toISOString() : data[1] ? data[1][j] : '';
+    else if (key === 'SavedAddresses' || key === 'Saved Addresses') rowValues[j] = user.SavedAddresses || '[]';
     else rowValues[j] = ''; // Keep empty for others like Last Login
   }
   
@@ -1084,6 +1116,8 @@ function handleUserCRUD(spreadsheet, params) {
             updatedRowValues[j] = user.Role !== undefined && user.Role !== null ? user.Role : existingValue;
           } else if (key === 'Status' || key === 'Active') {
             updatedRowValues[j] = user.Active !== undefined && user.Active !== null ? ((user.Active !== false) ? 'Active' : 'Inactive') : existingValue;
+          } else if (key === 'SavedAddresses' || key === 'Saved Addresses') {
+            updatedRowValues[j] = user.SavedAddresses !== undefined && user.SavedAddresses !== null ? user.SavedAddresses : existingValue;
           } else if (key === 'Registration Date' || key === 'Last Login') {
             updatedRowValues[j] = existingValue;
           } else {
@@ -1406,6 +1440,28 @@ function getUserMobile(user) {
     user.phone ||
     ''
   ).replace(/\D/g, '').trim();
+}
+
+function findUserSavedAddress(spreadsheet, userId, savedAddressId) {
+  if (!userId || !savedAddressId) return null;
+  var users = getUsersData(spreadsheet);
+  for (var i = 0; i < users.length; i++) {
+    if (String(users[i].ID || '').trim() !== String(userId).trim()) continue;
+    var raw = users[i].SavedAddresses || '[]';
+    try {
+      var addresses = typeof raw === 'string' ? JSON.parse(raw || '[]') : raw;
+      if (!Array.isArray(addresses)) return null;
+      for (var j = 0; j < addresses.length; j++) {
+        if (String(addresses[j].id || '').trim() === String(savedAddressId).trim()) {
+          return addresses[j];
+        }
+      }
+    } catch (e) {
+      Logger.log('findUserSavedAddress parse failure: ' + e.toString());
+      return null;
+    }
+  }
+  return null;
 }
 
 function handleAuthGoogleSignIn(spreadsheet, params) {

@@ -13,6 +13,7 @@ export interface User {
   Active: boolean;
   CreatedAt?: string;
   createdAt?: string;
+  SavedAddresses?: string;
 }
 
 type StoredSession = {
@@ -29,6 +30,7 @@ interface AuthContextType {
   login: (userData: User) => void;
   logout: () => void;
   clearSession: () => void;
+  updateUserSession: (userData: User) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -38,13 +40,13 @@ const AuthContext = createContext<AuthContextType>({
   login: () => {},
   logout: () => {},
   clearSession: () => {},
+  updateUserSession: () => {},
 });
 
 const SESSION_DAYS = 7;
 const SESSION_COOKIE = 'nimra_session';
 const USER_COOKIE = 'nimra_user';
 const TAB_SESSION_KEY = 'nimra_live_tab_session';
-const SAVED_ADDRESS_PREFIX = 'nimra_saved_addresses_';
 
 const createSessionToken = () => {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -78,9 +80,7 @@ export const clearBrowserSession = () => {
   });
 
   Object.keys(window.localStorage).forEach((key) => {
-    if (!key.startsWith(SAVED_ADDRESS_PREFIX)) {
-      window.localStorage.removeItem(key);
-    }
+    window.localStorage.removeItem(key);
   });
   window.sessionStorage.clear();
 };
@@ -175,32 +175,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (typeof window !== 'undefined') {
       window.sessionStorage.setItem(TAB_SESSION_KEY, session.token);
 
-      try {
-        const guestAddrs = localStorage.getItem('nimra_saved_addresses_guest');
-        if (guestAddrs) {
-          const userKey = `nimra_saved_addresses_${userData.ID}`;
-          const userAddrs = localStorage.getItem(userKey);
-          if (!userAddrs) {
-            localStorage.setItem(userKey, guestAddrs);
-          } else {
-            const parsedGuest = JSON.parse(guestAddrs);
-            const parsedUser = JSON.parse(userAddrs);
-            if (Array.isArray(parsedGuest) && Array.isArray(parsedUser)) {
-              // merge and remove exact duplicates based on fullAddress
-              const merged = [...parsedUser];
-              parsedGuest.forEach(ga => {
-                if (!merged.find(ua => ua.fullAddress === ga.fullAddress)) {
-                  merged.push({ ...ga, id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString() });
-                }
-              });
-              localStorage.setItem(userKey, JSON.stringify(merged));
-            }
-          }
-          localStorage.removeItem('nimra_saved_addresses_guest');
-        }
-      } catch (e) {
-        console.error('Failed to migrate guest addresses', e);
-      }
     }
 
     if (isAdminUser) {
@@ -222,6 +196,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const clearSession = useCallback(() => {
     setUser(null);
     clearBrowserSession();
+  }, []);
+
+  const updateUserSession = useCallback((userData: User) => {
+    setUser(userData);
+    Cookies.set(USER_COOKIE, JSON.stringify(userData), { path: '/', sameSite: 'lax' });
   }, []);
 
   useEffect(() => {
@@ -273,7 +252,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [router]);
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout, clearSession }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout, clearSession, updateUserSession }}>
       {children}
     </AuthContext.Provider>
   );

@@ -8,6 +8,7 @@ import { useLocation } from '@/frontend/customer/contexts/LocationContext';
 import { submitOrder, saveUser } from '@/utils/api';
 import { toast } from 'sonner';
 import { CheckoutForm, CheckoutSummary, CheckoutSuccess, SavedAddress, WORLD_DATA } from './portal/Checkout';
+import { migrateLegacyLocalAddresses, normalizeSavedAddresses, persistUserSavedAddresses } from '@/frontend/customer/utils/userAddresses';
 
 const initialForm = {
   name: '',
@@ -31,7 +32,7 @@ type FormState = typeof initialForm;
 
 export default function CheckoutClient() {
   const cart = useCart();
-  const { user, login } = useAuth();
+  const { user, updateUserSession } = useAuth();
   const [form, setForm] = useState<FormState>(initialForm);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [status, setStatus] = useState<{ kind: 'idle' | 'loading' | 'success' | 'error'; message: string; orderId?: string }>({ kind: 'idle', message: '' });
@@ -42,44 +43,48 @@ export default function CheckoutClient() {
 
   const location = useLocation();
 
-  // Load saved addresses on mount
+  // Load saved addresses from the user profile on mount/login.
   useEffect(() => {
-    const storageKey = `nimra_saved_addresses_${user?.ID || 'guest'}`;
-    const saved = localStorage.getItem(storageKey);
-    if (saved) {
-      try {
-        const parsed: SavedAddress[] = JSON.parse(saved);
-        setSavedAddresses(parsed);
-        if (parsed.length > 0) {
-          // Find default address or use first one
-          const defaultAddr = parsed.find(a => a.isDefault) || parsed[0];
-          setSelectedAddressId(defaultAddr.id);
-          setIsEditingAddress(false); // Read-only by default
+    if (!user) return;
 
-          // Prefill form with selected address details
-          setForm({
-            name: defaultAddr.name || user?.Name || '',
-            mobile: defaultAddr.mobile || user?.Mobile || '',
-            altMobile: defaultAddr.altMobile || '',
-            email: defaultAddr.email || user?.Username || '',
-            flatNo: defaultAddr.flatNo,
-            buildingName: defaultAddr.buildingName || '',
-            locality: defaultAddr.locality,
-            landmark: defaultAddr.landmark || '',
-            pincode: defaultAddr.pincode,
-            state: defaultAddr.state,
-            city: defaultAddr.city,
-            country: defaultAddr.country || 'India',
-            addressType: defaultAddr.type,
-            instructions: defaultAddr.instructions || '',
-            saveAddress: false,
-          });
-        }
-      } catch (e) {
-        console.error('Failed to parse saved addresses', e);
+    let cancelled = false;
+    const loadAddresses = async () => {
+      const migrated = await migrateLegacyLocalAddresses(user);
+      if (cancelled) return;
+      const parsed = migrated.addresses as SavedAddress[];
+      if (migrated.migrated) {
+        updateUserSession({ ...user, SavedAddresses: JSON.stringify(parsed) });
       }
-    }
-  }, [user]);
+      setSavedAddresses(parsed);
+      if (parsed.length > 0) {
+        const defaultAddr = parsed.find(a => a.isDefault) || parsed[0];
+        setSelectedAddressId(defaultAddr.id);
+        setIsEditingAddress(false);
+        setForm({
+          name: defaultAddr.name || user?.Name || '',
+          mobile: defaultAddr.mobile || user?.Mobile || '',
+          altMobile: defaultAddr.altMobile || '',
+          email: defaultAddr.email || user?.Username || '',
+          flatNo: defaultAddr.flatNo,
+          buildingName: defaultAddr.buildingName || '',
+          locality: defaultAddr.locality,
+          landmark: defaultAddr.landmark || '',
+          pincode: defaultAddr.pincode,
+          state: defaultAddr.state,
+          city: defaultAddr.city,
+          country: defaultAddr.country || 'India',
+          addressType: defaultAddr.type,
+          instructions: defaultAddr.instructions || '',
+          saveAddress: false,
+        });
+      }
+    };
+    void loadAddresses();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [updateUserSession, user]);
 
   // Pre-detect country based on location details or timezone fallback
   useEffect(() => {
@@ -210,15 +215,20 @@ export default function CheckoutClient() {
     }
   };
 
-  const handleSetDefaultAddress = (id: string) => {
-    const storageKey = `nimra_saved_addresses_${user?.ID || 'guest'}`;
+  const handleSetDefaultAddress = async (id: string) => {
+    if (!user) return;
     const updated = savedAddresses.map(a => ({
       ...a,
       isDefault: a.id === id
     }));
-    setSavedAddresses(updated);
-    localStorage.setItem(storageKey, JSON.stringify(updated));
-    toast.success('Default delivery location updated.');
+    const { result, addresses } = await persistUserSavedAddresses(user, updated);
+    if (result.success) {
+      setSavedAddresses(addresses as SavedAddress[]);
+      updateUserSession({ ...user, SavedAddresses: JSON.stringify(addresses) });
+      toast.success('Default delivery location updated.');
+    } else {
+      toast.error(result.message || 'Failed to update default address.');
+    }
   };
 
   const handleAddNewClick = () => {
@@ -264,9 +274,10 @@ export default function CheckoutClient() {
     const compositeAddress = [form.flatNo, form.buildingName, form.locality, form.landmark]
       .filter(Boolean).join(', ');
 
-    // 1. Persist to Profile and local storage if saveAddress is enabled
+    let selectedSavedAddressId = selectedAddressId || undefined;
+
+    // 1. Persist to the user profile when adding/editing an address.
     if (form.saveAddress && user) {
-      const storageKey = `nimra_saved_addresses_${user.ID}`;
       const newSavedAddr: SavedAddress = {
         id: selectedAddressId || Date.now().toString(),
         type: form.addressType,
@@ -288,27 +299,35 @@ export default function CheckoutClient() {
 
       // Set others to not default
       const listWithoutDefault = savedAddresses.map(a => ({ ...a, isDefault: false }));
-      const updatedList = selectedAddressId 
+      const updatedList = selectedAddressId
         ? listWithoutDefault.map(a => a.id === selectedAddressId ? newSavedAddr : a)
         : [...listWithoutDefault, newSavedAddr];
 
-      setSavedAddresses(updatedList);
-      localStorage.setItem(storageKey, JSON.stringify(updatedList));
+      const normalized = normalizeSavedAddresses(updatedList) as SavedAddress[];
+      selectedSavedAddressId = newSavedAddr.id;
 
-      // Persist contact details (Name, Mobile, Username/Email) to the profile backend
       try {
         const updatePayload = {
           ID: user.ID,
           Name: form.name,
           Mobile: form.mobile,
-          Username: form.email || user.Username
+          Username: form.email || user.Username,
+          SavedAddresses: JSON.stringify(normalized),
         };
         const profileRes = await saveUser(updatePayload, 'update');
         if (profileRes.success) {
-          login({ ...user, ...updatePayload });
+          setSavedAddresses(normalized);
+          updateUserSession({ ...user, ...updatePayload });
+        } else {
+          toast.error(profileRes.message || 'Failed to save address to your account.');
+          setStatus({ kind: 'error', message: profileRes.message || 'Failed to save address to your account.' });
+          return;
         }
       } catch (err) {
         console.error('Failed to auto-persist contact info to backend user profile', err);
+        toast.error('Failed to save address to your account.');
+        setStatus({ kind: 'error', message: 'Failed to save address to your account.' });
+        return;
       }
     }
 
@@ -317,6 +336,7 @@ export default function CheckoutClient() {
       userId: user?.ID,
       customer: {
         userId: user?.ID,
+        savedAddressId: selectedSavedAddressId,
         name: form.name,
         mobile: form.mobile,
         altMobile: form.altMobile || undefined,
