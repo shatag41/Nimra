@@ -95,8 +95,12 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
 
       const { latitude, longitude } = position.coords;
 
-      // Reverse Geocoding using Nominatim
-      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+      // Reverse geocoding is proxied through our server to avoid browser CORS failures.
+      const params = new URLSearchParams({ lat: String(latitude), lon: String(longitude) });
+      const res = await fetch(`/api/location/reverse?${params.toString()}`, {
+        headers: { Accept: 'application/json' },
+        cache: 'no-store',
+      });
       if (!res.ok) throw new Error('Failed to fetch address');
       const data = await res.json();
 

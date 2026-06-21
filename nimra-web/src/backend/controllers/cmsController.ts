@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { fallbackData } from '../models/fallbackData';
 
 const APPS_SCRIPT_URL = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || process.env.EXPO_PUBLIC_APPS_SCRIPT_URL || '';
+const APPS_SCRIPT_TIMEOUT_MS = 20000;
 
 let cachedCMSData: any = null;
 let lastFetchTime = 0;
@@ -36,9 +37,9 @@ export async function handleGet(req: Request) {
       const targetUrl = new URL(APPS_SCRIPT_URL);
       requestUrl.searchParams.forEach((value, key) => targetUrl.searchParams.set(key, value));
 
-      // 10 seconds timeout controller for fast response fallback (Google Apps Script can take > 1.5s)
+      // Allow for Google Apps Script cold starts while keeping a bounded fallback.
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const timeoutId = setTimeout(() => controller.abort(), APPS_SCRIPT_TIMEOUT_MS);
 
       const res = await fetch(targetUrl.toString(), {
         method: 'GET',
@@ -63,7 +64,7 @@ export async function handleGet(req: Request) {
       }
     } catch (err: any) {
       if (err.name === 'AbortError') {
-        console.warn(`[CMS API Proxy] Google Sheets fetch timed out (10s limit) for action: ${action || 'main'}. Serving cached or fallback data.`);
+        console.warn(`[CMS API Proxy] Google Sheets fetch timed out (${APPS_SCRIPT_TIMEOUT_MS / 1000}s limit) for action: ${action || 'main'}. Serving cached or fallback data.`);
       } else {
         console.error('Google Sheets GET fetch failed, using local fallback:', err);
       }

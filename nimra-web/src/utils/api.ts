@@ -580,6 +580,25 @@ export const fetchNotifications = async (): Promise<Notification[]> => {
   }));
 };
 
+export const saveUserAddresses = async <T>(customerId: string | number, addresses: T[]): Promise<{ success: boolean; message: string; addresses?: T[] }> => {
+  try {
+    const res = await fetch('/api/cms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'userAddresses', customerId, addresses }),
+    });
+    const data = await res.json();
+    return {
+      success: Boolean(data.success),
+      message: data.message || 'Addresses saved successfully',
+      addresses: Array.isArray(data.addresses) ? data.addresses : undefined,
+    };
+  } catch (err) {
+    console.error('Error saving user addresses:', err);
+    return { success: false, message: 'Failed to save addresses' };
+  }
+};
+
 export const fetchProducts = async (): Promise<Product[]> => {
   const res = await fetch(`/api/cms?action=getProducts&_t=${Date.now()}`, {
     method: 'GET',

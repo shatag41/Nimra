@@ -82,6 +82,9 @@ function doPost(e) {
     } else if (params.type === 'userCRUD') {
       Logger.log("doPost: Routing to userCRUD()");
       return jsonResponse(handleUserCRUD(spreadsheet, params));
+    } else if (params.type === 'userAddresses') {
+      Logger.log("doPost: Routing to handleUserAddresses()");
+      return jsonResponse(handleUserAddresses(spreadsheet, params));
     } else if (params.type === 'notificationCRUD') {
       Logger.log("doPost: Routing to notificationCRUD()");
       return jsonResponse(handleNotificationCRUD(spreadsheet, params));
@@ -174,25 +177,25 @@ function saveOrder(spreadsheet, params) {
   var totalAmount    = Number(params.total         || 0);
   var userId         = String(params.userId || customer.userId || customer.userID || customer.ID || '').trim();
   var savedAddressId = String(customer.savedAddressId || params.savedAddressId || '').trim();
+  var selectedSavedAddress = null;
 
   if (userId && savedAddressId) {
     var savedAddress = findUserSavedAddress(spreadsheet, userId, savedAddressId);
-    if (!savedAddress) {
-      return { success: false, message: 'Selected saved address was not found on this user account.' };
+    if (savedAddress) {
+      selectedSavedAddress = savedAddress;
+      name = String(savedAddress.name || name || '').trim();
+      mobile = String(savedAddress.mobile || mobile || '').trim();
+      altMobile = String(savedAddress.altMobile || altMobile || '').trim();
+      email = normalizeEmail(savedAddress.email || email);
+      flatNo = String(savedAddress.flatNo || '').trim();
+      buildingName = String(savedAddress.buildingName || '').trim();
+      locality = String(savedAddress.locality || '').trim();
+      landmark = String(savedAddress.landmark || '').trim();
+      city = String(savedAddress.city || '').trim();
+      state = String(savedAddress.state || '').trim();
+      pincode = String(savedAddress.pincode || '').trim();
+      addressType = String(savedAddress.type || addressType || 'Home').trim();
     }
-    name = String(savedAddress.name || name || '').trim();
-    mobile = String(savedAddress.mobile || mobile || '').trim();
-    altMobile = String(savedAddress.altMobile || altMobile || '').trim();
-    email = normalizeEmail(savedAddress.email || email);
-    flatNo = String(savedAddress.flatNo || '').trim();
-    buildingName = String(savedAddress.buildingName || '').trim();
-    locality = String(savedAddress.locality || '').trim();
-    landmark = String(savedAddress.landmark || '').trim();
-    city = String(savedAddress.city || '').trim();
-    state = String(savedAddress.state || '').trim();
-    pincode = String(savedAddress.pincode || '').trim();
-    addressType = String(savedAddress.type || addressType || 'Home').trim();
-    instructions = String(savedAddress.instructions || instructions || '').trim();
   }
 
   // Build composite Full Address from granular fields (also accept legacy address field)
@@ -221,6 +224,38 @@ function saveOrder(spreadsheet, params) {
     return { success: false, message: 'Invalid order payload. Required fields (name, mobile, address, city, state, pincode, items) are missing or invalid.' };
   }
 
+  if (!userId) {
+    return { success: false, message: 'A user account is required to save and reuse delivery addresses.' };
+  }
+
+  if (userId) {
+    var addressPayload = normalizeSavedAddressRecord({
+      id: savedAddressId,
+      type: addressType,
+      name: name,
+      mobile: mobile,
+      altMobile: altMobile,
+      email: email,
+      flatNo: flatNo,
+      buildingName: buildingName,
+      locality: locality,
+      landmark: landmark,
+      pincode: pincode,
+      state: state,
+      city: city,
+      country: customer.country || 'India',
+      instructions: instructions,
+      fullAddress: fullAddress,
+      isDefault: customer.isDefault === true || Boolean(selectedSavedAddress && selectedSavedAddress.isDefault) || !savedAddressId
+    });
+    var savedResult = upsertUserSavedAddress(spreadsheet, userId, addressPayload);
+    if (!savedResult.success) {
+      return savedResult;
+    }
+    savedAddressId = savedResult.address.id;
+    addressType = savedResult.address.type || addressType;
+  }
+
   Logger.log("Handler Execution: saveOrder handler is executing.");
   var sheet = ensureOrdersSheet(spreadsheet);
   Logger.log("Sheet Selection: Selected sheet name is: " + sheet.getName());
@@ -246,19 +281,8 @@ function saveOrder(spreadsheet, params) {
   var rowData = [
     orderId,          // Order ID
     timestamp,        // Order Date
-    name,             // Customer Name
-    mobile,           // Mobile Number
-    altMobile,        // Alternate Mobile Number
-    email,            // Email
-    flatNo,           // House/Flat No.
-    buildingName,     // Building/Society Name
-    locality,         // Area/Locality
-    landmark,         // Landmark
-    fullAddress,      // Full Address
-    city,             // City
-    state,            // State
-    pincode,          // Pincode
     addressType,      // Address Type
+    savedAddressId,   // Saved Address ID
     instructions,     // Delivery Instructions
     products,         // Products
     quantities,       // Quantities
@@ -271,7 +295,9 @@ function saveOrder(spreadsheet, params) {
     createdAt,        // Created At
     updatedAt,        // Updated At
     userId,           // Customer User ID
-    savedAddressId    // Saved Address ID
+    '',               // Cancellation Status
+    '',               // Cancellation Request ID
+    ''                // Status History
   ];
 
   Logger.log("Appended Values: Appending row data to " + sheet.getName() + " sheet: " + JSON.stringify(rowData));
@@ -292,10 +318,17 @@ function getAllOrders(spreadsheet, userId, mobile, email) {
   var data = sheet.getDataRange().getValues();
   if (data.length <= 1) return [];
   var headers = data[0];
+  var users = getUsersData(spreadsheet);
+  var userIdIndex = headers.indexOf('Customer User ID');
+  var requestedUserId = String(userId || '').trim();
   var orders = [];
   for (var i = 1; i < data.length; i++) {
-    if (!userId && !mobile && !email || orderBelongsToUser(headers, data[i], userId, mobile, email)) {
-      orders.push(rowToOrder(headers, data[i]));
+    if (requestedUserId && userIdIndex >= 0 && String(data[i][userIdIndex] || '').trim() !== requestedUserId) {
+      continue;
+    }
+    var order = rowToOrder(headers, data[i], spreadsheet, users);
+    if (!userId && !mobile && !email || orderBelongsToUser(order, userId, mobile, email)) {
+      orders.push(order);
     }
   }
   return orders;
@@ -310,21 +343,21 @@ function trackOrder(spreadsheet, orderId, mobile, userId, email) {
   var data = sheet.getDataRange().getValues();
   var headers = data[0] || [];
   var orderIdIndex = headers.indexOf('Order ID');
-  var mobileIndex = headers.indexOf('Mobile Number');
-  var emailIndex = headers.indexOf('Email');
   var userIdIndex = headers.indexOf('Customer User ID');
+  var users = getUsersData(spreadsheet);
 
   for (var i = 1; i < data.length; i++) {
     var matchesOrderId = orderId && String(data[i][orderIdIndex]).trim() === String(orderId).trim();
-    var matchesMobile = mobile && mobileIndex >= 0 && normalizeDigits(data[i][mobileIndex]) === normalizeDigits(mobile);
-    var matchesEmail = email && emailIndex >= 0 && normalizeEmail(data[i][emailIndex]) === normalizeEmail(email);
+    var order = rowToOrder(headers, data[i], spreadsheet, users);
+    var matchesMobile = mobile && normalizeDigits(order.customer.mobile) === normalizeDigits(mobile);
+    var matchesEmail = email && normalizeEmail(order.customer.email) === normalizeEmail(email);
     var matchesUserId = userId && userIdIndex >= 0 && String(data[i][userIdIndex]).trim() === String(userId).trim();
     var hasUserScope = Boolean(userId || mobile || email);
     var matchesUserScope = matchesUserId || matchesMobile || matchesEmail;
     if ((!orderId || matchesOrderId) && (!hasUserScope || matchesUserScope)) {
       return {
         success: true,
-        order: rowToOrder(headers, data[i])
+        order: order
       };
     }
   }
@@ -340,23 +373,22 @@ function updateOrderStatus(spreadsheet, params) {
 
   var data    = sheet.getDataRange().getValues();
   var headers = data[0];
+  var users = null;
 
   // Use exact new column names
   var orderIdIndex   = headers.indexOf('Order ID');
   var statusIndex    = headers.indexOf('Order Status');
   var updatedAtIndex = headers.indexOf('Updated At');
-  var nameIndex      = headers.indexOf('Customer Name');
-  var emailIndex     = headers.indexOf('Email');
-  var mobileIndex    = headers.indexOf('Mobile Number');
-
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][orderIdIndex]).trim() === String(orderId).trim()) {
       if (statusIndex  >= 0) sheet.getRange(i + 1, statusIndex  + 1).setValue(status);
       if (updatedAtIndex >= 0) sheet.getRange(i + 1, updatedAtIndex + 1).setValue(new Date());
 
-      var name   = nameIndex   >= 0 ? data[i][nameIndex]   : '';
-      var email  = emailIndex  >= 0 ? data[i][emailIndex]  : '';
-      var mobile = mobileIndex >= 0 ? data[i][mobileIndex] : '';
+      users = users || getUsersData(spreadsheet);
+      var order = rowToOrder(headers, data[i], spreadsheet, users);
+      var name   = order.customer.name || '';
+      var email  = order.customer.email || '';
+      var mobile = order.customer.mobile || '';
 
       var emailResult = sendOrderStatusUpdateEmail(email, name, orderId, status, mobile);
       var response = { success: true, message: 'Order status updated successfully', emailSent: emailResult.sent };
@@ -379,6 +411,7 @@ function requestOrderCancellation(spreadsheet, params) {
 
   var orderData = orderSheet.getDataRange().getValues();
   var orderHeaders = orderData[0] || [];
+  var users = null;
   var orderIdIndex = orderHeaders.indexOf('Order ID');
   var statusIndex = orderHeaders.indexOf('Order Status');
   var cancellationStatusIndex = ensureColumn(orderSheet, orderHeaders, 'Cancellation Status');
@@ -395,7 +428,8 @@ function requestOrderCancellation(spreadsheet, params) {
       return { success: false, message: 'A cancellation request is already pending for this order.' };
     }
 
-    var order = rowToOrder(orderHeaders, orderSheet.getRange(i + 1, 1, 1, orderSheet.getLastColumn()).getValues()[0]);
+    users = users || getUsersData(spreadsheet);
+    var order = rowToOrder(orderHeaders, orderSheet.getRange(i + 1, 1, 1, orderSheet.getLastColumn()).getValues()[0], spreadsheet, users);
     var now = new Date();
     var requestId = 'CAN-' + Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyyMMdd-HHmmss') + '-' + Math.floor(Math.random() * 900 + 100);
     var history = [{ status: 'Pending', at: now.toISOString(), by: 'Customer', remarks: reason }];
@@ -506,7 +540,7 @@ function toISOString(date) {
   return String(date);
 }
 
-function rowToOrder(headers, row) {
+function rowToOrder(headers, row, spreadsheet, users) {
   function value(name) {
     var index = headers.indexOf(name);
     return index >= 0 ? row[index] : '';
@@ -526,36 +560,42 @@ function rowToOrder(headers, row) {
     };
   });
 
+  var userId = value('Customer User ID');
+  var savedAddressId = value('Saved Address ID') || '';
+  var savedAddress = spreadsheet && userId
+    ? findUserSavedAddressForOrder(spreadsheet, userId, savedAddressId, value('Address Type'), users)
+    : null;
+  var customer = buildOrderCustomerFromAddress(userId, value('Address Type'), savedAddress, {
+    name:         value('Customer Name'),
+    mobile:       value('Mobile Number'),
+    altMobile:    value('Alternate Mobile Number'),
+    email:        value('Email'),
+    flatNo:       value('House/Flat No.'),
+    buildingName: value('Building/Society Name'),
+    locality:     value('Area/Locality'),
+    landmark:     value('Landmark'),
+    address:      value('Full Address'),
+    city:         value('City'),
+    state:        value('State'),
+    pincode:      value('Pincode'),
+    addressType:  value('Address Type'),
+    instructions: value('Delivery Instructions')
+  });
+
   return {
     type: 'order',
     orderId: value('Order ID'),
     status: value('Order Status') || 'Pending',
     createdAt: toISOString(value('Order Date')),
     updatedAt: toISOString(value('Updated At')) || toISOString(value('Order Date')),
-    customer: {
-      userId:       value('Customer User ID'),
-      name:         value('Customer Name'),
-      mobile:       value('Mobile Number'),
-      altMobile:    value('Alternate Mobile Number'),
-      email:        value('Email'),
-      flatNo:       value('House/Flat No.'),
-      buildingName: value('Building/Society Name'),
-      locality:     value('Area/Locality'),
-      landmark:     value('Landmark'),
-      address:      value('Full Address'),
-      city:         value('City'),
-      state:        value('State'),
-      pincode:      value('Pincode'),
-      addressType:  value('Address Type'),
-      instructions: value('Delivery Instructions')
-    },
+    customer: customer,
     items: items,
     subtotal:      Number(value('Subtotal')       || 0),
     deliveryCharge:Number(value('Delivery Charge')|| 0),
     total:         Number(value('Total Amount')   || 0),
     paymentMethod: value('Payment Method') || 'Cash on Delivery',
     source:        value('Source')         || 'Website',
-    savedAddressId: value('Saved Address ID') || '',
+    savedAddressId: savedAddressId || (savedAddress && savedAddress.id) || '',
     cancellationStatus: value('Cancellation Status') || '',
     cancellationRequestId: value('Cancellation Request ID') || '',
     statusHistory: parseStatusHistory(value('Status History'))
@@ -685,35 +725,23 @@ function ensureOrdersSheet(spreadsheet) {
   var requiredHeaders = [
     'Order ID',                  // col 1
     'Order Date',                // col 2
-    'Customer Name',             // col 3
-    'Mobile Number',             // col 4
-    'Alternate Mobile Number',   // col 5
-    'Email',                     // col 6
-    'House/Flat No.',            // col 7
-    'Building/Society Name',     // col 8
-    'Area/Locality',             // col 9
-    'Landmark',                  // col 10
-    'Full Address',              // col 11
-    'City',                      // col 12
-    'State',                     // col 13
-    'Pincode',                   // col 14
-    'Address Type',              // col 15
-    'Delivery Instructions',     // col 16
-    'Products',                  // col 17
-    'Quantities',                // col 18
-    'Subtotal',                  // col 19
-    'Delivery Charge',           // col 20
-    'Total Amount',              // col 21
-    'Payment Method',            // col 22
-    'Order Status',              // col 23
-    'Source',                    // col 24
-    'Created At',                // col 25
-    'Updated At',                // col 26
-    'Customer User ID',          // col 27
-    'Saved Address ID',          // col 28
-    'Cancellation Status',       // col 29
-    'Cancellation Request ID',   // col 30
-    'Status History'             // col 31
+    'Address Type',              // col 3
+    'Saved Address ID',          // col 4
+    'Delivery Instructions',     // col 5
+    'Products',                  // col 6
+    'Quantities',                // col 7
+    'Subtotal',                  // col 8
+    'Delivery Charge',           // col 9
+    'Total Amount',              // col 10
+    'Payment Method',            // col 11
+    'Order Status',              // col 12
+    'Source',                    // col 13
+    'Created At',                // col 14
+    'Updated At',                // col 15
+    'Customer User ID',          // col 16
+    'Cancellation Status',       // col 17
+    'Cancellation Request ID',   // col 18
+    'Status History'             // col 19
   ];
 
   var sheet = spreadsheet.getSheetByName('Orders');
@@ -729,14 +757,21 @@ function ensureOrdersSheet(spreadsheet) {
 
   if (existingStr !== requiredStr) {
     Logger.log("ensureOrdersSheet: Header mismatch detected — writing correct headers.");
-    // Extend the range if needed
-    if (sheet.getLastColumn() < requiredHeaders.length) {
-      sheet.getRange(1, 1, 1, requiredHeaders.length).setValues([requiredHeaders]);
-    } else {
-      sheet.getRange(1, 1, 1, requiredHeaders.length).setValues([requiredHeaders]);
+    var data = sheet.getDataRange().getValues();
+    var compactRows = [requiredHeaders];
+
+    for (var i = 1; i < data.length; i++) {
+      compactRows.push(compactOrderRow(spreadsheet, existingHeaders, data[i], requiredHeaders));
     }
+
+    sheet.clearContents();
+    sheet.getRange(1, 1, compactRows.length, requiredHeaders.length).setValues(compactRows);
   } else {
     Logger.log("ensureOrdersSheet: Headers already correct.");
+  }
+
+  if (sheet.getLastColumn() > requiredHeaders.length) {
+    sheet.deleteColumns(requiredHeaders.length + 1, sheet.getLastColumn() - requiredHeaders.length);
   }
 
   return sheet;
@@ -746,17 +781,15 @@ function normalizeDigits(value) {
   return String(value || '').replace(/\D/g, '').trim();
 }
 
-function orderBelongsToUser(headers, row, userId, mobile, email) {
-  var userIdIndex = headers.indexOf('Customer User ID');
-  var mobileIndex = headers.indexOf('Mobile Number');
-  var emailIndex = headers.indexOf('Email');
+function orderBelongsToUser(order, userId, mobile, email) {
   var requestedUserId = String(userId || '').trim();
   var requestedMobile = normalizeDigits(mobile);
   var requestedEmail = normalizeEmail(email);
+  var customer = order.customer || {};
 
-  if (requestedUserId && userIdIndex >= 0 && String(row[userIdIndex]).trim() === requestedUserId) return true;
-  if (requestedMobile && mobileIndex >= 0 && normalizeDigits(row[mobileIndex]) === requestedMobile) return true;
-  if (requestedEmail && emailIndex >= 0 && normalizeEmail(row[emailIndex]) === requestedEmail) return true;
+  if (requestedUserId && String(customer.userId || '').trim() === requestedUserId) return true;
+  if (requestedMobile && normalizeDigits(customer.mobile) === requestedMobile) return true;
+  if (requestedEmail && normalizeEmail(customer.email) === requestedEmail) return true;
   return false;
 }
 
@@ -809,16 +842,20 @@ function getUsersData(spreadsheet) {
   var sheet = spreadsheet.getSheetByName('Users');
   if (!sheet) {
     sheet = spreadsheet.insertSheet('Users');
-    var headers = ['User ID', 'Full Name', 'Mobile', 'Email', 'Password (hashed)', 'Role (Admin/Customer)', 'Status', 'Registration Date', 'Last Login', 'SavedAddresses'];
+    var headers = getRequiredUserHeaders();
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     
     // Seed default users with hashed password
-    sheet.appendRow([1, 'System Admin', '', 'admin', hashPassword('nimraadmin123'), 'Admin', 'Active', new Date().toISOString(), '']);
+    sheet.appendRow(buildSeedAdminUserRow());
   }
+
+  ensureUsersSheetColumns(sheet);
+  ensureUserAddressesSheet(spreadsheet, sheet);
   
   var data = sheet.getDataRange().getValues();
   if (data.length <= 1) return [];
   var headers = data[0];
+  var addressesByCustomer = getAllUserAddresses(spreadsheet);
   var rows = [];
   
   for (var i = 1; i < data.length; i++) {
@@ -845,6 +882,7 @@ function getUsersData(spreadsheet) {
         row[key] = val;
       }
     }
+    row['SavedAddresses'] = JSON.stringify(addressesByCustomer[String(row.ID || '').trim()] || []);
     // If Active property wasn't set by mapping, assume true unless specified
     if (row['Active'] === undefined) row['Active'] = true;
     
@@ -1040,16 +1078,14 @@ function handleUserCRUD(spreadsheet, params) {
   var user = params.user;
   var sheet = spreadsheet.getSheetByName('Users');
   if (!sheet) return { success: false, message: 'Users sheet not found.' };
+  ensureUsersSheetColumns(sheet);
 
   var data = sheet.getDataRange().getValues();
   var headers = data[0];
   Logger.log('handleUserCRUD - headers: ' + JSON.stringify(headers));
-  if (user && user.SavedAddresses !== undefined && headers.indexOf('SavedAddresses') === -1 && headers.indexOf('Saved Addresses') === -1) {
-    var savedAddressColumn = sheet.getLastColumn() + 1;
-    sheet.getRange(1, savedAddressColumn).setValue('SavedAddresses');
-    data = sheet.getDataRange().getValues();
-    headers = data[0];
-  }
+  var primaryAddress = getPrimaryAddressForUserPayload(user);
+  var clearAddressFields = userHasExplicitEmptySavedAddresses(user);
+  var suppliedAddresses = user.SavedAddresses !== undefined && user.SavedAddresses !== null;
   
   // Find ID index (check both possible column names)
   var idIndex = headers.indexOf('User ID');
@@ -1068,7 +1104,8 @@ function handleUserCRUD(spreadsheet, params) {
     else if (key === 'Role (Admin/Customer)' || key === 'Role') rowValues[j] = user.Role || 'Customer';
     else if (key === 'Status' || key === 'Active') rowValues[j] = (user.Active !== false) ? 'Active' : 'Inactive';
     else if (key === 'Registration Date') rowValues[j] = action === 'create' ? new Date().toISOString() : data[1] ? data[1][j] : '';
-    else if (key === 'SavedAddresses' || key === 'Saved Addresses') rowValues[j] = user.SavedAddresses || '[]';
+    else if (key === 'SavedAddresses' || key === 'Saved Addresses') rowValues[j] = normalizeSavedAddressesForStorage(user.SavedAddresses);
+    else if (isUserAddressColumn(key)) rowValues[j] = clearAddressFields ? '' : valueForUserAddressColumn(key, primaryAddress, user);
     else rowValues[j] = ''; // Keep empty for others like Last Login
   }
   
@@ -1086,12 +1123,14 @@ function handleUserCRUD(spreadsheet, params) {
     }
     Logger.log('handleUserCRUD - appending row: ' + JSON.stringify(rowValues));
     sheet.appendRow(rowValues);
+    if (suppliedAddresses) replaceUserAddresses(spreadsheet, user.ID, parseUserSavedAddresses(user.SavedAddresses));
     return { success: true, message: 'User created successfully', ID: user.ID };
   }
 
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][idIndex]).trim() === String(user.ID).trim()) {
       if (action === 'delete') {
+        deleteUserAddresses(spreadsheet, user.ID);
         sheet.deleteRow(i + 1);
         return { success: true, message: 'User deleted successfully' };
       } else if (action === 'update') {
@@ -1117,7 +1156,9 @@ function handleUserCRUD(spreadsheet, params) {
           } else if (key === 'Status' || key === 'Active') {
             updatedRowValues[j] = user.Active !== undefined && user.Active !== null ? ((user.Active !== false) ? 'Active' : 'Inactive') : existingValue;
           } else if (key === 'SavedAddresses' || key === 'Saved Addresses') {
-            updatedRowValues[j] = user.SavedAddresses !== undefined && user.SavedAddresses !== null ? user.SavedAddresses : existingValue;
+            updatedRowValues[j] = user.SavedAddresses !== undefined && user.SavedAddresses !== null ? normalizeSavedAddressesForStorage(user.SavedAddresses) : existingValue;
+          } else if (isUserAddressColumn(key)) {
+            updatedRowValues[j] = clearAddressFields ? '' : (primaryAddress ? valueForUserAddressColumn(key, primaryAddress, user) : existingValue);
           } else if (key === 'Registration Date' || key === 'Last Login') {
             updatedRowValues[j] = existingValue;
           } else {
@@ -1126,6 +1167,7 @@ function handleUserCRUD(spreadsheet, params) {
         }
 
         sheet.getRange(i + 1, 1, 1, updatedRowValues.length).setValues([updatedRowValues]);
+        if (suppliedAddresses) replaceUserAddresses(spreadsheet, user.ID, parseUserSavedAddresses(user.SavedAddresses));
         return { success: true, message: 'User updated successfully' };
       }
     }
@@ -1442,26 +1484,516 @@ function getUserMobile(user) {
   ).replace(/\D/g, '').trim();
 }
 
-function findUserSavedAddress(spreadsheet, userId, savedAddressId) {
-  if (!userId || !savedAddressId) return null;
-  var users = getUsersData(spreadsheet);
-  for (var i = 0; i < users.length; i++) {
-    if (String(users[i].ID || '').trim() !== String(userId).trim()) continue;
-    var raw = users[i].SavedAddresses || '[]';
-    try {
-      var addresses = typeof raw === 'string' ? JSON.parse(raw || '[]') : raw;
-      if (!Array.isArray(addresses)) return null;
-      for (var j = 0; j < addresses.length; j++) {
-        if (String(addresses[j].id || '').trim() === String(savedAddressId).trim()) {
-          return addresses[j];
-        }
+function getRequiredUserHeaders() {
+  return [
+    'User ID',
+    'Full Name',
+    'Mobile',
+    'Email',
+    'Password (hashed)',
+    'Role (Admin/Customer)',
+    'Status',
+    'Registration Date',
+    'Last Login',
+    'Alternate Mobile Number'
+  ];
+}
+
+function getRequiredUserAddressHeaders() {
+  return [
+    'AddressId', 'CustomerId', 'AddressType', 'House/Flat No',
+    'Building/Society Name', 'Area/Locality', 'Landmark', 'City', 'State',
+    'Pincode', 'IsDefault', 'CreatedDate', 'UpdatedDate'
+  ];
+}
+
+function buildSeedAdminUserRow() {
+  var headers = getRequiredUserHeaders();
+  var values = {
+    'User ID': 1,
+    'Full Name': 'System Admin',
+    'Mobile': '',
+    'Email': 'admin',
+    'Password (hashed)': hashPassword('nimraadmin123'),
+    'Role (Admin/Customer)': 'Admin',
+    'Status': 'Active',
+    'Registration Date': new Date().toISOString(),
+    'Last Login': '',
+  };
+  return headers.map(function(header) {
+    return values[header] || '';
+  });
+}
+
+function ensureUsersSheetColumns(sheet) {
+  var requiredHeaders = getRequiredUserHeaders();
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn() || requiredHeaders.length).getValues()[0] || [];
+
+  for (var i = 0; i < requiredHeaders.length; i++) {
+    if (headers.indexOf(requiredHeaders[i]) === -1) {
+      sheet.getRange(1, sheet.getLastColumn() + 1).setValue(requiredHeaders[i]);
+      headers.push(requiredHeaders[i]);
+    }
+  }
+}
+
+function ensureUserAddressesSheet(spreadsheet, usersSheet) {
+  var sheet = spreadsheet.getSheetByName('UserAddresses');
+  if (!sheet) sheet = spreadsheet.insertSheet('UserAddresses');
+  var required = getRequiredUserAddressHeaders();
+  if (sheet.getLastRow() === 0) {
+    sheet.getRange(1, 1, 1, required.length).setValues([required]);
+  } else {
+    var existing = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] || [];
+    for (var h = 0; h < required.length; h++) {
+      if (existing.indexOf(required[h]) < 0) {
+        sheet.getRange(1, sheet.getLastColumn() + 1).setValue(required[h]);
+        existing.push(required[h]);
       }
-    } catch (e) {
-      Logger.log('findUserSavedAddress parse failure: ' + e.toString());
-      return null;
+    }
+  }
+
+  // One-time migration: copy every JSON/flattened address before removing Users columns.
+  var data = usersSheet.getDataRange().getValues();
+  var headers = data[0] || [];
+  var idIndex = findHeaderIndex(headers, ['User ID', 'ID']);
+  var savedIndex = findHeaderIndex(headers, ['SavedAddresses', 'Saved Addresses']);
+  var hasLegacyAddressColumns = savedIndex >= 0 || findHeaderIndex(headers, [
+    'SavedAddressId', 'Saved Address ID', 'Address ID', 'AddressType', 'Address Type',
+    'House/Flat No', 'House/Flat No.', 'Area/Locality', 'City', 'State', 'Pincode'
+  ]) >= 0;
+  if (!hasLegacyAddressColumns) return sheet;
+
+  var existingByCustomer = getAllUserAddresses(spreadsheet);
+  for (var i = 1; i < data.length; i++) {
+    var customerId = idIndex >= 0 ? data[i][idIndex] : '';
+    if (!customerId || (existingByCustomer[String(customerId).trim()] || []).length) continue;
+    var addresses = savedIndex >= 0 ? parseUserSavedAddresses(data[i][savedIndex]) : [];
+    if (!addresses.length) {
+      var flattened = userAddressFromColumns(rowObjectFromHeaders(headers, data[i]));
+      if (flattened) addresses = [flattened];
+    }
+    if (addresses.length) replaceUserAddresses(spreadsheet, customerId, addresses);
+  }
+  removeDeprecatedUserAddressColumns(usersSheet);
+  return sheet;
+}
+
+function getUserAddresses(spreadsheet, customerId) {
+  return getAllUserAddresses(spreadsheet)[String(customerId || '').trim()] || [];
+}
+
+function getAllUserAddresses(spreadsheet) {
+  var sheet = spreadsheet.getSheetByName('UserAddresses');
+  if (!sheet || sheet.getLastRow() <= 1) return {};
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0] || [];
+  var result = {};
+  for (var i = 1; i < data.length; i++) {
+    var row = rowObjectFromHeaders(headers, data[i]);
+    var customerId = String(row.CustomerId || '').trim();
+    if (!customerId) continue;
+    if (!result[customerId]) result[customerId] = [];
+    result[customerId].push(normalizeSavedAddressRecord({
+      id: row.AddressId,
+      type: row.AddressType,
+      flatNo: row['House/Flat No'],
+      buildingName: row['Building/Society Name'],
+      locality: row['Area/Locality'],
+      landmark: row.Landmark,
+      city: row.City,
+      state: row.State,
+      pincode: row.Pincode,
+      isDefault: row.IsDefault === true || String(row.IsDefault).toLowerCase() === 'true'
+    }));
+  }
+  for (var customerId in result) {
+    if (result.hasOwnProperty(customerId)) result[customerId] = normalizeSavedAddressList(result[customerId]);
+  }
+  return result;
+}
+
+function replaceUserAddresses(spreadsheet, customerId, addresses) {
+  var usersSheet = spreadsheet.getSheetByName('Users');
+  var sheet = spreadsheet.getSheetByName('UserAddresses') || ensureUserAddressesSheet(spreadsheet, usersSheet);
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] || [];
+  var data = sheet.getDataRange().getValues();
+  var existingCreated = {};
+  for (var i = data.length - 1; i >= 1; i--) {
+    var oldRow = rowObjectFromHeaders(headers, data[i]);
+    if (String(oldRow.CustomerId || '').trim() === String(customerId).trim()) {
+      existingCreated[String(oldRow.AddressId || '')] = oldRow.CreatedDate;
+      sheet.deleteRow(i + 1);
+    }
+  }
+  var normalized = normalizeSavedAddressList(addresses || []);
+  var now = new Date().toISOString();
+  for (var j = 0; j < normalized.length; j++) {
+    var address = normalized[j];
+    var values = {
+      AddressId: address.id,
+      CustomerId: customerId,
+      AddressType: address.type,
+      'House/Flat No': address.flatNo,
+      'Building/Society Name': address.buildingName,
+      'Area/Locality': address.locality,
+      Landmark: address.landmark,
+      City: address.city,
+      State: address.state,
+      Pincode: address.pincode,
+      IsDefault: address.isDefault === true,
+      CreatedDate: existingCreated[address.id] || now,
+      UpdatedDate: now
+    };
+    sheet.appendRow(headers.map(function(header) { return values[header] !== undefined ? values[header] : ''; }));
+  }
+  return normalized;
+}
+
+function deleteUserAddresses(spreadsheet, customerId) {
+  return replaceUserAddresses(spreadsheet, customerId, []);
+}
+
+function handleUserAddresses(spreadsheet, params) {
+  var customerId = String(params.customerId || '').trim();
+  if (!customerId) return { success: false, message: 'Customer ID is required.' };
+  var users = getUsersData(spreadsheet);
+  var found = false;
+  for (var i = 0; i < users.length; i++) {
+    if (String(users[i].ID || '').trim() === customerId) { found = true; break; }
+  }
+  if (!found) return { success: false, message: 'Customer not found.' };
+  var addresses = replaceUserAddresses(spreadsheet, customerId, params.addresses || []);
+  return { success: true, message: 'Addresses saved successfully', addresses: addresses };
+}
+
+function rowObjectFromHeaders(headers, row) {
+  var obj = {};
+  for (var i = 0; i < headers.length; i++) {
+    obj[String(headers[i] || '').trim()] = row[i];
+  }
+  return obj;
+}
+
+function isUserAddressColumn(key) {
+  return [
+    'Saved Address ID',
+    'Address Type',
+    'House/Flat No.',
+    'Building/Society Name',
+    'Area/Locality',
+    'Landmark',
+    'City',
+    'State',
+    'Pincode',
+    'Alternate Mobile Number'
+  ].indexOf(key) >= 0;
+}
+
+function valueForUserAddressColumn(key, address, user) {
+  address = address || {};
+  user = user || {};
+  var values = {
+    'Saved Address ID': address.id || '',
+    'Address Type': address.type || address.addressType || '',
+    'House/Flat No.': address.flatNo || '',
+    'Building/Society Name': address.buildingName || '',
+    'Area/Locality': address.locality || '',
+    'Landmark': address.landmark || '',
+    'City': address.city || '',
+    'State': address.state || '',
+    'Pincode': address.pincode || '',
+    'Alternate Mobile Number': address.altMobile || ''
+  };
+  return values[key] || '';
+}
+
+function getPrimarySavedAddress(addresses) {
+  addresses = normalizeSavedAddressList(addresses || []);
+  if (!addresses.length) return null;
+  for (var i = 0; i < addresses.length; i++) {
+    if (addresses[i].isDefault) return addresses[i];
+  }
+  return addresses[0];
+}
+
+function getPrimaryAddressForUserPayload(user) {
+  if (!user) return null;
+  var saved = parseUserSavedAddresses(user.SavedAddresses || '[]');
+  var primary = getPrimarySavedAddress(saved);
+  if (primary) return primary;
+  return userAddressFromColumns(user);
+}
+
+function userHasExplicitEmptySavedAddresses(user) {
+  if (!user || user.SavedAddresses === undefined || user.SavedAddresses === null) return false;
+  return parseUserSavedAddresses(user.SavedAddresses).length === 0;
+}
+
+function userAddressFromColumns(row) {
+  row = row || {};
+  var hasAddress = row.SavedAddressId || row['Saved Address ID'] || row['Address ID'] || row['House/Flat No'] || row['House/Flat No.'] || row['Area/Locality'] || row.City || row.State || row.Pincode;
+  if (!hasAddress) return null;
+  return normalizeSavedAddressRecord({
+    id: row.SavedAddressId || row['Saved Address ID'] || row['Address ID'],
+    type: row.AddressType || row['Address Type'],
+    name: row.Name,
+    mobile: row.Mobile,
+    altMobile: row['Alternate Mobile Number'],
+    email: row.Username,
+    flatNo: row['House/Flat No'] || row['House/Flat No.'],
+    buildingName: row['Building/Society Name'],
+    locality: row['Area/Locality'],
+    landmark: row.Landmark,
+    city: row.City,
+    state: row.State,
+    pincode: row.Pincode,
+    isDefault: true
+  });
+}
+
+function writeUserAddressColumns(sheet, headers, rowNumber, address) {
+  address = normalizeSavedAddressRecord(address);
+  for (var i = 0; i < headers.length; i++) {
+    var key = String(headers[i] || '').trim();
+    if (isUserAddressColumn(key)) {
+      sheet.getRange(rowNumber, i + 1).setValue(valueForUserAddressColumn(key, address, {}));
+    }
+  }
+}
+
+function removeDeprecatedUserAddressColumns(sheet) {
+  var deprecatedHeaders = [
+    'SavedAddressId', 'Saved Address ID', 'Address ID', 'AddressType', 'Address Type',
+    'House/Flat No', 'House/Flat No.', 'Building/Society Name', 'Area/Locality',
+    'Landmark', 'City', 'State', 'Pincode', 'SavedAddresses', 'Saved Addresses',
+    'Delivery Instructions', 'Contact Name', 'Contact Mobile', 'Contact Email'
+  ];
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] || [];
+  for (var i = headers.length - 1; i >= 0; i--) {
+    if (deprecatedHeaders.indexOf(String(headers[i] || '').trim()) >= 0) {
+      sheet.deleteColumn(i + 1);
+    }
+  }
+}
+
+function parseUserSavedAddresses(raw) {
+  try {
+    var parsed = typeof raw === 'string' ? JSON.parse(raw || '[]') : raw;
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    Logger.log('parseUserSavedAddresses failure: ' + e.toString());
+    return [];
+  }
+}
+
+function normalizeSavedAddressesForStorage(raw) {
+  return JSON.stringify(normalizeSavedAddressList(parseUserSavedAddresses(raw)));
+}
+
+function buildFullAddress(address) {
+  address = address || {};
+  return String(address.fullAddress || address.address || [
+    address.flatNo,
+    address.buildingName,
+    address.locality,
+    address.landmark
+  ].filter(Boolean).join(', ')).trim();
+}
+
+function normalizeSavedAddressRecord(address) {
+  address = address || {};
+  var id = String(address.id || '').trim();
+  if (!id) {
+    id = 'addr-' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyyMMddHHmmss') + '-' + Math.floor(Math.random() * 900 + 100);
+  }
+
+  return {
+    id: id,
+    type: String(address.type || address.addressType || 'Home').trim() || 'Home',
+    name: String(address.name || '').trim(),
+    mobile: normalizeDigits(address.mobile),
+    altMobile: normalizeDigits(address.altMobile),
+    email: normalizeEmail(address.email),
+    flatNo: String(address.flatNo || '').trim(),
+    buildingName: String(address.buildingName || '').trim(),
+    locality: String(address.locality || '').trim(),
+    landmark: String(address.landmark || '').trim(),
+    pincode: normalizeDigits(address.pincode).slice(0, 6),
+    state: String(address.state || '').trim(),
+    city: String(address.city || '').trim(),
+    country: String(address.country || 'India').trim() || 'India',
+    instructions: '',
+    fullAddress: buildFullAddress(address),
+    isDefault: address.isDefault === true
+  };
+}
+
+function normalizeSavedAddressList(addresses) {
+  addresses = (addresses || []).filter(Boolean).map(function(address) {
+    return normalizeSavedAddressRecord(address);
+  });
+  if (!addresses.length) return [];
+
+  var defaultIndex = -1;
+  for (var i = 0; i < addresses.length; i++) {
+    if (addresses[i].isDefault && defaultIndex < 0) defaultIndex = i;
+  }
+  if (defaultIndex < 0) defaultIndex = 0;
+
+  return addresses.map(function(address, index) {
+    address.isDefault = index === defaultIndex;
+    return address;
+  });
+}
+
+function findUserSavedAddress(spreadsheet, userId, savedAddressId, users) {
+  if (!userId || !savedAddressId) return null;
+  var addresses = null;
+  if (users) {
+    for (var i = 0; i < users.length; i++) {
+      if (String(users[i].ID || '').trim() === String(userId).trim()) {
+        addresses = parseUserSavedAddresses(users[i].SavedAddresses || '[]');
+        break;
+      }
+    }
+  }
+  addresses = addresses || getUserAddresses(spreadsheet, userId);
+  for (var j = 0; j < addresses.length; j++) {
+    if (String(addresses[j].id || '').trim() === String(savedAddressId).trim()) {
+      return normalizeSavedAddressRecord(addresses[j]);
     }
   }
   return null;
+}
+
+function findUserSavedAddressForOrder(spreadsheet, userId, savedAddressId, addressType, users) {
+  if (savedAddressId) {
+    var exact = findUserSavedAddress(spreadsheet, userId, savedAddressId, users);
+    if (exact) return exact;
+  }
+
+  var addresses = null;
+  if (users) {
+    for (var i = 0; i < users.length; i++) {
+      if (String(users[i].ID || '').trim() === String(userId).trim()) {
+        addresses = normalizeSavedAddressList(parseUserSavedAddresses(users[i].SavedAddresses || '[]'));
+        break;
+      }
+    }
+  }
+  addresses = addresses || getUserAddresses(spreadsheet, userId);
+  var requestedType = String(addressType || '').trim().toLowerCase();
+  if (requestedType) {
+    for (var j = 0; j < addresses.length; j++) {
+      if (String(addresses[j].type || '').trim().toLowerCase() === requestedType) return addresses[j];
+    }
+  }
+  return getPrimarySavedAddress(addresses);
+}
+
+function upsertUserSavedAddress(spreadsheet, userId, address) {
+  if (!userId) return { success: false, message: 'User ID is required to save an address.' };
+  var normalizedAddress = normalizeSavedAddressRecord(address);
+  var addresses = getUserAddresses(spreadsheet, userId);
+  var replaced = false;
+  for (var i = 0; i < addresses.length; i++) {
+    if (String(addresses[i].id) === String(normalizedAddress.id)) {
+      addresses[i] = normalizedAddress;
+      replaced = true;
+      break;
+    }
+  }
+  if (!replaced) addresses.push(normalizedAddress);
+  addresses = replaceUserAddresses(spreadsheet, userId, addresses);
+  return { success: true, address: normalizedAddress, addresses: addresses };
+}
+
+function buildOrderCustomerFromAddress(userId, orderAddressType, savedAddress, fallback) {
+  fallback = fallback || {};
+  var address = savedAddress ? normalizeSavedAddressRecord(savedAddress) : fallback;
+  var fullAddress = buildFullAddress(address) || buildFullAddress(fallback);
+  return {
+    userId: userId,
+    savedAddressId: address.id || fallback.savedAddressId || '',
+    name: address.name || fallback.name || '',
+    mobile: address.mobile || fallback.mobile || '',
+    altMobile: address.altMobile || fallback.altMobile || '',
+    email: address.email || fallback.email || '',
+    flatNo: address.flatNo || fallback.flatNo || '',
+    buildingName: address.buildingName || fallback.buildingName || '',
+    locality: address.locality || fallback.locality || '',
+    landmark: address.landmark || fallback.landmark || '',
+    address: fullAddress,
+    city: address.city || fallback.city || '',
+    state: address.state || fallback.state || '',
+    pincode: address.pincode || fallback.pincode || '',
+    addressType: orderAddressType || address.type || fallback.addressType || 'Home',
+    instructions: address.instructions || fallback.instructions || ''
+  };
+}
+
+function compactOrderRow(spreadsheet, oldHeaders, oldRow, requiredHeaders) {
+  function oldValue(name) {
+    var index = oldHeaders.indexOf(name);
+    return index >= 0 ? oldRow[index] : '';
+  }
+
+  var userId = oldValue('Customer User ID');
+  var savedAddressId = oldValue('Saved Address ID');
+  var addressType = oldValue('Address Type') || 'Home';
+
+  if (userId && !findUserSavedAddress(spreadsheet, userId, savedAddressId)) {
+    var addressPayload = normalizeSavedAddressRecord({
+      id: savedAddressId,
+      type: addressType,
+      name: oldValue('Customer Name'),
+      mobile: oldValue('Mobile Number'),
+      altMobile: oldValue('Alternate Mobile Number'),
+      email: oldValue('Email'),
+      flatNo: oldValue('House/Flat No.'),
+      buildingName: oldValue('Building/Society Name'),
+      locality: oldValue('Area/Locality'),
+      landmark: oldValue('Landmark'),
+      pincode: oldValue('Pincode'),
+      state: oldValue('State'),
+      city: oldValue('City'),
+      instructions: oldValue('Delivery Instructions'),
+      fullAddress: oldValue('Full Address'),
+      isDefault: false
+    });
+    var saveResult = upsertUserSavedAddress(spreadsheet, userId, addressPayload);
+    if (saveResult.success) {
+      savedAddressId = saveResult.address.id;
+      addressType = saveResult.address.type;
+    }
+  }
+
+  var mapped = {
+    'Order ID': oldValue('Order ID'),
+    'Order Date': oldValue('Order Date'),
+    'Address Type': addressType,
+    'Saved Address ID': savedAddressId,
+    'Delivery Instructions': oldValue('Delivery Instructions'),
+    'Products': oldValue('Products'),
+    'Quantities': oldValue('Quantities'),
+    'Subtotal': oldValue('Subtotal'),
+    'Delivery Charge': oldValue('Delivery Charge'),
+    'Total Amount': oldValue('Total Amount'),
+    'Payment Method': oldValue('Payment Method'),
+    'Order Status': oldValue('Order Status') || 'Pending',
+    'Source': oldValue('Source'),
+    'Created At': oldValue('Created At'),
+    'Updated At': oldValue('Updated At'),
+    'Customer User ID': userId,
+    'Cancellation Status': oldValue('Cancellation Status'),
+    'Cancellation Request ID': oldValue('Cancellation Request ID'),
+    'Status History': oldValue('Status History')
+  };
+
+  return requiredHeaders.map(function(header) {
+    return mapped[header] || '';
+  });
 }
 
 function handleAuthGoogleSignIn(spreadsheet, params) {

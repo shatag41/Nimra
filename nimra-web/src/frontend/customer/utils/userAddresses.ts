@@ -1,4 +1,4 @@
-import { saveUser } from '@/utils/api';
+import { saveUserAddresses } from '@/utils/api';
 import type { User } from '@/frontend/customer/contexts/AuthContext';
 
 export interface SavedAddressRecord {
@@ -60,12 +60,11 @@ export function getUserSavedAddresses(user?: AddressUser | null): SavedAddressRe
 
 export async function persistUserSavedAddresses(user: User, addresses: SavedAddressRecord[]) {
   const normalized = normalizeSavedAddresses(addresses);
-  const payload = {
-    ID: user.ID,
-    SavedAddresses: JSON.stringify(normalized),
-  };
-  const result = await saveUser(payload as any, 'update');
-  return { result, addresses: normalized };
+  const result = await saveUserAddresses(user.ID, normalized);
+  const saved = result.success && result.addresses
+    ? normalizeSavedAddresses(result.addresses as SavedAddressRecord[])
+    : normalized;
+  return { result, addresses: saved };
 }
 
 export async function migrateLegacyLocalAddresses(user: User) {

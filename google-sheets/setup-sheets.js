@@ -100,41 +100,7 @@ function setupNIMRASheets() {
   }
 
   var ordersSheet = getOrCreateSheet(ss, 'Orders');
-  if (ordersSheet.getLastRow() === 0) {
-    var orderHeaders = [
-      'Order ID',
-      'Order Date',
-      'Customer Name',
-      'Mobile Number',
-      'Alternate Mobile Number',
-      'Email',
-      'House/Flat No.',
-      'Building/Society Name',
-      'Area/Locality',
-      'Landmark',
-      'Full Address',
-      'City',
-      'State',
-      'Pincode',
-      'Address Type',
-      'Delivery Instructions',
-      'Products',
-      'Quantities',
-      'Subtotal',
-      'Delivery Charge',
-      'Total Amount',
-      'Payment Method',
-      'Order Status',
-      'Source',
-      'Created At',
-      'Updated At',
-      'Customer User ID',
-      'Cancellation Status',
-      'Cancellation Request ID',
-      'Status History'
-    ];
-    ordersSheet.getRange(1, 1, 1, orderHeaders.length).setValues([orderHeaders]);
-  }
+  ensureOrdersSetupSheet(ordersSheet);
 
   var cancellationSheet = getOrCreateSheet(ss, 'CancellationRequests');
   if (cancellationSheet.getLastRow() === 0) {
@@ -160,20 +126,268 @@ function setupNIMRASheets() {
 
   // Set up Users sheet
   var usersSheet = getOrCreateSheet(ss, 'Users');
+  var userAddressesSheet = getOrCreateSheet(ss, 'UserAddresses');
+  ensureUserAddressesSetupSheet(userAddressesSheet);
   if (usersSheet.getLastRow() === 0) {
-    var userHeaders = ['User ID', 'Full Name', 'Mobile', 'Email', 'Password (hashed)', 'Role (Admin/Customer)', 'Status', 'Registration Date', 'Last Login'];
+    var userHeaders = getRequiredUserHeaders();
     usersSheet.getRange(1, 1, 1, userHeaders.length).setValues([userHeaders]);
     // Seed default admin user
     // We need to define hashPassword here or just use a placeholder
     // For setup, we'll just use a simple placeholder hash, user can reset it later
-    usersSheet.appendRow([1, 'System Admin', '', 'admin', 'placeholder_hash', 'Admin', 'Active', new Date().toISOString(), '']);
+    usersSheet.appendRow(buildSetupAdminUserRow());
+  } else {
+    ensureUsersSetupSheet(usersSheet, userAddressesSheet);
   }
 
-  SpreadsheetApp.getUi().alert('NIMRA Sheets setup complete. Catalog, inquiry, order, and user tabs are ready.');
+  notifySetupComplete('NIMRA Sheets setup complete. Catalog, inquiry, order, and user tabs are ready.');
 }
 
 function getOrCreateSheet(ss, name) {
   var sheet = ss.getSheetByName(name);
   if (!sheet) sheet = ss.insertSheet(name);
   return sheet;
+}
+
+function getRequiredOrderHeaders() {
+  return [
+    'Order ID',
+    'Order Date',
+    'Address Type',
+    'Saved Address ID',
+    'Delivery Instructions',
+    'Products',
+    'Quantities',
+    'Subtotal',
+    'Delivery Charge',
+    'Total Amount',
+    'Payment Method',
+    'Order Status',
+    'Source',
+    'Created At',
+    'Updated At',
+    'Customer User ID',
+    'Cancellation Status',
+    'Cancellation Request ID',
+    'Status History'
+  ];
+}
+
+function getRequiredUserHeaders() {
+  return [
+    'User ID',
+    'Full Name',
+    'Mobile',
+    'Email',
+    'Password (hashed)',
+    'Role (Admin/Customer)',
+    'Status',
+    'Registration Date',
+    'Last Login',
+    'Alternate Mobile Number'
+  ];
+}
+
+function getRequiredUserAddressHeaders() {
+  return [
+    'AddressId', 'CustomerId', 'AddressType', 'House/Flat No',
+    'Building/Society Name', 'Area/Locality', 'Landmark', 'City', 'State',
+    'Pincode', 'IsDefault', 'CreatedDate', 'UpdatedDate'
+  ];
+}
+
+function buildSetupAdminUserRow() {
+  var values = {
+    'User ID': 1,
+    'Full Name': 'System Admin',
+    'Mobile': '',
+    'Email': 'admin',
+    'Password (hashed)': 'placeholder_hash',
+    'Role (Admin/Customer)': 'Admin',
+    'Status': 'Active',
+    'Registration Date': new Date().toISOString(),
+    'Last Login': ''
+  };
+  return getRequiredUserHeaders().map(function(header) {
+    return values[header] || '';
+  });
+}
+
+function ensureOrdersSetupSheet(sheet) {
+  var requiredHeaders = getRequiredOrderHeaders();
+  var data = sheet.getDataRange().getValues();
+  var existingHeaders = data[0] || [];
+  if (sheet.getLastRow() === 0 || existingHeaders.length === 0) {
+    sheet.getRange(1, 1, 1, requiredHeaders.length).setValues([requiredHeaders]);
+    return;
+  }
+
+  var compactRows = [requiredHeaders];
+  for (var i = 1; i < data.length; i++) {
+    compactRows.push(requiredHeaders.map(function(header) {
+      var index = existingHeaders.indexOf(header);
+      return index >= 0 ? data[i][index] : '';
+    }));
+  }
+
+  sheet.clearContents();
+  sheet.getRange(1, 1, compactRows.length, requiredHeaders.length).setValues(compactRows);
+  if (sheet.getLastColumn() > requiredHeaders.length) {
+    sheet.deleteColumns(requiredHeaders.length + 1, sheet.getLastColumn() - requiredHeaders.length);
+  }
+}
+
+function ensureUserAddressesSetupSheet(sheet) {
+  var headers = getRequiredUserAddressHeaders();
+  if (sheet.getLastRow() === 0) {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    return;
+  }
+  var existing = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] || [];
+  for (var i = 0; i < headers.length; i++) {
+    if (existing.indexOf(headers[i]) < 0) sheet.getRange(1, sheet.getLastColumn() + 1).setValue(headers[i]);
+  }
+}
+
+function ensureUsersSetupSheet(sheet, addressSheet) {
+  var requiredHeaders = getRequiredUserHeaders();
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] || [];
+  for (var i = 0; i < requiredHeaders.length; i++) {
+    if (headers.indexOf(requiredHeaders[i]) === -1) {
+      sheet.getRange(1, sheet.getLastColumn() + 1).setValue(requiredHeaders[i]);
+      headers.push(requiredHeaders[i]);
+    }
+  }
+
+  var data = sheet.getDataRange().getValues();
+  headers = data[0] || [];
+  var savedIndex = headers.indexOf('SavedAddresses');
+  if (savedIndex === -1) savedIndex = headers.indexOf('Saved Addresses');
+
+  var idIndex = headers.indexOf('User ID');
+  if (idIndex < 0) idIndex = headers.indexOf('ID');
+  var addressHeaders = addressSheet.getRange(1, 1, 1, addressSheet.getLastColumn()).getValues()[0];
+  var existingAddressData = addressSheet.getDataRange().getValues();
+  for (var rowIndex = 1; rowIndex < data.length; rowIndex++) {
+    var customerId = idIndex >= 0 ? data[rowIndex][idIndex] : '';
+    if (!customerId || setupCustomerHasAddress(existingAddressData, addressHeaders, customerId)) continue;
+    var addresses = savedIndex >= 0 ? parseSetupAddresses(data[rowIndex][savedIndex]) : [];
+    if (!addresses.length) {
+      var flattened = getSetupAddressFromColumns(headers, data[rowIndex]);
+      if (flattened) addresses = [flattened];
+    }
+    var now = new Date().toISOString();
+    for (var addressIndex = 0; addressIndex < addresses.length; addressIndex++) {
+      var address = addresses[addressIndex] || {};
+      var addressId = address.id || address.addressId || ('addr-' + Utilities.getUuid());
+      var values = {
+        AddressId: addressId, CustomerId: customerId,
+        AddressType: address.type || address.addressType || 'Home',
+        'House/Flat No': address.flatNo || '',
+        'Building/Society Name': address.buildingName || '',
+        'Area/Locality': address.locality || '', Landmark: address.landmark || '',
+        City: address.city || '', State: address.state || '', Pincode: address.pincode || '',
+        IsDefault: address.isDefault === true || (addressIndex === 0 && !addresses.some(function(a) { return a && a.isDefault; })),
+        CreatedDate: now, UpdatedDate: now
+      };
+      addressSheet.appendRow(addressHeaders.map(function(header) { return values[header] !== undefined ? values[header] : ''; }));
+    }
+  }
+  removeDeprecatedSetupUserColumns(sheet);
+}
+
+function parseSetupAddresses(raw) {
+  if (!raw) return [];
+  try {
+    var parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function setupCustomerHasAddress(data, headers, customerId) {
+  var index = headers.indexOf('CustomerId');
+  if (index < 0) return false;
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][index]).trim() === String(customerId).trim()) return true;
+  }
+  return false;
+}
+
+function getPrimarySetupAddress(raw) {
+  if (!raw) return null;
+  try {
+    var parsed = typeof raw === 'string' ? JSON.parse(raw || '[]') : raw;
+    if (!Array.isArray(parsed) || parsed.length === 0) return null;
+    for (var i = 0; i < parsed.length; i++) {
+      if (parsed[i] && parsed[i].isDefault) return parsed[i];
+    }
+    return parsed[0];
+  } catch (e) {
+    Logger.log('Could not parse SavedAddresses during setup: ' + e.toString());
+    return null;
+  }
+}
+
+function valueForSetupAddressColumn(header, address) {
+  var values = {
+    'Saved Address ID': address.id || '',
+    'Address Type': address.type || address.addressType || '',
+    'House/Flat No.': address.flatNo || '',
+    'Building/Society Name': address.buildingName || '',
+    'Area/Locality': address.locality || '',
+    'Landmark': address.landmark || '',
+    'City': address.city || '',
+    'State': address.state || '',
+    'Pincode': address.pincode || '',
+    'Alternate Mobile Number': address.altMobile || ''
+  };
+  return values.hasOwnProperty(header) ? values[header] : null;
+}
+
+function getSetupAddressFromColumns(headers, row) {
+  var data = {};
+  for (var i = 0; i < headers.length; i++) {
+    data[String(headers[i] || '').trim()] = row[i];
+  }
+  var hasAddress = data.SavedAddressId || data['Saved Address ID'] || data['Address ID'] || data['House/Flat No'] || data['House/Flat No.'] || data['Area/Locality'] || data.City || data.State || data.Pincode;
+  if (!hasAddress) return null;
+  return {
+    id: data.SavedAddressId || data['Saved Address ID'] || data['Address ID'] || '',
+    type: data.AddressType || data['Address Type'] || '',
+    flatNo: data['House/Flat No'] || data['House/Flat No.'] || '',
+    buildingName: data['Building/Society Name'] || '',
+    locality: data['Area/Locality'] || '',
+    landmark: data.Landmark || '',
+    city: data.City || '',
+    state: data.State || '',
+    pincode: data.Pincode || '',
+    name: '',
+    mobile: '',
+    altMobile: data['Alternate Mobile Number'] || '',
+    email: ''
+  };
+}
+
+function removeDeprecatedSetupUserColumns(sheet) {
+  var deprecatedHeaders = [
+    'SavedAddressId', 'Saved Address ID', 'Address ID', 'AddressType', 'Address Type',
+    'House/Flat No', 'House/Flat No.', 'Building/Society Name', 'Area/Locality',
+    'Landmark', 'City', 'State', 'Pincode', 'SavedAddresses', 'Saved Addresses',
+    'Delivery Instructions', 'Contact Name', 'Contact Mobile', 'Contact Email'
+  ];
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] || [];
+  for (var i = headers.length - 1; i >= 0; i--) {
+    if (deprecatedHeaders.indexOf(String(headers[i] || '').trim()) >= 0) {
+      sheet.deleteColumn(i + 1);
+    }
+  }
+}
+
+function notifySetupComplete(message) {
+  try {
+    SpreadsheetApp.getUi().alert(message);
+  } catch (e) {
+    Logger.log(message);
+  }
 }
