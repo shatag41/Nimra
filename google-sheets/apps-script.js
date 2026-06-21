@@ -341,9 +341,10 @@ function getAllOrders(spreadsheet, userId, mobile, email) {
   if (data.length <= 1) return [];
   var headers = data[0];
   var users = getUsersData(spreadsheet);
+  var customerLookup = buildOrderCustomerLookup(spreadsheet, users);
   var orders = [];
   for (var i = 1; i < data.length; i++) {
-    var order = rowToOrder(headers, data[i], spreadsheet, users);
+    var order = rowToOrder(headers, data[i], spreadsheet, users, customerLookup);
     if (!userId && !mobile && !email || orderBelongsToUser(order, userId, mobile, email)) {
       orders.push(order);
     }
@@ -557,7 +558,7 @@ function toISOString(date) {
   return String(date);
 }
 
-function rowToOrder(headers, row, spreadsheet, users) {
+function rowToOrder(headers, row, spreadsheet, users, customerLookup) {
   function value(name) {
     var index = headers.indexOf(name);
     return index >= 0 ? row[index] : '';
@@ -577,16 +578,24 @@ function rowToOrder(headers, row, spreadsheet, users) {
     };
   });
 
-  var userId = value('Customer User ID');
+  var userId = String(value('Customer User ID') || '').trim();
   var savedAddressId = value('Saved Address ID') || '';
+  var orderId = value('Order ID');
+  customerLookup = customerLookup || { usersById: indexUsersById(users || []) };
+  var recovered = customerLookup.ordersById && customerLookup.ordersById[String(orderId)] || {};
+  if (!userId && savedAddressId && customerLookup.userIdByAddressId) {
+    userId = String(customerLookup.userIdByAddressId[String(savedAddressId)] || '').trim();
+  }
+  if (!userId && recovered.userId) userId = String(recovered.userId).trim();
+  var profile = customerLookup.usersById && customerLookup.usersById[userId] || {};
   var savedAddress = spreadsheet && userId
     ? findUserSavedAddressForOrder(spreadsheet, userId, savedAddressId, value('Address Type'), users)
     : null;
   var customer = buildOrderCustomerFromAddress(userId, value('Address Type'), savedAddress, {
-    name:         value('Customer Name'),
-    mobile:       value('Mobile Number'),
+    name:         value('Customer Name') || recovered.name || profile.Name,
+    mobile:       value('Mobile Number') || recovered.mobile || profile.Mobile,
     altMobile:    value('Alternate Mobile Number'),
-    email:        value('Email'),
+    email:        value('Email') || recovered.email || profile.Username,
     flatNo:       value('House/Flat No.'),
     buildingName: value('Building/Society Name'),
     locality:     value('Area/Locality'),
@@ -601,7 +610,7 @@ function rowToOrder(headers, row, spreadsheet, users) {
 
   return {
     type: 'order',
-    orderId: value('Order ID'),
+    orderId: orderId,
     status: value('Order Status') || 'Pending',
     createdAt: toISOString(value('Order Date')),
     updatedAt: toISOString(value('Updated At')) || toISOString(value('Order Date')),
@@ -617,6 +626,68 @@ function rowToOrder(headers, row, spreadsheet, users) {
     cancellationRequestId: value('Cancellation Request ID') || '',
     statusHistory: parseStatusHistory(value('Status History'))
   };
+}
+
+function indexUsersById(users) {
+  var result = {};
+  for (var i = 0; i < (users || []).length; i++) {
+    var id = String(users[i].ID || '').trim();
+    if (id) result[id] = users[i];
+  }
+  return result;
+}
+
+// Recover legacy order ownership from durable related records. This only uses
+// exact order IDs, saved-address IDs, email, or mobile matches; it never guesses.
+function buildOrderCustomerLookup(spreadsheet, users) {
+  var lookup = {
+    usersById: indexUsersById(users || []),
+    userIdByAddressId: {},
+    ordersById: {}
+  };
+
+  var addressSheet = spreadsheet.getSheetByName('UserAddresses');
+  if (addressSheet && addressSheet.getLastRow() > 1) {
+    var addressData = addressSheet.getDataRange().getValues();
+    var addressHeaders = addressData[0] || [];
+    var addressIdIndex = addressHeaders.indexOf('AddressId');
+    var customerIdIndex = addressHeaders.indexOf('CustomerId');
+    for (var i = 1; i < addressData.length; i++) {
+      var addressId = addressIdIndex >= 0 ? String(addressData[i][addressIdIndex] || '').trim() : '';
+      var customerId = customerIdIndex >= 0 ? String(addressData[i][customerIdIndex] || '').trim() : '';
+      if (addressId && customerId) lookup.userIdByAddressId[addressId] = customerId;
+    }
+  }
+
+  var requestSheet = spreadsheet.getSheetByName('CancellationRequests');
+  if (requestSheet && requestSheet.getLastRow() > 1) {
+    var requestData = requestSheet.getDataRange().getValues();
+    var requestHeaders = requestData[0] || [];
+    var requestOrderIndex = requestHeaders.indexOf('Order ID');
+    var requestNameIndex = requestHeaders.indexOf('Customer Name');
+    var requestMobileIndex = requestHeaders.indexOf('Customer Mobile');
+    var requestEmailIndex = requestHeaders.indexOf('Customer Email');
+    for (var j = 1; j < requestData.length; j++) {
+      var requestOrderId = requestOrderIndex >= 0 ? String(requestData[j][requestOrderIndex] || '').trim() : '';
+      if (!requestOrderId) continue;
+      var recovered = {
+        name: requestNameIndex >= 0 ? requestData[j][requestNameIndex] : '',
+        mobile: requestMobileIndex >= 0 ? requestData[j][requestMobileIndex] : '',
+        email: requestEmailIndex >= 0 ? requestData[j][requestEmailIndex] : ''
+      };
+      for (var userKey in lookup.usersById) {
+        if (!lookup.usersById.hasOwnProperty(userKey)) continue;
+        var candidate = lookup.usersById[userKey];
+        if ((recovered.email && normalizeEmail(candidate.Username) === normalizeEmail(recovered.email)) ||
+            (recovered.mobile && normalizeDigits(candidate.Mobile) === normalizeDigits(recovered.mobile))) {
+          recovered.userId = userKey;
+          break;
+        }
+      }
+      lookup.ordersById[requestOrderId] = recovered;
+    }
+  }
+  return lookup;
 }
 
 function ensureColumn(sheet, headers, columnName) {
