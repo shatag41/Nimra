@@ -281,27 +281,46 @@ function saveOrder(spreadsheet, params) {
   }).join(' | ');
 
   // ── Row order MUST match ensureOrdersSheet headers exactly ───────────────
-  var rowData = [
-    orderId,          // Order ID
-    timestamp,        // Order Date
-    addressType,      // Address Type
-    savedAddressId,   // Saved Address ID
-    instructions,     // Delivery Instructions
-    products,         // Products
-    quantities,       // Quantities
-    subtotal,         // Subtotal
-    deliveryCharge,   // Delivery Charge
-    totalAmount,      // Total Amount
-    paymentMethod,    // Payment Method
-    'Pending',        // Order Status
-    source,           // Source
-    createdAt,        // Created At
-    updatedAt,        // Updated At
-    userId,           // Customer User ID
-    '',               // Cancellation Status
-    '',               // Cancellation Request ID
-    ''                // Status History
-  ];
+  // Keep an immutable customer/address snapshot on every order. Saved addresses
+  // can be edited later and older orders may not have a user ID, so orders must
+  // never depend on another sheet for ownership or delivery details.
+  var orderValues = {
+    'Order ID': orderId,
+    'Order Date': timestamp,
+    'Customer User ID': userId,
+    'Customer Name': name,
+    'Mobile Number': mobile,
+    'Alternate Mobile Number': altMobile,
+    'Email': email,
+    'Address Type': addressType,
+    'Saved Address ID': savedAddressId,
+    'House/Flat No.': flatNo,
+    'Building/Society Name': buildingName,
+    'Area/Locality': locality,
+    'Landmark': landmark,
+    'Full Address': fullAddress,
+    'City': city,
+    'State': state,
+    'Pincode': pincode,
+    'Delivery Instructions': instructions,
+    'Products': products,
+    'Quantities': quantities,
+    'Subtotal': subtotal,
+    'Delivery Charge': deliveryCharge,
+    'Total Amount': totalAmount,
+    'Payment Method': paymentMethod,
+    'Order Status': 'Pending',
+    'Source': source,
+    'Created At': createdAt,
+    'Updated At': updatedAt,
+    'Cancellation Status': '',
+    'Cancellation Request ID': '',
+    'Status History': ''
+  };
+  var orderHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  var rowData = orderHeaders.map(function(header) {
+    return orderValues[header] !== undefined ? orderValues[header] : '';
+  });
 
   Logger.log("Appended Values: Appending row data to " + sheet.getName() + " sheet: " + JSON.stringify(rowData));
   sheet.appendRow(rowData);
@@ -322,13 +341,8 @@ function getAllOrders(spreadsheet, userId, mobile, email) {
   if (data.length <= 1) return [];
   var headers = data[0];
   var users = getUsersData(spreadsheet);
-  var userIdIndex = headers.indexOf('Customer User ID');
-  var requestedUserId = String(userId || '').trim();
   var orders = [];
   for (var i = 1; i < data.length; i++) {
-    if (requestedUserId && userIdIndex >= 0 && String(data[i][userIdIndex] || '').trim() !== requestedUserId) {
-      continue;
-    }
     var order = rowToOrder(headers, data[i], spreadsheet, users);
     if (!userId && !mobile && !email || orderBelongsToUser(order, userId, mobile, email)) {
       orders.push(order);
@@ -724,27 +738,17 @@ function updateOrderCancellationAudit(spreadsheet, orderId, requestId, decision,
 }
 
 function ensureOrdersSheet(spreadsheet) {
-  // ── Column order must match rowData in saveOrder() exactly ───────────────
+  // Customer details are deliberate order snapshots. Do not remove them: doing
+  // so makes legacy orders unmatchable when Customer User ID is blank.
   var requiredHeaders = [
-    'Order ID',                  // col 1
-    'Order Date',                // col 2
-    'Address Type',              // col 3
-    'Saved Address ID',          // col 4
-    'Delivery Instructions',     // col 5
-    'Products',                  // col 6
-    'Quantities',                // col 7
-    'Subtotal',                  // col 8
-    'Delivery Charge',           // col 9
-    'Total Amount',              // col 10
-    'Payment Method',            // col 11
-    'Order Status',              // col 12
-    'Source',                    // col 13
-    'Created At',                // col 14
-    'Updated At',                // col 15
-    'Customer User ID',          // col 16
-    'Cancellation Status',       // col 17
-    'Cancellation Request ID',   // col 18
-    'Status History'             // col 19
+    'Order ID', 'Order Date', 'Customer User ID', 'Customer Name',
+    'Mobile Number', 'Alternate Mobile Number', 'Email', 'Address Type',
+    'Saved Address ID', 'House/Flat No.', 'Building/Society Name',
+    'Area/Locality', 'Landmark', 'Full Address', 'City', 'State', 'Pincode',
+    'Delivery Instructions', 'Products', 'Quantities', 'Subtotal',
+    'Delivery Charge', 'Total Amount', 'Payment Method', 'Order Status',
+    'Source', 'Created At', 'Updated At', 'Cancellation Status',
+    'Cancellation Request ID', 'Status History'
   ];
 
   var sheet = spreadsheet.getSheetByName('Orders');
@@ -753,28 +757,17 @@ function ensureOrdersSheet(spreadsheet) {
     sheet = spreadsheet.insertSheet('Orders');
   }
 
-  // Only update headers if they don't match (avoids overwriting existing data)
-  var existingHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn() || requiredHeaders.length).getValues()[0] || [];
-  var existingStr = existingHeaders.slice(0, requiredHeaders.length).join('|');
-  var requiredStr  = requiredHeaders.join('|');
-
-  if (existingStr !== requiredStr) {
-    Logger.log("ensureOrdersSheet: Header mismatch detected — writing correct headers.");
-    var data = sheet.getDataRange().getValues();
-    var compactRows = [requiredHeaders];
-
-    for (var i = 1; i < data.length; i++) {
-      compactRows.push(compactOrderRow(spreadsheet, existingHeaders, data[i], requiredHeaders));
-    }
-
-    sheet.clearContents();
-    sheet.getRange(1, 1, compactRows.length, requiredHeaders.length).setValues(compactRows);
-  } else {
-    Logger.log("ensureOrdersSheet: Headers already correct.");
+  if (sheet.getLastRow() === 0) {
+    sheet.getRange(1, 1, 1, requiredHeaders.length).setValues([requiredHeaders]);
+    return sheet;
   }
 
-  if (sheet.getLastColumn() > requiredHeaders.length) {
-    sheet.deleteColumns(requiredHeaders.length + 1, sheet.getLastColumn() - requiredHeaders.length);
+  var existingHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] || [];
+  for (var i = 0; i < requiredHeaders.length; i++) {
+    if (existingHeaders.indexOf(requiredHeaders[i]) < 0) {
+      sheet.getRange(1, sheet.getLastColumn() + 1).setValue(requiredHeaders[i]);
+      existingHeaders.push(requiredHeaders[i]);
+    }
   }
 
   return sheet;

@@ -152,8 +152,21 @@ function getRequiredOrderHeaders() {
   return [
     'Order ID',
     'Order Date',
+    'Customer User ID',
+    'Customer Name',
+    'Mobile Number',
+    'Alternate Mobile Number',
+    'Email',
     'Address Type',
     'Saved Address ID',
+    'House/Flat No.',
+    'Building/Society Name',
+    'Area/Locality',
+    'Landmark',
+    'Full Address',
+    'City',
+    'State',
+    'Pincode',
     'Delivery Instructions',
     'Products',
     'Quantities',
@@ -165,7 +178,6 @@ function getRequiredOrderHeaders() {
     'Source',
     'Created At',
     'Updated At',
-    'Customer User ID',
     'Cancellation Status',
     'Cancellation Request ID',
     'Status History'
@@ -214,25 +226,17 @@ function buildSetupAdminUserRow() {
 
 function ensureOrdersSetupSheet(sheet) {
   var requiredHeaders = getRequiredOrderHeaders();
-  var data = sheet.getDataRange().getValues();
-  var existingHeaders = data[0] || [];
+  var existingHeaders = sheet.getDataRange().getValues()[0] || [];
   if (sheet.getLastRow() === 0 || existingHeaders.length === 0) {
     sheet.getRange(1, 1, 1, requiredHeaders.length).setValues([requiredHeaders]);
     return;
   }
 
-  var compactRows = [requiredHeaders];
-  for (var i = 1; i < data.length; i++) {
-    compactRows.push(requiredHeaders.map(function(header) {
-      var index = existingHeaders.indexOf(header);
-      return index >= 0 ? data[i][index] : '';
-    }));
-  }
-
-  sheet.clearContents();
-  sheet.getRange(1, 1, compactRows.length, requiredHeaders.length).setValues(compactRows);
-  if (sheet.getLastColumn() > requiredHeaders.length) {
-    sheet.deleteColumns(requiredHeaders.length + 1, sheet.getLastColumn() - requiredHeaders.length);
+  for (var i = 0; i < requiredHeaders.length; i++) {
+    if (existingHeaders.indexOf(requiredHeaders[i]) < 0) {
+      sheet.getRange(1, sheet.getLastColumn() + 1).setValue(requiredHeaders[i]);
+      existingHeaders.push(requiredHeaders[i]);
+    }
   }
 }
 

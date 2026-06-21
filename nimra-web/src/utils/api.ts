@@ -444,10 +444,11 @@ export const fetchOrders = async (): Promise<OrderRecord[]> => {
   return Array.isArray(data) ? data : (data.orders || []);
 };
 
-export const fetchCustomerOrders = async (userId: string | number, email: string): Promise<OrderRecord[]> => {
+export const fetchCustomerOrders = async (userId: string | number, email: string, mobile = ''): Promise<OrderRecord[]> => {
   const params = new URLSearchParams({ action: 'getOrders' });
   if (userId) params.set('userId', String(userId));
   if (email) params.set('email', email);
+  if (mobile) params.set('mobile', mobile);
   params.set('_t', String(Date.now()));
 
   const res = await fetch(`/api/cms?${params.toString()}`, { 

@@ -94,6 +94,7 @@ export async function handleGet(req: Request) {
     if (!userId && !mobile && !email) return NextResponse.json(fallbackData.orders, { headers: cacheHeaders });
     return NextResponse.json(
       fallbackData.orders.filter((order: any) =>
+        (userId && String(order.customer.userId || '') === userId) ||
         (mobile && order.customer.mobile.replace(/\D/g, '') === mobile.replace(/\D/g, '')) ||
         (email && order.customer.email.toLowerCase() === email.toLowerCase())
       ),
