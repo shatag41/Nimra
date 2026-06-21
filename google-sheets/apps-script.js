@@ -100,6 +100,9 @@ function doPost(e) {
     } else if (params.type === 'requestOTP') {
       Logger.log("doPost: Routing to handleAuthRequestOTP()");
       return jsonResponse(handleAuthRequestOTP(spreadsheet, params));
+    } else if (params.type === 'requestEmailChangeOTP') {
+      Logger.log("doPost: Routing to handleRequestEmailChangeOTP()");
+      return jsonResponse(handleRequestEmailChangeOTP(spreadsheet, params));
     } else if (params.type === 'resetPassword') {
       Logger.log("doPost: Routing to handleAuthResetPassword()");
       return jsonResponse(handleAuthResetPassword(spreadsheet, params));
@@ -1137,6 +1140,36 @@ function handleUserCRUD(spreadsheet, params) {
         return { success: true, message: 'User deleted successfully' };
       } else if (action === 'update') {
         var existingRow = data[i] || [];
+        var emailColIndex = headers.indexOf('Email');
+        if (emailColIndex === -1) emailColIndex = headers.indexOf('Username');
+        var currentEmail = emailColIndex >= 0 ? normalizeEmail(existingRow[emailColIndex]) : '';
+        var newEmail = user.Username !== undefined ? normalizeEmail(user.Username) : '';
+        
+        if (newEmail && currentEmail && newEmail !== currentEmail) {
+          var cache = CacheService.getScriptCache();
+          var cachedOtp = cache.get('email_change_otp_' + user.ID);
+          
+          var otpIndex = findHeaderIndex(headers, ['ResetOTP', 'Reset OTP']);
+          var expiresIndex = findHeaderIndex(headers, ['ResetOTPExpiresAt', 'Reset OTP Expires At']);
+          var sheetOtp = otpIndex >= 0 ? String(existingRow[otpIndex] || '').trim() : '';
+          var expiresAt = expiresIndex >= 0 ? new Date(existingRow[expiresIndex]) : null;
+          var hasValidSheetOtp = sheetOtp === user.otp && expiresAt && !isNaN(expiresAt.getTime()) && expiresAt.getTime() >= Date.now();
+          
+          if ((cachedOtp && cachedOtp !== user.otp) || (!cachedOtp && !hasValidSheetOtp)) {
+            return { success: false, message: 'Invalid or expired OTP.' };
+          }
+          
+          cache.remove('email_change_otp_' + user.ID);
+          if (otpIndex >= 0) {
+            sheet.getRange(i + 1, otpIndex + 1).setValue('');
+            existingRow[otpIndex] = '';
+          }
+          if (expiresIndex >= 0) {
+            sheet.getRange(i + 1, expiresIndex + 1).setValue('');
+            existingRow[expiresIndex] = '';
+          }
+        }
+
         var updatedRowValues = new Array(headers.length);
 
         for (var j = 0; j < headers.length; j++) {
@@ -2054,6 +2087,73 @@ function handleAuthGoogleSignIn(spreadsheet, params) {
     return response;
   }
   return result;
+}
+
+function handleRequestEmailChangeOTP(spreadsheet, params) {
+  var userId = String(params.userId || '').trim();
+  var newEmail = normalizeEmail(params.newEmail);
+  if (!userId || !newEmail) return { success: false, message: 'User ID and new email are required.' };
+  if (!isValidEmail(newEmail)) return { success: false, message: 'Enter a valid email address.' };
+  
+  var users = getUsersData(spreadsheet);
+  var user = null;
+  for (var i = 0; i < users.length; i++) {
+    if (String(users[i].ID).trim() === userId) {
+      user = users[i];
+    }
+    if (String(users[i].ID).trim() !== userId && normalizeEmail(users[i].Username) === newEmail) {
+      return { success: false, message: 'Email address already registered to another account.' };
+    }
+  }
+  if (!user) return { success: false, message: 'User not found.' };
+  
+  var otp = Math.floor(100000 + Math.random() * 900000).toString();
+  var expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+  
+  var cache = CacheService.getScriptCache();
+  cache.put('email_change_otp_' + userId, otp, 600);
+  
+  var userMatch = findUserRowByEmail(spreadsheet, user.Username);
+  if (userMatch) {
+    var otpIndex = ensureUserColumn(userMatch.sheet, userMatch.headers, 'ResetOTP');
+    var expiresIndex = ensureUserColumn(userMatch.sheet, userMatch.headers, 'ResetOTPExpiresAt');
+    userMatch.sheet.getRange(userMatch.rowNumber, otpIndex + 1).setValue(otp);
+    userMatch.sheet.getRange(userMatch.rowNumber, expiresIndex + 1).setValue(expiresAt.toISOString());
+  }
+  
+  try {
+    sendEmailChangeOtpEmail(newEmail, otp, user.Name);
+    return { success: true, message: 'OTP sent to your new email.' };
+  } catch (e) {
+    var emailError = getErrorMessage(e);
+    Logger.log('handleRequestEmailChangeOTP email failure: ' + emailError);
+    return {
+      success: false,
+      message: 'Failed to send email: ' + emailError,
+      hint: 'Run authorizeNimraEmailSending once in Apps Script, then deploy a new Web App version with Execute as Me.'
+    };
+  }
+}
+
+function sendEmailChangeOtpEmail(email, otp, name) {
+  email = normalizeEmail(email);
+  if (!email || !isValidEmail(email)) {
+    throw new Error('Invalid email address.');
+  }
+  var displayName = String(name || 'NIMRA customer').trim();
+  var subject = 'NIMRA email change OTP';
+  var plainBody = 'Hello ' + displayName + ',\n\n' +
+    'Your OTP for changing your NIMRA account email is: ' + otp + '\n\n' +
+    'This OTP is valid for 10 minutes. If you did not request this, you can ignore this email.\n\n' +
+    'NIMRA Support';
+  var htmlBody = '<p>Hello ' + escapeHtml(displayName) + ',</p>' +
+    '<p>Your OTP for changing your NIMRA account email is:</p>' +
+    '<p style="font-size:28px;font-weight:700;letter-spacing:6px;margin:16px 0;">' + otp + '</p>' +
+    '<p>This OTP is valid for 10 minutes. If you did not request this, you can ignore this email.</p>' +
+    '<p>NIMRA Support</p>';
+
+  var result = sendNimraEmail(email, subject, plainBody, htmlBody, 'NIMRA Support');
+  if (!result.sent) throw new Error(result.error || 'Unable to send OTP email.');
 }
 
 function handleAuthRequestOTP(spreadsheet, params) {

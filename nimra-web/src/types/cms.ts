@@ -149,6 +149,7 @@ export interface AdminUser {
   Name: string;
   Active?: boolean | string;
   SavedAddresses?: string;
+  otp?: string;
 }
 
 export interface Notification {

@@ -6,7 +6,8 @@ export type AuthRequest =
   | { type: 'register'; user: { Name: string; Username?: string; Mobile?: string; Password: string; Role?: string } }
   | { type: 'googleSignIn'; email: string; name: string; role?: string }
   | { type: 'requestOTP'; email: string }
-  | { type: 'resetPassword'; email: string; otp: string; newPassword: string };
+  | { type: 'resetPassword'; email: string; otp: string; newPassword: string }
+  | { type: 'requestEmailChangeOTP'; userId: string | number; newEmail: string };
 
 export type AuthResponse = {
   success: boolean;
@@ -559,6 +560,24 @@ export const saveUser = async (user: Partial<AdminUser>, action: 'create' | 'upd
   } catch (err) {
     console.error('Error saving user:', err);
     return { success: false, message: 'Failed to save user' };
+  }
+};
+
+export const requestEmailChangeOTP = async (
+  userId: string | number,
+  newEmail: string
+): Promise<{ success: boolean; message: string }> => {
+  try {
+    const res = await fetch('/api/cms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'requestEmailChangeOTP', userId, newEmail }),
+    });
+    const data = await res.json();
+    return { success: data.success, message: data.message || 'OTP requested successfully' };
+  } catch (err) {
+    console.error('Error requesting email change OTP:', err);
+    return { success: false, message: 'Failed to request OTP' };
   }
 };
 

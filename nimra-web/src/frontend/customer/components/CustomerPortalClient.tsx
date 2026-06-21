@@ -15,7 +15,7 @@ import { Profile } from './portal/Profile';
 import { Addresses } from './portal/Addresses';
 import { CartToast, PortalNotifications } from './portal/Notifications';
 import { toast } from 'sonner';
-import { saveUser } from '@/utils/api';
+import { saveUser, requestEmailChangeOTP } from '@/utils/api';
 
 // Lazy-loaded heavy sections for faster page loads
 const RecommendationCard = dynamic(
@@ -461,32 +461,62 @@ function EditProfileForm({ user, onUpdate }: { user: any; onUpdate: (user: any) 
     if (!validateFields()) return;
 
     if (email !== user?.Username) {
-      setIsVerifying(true);
-      // Simulate sending OTP
-      toast.info('OTP Sent! Use 123456 to verify.');
+      setLoading(true);
+      try {
+        const res = await requestEmailChangeOTP(user?.ID, email);
+        if (res.success) {
+          setIsVerifying(true);
+          toast.success(res.message || 'OTP Sent! Please check your new email.');
+        } else {
+          toast.error(res.message || 'Failed to send OTP.');
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error('An unexpected error occurred while requesting OTP.');
+      } finally {
+        setLoading(false);
+      }
     } else {
       performUpdate();
+    }
+  };
+
+  const handleResend = async () => {
+    setLoading(true);
+    try {
+      const res = await requestEmailChangeOTP(user?.ID, email);
+      if (res.success) {
+        toast.success(res.message || 'OTP resent successfully.');
+        setOtp('');
+      } else {
+        toast.error(res.message || 'Failed to resend OTP.');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('An unexpected error occurred while resending OTP.');
+    } finally {
+      setLoading(false);
     }
   };
 
   const verifyOtp = (e: React.FormEvent) => {
     e.preventDefault();
-    if (otp === '123456') {
-      performUpdate();
-    } else {
-      setErrors(prev => ({ ...prev, otp: 'Invalid OTP code. Use 123456.' }));
-    }
+    performUpdate(otp);
   };
 
-  const performUpdate = async () => {
+  const performUpdate = async (verificationOtp?: string) => {
     setLoading(true);
     try {
-      const updatePayload = {
+      const updatePayload: any = {
         ID: user?.ID,
         Name: name,
         Mobile: mobile,
         Username: email
       };
+
+      if (verificationOtp) {
+        updatePayload.otp = verificationOtp;
+      }
       
       const res = await saveUser(updatePayload, 'update');
       if (res.success) {
@@ -494,7 +524,11 @@ function EditProfileForm({ user, onUpdate }: { user: any; onUpdate: (user: any) 
         setIsVerifying(false);
         toast.success('Profile updated successfully!');
       } else {
-        toast.error(res.message || 'Failed to save profile changes.');
+        if (verificationOtp) {
+          setErrors(prev => ({ ...prev, otp: res.message || 'Invalid or expired OTP.' }));
+        } else {
+          toast.error(res.message || 'Failed to save profile changes.');
+        }
       }
     } catch (err) {
       console.error('Failed to update profile:', err);
@@ -605,6 +639,28 @@ function EditProfileForm({ user, onUpdate }: { user: any; onUpdate: (user: any) 
               className={`form-input otp-field ${errors.otp ? 'error-state' : ''}`} 
             />
             {errors.otp && <span className="error-message center-align">{errors.otp}</span>}
+          </div>
+
+          <div style={{ textAlign: 'center', marginTop: '-0.5rem', marginBottom: '0.5rem' }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              Didn't receive the code?{' '}
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={loading}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--primary-color)',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  padding: 0,
+                  fontSize: '0.85rem'
+                }}
+              >
+                Resend OTP
+              </button>
+            </span>
           </div>
 
           <div className="otp-button-group">

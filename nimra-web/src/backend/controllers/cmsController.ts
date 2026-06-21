@@ -8,6 +8,9 @@ let cachedCMSData: any = null;
 let lastFetchTime = 0;
 const CACHE_TTL = 300000; // 5 minutes cache
 
+// Store OTPs in-memory for local fallback mode
+const localOTPCache = new Map<string, { otp: string; expiresAt: number }>();
+
 function invalidateCMSCache() {
   cachedCMSData = null;
   lastFetchTime = 0;
@@ -224,11 +227,21 @@ export async function handlePost(req: Request) {
 
       if (action === 'update') {
         if (userIndex >= 0) {
+          const currentUser = fallbackData.users[userIndex];
+          if (incomingUser.Username && incomingUser.Username.toLowerCase() !== currentUser.Username.toLowerCase()) {
+            const cachedOtpInfo = localOTPCache.get(String(incomingUser.ID));
+            if (!cachedOtpInfo || cachedOtpInfo.otp !== incomingUser.otp || Date.now() > cachedOtpInfo.expiresAt) {
+              return NextResponse.json({ success: false, message: 'Invalid or expired OTP.' });
+            }
+            localOTPCache.delete(String(incomingUser.ID));
+          }
+
           fallbackData.users[userIndex] = {
             ...fallbackData.users[userIndex],
             ...incomingUser,
             ID: fallbackData.users[userIndex].ID,
           };
+          delete fallbackData.users[userIndex].otp;
           return NextResponse.json({ success: true, message: 'User updated successfully', ID: fallbackData.users[userIndex].ID });
         }
 
@@ -365,6 +378,26 @@ export async function handlePost(req: Request) {
         },
         { status: 503 }
       );
+    } else if (payload.type === 'requestEmailChangeOTP') {
+      const { userId, newEmail } = payload;
+      if (!newEmail) {
+        return NextResponse.json({ success: false, message: 'New email is required.' }, { status: 400 });
+      }
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiresAt = Date.now() + 10 * 60 * 1000;
+      localOTPCache.set(String(userId), { otp, expiresAt });
+
+      console.log(`\n==================================================`);
+      console.log(`[LOCAL DEV] Email Change OTP for User ID: ${userId}`);
+      console.log(`[LOCAL DEV] New Email: ${newEmail}`);
+      console.log(`[LOCAL DEV] OTP Code: ${otp}`);
+      console.log(`[LOCAL DEV] Expiry: ${new Date(expiresAt).toISOString()}`);
+      console.log(`==================================================\n`);
+
+      return NextResponse.json({
+        success: true,
+        message: `OTP sent to ${newEmail} (local fallback mode, check server console).`
+      });
     }
 
     // Return error for other types
