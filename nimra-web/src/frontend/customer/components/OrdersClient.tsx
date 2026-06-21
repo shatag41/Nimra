@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useDeferredValue } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/frontend/customer/hooks/useAuth';
@@ -28,22 +28,17 @@ const formatDate = (value?: string) => {
 
 export default function OrdersClient() {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { orders, loadingOrders, refreshOrders } = useCustomerOrders();
-  const { addProduct, items: cartItems, subtotal, deliveryCharge, grandTotal, totalItems } = useCart();
+  const { addProduct, items: cartItems, subtotal, totalItems } = useCart();
 
-  const [activeTab, setActiveTab] = useState<OrderTab>('all');
+  const [activeTab, setActiveTab] = useState<OrderTab>('active');
   const [dateFilter, setDateFilter] = useState<'all' | '30days' | '6months' | 'year'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
   const [orderToCancel, setOrderToCancel] = useState<OrderRecord | null>(null);
   const [cancelling, setCancelling] = useState(false);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      refreshOrders();
-    }
-  }, [isAuthenticated, refreshOrders]);
 
   const handleCancelOrder = async () => {
     if (!orderToCancel) return;
@@ -99,10 +94,12 @@ export default function OrdersClient() {
   };
 
   const filteredOrders = useMemo(() => {
+    const normalizedSearch = deferredSearchQuery.trim().toLowerCase();
     return orders.filter((order) => {
       const matchesSearch =
-        order.orderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order.items.some((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()));
+        !normalizedSearch ||
+        order.orderId.toLowerCase().includes(normalizedSearch) ||
+        order.items.some((item) => item.name.toLowerCase().includes(normalizedSearch));
 
       if (!matchesSearch) return false;
 
@@ -136,12 +133,9 @@ export default function OrdersClient() {
           return true;
       }
     });
-  }, [orders, searchQuery, activeTab, dateFilter]);
+  }, [orders, deferredSearchQuery, activeTab, dateFilter]);
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  if (!mounted || authLoading) {
+  if (authLoading) {
     return (
       <div className="loading-state">
         <div className="loader"></div>
@@ -340,6 +334,13 @@ export default function OrdersClient() {
 
 
           {/* Orders Cards List */}
+          {!loadingOrders && activeTab === 'active' && filteredOrders.length > 0 && (
+            <div className="orders-priority-strip">
+              <strong>Active and pending orders are shown first.</strong>
+              <span>Use the filters to view completed or cancelled history.</span>
+            </div>
+          )}
+
           {loadingOrders ? (
             <div className="loading-state">
               <div className="loader"></div>
@@ -815,7 +816,25 @@ export default function OrdersClient() {
         .orders-main-content {
           display: flex;
           flex-direction: column;
-          gap: 1rem;
+          gap: 0.75rem;
+        }
+
+        .orders-priority-strip {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.75rem;
+          padding: 0.65rem 0.85rem;
+          border: 1px solid rgba(var(--primary-rgb), 0.18);
+          border-radius: var(--radius-sm);
+          background: rgba(var(--primary-rgb), 0.06);
+          color: var(--text-secondary);
+          font-size: 0.82rem;
+        }
+
+        .orders-priority-strip strong {
+          color: var(--primary-color);
+          font-size: 0.84rem;
         }
 
         /* Search Bar */
@@ -870,7 +889,7 @@ export default function OrdersClient() {
         .orders-cards-list {
           display: flex;
           flex-direction: column;
-          gap: 1rem;
+          gap: 0.75rem;
         }
 
         /* Amazon-Style Order Card */
@@ -895,14 +914,14 @@ export default function OrdersClient() {
           align-items: center;
           background: var(--bg-tertiary);
           border-bottom: 1px solid var(--border-color);
-          padding: 0.65rem 1.25rem;
+          padding: 0.55rem 0.9rem;
           flex-wrap: wrap;
           gap: 1rem;
         }
 
         .header-meta-columns {
           display: flex;
-          gap: 2rem;
+          gap: 1.1rem;
           flex-wrap: wrap;
         }
 
@@ -1002,20 +1021,20 @@ export default function OrdersClient() {
 
         /* Card Body */
         .amazon-card-body {
-          padding: 1.25rem;
+          padding: 0.85rem 0.9rem;
         }
 
         .card-body-content-split {
           display: grid;
-          grid-template-columns: 1fr 180px;
-          gap: 1.5rem;
+          grid-template-columns: 1fr 160px;
+          gap: 1rem;
           align-items: center;
         }
 
         .items-list-column {
           display: flex;
           flex-direction: column;
-          gap: 1rem;
+          gap: 0.65rem;
         }
 
         .actions-column {
@@ -1025,7 +1044,7 @@ export default function OrdersClient() {
           justify-content: center;
           align-items: stretch;
           border-left: 1px solid var(--border-color);
-          padding-left: 1.5rem;
+          padding-left: 1rem;
         }
 
         .actions-column .amazon-action-btn {
@@ -1035,14 +1054,14 @@ export default function OrdersClient() {
 
         .amazon-item-row {
           display: grid;
-          grid-template-columns: 60px 1.5fr 1fr;
-          gap: 1.5rem;
+          grid-template-columns: 48px minmax(0, 1.5fr) minmax(8rem, 1fr);
+          gap: 0.85rem;
           align-items: center;
         }
 
         .item-img-wrapper {
-          width: 60px;
-          height: 60px;
+          width: 48px;
+          height: 48px;
           border: 1px solid var(--border-color);
           border-radius: var(--radius-sm);
           background: white;
@@ -1092,7 +1111,7 @@ export default function OrdersClient() {
           flex-direction: column;
           gap: 0.25rem;
           border-left: 1px solid var(--border-light);
-          padding-left: 1.5rem;
+          padding-left: 0.85rem;
         }
 
         .status-label-group {
@@ -1209,14 +1228,21 @@ export default function OrdersClient() {
             min-width: 120px;
           }
           .amazon-item-row {
-            grid-template-columns: 50px 1fr;
-            gap: 1rem;
+            grid-template-columns: 44px 1fr;
+            gap: 0.75rem;
           }
           .item-status-column {
             border-left: none;
             padding-left: 0;
             grid-column: span 2;
             margin-top: 0.25rem;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .orders-priority-strip {
+            align-items: flex-start;
+            flex-direction: column;
           }
         }
 

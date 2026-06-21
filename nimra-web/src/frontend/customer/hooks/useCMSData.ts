@@ -4,6 +4,34 @@ import { useState, useEffect } from 'react';
 import { fetchCMSData } from '@/utils/api';
 import { Banner, Product, FAQ, CompanyInfo } from '@/types/cms';
 
+type CMSPayload = {
+  banners: Banner[];
+  products: Product[];
+  faqs: FAQ[];
+  companyInfo?: CompanyInfo;
+};
+
+let cmsCache: CMSPayload | null = null;
+let cmsRequest: Promise<CMSPayload> | null = null;
+
+const getCMSPayload = async () => {
+  if (cmsCache) return cmsCache;
+  if (!cmsRequest) {
+    cmsRequest = fetchCMSData().then((data) => {
+      cmsCache = {
+        banners: data.banners || [],
+        products: data.products || [],
+        faqs: data.faqs || [],
+        companyInfo: data.companyInfo,
+      };
+      return cmsCache;
+    }).finally(() => {
+      cmsRequest = null;
+    });
+  }
+  return cmsRequest;
+};
+
 export function useCMSData() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -23,11 +51,11 @@ export function useCMSData() {
     let active = true;
     const loadData = async () => {
       try {
-        const data = await fetchCMSData();
+        const data = await getCMSPayload();
         if (active) {
-          setBanners(data.banners || []);
-          setProducts(data.products || []);
-          setFaqs(data.faqs || []);
+          setBanners(data.banners);
+          setProducts(data.products);
+          setFaqs(data.faqs);
           if (data.companyInfo) {
             setCompanyInfo(data.companyInfo);
           }

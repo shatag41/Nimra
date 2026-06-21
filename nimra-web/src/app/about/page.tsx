@@ -1,9 +1,10 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { fetchCMSData } from '@/utils/api';
+import LoadingState from '@/frontend/customer/components/LoadingState';
 
 const AboutClient = dynamic(() => import('@/frontend/customer/components/AboutClient'), {
-  loading: () => <div className="loading-state" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>Loading About details...</div>
+  loading: () => <LoadingState label="Loading about details" />
 });
 
 export const metadata = {

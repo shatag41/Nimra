@@ -58,7 +58,7 @@ export default function CustomerPortalClient() {
   if (!mounted || isLoading) {
     return (
       <div className="portal-page">
-        <div className="portal-hero" style={{ minHeight: '200px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <div className="portal-hero" style={{ minHeight: '96px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <div style={{ width: '250px', height: '40px', background: 'rgba(255,255,255,0.2)', borderRadius: '8px', animation: 'pulse 2s infinite' }} />
           <div style={{ width: '400px', height: '20px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', marginTop: '1rem', animation: 'pulse 2s infinite' }} />
         </div>
@@ -120,15 +120,15 @@ export default function CustomerPortalClient() {
       <PortalHero isAuthenticated={true} name={user?.Name} />
 
       {tab === 'addresses' ? (
-        <section className="portal-grid" style={{ gridTemplateColumns: '1fr', maxWidth: '1000px', margin: '2rem auto' }}>
+        <section className="portal-grid portal-tab-section" style={{ gridTemplateColumns: '1fr', maxWidth: '1000px', margin: '0 auto' }}>
           <Addresses />
         </section>
       ) : tab === 'profile' ? (
-        <section className="portal-grid" style={{ gridTemplateColumns: '1fr', maxWidth: '600px', margin: '2rem auto' }}>
+        <section className="portal-grid portal-tab-section" style={{ gridTemplateColumns: '1fr', maxWidth: '640px', margin: '0 auto' }}>
           <EditProfileForm user={user} onUpdate={(updatedUser) => login(updatedUser)} />
         </section>
       ) : tab === 'notifications' ? (
-        <section className="portal-grid" style={{ gridTemplateColumns: '1fr', maxWidth: '800px', margin: '2rem auto' }}>
+        <section className="portal-grid portal-tab-section" style={{ gridTemplateColumns: '1fr', maxWidth: '800px', margin: '0 auto' }}>
           <PortalNotifications />
         </section>
       ) : (

@@ -1,7 +1,8 @@
 import dynamic from 'next/dynamic';
+import LoadingState from '@/frontend/customer/components/LoadingState';
 
 const CartClient = dynamic(() => import('@/frontend/customer/components/CartClient'), {
-  loading: () => <div className="loading-state" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>Loading Cart...</div>
+  loading: () => <LoadingState label="Loading cart" />
 });
 
 export const metadata = {

@@ -1,13 +1,10 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { fetchCMSData } from '@/utils/api';
+import LoadingState from '@/frontend/customer/components/LoadingState';
 
 const ContactClient = dynamic(() => import('@/frontend/customer/components/ContactClient'), {
-  loading: () => (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50vh', color: '#94a3b8' }}>
-      Loading Contact Dashboard...
-    </div>
-  )
+  loading: () => <LoadingState label="Loading contact dashboard" />
 });
 
 export const metadata = {

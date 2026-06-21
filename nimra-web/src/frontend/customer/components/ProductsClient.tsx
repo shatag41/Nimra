@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { Product } from '@/types/cms';
 import { useCart } from '@/frontend/customer/hooks/useCart';
 import { CatalogCard } from './portal/Products';
@@ -28,15 +28,17 @@ export default function ProductsClient({ products }: ProductsClientProps) {
   const [cartToast, setCartToast] = useState<{ name: string; visible: boolean }>({ name: '', visible: false });
   const { addProduct } = useCart();
   const cartToastTimer = useRef<number | null>(null);
+  const deferredSearchQuery = useDeferredValue(searchQuery);
 
-  const filteredProducts = products.filter((product) => {
+  const filteredProducts = useMemo(() => products.filter((product) => {
     const matchesCategory = activeTab === 'All' ? true : normalizeCategory(product.Category) === activeTab;
     if (!matchesCategory) return false;
 
-    const matchesSearch = searchQuery
-      ? product.Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (product.Description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.Category.toLowerCase().includes(searchQuery.toLowerCase())
+    const normalizedSearch = deferredSearchQuery.trim().toLowerCase();
+    const matchesSearch = normalizedSearch
+      ? product.Name.toLowerCase().includes(normalizedSearch) ||
+        (product.Description || '').toLowerCase().includes(normalizedSearch) ||
+        product.Category.toLowerCase().includes(normalizedSearch)
       : true;
     if (!matchesSearch) return false;
 
@@ -49,7 +51,7 @@ export default function ProductsClient({ products }: ProductsClientProps) {
     if (sizeFilter === 'bottle' && isJar) return false;
 
     return true;
-  });
+  }), [activeTab, deferredSearchQuery, products, sizeFilter, statusFilter]);
 
   const showCartToast = useCallback((product: Product) => {
     setCartToast({ name: product.Name, visible: true });

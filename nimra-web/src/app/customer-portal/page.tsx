@@ -1,8 +1,9 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
+import LoadingState from '@/frontend/customer/components/LoadingState';
 
 const CustomerPortalClient = dynamic(() => import('@/frontend/customer/components/CustomerPortalClient'), {
-  loading: () => <div className="loading-state" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>Loading Portal...</div>
+  loading: () => <LoadingState label="Loading portal" />
 });
 
 export const metadata = {
@@ -13,4 +14,3 @@ export const metadata = {
 export default function CustomerPortalPage() {
   return <CustomerPortalClient />;
 }
-

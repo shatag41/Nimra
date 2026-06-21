@@ -47,24 +47,16 @@ export default async function RootLayout({
   return (
     <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700&display=swap"
-          rel="stylesheet"
-        />
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
                 try {
                   var savedTheme = localStorage.getItem('theme');
-                  if (!savedTheme) {
-                    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-                    savedTheme = systemTheme;
-                  }
-                  document.documentElement.setAttribute('data-theme', savedTheme);
-                  document.body && document.body.setAttribute('data-theme', savedTheme);
+                  var activeTheme = savedTheme === 'dark' || savedTheme === 'light' ? savedTheme : 'light';
+                  document.documentElement.setAttribute('data-theme', activeTheme);
+                  document.documentElement.style.colorScheme = activeTheme;
+                  document.body && document.body.setAttribute('data-theme', activeTheme);
                 } catch (e) {}
               })();
             `,

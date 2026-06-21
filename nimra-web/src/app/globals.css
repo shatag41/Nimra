@@ -1,6 +1,4 @@
 /* ── Google Fonts ──────────────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
-
 /* ── Design Tokens ─────────────────────────────────────────────────────────── */
 :root {
   /* Nimra Blue Palette */
@@ -56,8 +54,8 @@
   --shadow-green: 0 8px 30px rgba(37, 99, 235, 0.25);
 
   /* Typography */
-  --font-heading: 'Outfit', 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif;
-  --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-heading: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 
   /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -2785,6 +2783,936 @@ textarea::placeholder {
   .checkout-page .container {
     width: var(--ds-container) !important;
     max-width: var(--ds-container) !important;
+  }
+}
+
+/* Enterprise UX consolidation layer
+   Keep this late in the cascade so legacy page styles inherit one responsive system. */
+:root {
+  --ds-container: min(100% - clamp(1rem, 4vw, 2.5rem), 76rem);
+  --ds-container-wide: min(100% - clamp(1rem, 4vw, 2.5rem), 88rem);
+  --ds-readable: min(100%, 68rem);
+  --ds-section-y: clamp(2.25rem, 5vw, 5rem);
+  --ds-gap-sm: clamp(0.75rem, 1.5vw, 1rem);
+  --ds-gap-md: clamp(1rem, 2vw, 1.5rem);
+  --ds-gap-lg: clamp(1.25rem, 3vw, 2.25rem);
+  --ds-card-pad: clamp(1rem, 2.4vw, 1.5rem);
+  --ds-card-radius: clamp(1rem, 2vw, 1.35rem);
+  --ds-header-offset: 5.75rem;
+}
+
+html {
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-width: 320px;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid rgba(var(--primary-rgb), 0.38);
+  outline-offset: 3px;
+}
+
+.ds-app-shell {
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+  isolation: isolate;
+}
+
+.ds-main {
+  flex: 1 0 auto;
+  min-width: 0;
+}
+
+.ds-main.with-site-header {
+  padding-top: var(--ds-header-offset);
+}
+
+.container,
+.container-sm,
+.container-lg,
+.header-container,
+.footer-inner {
+  width: var(--ds-container) !important;
+  max-width: var(--ds-container-wide) !important;
+  margin-inline: auto !important;
+  padding-inline: 0 !important;
+}
+
+section {
+  padding-block: var(--ds-section-y);
+  scroll-margin-top: calc(var(--ds-header-offset) + 1rem);
+}
+
+.section-header,
+.hero-text,
+.story-text,
+.contact-hero,
+.products-hero,
+.orders-hero,
+.track-hero {
+  max-width: var(--ds-readable);
+}
+
+.card,
+.card-glass,
+.panel,
+.quick-card,
+.metric-card,
+.profile-edit-panel,
+.track-form,
+.result,
+.contact-card,
+.orders-card,
+.products-sidebar,
+.search-bar-wrapper,
+.catalog-card,
+.product-preview-card,
+.modal-card,
+.admin-modal,
+.profile-panel,
+.filter-bar,
+.table-responsive,
+.auth-card,
+.co-summary,
+.summary,
+.form-card {
+  border-radius: var(--ds-card-radius) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.rush-portal-banner {
+  background: var(--surface-1) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+.rush-portal-banner h2 {
+  color: var(--text-primary) !important;
+}
+
+.rush-portal-banner p {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .rush-portal-banner {
+  background: linear-gradient(135deg, #020617 0%, #0f172a 100%) !important;
+  color: #ffffff !important;
+  border-color: #1e293b !important;
+}
+
+[data-theme="dark"] .rush-portal-banner h2 {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .rush-portal-banner p {
+  color: rgba(255, 255, 255, 0.72) !important;
+}
+
+.card:hover,
+.quick-card:hover,
+.catalog-card:hover,
+.product-preview-card:hover,
+.metric-card:hover {
+  box-shadow: var(--shadow-lg) !important;
+}
+
+.btn,
+.btn-clear,
+.auth-submit,
+.auth-google-button,
+.co-btn,
+.modal-actions button,
+.section-head-btn button,
+.cart-summary button,
+.checkout-page button {
+  min-height: 2.75rem;
+  border-radius: 0.875rem !important;
+  touch-action: manipulation;
+}
+
+.btn,
+.icon-btn,
+.nav-link,
+.mobile-nav-link,
+.catalog-card,
+.quick-card,
+.modal-card,
+.admin-modal,
+.custom-select-trigger,
+.form-input,
+.form-select,
+.form-textarea,
+.auth-input,
+.auth-select,
+.co-select {
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+input,
+textarea,
+select,
+.form-input,
+.form-select,
+.form-textarea,
+.auth-input,
+.auth-select,
+.co-select,
+.modal-select,
+.filter-input,
+.filter-select,
+.search-input,
+.custom-select-trigger {
+  min-height: 2.75rem;
+  border-radius: 0.875rem !important;
+}
+
+textarea,
+.form-textarea {
+  min-height: 7rem;
+  resize: vertical;
+}
+
+.modal-backdrop,
+.admin-modal-backdrop {
+  display: grid !important;
+  place-items: center !important;
+  padding: clamp(0.75rem, 3vw, 2rem) !important;
+}
+
+.modal-card,
+.admin-modal {
+  width: min(100%, 44rem) !important;
+  max-height: min(88dvh, 54rem) !important;
+  overflow: auto !important;
+  animation: modalEnter 180ms ease-out both;
+}
+
+.modal-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin-inline: calc(var(--ds-card-pad) * -1);
+  margin-bottom: calc(var(--ds-card-pad) * -1);
+  padding: var(--ds-gap-sm) var(--ds-card-pad) var(--ds-card-pad);
+  background: linear-gradient(to top, var(--surface-1) 76%, transparent);
+}
+
+.table-responsive,
+.table-wrapper,
+.orders-table-wrap,
+.admin-table-wrapper,
+.table-wrap {
+  overflow-x: auto !important;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+table,
+.admin-table,
+.orders-table {
+  border-spacing: 0;
+}
+
+th,
+td {
+  vertical-align: middle;
+}
+
+.ds-loading-state {
+  min-height: min(80dvh, 42rem);
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.85rem;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: var(--ds-section-y) 1rem;
+}
+
+.ds-loading-state.compact {
+  min-height: 8rem;
+}
+
+.ds-loading-orb {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  border: 3px solid rgba(var(--primary-rgb), 0.16);
+  border-top-color: var(--primary-color);
+  box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0.22);
+  animation: spin 780ms linear infinite, loaderPulse 1.6s ease-out infinite;
+}
+
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes loaderPulse {
+  70% {
+    box-shadow: 0 0 0 1rem rgba(var(--primary-rgb), 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0);
+  }
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --ds-header-offset: 5.25rem;
+  }
+
+  .preview-grid,
+  .products-grid,
+  .recommendations-grid {
+    gap: var(--ds-gap-lg) !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --ds-header-offset: 5.25rem;
+  }
+
+  .header-actions {
+    gap: 0.45rem !important;
+  }
+
+  .portal-grid,
+  .checkout-grid,
+  .cart-grid,
+  .orders-layout,
+  .contact-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --ds-header-offset: 4.75rem;
+    --ds-section-y: clamp(1.75rem, 7vw, 3rem);
+  }
+
+  body {
+    line-height: 1.55;
+  }
+
+  .ds-main.with-site-header {
+    padding-top: var(--ds-header-offset);
+  }
+
+  h1 {
+    font-size: clamp(2rem, 10vw, 3rem) !important;
+  }
+
+  h2 {
+    font-size: clamp(1.45rem, 7vw, 2.1rem) !important;
+  }
+
+  .btn,
+  .auth-submit,
+  .auth-google-button,
+  .co-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .modal-card,
+  .admin-modal {
+    width: 100% !important;
+    max-height: 92dvh !important;
+    border-radius: 1rem !important;
+  }
+
+  .modal-actions {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --ds-card-pad: 0.95rem;
+    --ds-card-radius: 0.95rem;
+  }
+
+  .container,
+  .container-sm,
+  .container-lg,
+  .header-container,
+  .footer-inner {
+    width: min(100% - 1rem, 100%) !important;
+  }
+
+  .table-responsive,
+  .table-wrapper,
+  .orders-table-wrap,
+  .admin-table-wrapper,
+  .table-wrap {
+    margin-inline: -0.5rem;
+    width: calc(100% + 1rem) !important;
+    border-radius: 0.85rem !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Compact app chrome + centered account workspaces */
+:root {
+  --ds-header-offset: 3.6875rem;
+  --ds-account-width: min(100% - clamp(1rem, 4vw, 2rem), 62.5rem);
+  --ds-form-width: min(100% - clamp(1rem, 4vw, 2rem), 40rem);
+}
+
+.ds-main.with-site-header {
+  padding-top: var(--ds-header-offset) !important;
+}
+
+.portal-page,
+.customer-portal-page {
+  padding-top: 0 !important;
+}
+
+.portal-page .portal-hero {
+  margin-top: 0 !important;
+  min-height: auto !important;
+  padding: clamp(0.85rem, 2vw, 1.35rem) clamp(1rem, 4vw, 2rem) clamp(1rem, 2.4vw, 1.65rem) !important;
+}
+
+.portal-page .portal-hero > div,
+.portal-page .portal-hero .hero-actions {
+  width: var(--ds-container-wide);
+  max-width: var(--ds-container-wide);
+  margin-inline: auto !important;
+}
+
+.portal-page .portal-hero h1 {
+  margin-block: 0.35rem !important;
+}
+
+.portal-page .portal-hero p {
+  margin: 0 !important;
+}
+
+.portal-page .hero-actions {
+  margin-top: 0.9rem !important;
+}
+
+.portal-page .metric-grid,
+.portal-page .portal-grid,
+.portal-page .quick-section,
+.portal-page .recommendations-section {
+  width: var(--ds-container-wide) !important;
+  max-width: var(--ds-container-wide) !important;
+  margin-inline: auto !important;
+  padding-inline: 0 !important;
+  padding-block: 0 !important;
+}
+
+.portal-page .guest-checkout {
+  width: var(--ds-container-wide) !important;
+  max-width: var(--ds-container-wide) !important;
+  margin-inline: auto !important;
+  padding: clamp(1rem, 2.4vw, 1.5rem) clamp(1rem, 3vw, 2rem) !important;
+}
+
+.portal-page .metric-grid {
+  margin-top: clamp(0.75rem, 1.6vw, 1rem) !important;
+}
+
+.portal-page .portal-grid,
+.portal-page .quick-section,
+.portal-page .guest-checkout,
+.portal-page .recommendations-section {
+  margin-top: clamp(0.75rem, 1.8vw, 1.25rem) !important;
+}
+
+.portal-page .portal-tab-section {
+  width: var(--ds-account-width) !important;
+  max-width: var(--ds-account-width) !important;
+  margin-top: clamp(0.75rem, 1.8vw, 1.25rem) !important;
+  padding-block: 0 !important;
+  justify-items: stretch;
+}
+
+.portal-page .portal-tab-section .profile-edit-panel {
+  width: 100% !important;
+  max-width: var(--ds-form-width) !important;
+  margin-inline: auto !important;
+}
+
+.portal-page .addresses-container,
+.portal-page .notifications-panel,
+.portal-page .profile-card,
+.portal-page .profile-edit-panel,
+.portal-page .settings-section {
+  width: 100% !important;
+  margin-inline: auto !important;
+}
+
+.portal-page .addresses-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)) !important;
+  gap: clamp(0.85rem, 2vw, 1.25rem) !important;
+}
+
+.portal-page .section-header,
+.portal-page .panel-head {
+  margin-bottom: clamp(0.85rem, 2vw, 1.25rem) !important;
+}
+
+.portal-page .recommendations-section[style],
+.portal-page .recommendations-section {
+  margin-top: clamp(0.75rem, 1.8vw, 1.25rem) !important;
+}
+
+.checkout-page .container,
+.cart-page .container,
+.orders-page.container,
+.track-page.container,
+.contact-page.container,
+.products-page.container {
+  padding-top: 0 !important;
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --ds-header-offset: 3.6875rem;
+  }
+
+  .portal-page .portal-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 700px) {
+  :root {
+    --ds-header-offset: 3.6875rem;
+  }
+
+  .portal-page .portal-hero {
+    padding: 0.85rem 1rem 1rem !important;
+  }
+
+  .portal-page .metric-grid,
+  .portal-page .portal-grid,
+  .portal-page .quick-section,
+  .portal-page .guest-checkout,
+  .portal-page .recommendations-section,
+  .portal-page .portal-tab-section {
+    width: min(100% - 1rem, 100%) !important;
+  }
+}
+
+/* Customer portal compact optimization layer */
+:root {
+  --ds-container-wide: min(100% - clamp(0.75rem, 3vw, 1.5rem), 82rem);
+  --ds-container: min(100% - clamp(0.75rem, 3vw, 1.25rem), 74rem);
+  --ds-section-y: clamp(1rem, 2.5vw, 2rem);
+  --ds-gap-sm: clamp(0.45rem, 1vw, 0.7rem);
+  --ds-gap-md: clamp(0.65rem, 1.5vw, 1rem);
+  --ds-gap-lg: clamp(0.85rem, 2vw, 1.35rem);
+  --ds-card-pad: clamp(0.75rem, 1.7vw, 1.1rem);
+  --ds-card-radius: 0.75rem;
+  --ds-control-h: 2.35rem;
+  --ds-compact-sticky-top: 4.25rem;
+}
+
+.portal-page,
+.orders-page,
+.products-page,
+.cart-page,
+.checkout-page,
+.track-page,
+.contact-page {
+  padding-bottom: clamp(1.5rem, 3vw, 2.5rem) !important;
+}
+
+.portal-page .portal-hero,
+.page-header,
+.orders-page .page-header,
+.products-page .page-header,
+.cart-page .page-header {
+  padding-block: clamp(0.65rem, 1.5vw, 1rem) !important;
+  margin-bottom: clamp(0.55rem, 1.4vw, 0.9rem) !important;
+}
+
+.portal-page .portal-hero h1,
+.page-header h1,
+.orders-page .page-header h1,
+.products-page .page-header h1,
+.cart-page .page-header h1 {
+  font-size: clamp(1.25rem, 2.4vw, 1.75rem) !important;
+  margin-bottom: 0.15rem !important;
+}
+
+.portal-page .portal-hero p,
+.page-header p,
+.orders-page .page-header p,
+.products-page .page-header p,
+.cart-page .page-header p {
+  font-size: 0.82rem !important;
+  line-height: 1.4 !important;
+}
+
+.badge,
+.eyebrow,
+.cat-volume,
+.cat-badge,
+.rec-vol,
+.status-badge {
+  padding: 0.16rem 0.55rem !important;
+  font-size: 0.66rem !important;
+}
+
+.metric-grid,
+.portal-grid,
+.quick-section,
+.recommendations-grid,
+.orders-layout-grid,
+.products-layout-grid,
+.cart-layout,
+.checkout-grid {
+  gap: var(--ds-gap-md) !important;
+}
+
+.portal-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(17rem, 21rem) !important;
+}
+
+.orders-layout-grid,
+.products-layout-grid {
+  grid-template-columns: minmax(12.5rem, 13.5rem) minmax(0, 1fr) !important;
+}
+
+.checkout-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(17.5rem, 20rem) !important;
+}
+
+.cart-layout {
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 18rem) !important;
+}
+
+.panel,
+.quick-card,
+.metric-card,
+.profile-edit-panel,
+.orders-sidebar,
+.products-sidebar,
+.search-bar-wrapper,
+.catalog-card,
+.cart-row,
+.summary,
+.checkout-form-container,
+.co-summary,
+.notifications-panel,
+.rush-portal-banner {
+  border-radius: var(--ds-card-radius) !important;
+  padding: var(--ds-card-pad) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.amazon-order-card {
+  border-radius: var(--ds-card-radius) !important;
+  box-shadow: var(--shadow-sm) !important;
+  padding: 0 !important;
+}
+
+.orders-sidebar,
+.products-sidebar,
+.summary,
+.co-summary {
+  top: var(--ds-compact-sticky-top) !important;
+}
+
+.orders-sidebar,
+.products-sidebar {
+  gap: var(--ds-gap-md) !important;
+}
+
+.sidebar-section h3,
+.filter-group h4,
+.summary h2,
+.co-summary h2,
+.panel h2 {
+  font-size: 0.92rem !important;
+  margin-bottom: 0.45rem !important;
+}
+
+.filter-options {
+  gap: 0.35rem !important;
+}
+
+.filter-label,
+.filter-btn,
+.reset-btn {
+  font-size: 0.78rem !important;
+}
+
+.filter-btn,
+.reset-btn,
+.refresh-btn,
+.table-link,
+.toast-go-btn,
+.add-btn,
+.add-cart-btn,
+.btn-sm {
+  min-height: 2rem !important;
+  padding: 0.35rem 0.65rem !important;
+}
+
+.search-bar-wrapper {
+  max-width: 100% !important;
+  padding: 0.25rem !important;
+  margin-bottom: 0.25rem !important;
+}
+
+.search-input,
+.form-input,
+.form-select,
+.filter-input,
+.filter-select,
+.co-field input,
+.co-field textarea,
+.co-select,
+.checkout-alt-mobile-input,
+.delivery-instructions-textarea {
+  min-height: var(--ds-control-h) !important;
+  padding-block: 0.48rem !important;
+  font-size: 0.86rem !important;
+}
+
+.catalog-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13.5rem), 1fr)) !important;
+  gap: var(--ds-gap-md) !important;
+}
+
+.catalog-card {
+  min-height: 0 !important;
+}
+
+.cat-img-box,
+.rec-img-box,
+.prod-img-box {
+  height: clamp(6.25rem, 13vw, 8rem) !important;
+  margin-bottom: 0.55rem !important;
+}
+
+.cat-meta,
+.prod-meta {
+  gap: 0.4rem !important;
+  margin-bottom: 0.45rem !important;
+}
+
+.cat-info-box h3,
+.rec-info h3,
+.prod-info-box h3 {
+  font-size: 0.95rem !important;
+  margin-bottom: 0.2rem !important;
+}
+
+.cat-info-box p,
+.rec-desc,
+.prod-info-box p {
+  font-size: 0.78rem !important;
+  line-height: 1.35 !important;
+  margin-bottom: 0.4rem !important;
+}
+
+.cat-price-row,
+.rec-footer {
+  padding-top: 0.55rem !important;
+}
+
+.price-val,
+.rec-price,
+.prod-price {
+  font-size: 1.08rem !important;
+}
+
+.qty-btn {
+  width: 2rem !important;
+  height: 2rem !important;
+}
+
+.qty-count {
+  min-width: 1.75rem !important;
+}
+
+.table-wrap {
+  max-height: 16rem !important;
+}
+
+.orders-table {
+  min-width: 38rem !important;
+}
+
+.orders-table th,
+.orders-table td {
+  padding: 0.5rem 0.65rem !important;
+  font-size: 0.82rem !important;
+}
+
+.empty-state,
+.empty-orders,
+.empty-products {
+  min-height: 9rem !important;
+  padding: 1.25rem !important;
+}
+
+.cart-row {
+  grid-template-columns: 3rem minmax(0, 1fr) auto auto !important;
+  gap: 0.65rem !important;
+}
+
+.cart-row img {
+  width: 3rem !important;
+  height: 3rem !important;
+}
+
+.row-main h3 {
+  font-size: 0.92rem !important;
+}
+
+.summary div,
+.co-item-row,
+.sum-row {
+  font-size: 0.84rem !important;
+}
+
+.co-summary {
+  padding: 1rem !important;
+}
+
+.co-items {
+  max-height: 12rem !important;
+  gap: 0.5rem !important;
+}
+
+.checkout-form-container {
+  padding: clamp(0.85rem, 1.8vw, 1.15rem) !important;
+}
+
+.form-grid-three,
+.form-grid-two,
+.form-grid-row {
+  gap: var(--ds-gap-sm) !important;
+}
+
+.form-fields-group,
+.edit-form-content,
+.otp-verification-wrapper {
+  gap: var(--ds-gap-sm) !important;
+}
+
+.compact-card-header,
+.form-section-header {
+  padding-bottom: 0.65rem !important;
+  margin-bottom: 0.8rem !important;
+}
+
+.notifications-panel {
+  padding: 1rem !important;
+}
+
+.notifications-list {
+  gap: 0.65rem !important;
+}
+
+.notifications-list > div {
+  padding: 0.8rem !important;
+  border-radius: var(--ds-card-radius) !important;
+}
+
+.cart-toast-banner {
+  bottom: 1rem !important;
+  min-width: min(24rem, calc(100vw - 1rem)) !important;
+  padding: 0.65rem 0.8rem !important;
+  gap: 0.55rem !important;
+  border-radius: var(--ds-card-radius) !important;
+}
+
+.toast-content {
+  font-size: 0.84rem !important;
+}
+
+.modal-content-details,
+.modal-card,
+.admin-modal {
+  max-width: min(100%, 38rem) !important;
+}
+
+.modal-header,
+.modal-scroll-area,
+.modal-footer-actions,
+.modal-actions {
+  padding: 0.8rem !important;
+}
+
+@media (max-width: 1024px) {
+  .portal-grid,
+  .orders-layout-grid,
+  .products-layout-grid,
+  .cart-layout,
+  .checkout-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .orders-sidebar,
+  .products-sidebar,
+  .summary,
+  .co-summary {
+    position: static !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .metric-grid,
+  .quick-section,
+  .recommendations-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)) !important;
+  }
+
+  .cart-row {
+    grid-template-columns: 3rem minmax(0, 1fr) !important;
   }
 }
 

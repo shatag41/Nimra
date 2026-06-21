@@ -1,7 +1,8 @@
 import dynamic from 'next/dynamic';
+import LoadingState from '@/frontend/customer/components/LoadingState';
 
 const TrackClient = dynamic(() => import('@/frontend/customer/components/TrackClient'), {
-  loading: () => <div className="container" style={{ padding: '4rem 2rem', textAlign: 'center' }}>Loading tracker...</div>
+  loading: () => <LoadingState label="Loading tracker" />
 });
 
 export const metadata = {

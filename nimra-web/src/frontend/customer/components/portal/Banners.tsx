@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 export function RushPortalBanner() {
   return (
-    <section className="recommendations-section" style={{ marginTop: '3rem' }}>
+    <section className="recommendations-section" style={{ marginTop: '1rem' }}>
       <div className="panel rush-portal-banner" style={{ background: 'linear-gradient(135deg, #020617 0%, #0f172a 100%)', color: 'white', border: '1px solid #1e293b', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '3rem 2rem' }}>
         <span className="eyebrow" style={{ color: '#fbbf24', background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: '999px', padding: '0.2rem 0.75rem', fontSize: '0.7rem', marginBottom: '1rem' }}>Coming Soon</span>
         <h2 style={{ marginBottom: '1rem', fontSize: '2rem', color: 'white', fontWeight: '800', letterSpacing: '-0.02em' }}>RUSH Club Soda</h2>

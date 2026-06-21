@@ -7,10 +7,10 @@ export default function ThemeToggle() {
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    const activeTheme = savedTheme || systemTheme;
+    const activeTheme = savedTheme === 'dark' || savedTheme === 'light' ? savedTheme : 'light';
     setTheme(activeTheme);
     document.documentElement.setAttribute('data-theme', activeTheme);
+    document.documentElement.style.colorScheme = activeTheme;
     document.body.setAttribute('data-theme', activeTheme);
 
     const transitionTimeout = setTimeout(() => {
@@ -25,6 +25,7 @@ export default function ThemeToggle() {
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
     document.documentElement.setAttribute('data-theme', newTheme);
+    document.documentElement.style.colorScheme = newTheme;
     document.body.setAttribute('data-theme', newTheme);
   };
 

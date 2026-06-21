@@ -15,7 +15,7 @@ const statusClass = (status: string) => status.toLowerCase().replace(/[^a-z0-9]+
 
 const formatDate = (value?: string) => {
   if (!value) return 'Not available';
-  var date = new Date(value);
+  const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'Not available';
   return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 };

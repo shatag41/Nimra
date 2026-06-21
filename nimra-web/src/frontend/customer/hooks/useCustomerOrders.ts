@@ -5,6 +5,12 @@ import { OrderRecord } from '@/types/cms';
 import { fetchCustomerOrders } from '@/utils/api';
 import { useAuth } from './useAuth';
 
+const isActiveOrder = (order: OrderRecord) => !/delivered|cancelled/i.test(order.status || '');
+const orderTime = (order: OrderRecord) => {
+  const time = new Date(order.createdAt || '').getTime();
+  return Number.isNaN(time) ? 0 : time;
+};
+
 export function useCustomerOrders() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [orders, setOrders] = useState<OrderRecord[]>([]);
@@ -18,7 +24,10 @@ export function useCustomerOrders() {
     setLoadingOrders(true);
     try {
       const data = await fetchCustomerOrders(user.ID || '', user.Username || '');
-      setOrders(data);
+      setOrders([...data].sort((a, b) => {
+        const activeDelta = Number(isActiveOrder(b)) - Number(isActiveOrder(a));
+        return activeDelta || orderTime(b) - orderTime(a);
+      }));
     } catch (err) {
       console.error('Failed to load orders', err);
     } finally {
@@ -28,13 +37,15 @@ export function useCustomerOrders() {
 
   useEffect(() => {
     if (!authLoading) {
-      loadOrders();
+      queueMicrotask(() => {
+        loadOrders();
+      });
     }
   }, [authLoading, loadOrders]);
 
   const metrics = useMemo(() => {
     const totalSpend = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
-    const activeOrders = orders.filter((order) => !/delivered|cancelled/i.test(order.status)).length;
+    const activeOrders = orders.filter(isActiveOrder).length;
     const deliveredOrders = orders.filter((order) => /delivered/i.test(order.status)).length;
     const cancelledOrders = orders.filter((order) => /cancelled/i.test(order.status)).length;
     const latestOrder = orders[0];
