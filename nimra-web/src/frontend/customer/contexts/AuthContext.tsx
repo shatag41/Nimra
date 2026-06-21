@@ -9,6 +9,7 @@ export interface User {
   Name: string;
   Username: string; // Email
   Mobile?: string;
+  AlternateMobile?: string;
   Role: string; // 'Admin' | 'Customer'
   Active: boolean;
   CreatedAt?: string;

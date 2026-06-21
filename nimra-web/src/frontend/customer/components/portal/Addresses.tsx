@@ -36,6 +36,7 @@ export function Addresses() {
   const [isAdding, setIsAdding] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [addressPendingDelete, setAddressPendingDelete] = useState<Address | null>(null);
   
   const [formData, setFormData] = useState<Omit<Address, 'id' | 'fullAddress'>>({
     type: 'Home',
@@ -213,8 +214,14 @@ export function Addresses() {
     setIsAdding(true);
   };
 
-  const handleDelete = (id: string) => {
-    void saveAddressList(addresses.filter(a => a.id !== id) as Address[]);
+  const handleDelete = (address: Address) => {
+    setAddressPendingDelete(address);
+  };
+
+  const confirmDelete = async () => {
+    if (!addressPendingDelete) return;
+    const deleted = await saveAddressList(addresses.filter(a => a.id !== addressPendingDelete.id) as Address[]);
+    if (deleted) setAddressPendingDelete(null);
   };
 
   const handleAddNew = () => {
@@ -483,7 +490,7 @@ export function Addresses() {
                         <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
                       </svg>
                     </button>
-                    <button onClick={() => handleDelete(address.id)} className="action-btn delete" title="Delete Address" aria-label="Delete Address">
+                    <button onClick={() => handleDelete(address)} className="action-btn delete" title="Delete Address" aria-label="Delete Address">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2M10 11v6M14 11v6"/>
                       </svg>
@@ -511,6 +518,20 @@ export function Addresses() {
               </div>
             ))
           )}
+        </div>
+      )}
+
+      {addressPendingDelete && (
+        <div className="delete-modal-overlay" role="presentation" onClick={() => !saving && setAddressPendingDelete(null)}>
+          <div className="delete-modal" role="dialog" aria-modal="true" aria-labelledby="delete-address-title" onClick={(event) => event.stopPropagation()}>
+            <div className="delete-modal-icon" aria-hidden="true">!</div>
+            <h3 id="delete-address-title">Delete {addressPendingDelete.type} address?</h3>
+            <p>This saved address will be permanently removed from your account.</p>
+            <div className="delete-modal-actions">
+              <button type="button" className="btn-cancel-delete" disabled={saving} onClick={() => setAddressPendingDelete(null)}>No, keep it</button>
+              <button type="button" className="btn-confirm-delete" disabled={saving} onClick={() => void confirmDelete()}>{saving ? 'Deleting...' : 'Yes, delete'}</button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -812,7 +833,9 @@ export function Addresses() {
 
         /* Form Design */
         .address-form-panel {
-          max-width: 680px;
+          width: min(1080px, 100%);
+          max-width: 1080px;
+          box-sizing: border-box;
           margin: 0 auto;
           padding: 2.25rem;
           border-radius: var(--radius-2xl);
@@ -835,9 +858,9 @@ export function Addresses() {
         }
 
         .form-fields-group {
-          display: flex;
-          flex-direction: column;
-          gap: 1.1rem;
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 1.1rem 1.25rem;
         }
 
         .group-title {
@@ -852,6 +875,7 @@ export function Addresses() {
         }
 
         .label-row-header {
+          grid-column: 1 / -1;
           display: flex;
           justify-content: space-between;
           align-items: center;
@@ -910,15 +934,11 @@ export function Addresses() {
         }
 
         .form-grid-three {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 1.25rem;
+          display: contents;
         }
 
         .form-grid-row {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 1.25rem;
+          display: contents;
         }
 
         .form-select {
@@ -1002,7 +1022,51 @@ export function Addresses() {
           color: var(--text-secondary);
           margin-top: 0.5rem;
           user-select: none;
+          grid-column: 1 / -1;
         }
+
+        .delete-modal-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 1000;
+          display: grid;
+          place-items: center;
+          padding: 1rem;
+          background: rgba(2, 6, 23, 0.72);
+          backdrop-filter: blur(6px);
+        }
+
+        .delete-modal {
+          width: min(420px, 100%);
+          box-sizing: border-box;
+          padding: 1.75rem;
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-xl);
+          background: var(--bg-secondary);
+          box-shadow: var(--shadow-xl);
+          text-align: center;
+        }
+
+        .delete-modal-icon {
+          display: grid;
+          place-items: center;
+          width: 48px;
+          height: 48px;
+          margin: 0 auto 1rem;
+          border-radius: 50%;
+          background: rgba(239, 68, 68, 0.12);
+          color: #ef4444;
+          font-size: 1.5rem;
+          font-weight: 800;
+        }
+
+        .delete-modal h3 { margin: 0; font-size: 1.2rem; }
+        .delete-modal p { margin: 0.65rem 0 1.4rem; color: var(--text-secondary); line-height: 1.5; }
+        .delete-modal-actions { display: flex; justify-content: center; gap: 0.75rem; }
+        .btn-cancel-delete, .btn-confirm-delete { padding: 0.7rem 1rem; border-radius: var(--radius-md); font-weight: 700; cursor: pointer; }
+        .btn-cancel-delete { border: 1px solid var(--border-color); background: transparent; color: var(--text-primary); }
+        .btn-confirm-delete { border: 1px solid #ef4444; background: #ef4444; color: white; }
+        .btn-cancel-delete:disabled, .btn-confirm-delete:disabled { opacity: 0.65; cursor: wait; }
 
         .save-future-checkbox-label input {
           width: 17px;
@@ -1083,7 +1147,7 @@ export function Addresses() {
             justify-content: center;
           }
 
-          .form-grid-three, .form-grid-row {
+          .form-fields-group {
             grid-template-columns: 1fr;
             gap: 1rem;
           }

@@ -877,6 +877,7 @@ function getUsersData(spreadsheet) {
         row['Active'] = isActive;
         active = isActive;
       }
+      else if (key === 'Alternate Mobile Number') row['AlternateMobile'] = normalizeDigits(val);
       else if (key === 'SavedAddresses' || key === 'Saved Addresses') row['SavedAddresses'] = val;
       else {
         row[key] = val;
@@ -1100,6 +1101,7 @@ function handleUserCRUD(spreadsheet, params) {
     else if (key === 'Full Name' || key === 'Name') rowValues[j] = user.Name || '';
     else if (key === 'Email' || key === 'Username') rowValues[j] = user.Username || '';
     else if (key === 'Mobile' || key === 'Mobile Number' || key === 'Phone') rowValues[j] = getUserMobile(user);
+    else if (key === 'Alternate Mobile Number') rowValues[j] = normalizeDigits(user.AlternateMobile || user.altMobile);
     else if (key === 'Password (hashed)' || key === 'Password') rowValues[j] = user.Password || '';
     else if (key === 'Role (Admin/Customer)' || key === 'Role') rowValues[j] = user.Role || 'Customer';
     else if (key === 'Status' || key === 'Active') rowValues[j] = (user.Active !== false) ? 'Active' : 'Inactive';
@@ -1149,6 +1151,10 @@ function handleUserCRUD(spreadsheet, params) {
             updatedRowValues[j] = user.Username !== undefined && user.Username !== null ? user.Username : existingValue;
           } else if (key === 'Mobile' || key === 'Mobile Number' || key === 'Phone') {
             updatedRowValues[j] = getUserMobile(user) !== '' ? getUserMobile(user) : existingValue;
+          } else if (key === 'Alternate Mobile Number') {
+            updatedRowValues[j] = user.AlternateMobile !== undefined
+              ? normalizeDigits(user.AlternateMobile)
+              : (user.altMobile !== undefined ? normalizeDigits(user.altMobile) : existingValue);
           } else if (key === 'Password (hashed)' || key === 'Password') {
             updatedRowValues[j] = user.Password !== undefined && user.Password !== null ? user.Password : existingValue;
           } else if (key === 'Role (Admin/Customer)' || key === 'Role') {

@@ -63,7 +63,7 @@ export default function CheckoutClient() {
         setForm({
           name: defaultAddr.name || user?.Name || '',
           mobile: defaultAddr.mobile || user?.Mobile || '',
-          altMobile: defaultAddr.altMobile || '',
+          altMobile: defaultAddr.altMobile || user.AlternateMobile || '',
           email: defaultAddr.email || user?.Username || '',
           flatNo: defaultAddr.flatNo,
           buildingName: defaultAddr.buildingName || '',
@@ -197,7 +197,7 @@ export default function CheckoutClient() {
       setForm({
         name: addr.name || user?.Name || '',
         mobile: addr.mobile || user?.Mobile || '',
-        altMobile: addr.altMobile || '',
+        altMobile: addr.altMobile || user?.AlternateMobile || '',
         email: addr.email || user?.Username || '',
         flatNo: addr.flatNo,
         buildingName: addr.buildingName || '',
@@ -312,6 +312,7 @@ export default function CheckoutClient() {
           Name: form.name,
           Mobile: form.mobile,
           Username: form.email || user.Username,
+          AlternateMobile: form.altMobile,
           SavedAddresses: JSON.stringify(normalized),
         };
         const profileRes = await saveUser(updatePayload, 'update');
@@ -329,6 +330,18 @@ export default function CheckoutClient() {
         setStatus({ kind: 'error', message: 'Failed to save address to your account.' });
         return;
       }
+    }
+
+    // Alternate mobile belongs to the customer profile, even when an existing
+    // saved address is used without editing/saving that address.
+    if (user && !form.saveAddress && form.altMobile !== (user.AlternateMobile || '')) {
+      const profileRes = await saveUser({ ID: user.ID, AlternateMobile: form.altMobile } as any, 'update');
+      if (!profileRes.success) {
+        toast.error(profileRes.message || 'Failed to save alternate mobile number.');
+        setStatus({ kind: 'error', message: profileRes.message || 'Failed to save alternate mobile number.' });
+        return;
+      }
+      updateUserSession({ ...user, AlternateMobile: form.altMobile });
     }
 
     const orderData = {

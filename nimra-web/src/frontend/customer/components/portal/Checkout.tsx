@@ -225,6 +225,20 @@ export function CheckoutForm({
           )}
 
           {/* Delivery Instructions — always visible below Change Address */}
+          <div className="checkout-alt-mobile-section">
+            <label className="change-label">Alternate Mobile Number <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(Optional)</span></label>
+            <input
+              className="checkout-alt-mobile-input"
+              type="tel"
+              inputMode="numeric"
+              maxLength={10}
+              placeholder="Enter 10-digit alternate mobile number"
+              value={form.altMobile}
+              onChange={(e) => { update('altMobile', e.target.value.replace(/\D/g, '')); clearError('altMobile'); }}
+            />
+            {errors.altMobile && <span className="error-hint">{errors.altMobile}</span>}
+          </div>
+
           <div className="delivery-instructions-section">
             <label className="change-label">Delivery Instructions <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(Optional)</span></label>
             <textarea
@@ -680,6 +694,29 @@ export function CheckoutForm({
           margin-top: 1.25rem;
           border-top: 1px solid var(--border-color);
           padding-top: 1.25rem;
+        }
+
+        .checkout-alt-mobile-section {
+          margin-top: 1.25rem;
+          border-top: 1px solid var(--border-color);
+          padding-top: 1.25rem;
+        }
+
+        .checkout-alt-mobile-input {
+          width: 100%;
+          box-sizing: border-box;
+          padding: 0.75rem 1rem;
+          border-radius: var(--radius-lg);
+          border: 1.5px solid var(--border-color);
+          background: rgba(148, 163, 184, 0.04);
+          color: var(--text-primary);
+          font: inherit;
+          outline: none;
+        }
+
+        .checkout-alt-mobile-input:focus {
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
 
         .delivery-instructions-textarea {
