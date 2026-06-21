@@ -13,6 +13,7 @@ import { PortalHero } from './portal/Hero';
 import { Orders } from './portal/Orders';
 import { Profile } from './portal/Profile';
 import { Addresses } from './portal/Addresses';
+import { RecentlyViewedProducts } from './portal/RecentlyViewed';
 import { CartToast, PortalNotifications } from './portal/Notifications';
 import { toast } from 'sonner';
 import { saveUser, requestEmailChangeOTP } from '@/utils/api';
@@ -168,7 +169,10 @@ export default function CustomerPortalClient() {
           </section>
 
           <section className="portal-grid">
-            <Orders orders={orders} loadingOrders={loadingOrders} onRefresh={refreshOrders} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <Orders orders={orders} loadingOrders={loadingOrders} onRefresh={refreshOrders} />
+              <RecentlyViewedProducts products={products} />
+            </div>
 
             <aside className="side-stack">
               <Profile user={user} />

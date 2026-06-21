@@ -1,0 +1,208 @@
+'use client';
+
+import React from 'react';
+import Link from 'next/link';
+import { Product } from '@/types/cms';
+import { formatCurrency } from '../../utils/commerce';
+
+interface RecentlyViewedProductsProps {
+  products: Product[];
+}
+
+export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps) {
+  const [viewedProducts, setViewedProducts] = React.useState<Product[]>([]);
+
+  const loadViewedProducts = React.useCallback(() => {
+    try {
+      const key = 'nimra-recently-viewed';
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        const parsed = JSON.parse(stored) as Product[];
+        // Map them back to latest products data to get updated price/stock etc.
+        const mapped = parsed
+          .map((p) => products.find((prod) => String(prod.ID || prod.Name) === String(p.ID || p.Name)))
+          .filter((p): p is Product => !!p);
+        setViewedProducts(mapped);
+      }
+    } catch (e) {
+      console.error('Failed to load recently viewed products:', e);
+    }
+  }, [products]);
+
+  React.useEffect(() => {
+    loadViewedProducts();
+
+    // Listen to updates
+    window.addEventListener('nimra-recently-viewed-updated', loadViewedProducts);
+    return () => {
+      window.removeEventListener('nimra-recently-viewed-updated', loadViewedProducts);
+    };
+  }, [loadViewedProducts]);
+
+  return (
+    <div className="panel recently-viewed-panel animate-fade-in-up">
+      <div className="panel-head compact">
+        <div>
+          <span className="eyebrow" style={{ color: 'var(--primary-color)', background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.2)', borderRadius: '999px', padding: '0.2rem 0.75rem', fontSize: '0.7rem' }}>History</span>
+          <h2>Recently Viewed Products</h2>
+        </div>
+      </div>
+
+      {viewedProducts.length > 0 ? (
+        <div className="recently-viewed-grid">
+          {viewedProducts.map((product) => (
+            <div key={String(product.ID || product.Name)} className="rv-card glass">
+              <div className="rv-img-box">
+                <img src={product.ImageUrl} alt={product.Name} loading="lazy" decoding="async" />
+              </div>
+              <div className="rv-info">
+                <span className="rv-vol">{product.Volume}</span>
+                <h3 className="rv-title">{product.Name}</h3>
+                <div className="rv-footer">
+                  <span className="rv-price">{formatCurrency(Number(product.Price))}</span>
+                  <Link href="/products" className="btn btn-primary btn-sm rv-btn">
+                    View Again
+                  </Link>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="empty-state-rv">
+          <div className="empty-icon">💧</div>
+          <h3>No recently viewed products</h3>
+          <p>Products you view in our catalog will appear here for quick access.</p>
+          <Link href="/products" className="btn btn-primary btn-sm">
+            Browse Catalog
+          </Link>
+        </div>
+      )}
+
+      <style jsx>{`
+        .recently-viewed-panel {
+          margin-top: 1rem;
+        }
+        .recently-viewed-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+          gap: 1rem;
+          margin-top: 0.5rem;
+        }
+        .rv-card {
+          background: var(--bg-secondary);
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-lg);
+          padding: 0.75rem;
+          display: flex;
+          flex-direction: column;
+          transition: all var(--transition-normal);
+          box-shadow: var(--shadow-sm);
+        }
+        .rv-card:hover {
+          transform: translateY(-3px);
+          border-color: var(--primary-color);
+          box-shadow: var(--shadow-md);
+        }
+        .rv-img-box {
+          height: 100px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--bg-primary);
+          border-radius: var(--radius-md);
+          margin-bottom: 0.5rem;
+          overflow: hidden;
+          border: 1px solid rgba(150, 150, 150, 0.08);
+        }
+        .rv-img-box img {
+          max-height: 90%;
+          max-width: 90%;
+          object-fit: contain;
+          transition: transform var(--transition-normal);
+        }
+        .rv-card:hover .rv-img-box img {
+          transform: scale(1.05);
+        }
+        .rv-info {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+        }
+        .rv-vol {
+          display: inline-block;
+          font-size: 0.65rem;
+          font-weight: 800;
+          color: var(--primary-color);
+          background: rgba(37, 99, 235, 0.08);
+          padding: 0.15rem 0.5rem;
+          border-radius: 999px;
+          align-self: flex-start;
+          margin-bottom: 0.25rem;
+          border: 1px solid rgba(37, 99, 235, 0.15);
+        }
+        .rv-title {
+          font-size: 0.88rem;
+          font-weight: 700;
+          margin: 0.25rem 0 0.5rem 0;
+          color: var(--text-primary);
+          line-height: 1.3;
+          flex: 1;
+        }
+        .rv-footer {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border-top: 1px solid var(--border-color);
+          padding-top: 0.5rem;
+          margin-top: auto;
+        }
+        .rv-price {
+          font-size: 0.95rem;
+          font-weight: 800;
+          color: var(--primary-color);
+          font-family: var(--font-heading);
+        }
+        .rv-btn {
+          font-size: 0.75rem !important;
+          padding: 0.3rem 0.7rem !important;
+        }
+        .empty-state-rv {
+          min-height: 150px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          color: var(--text-secondary);
+          text-align: center;
+          border: 1.5px dashed var(--border-color);
+          border-radius: var(--radius-xl);
+          background: var(--bg-primary);
+          padding: 1.5rem 1rem;
+        }
+        .empty-icon {
+          font-size: 1.8rem;
+          margin-bottom: 0.25rem;
+        }
+        .empty-state-rv h3 {
+          margin: 0;
+          color: var(--text-primary);
+          font-size: 1rem;
+          font-weight: 700;
+        }
+        .empty-state-rv p {
+          font-size: 0.8rem;
+          margin: 0 0 0.5rem 0;
+          max-width: 320px;
+          line-height: 1.4;
+        }
+        @media (max-width: 480px) {
+          .recently-viewed-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
+    </div>
+  );
+}

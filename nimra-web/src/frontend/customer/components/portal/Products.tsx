@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Product } from '@/types/cms';
 import { useCart } from '@/frontend/customer/hooks/useCart';
-import { formatCurrency, isOrderable, normalizeCategory } from '../../utils/commerce';
+import { formatCurrency, isOrderable, normalizeCategory, trackProductView } from '../../utils/commerce';
 
 interface ProductCardProps {
   product: Product;
@@ -42,8 +42,36 @@ export const CatalogCard = React.memo(function CatalogCard({ product, onAdd }: P
     }
   };
 
+  const timerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  const handleMouseEnter = () => {
+    timerRef.current = setTimeout(() => {
+      trackProductView(product);
+    }, 800);
+  };
+
+  const handleMouseLeave = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+  };
+
+  const handleClick = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    trackProductView(product);
+  };
+
   return (
-    <article className={`catalog-card glass ${inCart ? 'in-cart' : ''}`}>
+    <article 
+      className={`catalog-card glass ${inCart ? 'in-cart' : ''}`}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={handleClick}
+    >
       <div className="cat-img-box">
         <img src={product.ImageUrl} alt={product.Name} loading="lazy" decoding="async" />
         {inCart && (
@@ -135,8 +163,36 @@ export const RecommendationCard = React.memo(function RecommendationCard({ produ
     }
   };
 
+  const timerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  const handleMouseEnter = () => {
+    timerRef.current = setTimeout(() => {
+      trackProductView(product);
+    }, 800);
+  };
+
+  const handleMouseLeave = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+  };
+
+  const handleClick = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    trackProductView(product);
+  };
+
   return (
-    <div className="rec-card">
+    <div 
+      className="rec-card"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={handleClick}
+    >
       <div className="rec-img-box">
         <img src={product.ImageUrl} alt={product.Name} loading="lazy" decoding="async" />
       </div>
@@ -161,8 +217,37 @@ export const RecommendationCard = React.memo(function RecommendationCard({ produ
 });
 
 export const PreviewCard = React.memo(function PreviewCard({ product, index }: ProductCardProps & { index: number }) {
+  const timerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  const handleMouseEnter = () => {
+    timerRef.current = setTimeout(() => {
+      trackProductView(product);
+    }, 800);
+  };
+
+  const handleMouseLeave = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+  };
+
+  const handleClick = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    trackProductView(product);
+  };
+
   return (
-    <div className="product-preview-card" style={{ animationDelay: `${index * 0.1}s` }}>
+    <div 
+      className="product-preview-card" 
+      style={{ animationDelay: `${index * 0.1}s` }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={handleClick}
+    >
       <div className="prod-img-box">
         <img src={product.ImageUrl} alt={product.Name} loading="lazy" decoding="async" />
         <div className="prod-img-overlay" />

@@ -45,3 +45,27 @@ export const formatCurrency = (value: number) =>
     currency: 'INR',
     maximumFractionDigits: 0,
   }).format(value);
+
+export const trackProductView = (product: Product) => {
+  if (typeof window === 'undefined') return;
+  try {
+    const key = 'nimra-recently-viewed';
+    const existingStr = localStorage.getItem(key);
+    let existing: Product[] = [];
+    if (existingStr) {
+      existing = JSON.parse(existingStr);
+    }
+    // Remove if already exists to move to front
+    existing = existing.filter((p) => String(p.ID || p.Name) !== String(product.ID || product.Name));
+    // Add to front
+    existing.unshift(product);
+    // Keep last 4 products
+    existing = existing.slice(0, 4);
+    localStorage.setItem(key, JSON.stringify(existing));
+    // Dispatch a custom event to notify listeners (e.g. the dashboard section)
+    window.dispatchEvent(new Event('nimra-recently-viewed-updated'));
+  } catch (e) {
+    console.error('Error tracking product view:', e);
+  }
+};
+
