@@ -195,20 +195,7 @@ export default function CustomerPortalClient() {
             </aside>
           </section>
 
-          {recommendedProducts.length > 0 && (
-            <section className="recommendations-section">
-              <div className="section-head-left">
-                <span className="eyebrow" style={{ color: 'var(--primary-color)', background: 'rgba(0,150,58,0.1)', border: '1px solid rgba(0,150,58,0.2)', borderRadius: '999px', padding: '0.2rem 0.75rem', fontSize: '0.7rem' }}>Recommendations</span>
-                <h2>Recommended Products</h2>
-                <p>Pure hydration options curated for your regular supply.</p>
-              </div>
-              <div className="recommendations-grid">
-                {recommendedProducts.map((product) => (
-                  <RecommendationCard key={product.ID} product={product} onAdd={handleProductAdded} />
-                ))}
-              </div>
-            </section>
-          )}
+
         </>
       )}
 

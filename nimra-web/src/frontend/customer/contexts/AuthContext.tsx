@@ -15,6 +15,7 @@ export interface User {
   CreatedAt?: string;
   createdAt?: string;
   SavedAddresses?: string;
+  RecentlyViewed?: string;
 }
 
 type StoredSession = {
@@ -251,6 +252,73 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(null);
     router.replace('/');
   }, [router]);
+
+  // Synchronize Recently Viewed Products with Database
+  useEffect(() => {
+    if (!user || typeof window === 'undefined') return;
+
+    // 1. Initial sync: if user has RecentlyViewed, load it into localStorage
+    try {
+      const storedLocal = localStorage.getItem('nimra-recently-viewed');
+      const localIds = storedLocal ? JSON.parse(storedLocal).map((p: any) => String(p.ID || p.Name)) : [];
+      
+      if (user.RecentlyViewed) {
+        const dbParsed = typeof user.RecentlyViewed === 'string' ? JSON.parse(user.RecentlyViewed) : user.RecentlyViewed;
+        if (Array.isArray(dbParsed)) {
+          const dbIdsStr = dbParsed.map((id: any) => String(id));
+          
+          if (JSON.stringify(localIds) !== JSON.stringify(dbIdsStr)) {
+            const newLocal = dbParsed.map((id: any) => ({ ID: id, Name: String(id) }));
+            localStorage.setItem('nimra-recently-viewed', JSON.stringify(newLocal));
+            window.dispatchEvent(new Event('nimra-recently-viewed-updated'));
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error syncing recently viewed on mount:', e);
+    }
+
+    // 2. Listen to updates to localStorage and sync to database
+    const handleUpdate = async () => {
+      try {
+        const storedLocal = localStorage.getItem('nimra-recently-viewed');
+        if (!storedLocal) return;
+        const localParsed = JSON.parse(storedLocal);
+        const ids = localParsed.map((p: any) => p.ID || p.Name).filter(Boolean);
+        const currentDbStr = user.RecentlyViewed || '[]';
+        const currentDbIds = JSON.parse(currentDbStr);
+
+        if (JSON.stringify(ids) !== JSON.stringify(currentDbIds)) {
+          const res = await fetch('/api/cms', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'userCRUD',
+              action: 'update',
+              user: {
+                ID: user.ID,
+                RecentlyViewed: JSON.stringify(ids)
+              }
+            }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            updateUserSession({
+              ...user,
+              RecentlyViewed: JSON.stringify(ids)
+            });
+          }
+        }
+      } catch (e) {
+        console.error('Error syncing recently viewed update:', e);
+      }
+    };
+
+    window.addEventListener('nimra-recently-viewed-updated', handleUpdate);
+    return () => {
+      window.removeEventListener('nimra-recently-viewed-updated', handleUpdate);
+    };
+  }, [user, updateUserSession]);
 
   return (
     <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout, clearSession, updateUserSession }}>

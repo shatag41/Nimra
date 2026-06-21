@@ -2,7 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Product } from '@/types/cms';
+import { useCart } from '@/frontend/customer/hooks/useCart';
 import { formatCurrency } from '../../utils/commerce';
 
 interface RecentlyViewedProductsProps {
@@ -11,6 +13,8 @@ interface RecentlyViewedProductsProps {
 
 export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps) {
   const [viewedProducts, setViewedProducts] = React.useState<Product[]>([]);
+  const { addProduct } = useCart();
+  const router = useRouter();
 
   const loadViewedProducts = React.useCallback(() => {
     try {
@@ -39,6 +43,13 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
     };
   }, [loadViewedProducts]);
 
+  const handleBuyNow = (product: Product, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    addProduct(product);
+    router.push('/checkout');
+  };
+
   return (
     <div className="panel recently-viewed-panel animate-fade-in-up">
       <div className="panel-head compact">
@@ -60,9 +71,14 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
                 <h3 className="rv-title">{product.Name}</h3>
                 <div className="rv-footer">
                   <span className="rv-price">{formatCurrency(Number(product.Price))}</span>
-                  <Link href="/products" className="btn btn-primary btn-sm rv-btn">
-                    View Again
-                  </Link>
+                  <button
+                    type="button"
+                    onClick={(e) => handleBuyNow(product, e)}
+                    className="btn btn-primary btn-sm rv-btn"
+                    style={{ cursor: 'pointer', border: 'none' }}
+                  >
+                    Buy Now
+                  </button>
                 </div>
               </div>
             </div>

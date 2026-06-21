@@ -1174,6 +1174,7 @@ function handleUserCRUD(spreadsheet, params) {
     else if (key === 'Status' || key === 'Active') rowValues[j] = (user.Active !== false) ? 'Active' : 'Inactive';
     else if (key === 'Registration Date') rowValues[j] = action === 'create' ? new Date().toISOString() : data[1] ? data[1][j] : '';
     else if (key === 'SavedAddresses' || key === 'Saved Addresses') rowValues[j] = normalizeSavedAddressesForStorage(user.SavedAddresses);
+    else if (key === 'RecentlyViewed') rowValues[j] = user.RecentlyViewed || '';
     else if (isUserAddressColumn(key)) rowValues[j] = clearAddressFields ? '' : valueForUserAddressColumn(key, primaryAddress, user);
     else rowValues[j] = ''; // Keep empty for others like Last Login
   }
@@ -1260,6 +1261,8 @@ function handleUserCRUD(spreadsheet, params) {
             updatedRowValues[j] = user.Active !== undefined && user.Active !== null ? ((user.Active !== false) ? 'Active' : 'Inactive') : existingValue;
           } else if (key === 'SavedAddresses' || key === 'Saved Addresses') {
             updatedRowValues[j] = user.SavedAddresses !== undefined && user.SavedAddresses !== null ? normalizeSavedAddressesForStorage(user.SavedAddresses) : existingValue;
+          } else if (key === 'RecentlyViewed') {
+            updatedRowValues[j] = user.RecentlyViewed !== undefined && user.RecentlyViewed !== null ? user.RecentlyViewed : existingValue;
           } else if (isUserAddressColumn(key)) {
             updatedRowValues[j] = clearAddressFields ? '' : (primaryAddress ? valueForUserAddressColumn(key, primaryAddress, user) : existingValue);
           } else if (key === 'Registration Date' || key === 'Last Login') {
@@ -1598,7 +1601,8 @@ function getRequiredUserHeaders() {
     'Status',
     'Registration Date',
     'Last Login',
-    'Alternate Mobile Number'
+    'Alternate Mobile Number',
+    'RecentlyViewed'
   ];
 }
 

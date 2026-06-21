@@ -195,7 +195,8 @@ function getRequiredUserHeaders() {
     'Status',
     'Registration Date',
     'Last Login',
-    'Alternate Mobile Number'
+    'Alternate Mobile Number',
+    'RecentlyViewed'
   ];
 }
 
