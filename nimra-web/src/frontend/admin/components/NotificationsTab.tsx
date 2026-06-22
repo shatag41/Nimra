@@ -33,7 +33,7 @@ export default function NotificationsTab({
         {/* Sender Panel */}
         <form className="notif-sender-panel glass-inner" onSubmit={onSubmit}>
           <h3>Broadcast System Update</h3>
-          <div className="form-group" style={{ marginTop: '1rem' }}>
+          <div className="form-group mt-3">
             <label>Notification Title</label>
             <input
               required
@@ -43,7 +43,7 @@ export default function NotificationsTab({
               placeholder="e.g. Scheduled Maintenance, Store Updates"
             />
           </div>
-          <div className="form-group" style={{ marginTop: '1rem' }}>
+          <div className="form-group mt-3">
             <label>Message Content</label>
             <textarea
               required
@@ -53,7 +53,7 @@ export default function NotificationsTab({
               placeholder="Broadcast message text..."
             />
           </div>
-          <button type="submit" className="btn btn-primary" style={{ marginTop: '1.25rem', width: '100%' }} disabled={saveLoading}>
+          <button type="submit" className="btn btn-primary btn-full mt-4" disabled={saveLoading}>
             📢 Log notification
           </button>
         </form>

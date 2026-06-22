@@ -45,12 +45,12 @@ export default function OrderModal({
                 <span>{item.name} x {item.quantity}</span>
               </div>
             ))}
-            <div style={{ marginTop: '0.5rem', textAlign: 'right', fontWeight: 800 }}>
+            <div className="order-grand-total">
               Grand Total: {formatCurrency(selectedOrder.total)}
             </div>
           </div>
 
-          <div className="form-group" style={{ marginTop: '1rem' }}>
+          <div className="form-group mt-3">
             <label>Update Delivery Status</label>
             <CustomSelect
               value={orderStatusVal}

@@ -46,7 +46,7 @@ export default function InquiriesTab({
           </div>
           <div className="filter-group">
             <label>From:</label>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <div className="date-input-wrap">
               <input
                 type="date"
                 value={inquiryStartDate}
@@ -57,7 +57,7 @@ export default function InquiriesTab({
           </div>
           <div className="filter-group">
             <label>To:</label>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <div className="date-input-wrap">
               <input
                 type="date"
                 value={inquiryEndDate}
@@ -95,7 +95,7 @@ export default function InquiriesTab({
                 </td>
                 <td>
                   <div><small>Inquiry ID: {inquiryId || 'Legacy record'}</small></div>
-                  <div style={{ fontWeight: 800, color: 'var(--primary-color)' }}>{inq.Subject}</div>
+                  <div className="inquiry-subject">{inq.Subject}</div>
                   <p className="message-cell">{inq.Message}</p>
                   <span className={`status-badge ${isNew ? 'status-pending' : 'status-delivered'}`}>
                     {isNew ? 'New' : 'Reviewed'}
@@ -103,7 +103,7 @@ export default function InquiriesTab({
                 </td>
                 <td className="sticky-action-col">
                   <div className="actions-flex vertical">
-                    <a href={`tel:${inq.Phone}`} className="btn-table btn-edit text-center">
+                    <a href={`tel:${inq.Phone}`} className="btn-table btn-call">
                       📞 Call
                     </a>
                     <a
@@ -117,11 +117,11 @@ export default function InquiriesTab({
                     {isNew && (
                       <button
                         type="button"
-                        className="btn-table btn-view"
+                        className="btn-table btn-approve"
                         disabled={saveLoading || !inquiryId}
                         onClick={() => void handleInquiryReview(inq)}
                       >
-                        Mark reviewed
+                        ✓ Mark Reviewed
                       </button>
                     )}
                   </div>

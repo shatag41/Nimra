@@ -223,24 +223,24 @@ export default function DashboardTab({ orders, filteredInquiries, filteredOrders
         <div className="chart-card glass">
           <h3>Orders Status Distribution</h3>
           <div className="donut-chart-flex">
-            <div style={{ position: 'relative', width: 140, height: 140 }}>
-              <svg viewBox="0 0 160 160" width="140" height="140" style={{ transform: 'rotate(-90deg)' }}>
+            <div className="donut-chart-container">
+              <svg viewBox="0 0 160 160" width="140" height="140" className="donut-svg">
                 <circle cx="80" cy="80" r="60" fill="transparent" stroke="var(--border-color)" strokeWidth="15" />
                 {statusStats.map((stat, idx) => stat.count > 0 && (
                   <circle key={idx} cx="80" cy="80" r="60" fill="transparent" stroke={stat.color} strokeWidth="15" 
                           strokeDasharray={stat.dashArray} strokeDashoffset={stat.dashOffset} />
                 ))}
               </svg>
-              <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                <strong style={{ fontSize: '1.4rem', color: 'var(--text-primary)', lineHeight: 1, marginBottom: '2px' }}>{totalOrdersCount}</strong>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Total</span>
+              <div className="donut-chart-text">
+                <strong className="donut-total-count">{totalOrdersCount}</strong>
+                <span className="donut-total-label">Total</span>
               </div>
             </div>
-            <div className="legend-list" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '4px', fontSize: '0.8rem', flex: 1, marginLeft: '1rem', alignContent: 'center' }}>
+            <div className="legend-list-grid">
               {statusStats.map((stat, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', opacity: stat.count > 0 ? 1 : 0.4 }}>
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <span style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: stat.color, marginRight: '6px', display: 'inline-block' }}></span>
+                <div key={idx} className="legend-item" style={{ opacity: stat.count > 0 ? 1 : 0.4 }}>
+                  <div className="legend-item-left">
+                    <span className="legend-color-dot" style={{ backgroundColor: stat.color }}></span>
                     {stat.name}
                   </div>
                   <strong>{stat.count}</strong>
@@ -288,7 +288,7 @@ export default function DashboardTab({ orders, filteredInquiries, filteredOrders
                   <tr key={request.requestId}>
                     <td><span className="badge badge-orange">{request.status}</span></td>
                     <td>
-                      <strong style={{ color: 'var(--primary-color)' }}>{request.orderId}</strong>
+                      <strong className="order-id-link">{request.orderId}</strong>
                       <br />
                       <small>{formatCurrency(request.orderTotal)}</small>
                     </td>
@@ -301,20 +301,19 @@ export default function DashboardTab({ orders, filteredInquiries, filteredOrders
                       <div>{request.paymentMethod || 'Cash on Delivery'}</div>
                       <small>{request.refundStatus || 'Pending approval'}</small>
                     </td>
-                    <td style={{ minWidth: 220 }}>
+                    <td className="remarks-col">
                       <textarea
-                        className="form-input"
+                        className="form-input remarks-textarea"
                         value={remarksByRequest[request.requestId] || ''}
                         onChange={(event) => setRemarksByRequest((prev) => ({ ...prev, [request.requestId]: event.target.value }))}
                         placeholder="Audit remarks"
                         rows={2}
-                        style={{ width: '100%', resize: 'vertical', minHeight: 54, padding: '0.55rem 0.7rem', borderColor: 'rgba(37, 99, 235, 0.28)' }}
                       />
                     </td>
                     <td className="sticky-action-col">
-                      <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
-                        <button type="button" className="btn-table btn-edit" onClick={() => reviewCancellation(request, 'Rejected')}>Reject</button>
-                        <button type="button" className="btn-table btn-view" onClick={() => reviewCancellation(request, 'Approved')}>Approve</button>
+                      <div className="actions-flex row-wrap">
+                        <button type="button" className="btn-table btn-reject" onClick={() => reviewCancellation(request, 'Rejected')}>✗ Reject</button>
+                        <button type="button" className="btn-table btn-approve" onClick={() => reviewCancellation(request, 'Approved')}>✓ Approve</button>
                       </div>
                     </td>
                   </tr>
@@ -353,8 +352,8 @@ export default function DashboardTab({ orders, filteredInquiries, filteredOrders
                   rows={2}
                 />
                 <div className="cancellation-mobile-actions">
-                  <button type="button" className="btn-table btn-edit" onClick={() => reviewCancellation(request, 'Rejected')}>Reject</button>
-                  <button type="button" className="btn-table btn-view" onClick={() => reviewCancellation(request, 'Approved')}>Approve</button>
+                  <button type="button" className="btn-table btn-reject" onClick={() => reviewCancellation(request, 'Rejected')}>✗ Reject</button>
+                  <button type="button" className="btn-table btn-approve" onClick={() => reviewCancellation(request, 'Approved')}>✓ Approve</button>
                 </div>
               </div>
             ))}

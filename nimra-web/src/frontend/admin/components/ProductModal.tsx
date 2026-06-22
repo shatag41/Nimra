@@ -62,7 +62,7 @@ export default function ProductModal({
             </div>
           </div>
 
-          <div className="form-row" style={{ zIndex: 12, position: 'relative' }}>
+          <div className="form-row form-row-relative">
             <div className="form-group">
               <label>Product Category</label>
               <CustomSelect

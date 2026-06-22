@@ -82,7 +82,7 @@ export default React.memo(function OrdersTab({
 
   return (
     <div className="orders-tab card glass">
-      <div className="orders-mode-tabs" style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+      <div className="orders-mode-tabs">
         <button
           type="button"
           className={`btn ${ordersView === 'active' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
@@ -123,7 +123,7 @@ export default React.memo(function OrdersTab({
                       <span className={`badge ${isPending ? 'badge-orange' : request.status === 'Approved' ? 'badge-primary' : 'badge-cancelled'}`}>{request.status}</span>
                     </td>
                     <td>
-                      <strong style={{ color: 'var(--primary-color)' }}>{request.orderId}</strong>
+                      <strong className="order-id-link">{request.orderId}</strong>
                       <br />
                       <small>{formatCurrency(request.orderTotal)}</small>
                     </td>
@@ -139,16 +139,15 @@ export default React.memo(function OrdersTab({
                       <div>{request.paymentMethod || 'Cash on Delivery'}</div>
                       <small>{request.refundStatus || 'Pending approval'}</small>
                     </td>
-                    <td style={{ maxWidth: 220 }}>{request.reason || 'Not specified'}</td>
-                    <td style={{ minWidth: 240 }}>
+                    <td className="reason-col">{request.reason || 'Not specified'}</td>
+                    <td className="remarks-col">
                       {isPending ? (
                         <textarea
-                          className="form-input"
+                          className="form-input remarks-textarea"
                           value={remarksByRequest[request.requestId] || ''}
                           onChange={(event) => setRemarksByRequest((prev) => ({ ...prev, [request.requestId]: event.target.value }))}
                           placeholder="Audit remarks"
                           rows={2}
-                          style={{ width: '100%', resize: 'vertical', minHeight: 54, padding: '0.55rem 0.7rem', borderColor: 'rgba(37, 99, 235, 0.28)', background: 'rgba(255,255,255,0.72)' }}
                         />
                       ) : (
                         <small>{request.adminRemarks || 'No remarks recorded'}</small>
@@ -156,12 +155,12 @@ export default React.memo(function OrdersTab({
                     </td>
                     <td className="sticky-action-col">
                       {isPending ? (
-                        <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
-                          <button type="button" className="btn-table btn-edit" onClick={() => reviewCancellation(request, 'Rejected')}>
-                            Reject
+                        <div className="actions-flex row-wrap">
+                          <button type="button" className="btn-table btn-reject" onClick={() => reviewCancellation(request, 'Rejected')}>
+                            ✗ Reject
                           </button>
-                          <button type="button" className="btn-table btn-view" onClick={() => reviewCancellation(request, 'Approved')}>
-                            Approve
+                          <button type="button" className="btn-table btn-approve" onClick={() => reviewCancellation(request, 'Approved')}>
+                            ✓ Approve
                           </button>
                         </div>
                       ) : (
@@ -234,7 +233,7 @@ export default React.memo(function OrdersTab({
           </div>
           <div className="filter-group">
             <label>From:</label>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <div className="date-input-wrap">
               <input
                 type="date"
                 value={orderStartDate}
@@ -245,7 +244,7 @@ export default React.memo(function OrdersTab({
           </div>
           <div className="filter-group">
             <label>To:</label>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div className="date-input-wrap gap-2">
               <input
                 type="date"
                 value={orderEndDate}
@@ -257,8 +256,7 @@ export default React.memo(function OrdersTab({
                 <button 
                   className="btn-clear" 
                   onClick={handleClearOrderFilters} 
-                  title="Clear Filters" 
-                  style={{ display: 'inline-flex', flexShrink: 0, whiteSpace: 'nowrap', alignItems: 'center', justifyContent: 'center', padding: '0.45rem 0.55rem' }}
+                  title="Clear Filters"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M23 4v6h-6"></path>

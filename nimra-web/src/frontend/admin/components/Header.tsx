@@ -53,8 +53,8 @@ export default function Header({
       </h1>
       <div className="header-actions">
         {showSearchAndFilter && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexGrow: 1, maxWidth: '350px', minWidth: '200px' }}>
-            <div className="search-container" style={{ position: 'relative', display: 'flex', alignItems: 'center', flexGrow: 1, width: '100%' }}>
+          <div className="header-search-wrap">
+            <div className="search-container header-search-inner">
               <input
                 type="text"
                 placeholder={`Search ${activeTab}...`}
@@ -72,14 +72,6 @@ export default function Header({
                 strokeLinecap="round" 
                 strokeLinejoin="round" 
                 className="search-icon-svg"
-                style={{ 
-                  position: 'absolute', 
-                  left: '18px', 
-                  pointerEvents: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  zIndex: 2
-                }}
               >
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -87,21 +79,6 @@ export default function Header({
               {globalSearch && (
                 <button
                   onClick={() => setGlobalSearch('')}
-                  style={{
-                    position: 'absolute',
-                    right: '16px',
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'var(--text-secondary)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '4px',
-                    borderRadius: '50%',
-                    zIndex: 3,
-                    transition: 'all var(--transition-fast)'
-                  }}
                   className="search-clear-btn"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -114,22 +91,6 @@ export default function Header({
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`filter-toggle-btn ${showFilters ? 'active' : ''}`}
-              style={{
-                background: showFilters ? 'var(--primary-color)' : 'var(--bg-secondary)',
-                color: showFilters ? 'white' : 'var(--text-primary)',
-                border: '1px solid var(--border-color)',
-                height: '44px',
-                padding: '0 1.25rem',
-                borderRadius: '12px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontWeight: 600,
-                fontSize: '0.85rem',
-                transition: 'all var(--transition-fast)',
-                flexShrink: 0
-              }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>

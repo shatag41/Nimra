@@ -42,7 +42,7 @@ export default function UserModal({
               placeholder="e.g. John Doe"
             />
             {editingUser.Name && editingUser.Name.length === 26 && (
-              <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+              <p className="form-group-error">
                 Display Name cannot exceed 26 characters.
               </p>
             )}
@@ -71,7 +71,7 @@ export default function UserModal({
             </div>
           </div>
 
-          <div className="form-row" style={{ zIndex: 12, position: 'relative' }}>
+          <div className="form-row form-row-relative">
             <div className="form-group">
               <label>Access Role Authority</label>
               <CustomSelect
