@@ -114,14 +114,25 @@ export const useAdminData = (initialCMSData: CMSData) => {
   const refreshData = async () => {
     setLoading(true);
     try {
-      const fetchedOrders = await fetchOrders();
-      const fetchedInquiries = await fetchInquiries();
-      const fetchedUsers = await fetchUsers();
-      const fetchedNotifs = await fetchNotifications();
-      const fetchedCancellationRequests = await fetchCancellationRequests();
-      const fetchedProducts = await fetchProducts();
-      const fetchedBanners = await fetchBanners();
-      const fetchedFaqs = await fetchFAQs();
+      const [
+        fetchedOrders,
+        fetchedInquiries,
+        fetchedUsers,
+        fetchedNotifs,
+        fetchedCancellationRequests,
+        fetchedProducts,
+        fetchedBanners,
+        fetchedFaqs,
+      ] = await Promise.all([
+        fetchOrders(),
+        fetchInquiries(),
+        fetchUsers(),
+        fetchNotifications(),
+        fetchCancellationRequests(),
+        fetchProducts(),
+        fetchBanners(),
+        fetchFAQs(),
+      ]);
 
       setOrders(fetchedOrders);
       setInquiries(fetchedInquiries);

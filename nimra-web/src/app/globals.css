@@ -116,15 +116,23 @@
 html, body {
   height: 100%;
   width: 100%;
-  background-color: var(--app-bg);
-  background-image: var(--app-bg-gradient);
-  background-attachment: fixed;
   color: var(--text-primary);
   font-family: var(--font-body);
   scroll-behavior: smooth;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  pointer-events: auto;
+  letter-spacing: 0.01em;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-color: var(--app-bg);
+  background-image: var(--app-bg-gradient);
   pointer-events: auto;
   letter-spacing: 0.01em;
 }

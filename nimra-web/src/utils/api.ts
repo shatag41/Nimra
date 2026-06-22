@@ -281,6 +281,9 @@ const isNextDynamicSignal = (err: unknown) => {
 
 // Fetch CMS Data via internal proxy
 export const fetchCMSData = async (): Promise<CMSData> => {
+  if (typeof window !== 'undefined' && clientCMSCache) {
+    return clientCMSCache;
+  }
   try {
     const fetchOptions: RequestInit & { next?: { revalidate: number } } =
       typeof window === 'undefined'

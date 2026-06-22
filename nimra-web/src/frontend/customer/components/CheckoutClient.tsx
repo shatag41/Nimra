@@ -6,6 +6,7 @@ import { useCart } from '@/frontend/customer/hooks/useCart';
 import { useAuth } from '@/frontend/customer/hooks/useAuth';
 import { useLocation } from '@/frontend/customer/contexts/LocationContext';
 import { submitOrder, saveUser } from '@/utils/api';
+import { clearCustomerOrdersCache } from '@/frontend/customer/hooks/useCustomerOrders';
 import { toast } from 'sonner';
 import { CheckoutForm, CheckoutSummary, CheckoutSuccess, SavedAddress, WORLD_DATA } from './portal/Checkout';
 import { migrateLegacyLocalAddresses, normalizeSavedAddresses, persistUserSavedAddresses } from '@/frontend/customer/utils/userAddresses';
@@ -362,6 +363,7 @@ export default function CheckoutClient() {
 
     const result = await submitOrder(orderData);
     if (result.success) {
+      clearCustomerOrdersCache(user?.ID);
       cart.clearCart();
       setForm(initialForm);
       setStatus({ kind: 'success', message: result.message, orderId: result.orderId });

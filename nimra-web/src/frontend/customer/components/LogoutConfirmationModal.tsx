@@ -8,7 +8,7 @@ interface LogoutConfirmationModalProps {
   onConfirm: () => void;
 }
 
-export default function LogoutConfirmationModal({
+const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
   isOpen,
   onClose,
   onConfirm,
@@ -196,4 +196,6 @@ export default function LogoutConfirmationModal({
       `}</style>
     </>
   );
-}
+});
+
+export default LogoutConfirmationModal;

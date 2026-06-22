@@ -19,15 +19,15 @@ import {
 
 import Sidebar from './Sidebar';
 import Header from './Header';
-import ProfilePanel from './ProfilePanel';
 import LogoutConfirmationModal from '@/frontend/customer/components/LogoutConfirmationModal';
 
-// Modals
-import OrderModal from './OrderModal';
-import ProductModal from './ProductModal';
-import BannerModal from './BannerModal';
-import FAQModal from './FAQModal';
-import UserModal from './UserModal';
+// Dynamically loaded Modals & Profile
+const ProfilePanel = dynamic(() => import('./ProfilePanel'), { ssr: false });
+const OrderModal = dynamic(() => import('./OrderModal'), { ssr: false });
+const ProductModal = dynamic(() => import('./ProductModal'), { ssr: false });
+const BannerModal = dynamic(() => import('./BannerModal'), { ssr: false });
+const FAQModal = dynamic(() => import('./FAQModal'), { ssr: false });
+const UserModal = dynamic(() => import('./UserModal'), { ssr: false });
 
 // Lazy-loaded Tab components
 const DashboardTab = dynamic(() => import('./DashboardTab'), {
