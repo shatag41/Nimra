@@ -121,7 +121,7 @@ export default function CustomerPortalClient() {
       <PortalHero isAuthenticated={true} name={user?.Name} />
 
       {tab === 'addresses' ? (
-        <section className="portal-grid portal-tab-section" style={{ gridTemplateColumns: '1fr', maxWidth: '1000px', margin: '0 auto' }}>
+        <section className="portal-tab-section" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1rem', width: '100%' }}>
           <Addresses />
         </section>
       ) : tab === 'profile' ? (
