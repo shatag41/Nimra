@@ -191,6 +191,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
 
           {/* Actions */}
           <div className="header-actions">
+            <div className="header-icon-group">
             {/* Location Indicator - Desktop only */}
             {mounted && (!activeUser || activeUser.Role === 'Customer') && (
               <button 
@@ -215,7 +216,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
 
             {/* Admin Notifications Bell */}
             {activeUser && (
-              <div className="notification-container" style={{ position: 'relative' }}>
+              <div className="notification-container">
                 <button 
                   className="icon-btn" 
                   onClick={() => setNotificationDropdownOpen(!notificationDropdownOpen)} 
@@ -224,28 +225,28 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                   {unreadCount > 0 && (
-                    <span className="badge-count" style={{ position: 'absolute', top: '2px', right: '2px', width: '8px', height: '8px', background: '#ef4444', borderRadius: '50%', border: '1.5px solid var(--bg-primary)' }} />
+                    <span className="badge-count" />
                   )}
                 </button>
 
                 {notificationDropdownOpen && (
-                  <div className="profile-dropdown animate-fade-in-up" style={{ width: '320px', right: '-80px', maxHeight: '400px', overflowY: 'auto' }}>
+                  <div className="profile-dropdown notification-dropdown-menu animate-fade-in-up">
                     <div className="dropdown-header">
                       <strong>Notifications</strong>
                     </div>
                     <div className="dropdown-divider"></div>
                     {notifications.length === 0 ? (
-                      <div style={{ padding: '1.25rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                      <div className="notification-empty-state">
                         No new notifications
                       </div>
                     ) : (
-                      <div className="notification-list" style={{ display: 'flex', flexDirection: 'column' }}>
+                      <div className="notification-list">
                         {/* RECENT (UNREAD) SECTION */}
                         {(() => {
                           const unreadNotifs = notifications.filter(n => n.Read !== true && n.Read !== 'true');
                           return unreadNotifs.length > 0 && (
                             <>
-                              <div style={{ padding: '0.4rem 1.25rem', background: 'rgba(37, 99, 235, 0.05)', fontSize: '0.7rem', fontWeight: 800, color: 'var(--primary-color)', letterSpacing: '0.05em', textTransform: 'uppercase', borderBottom: '1px solid var(--border-color)' }}>
+                              <div className="notification-section-label notification-section-label-unread">
                                 Recent
                               </div>
                               {unreadNotifs.map((n) => {
@@ -254,30 +255,14 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                                   <div 
                                     key={`unread-${n.ID}-${originalIdx}`} 
                                     onClick={() => handleMarkAsRead(n.ID, originalIdx)}
-                                    style={{ 
-                                      padding: '0.75rem 1.25rem', 
-                                      borderBottom: '1px solid var(--border-color)', 
-                                      fontSize: '0.85rem',
-                                      cursor: 'pointer',
-                                      background: 'rgba(37, 99, 235, 0.06)',
-                                      transition: 'background 0.2s ease',
-                                      position: 'relative'
-                                    }}
+                                    className="notification-dropdown-item notification-dropdown-item-unread"
                                   >
-                                    <strong style={{ display: 'block', color: 'var(--text-primary)', marginBottom: '0.2rem', paddingRight: '12px' }}>{n.Title}</strong>
-                                    <p style={{ margin: 0, color: 'var(--text-secondary)', lineHeight: 1.4 }}>{n.Message}</p>
-                                    <small style={{ color: 'var(--text-muted)', fontSize: '0.7rem', marginTop: '0.4rem', display: 'block' }}>
+                                    <strong className="notification-title notification-title-unread">{n.Title}</strong>
+                                    <p className="notification-message">{n.Message}</p>
+                                    <small className="notification-date">
                                       {new Date(n.CreatedAt || n.Timestamp).toLocaleDateString()}
                                     </small>
-                                    <span style={{
-                                      position: 'absolute',
-                                      top: '12px',
-                                      right: '12px',
-                                      width: '6px',
-                                      height: '6px',
-                                      borderRadius: '50%',
-                                      background: 'var(--primary-color)'
-                                    }} />
+                                    <span className="notification-unread-dot" />
                                   </div>
                                 );
                               })}
@@ -290,7 +275,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                           const readNotifs = notifications.filter(n => n.Read === true || n.Read === 'true');
                           return readNotifs.length > 0 && (
                             <>
-                              <div style={{ padding: '0.4rem 1.25rem', background: 'var(--bg-secondary)', fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase', borderBottom: '1px solid var(--border-color)' }}>
+                              <div className="notification-section-label notification-section-label-read">
                                 Earliest
                               </div>
                               {readNotifs.map((n) => {
@@ -299,19 +284,11 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                                   <div 
                                     key={`read-${n.ID}-${originalIdx}`} 
                                     onClick={() => handleMarkAsRead(n.ID, originalIdx)}
-                                    style={{ 
-                                      padding: '0.75rem 1.25rem', 
-                                      borderBottom: '1px solid var(--border-color)', 
-                                      fontSize: '0.85rem',
-                                      cursor: 'pointer',
-                                      background: 'transparent',
-                                      transition: 'background 0.2s ease',
-                                      position: 'relative'
-                                    }}
+                                    className="notification-dropdown-item"
                                   >
-                                    <strong style={{ display: 'block', color: 'var(--text-primary)', marginBottom: '0.2rem' }}>{n.Title}</strong>
-                                    <p style={{ margin: 0, color: 'var(--text-secondary)', lineHeight: 1.4 }}>{n.Message}</p>
-                                    <small style={{ color: 'var(--text-muted)', fontSize: '0.7rem', marginTop: '0.4rem', display: 'block' }}>
+                                    <strong className="notification-title">{n.Title}</strong>
+                                    <p className="notification-message">{n.Message}</p>
+                                    <small className="notification-date">
                                       {new Date(n.CreatedAt || n.Timestamp).toLocaleDateString()}
                                     </small>
                                   </div>
@@ -329,7 +306,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
 
             {/* Login / Profile */}
             {!mounted || isAuthLoading ? (
-              <div className="skeleton-btn" style={{ width: '110px', height: '36px', borderRadius: 'var(--radius-md)', background: 'var(--bg-secondary)', border: '1.5px solid var(--border-color)', animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
+              <div className="skeleton-btn header-skeleton-btn" />
             ) : activeUser ? (
               <div className="profile-menu-container">
                 <button 
@@ -442,7 +419,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                         </li>
                         <li className="dropdown-item-toggle">
                           <button onClick={(e) => { e.preventDefault(); toggleTheme(); }} className="dropdown-item theme-toggle-btn">
-                            <div className="theme-toggle-label-wrap" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <div className="theme-toggle-label-wrap">
                               <div className="menu-icon-container">
                                 {theme === 'light' ? (
                                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
@@ -487,7 +464,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                   className={`profile-btn ${profileDropdownOpen ? 'active' : ''}`}
                   aria-label="Profile Menu"
                 >
-                  <div className="avatar" style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
+                  <div className="avatar avatar-guest">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                   </div>
                 </button>
@@ -496,12 +473,12 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                   <div className="profile-dropdown animate-fade-in-up">
                     <Link href="/login" className="dropdown-header-link" onClick={() => setProfileDropdownOpen(false)}>
                       <div className="dropdown-header">
-                        <div className="dropdown-avatar-large" style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
+                        <div className="dropdown-avatar-large dropdown-avatar-guest">
                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         </div>
                         <div className="dropdown-user-info">
                           <strong>Guest</strong>
-                          <span style={{ color: 'var(--primary-color)' }}>Login or Register</span>
+                          <span className="dropdown-login-link">Login or Register</span>
                         </div>
                       </div>
                     </Link>
@@ -523,7 +500,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                         </li>
                         <li className="dropdown-item-toggle">
                           <button onClick={(e) => { e.preventDefault(); toggleTheme(); }} className="dropdown-item theme-toggle-btn">
-                            <div className="theme-toggle-label-wrap" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <div className="theme-toggle-label-wrap">
                               <div className="menu-icon-container">
                                 {theme === 'light' ? (
                                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
@@ -544,6 +521,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                 )}
               </div>
             )}
+            </div>
 
             {/* Mobile Hamburger */}
             <button
@@ -583,8 +561,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                 <Link
                   href="/cart"
                   prefetch={true}
-                  className={`btn btn-secondary ${pathname === '/cart' ? 'active' : ''}`}
-                  style={{ width: '100%', justifyContent: 'center' }}
+                  className={`btn btn-secondary mobile-full-action ${pathname === '/cart' ? 'active' : ''}`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
@@ -593,11 +570,10 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
               )}
 
               {isAuthLoading ? (
-                <div style={{ width: '100%', height: '44px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
+                <div className="mobile-menu-skeleton" />
               ) : activeUser ? (
                 <button
-                  className="btn btn-outline-danger"
-                  style={{ width: '100%', justifyContent: 'center' }}
+                  className="btn btn-outline-danger mobile-full-action"
                   onClick={() => { setMobileMenuOpen(false); setIsLogoutModalOpen(true); }}
                 >
                   Logout
@@ -606,8 +582,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                 <Link
                   href="/login"
                   prefetch={true}
-                  className="btn btn-primary"
-                  style={{ width: '100%', justifyContent: 'center' }}
+                  className="btn btn-primary mobile-full-action"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Login
@@ -626,678 +601,6 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           logout();
         }}
       />
-
-      <style jsx>{`
-        .header {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          z-index: 1000;
-          background: var(--nav-bg);
-          border-bottom: 1px solid var(--border-color);
-          transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
-          backdrop-filter: blur(16px) saturate(180%);
-          -webkit-backdrop-filter: blur(16px) saturate(180%);
-        }
-
-        .header-accent-bar {
-          height: 3px;
-          background: linear-gradient(90deg, #2563eb 0%, #3b82f6 50%, #2563eb 100%);
-          background-size: 200% 100%;
-          animation: shimmerBar 3s ease-in-out infinite;
-        }
-
-        @keyframes shimmerBar {
-          0%   { background-position: 0% center; }
-          50%  { background-position: 100% center; }
-          100% { background-position: 0% center; }
-        }
-
-        .header.scrolled {
-          background: var(--nav-bg);
-          box-shadow: 0 2px 20px rgba(0, 100, 40, 0.1);
-        }
-
-        [data-theme="dark"] .header { background: rgba(15, 23, 42, 0.95); }
-        [data-theme="dark"] .header.scrolled { background: rgba(15, 23, 42, 0.98); box-shadow: 0 2px 20px rgba(0,0,0,0.3); }
-
-        .header-container {
-          width: 100%;
-          max-width: 1280px;
-          margin: 0 auto;
-          padding: 0 1.5rem;
-          height: 56px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 1.5rem;
-        }
-
-        :global(.logo) {
-          display: flex;
-          align-items: center;
-          gap: 0.65rem;
-          text-decoration: none;
-          flex-shrink: 0;
-          transition: opacity 150ms ease;
-        }
-        :global(.logo:hover) { opacity: 0.85; }
-
-        .logo-icon {
-          width: 30px;
-          height: 30px;
-          border-radius: 8px;
-          background: linear-gradient(135deg, #eff6ff, #bfdbfe);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          box-shadow: 0 2px 8px rgba(0,150,58,0.18);
-        }
-
-        [data-theme="dark"] .logo-icon {
-          background: linear-gradient(135deg, #1e293b, #334155);
-        }
-
-        .logo-text-group {
-          display: flex;
-          flex-direction: column;
-          line-height: 1;
-        }
-
-        .logo-text {
-          font-family: var(--font-heading);
-          font-weight: 800;
-          font-size: 1.1rem;
-          letter-spacing: -0.02em;
-          color: var(--text-primary);
-          line-height: 1.1;
-        }
-
-        .logo-tagline {
-          font-size: 0.62rem;
-          font-weight: 600;
-          color: var(--primary-color);
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          line-height: 1.2;
-        }
-
-        /* Desktop Nav */
-        .desktop-nav {
-          display: flex;
-          align-items: center;
-          gap: 0.25rem;
-          flex: 1;
-          justify-content: center;
-        }
-
-        :global(.nav-link) {
-          position: relative;
-          display: flex;
-          align-items: center;
-          gap: 0.25rem;
-          flex-direction: column;
-          padding: 0.4rem 0.75rem;
-          font-size: 0.85rem;
-          font-weight: 600;
-          color: var(--text-secondary);
-          border-radius: var(--radius-lg);
-          transition: all 150ms ease;
-          text-decoration: none;
-          letter-spacing: 0.01em;
-        }
-
-        :global(.nav-link:hover) {
-          color: var(--primary-color);
-          background: rgba(37, 99, 235, 0.07);
-        }
-
-        :global(.nav-link.active) {
-          color: var(--primary-color);
-          background: rgba(37, 99, 235, 0.1);
-          font-weight: 700;
-        }
-
-        .nav-indicator {
-          position: absolute;
-          bottom: 6px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 4px;
-          height: 4px;
-          border-radius: 50%;
-          background: var(--primary-color);
-        }
-
-        /* Header Actions */
-        .header-actions {
-          display: flex;
-          align-items: center;
-          gap: 0.6rem;
-          flex-shrink: 0;
-        }
-
-        .icon-btn {
-          width: 32px;
-          height: 32px;
-          border-radius: var(--radius-md);
-          background: var(--bg-primary);
-          border: 1.5px solid var(--border-color);
-          color: var(--text-secondary);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 150ms ease;
-          flex-shrink: 0;
-        }
-        .icon-btn:hover {
-          background: rgba(37, 99, 235, 0.08);
-          border-color: var(--primary-color);
-          color: var(--primary-color);
-          transform: translateY(-1px);
-        }
-
-        .location-btn {
-          display: flex;
-          align-items: center;
-          gap: 0.35rem;
-          padding: 0 0.75rem;
-          height: 32px;
-          border-radius: var(--radius-md);
-          background: var(--bg-primary);
-          border: 1.5px solid var(--border-color);
-          color: var(--text-secondary);
-          cursor: pointer;
-          transition: all 150ms ease;
-          font-family: var(--font-body);
-        }
-        .location-btn:hover {
-          background: rgba(37, 99, 235, 0.08);
-          border-color: var(--primary-color);
-          color: var(--primary-color);
-          transform: translateY(-1px);
-        }
-        .loc-icon {
-          font-size: 0.9rem;
-        }
-        .loc-text {
-          font-size: 0.8rem;
-          font-weight: 600;
-          white-space: nowrap;
-          max-width: 100px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        :global(.cart-link) {
-          position: relative;
-          width: 32px;
-          height: 32px;
-          border-radius: var(--radius-md);
-          background: var(--bg-primary);
-          border: 1.5px solid var(--border-color);
-          color: var(--text-secondary);
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 150ms ease;
-        }
-        :global(.cart-link:hover),
-        :global(.cart-link.active) {
-          background: rgba(37, 99, 235, 0.08);
-          border-color: var(--primary-color);
-          color: var(--primary-color);
-          transform: translateY(-1px);
-        }
-
-        .cart-count {
-          position: absolute;
-          top: -7px;
-          right: -7px;
-          min-width: 20px;
-          height: 20px;
-          padding: 0 5px;
-          border-radius: 999px;
-          background: linear-gradient(135deg, #2563eb, #3b82f6);
-          color: white;
-          font-size: 0.68rem;
-          font-weight: 800;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 2px 6px rgba(0,150,58,0.35);
-          border: 2px solid white;
-        }
-        [data-theme="dark"] .cart-count { border-color: #0f172a; }
-
-        .btn-outline-danger {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.45rem;
-          padding: 0.4rem 0.85rem;
-          font-size: 0.8rem;
-          font-weight: 600;
-          font-family: var(--font-heading);
-          border-radius: var(--radius-md);
-          border: 1.5px solid rgba(239,68,68,0.35);
-          background: transparent;
-          color: #ef4444;
-          cursor: pointer;
-          transition: all 150ms ease;
-          position: relative;
-          z-index: 10;
-        }
-        .btn-outline-danger:hover {
-          background: rgba(239,68,68,0.08);
-          border-color: #ef4444;
-          transform: translateY(-1px);
-        }
-
-        /* Profile Dropdown */
-        .profile-menu-container {
-          position: relative;
-        }
-
-        .profile-btn {
-          background: none;
-          border: none;
-          padding: 0;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 50%;
-          transition: all 0.2s ease;
-        }
-
-        .avatar {
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, var(--primary-color), #60a5fa);
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 700;
-          font-size: 1rem;
-          font-family: var(--font-heading);
-          box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
-          border: 2px solid transparent;
-          transition: all 0.2s ease;
-        }
-
-        .profile-btn:hover .avatar, .profile-btn.active .avatar {
-          border-color: var(--primary-color);
-          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
-          transform: translateY(-1px);
-        }
-        
-        .profile-dropdown {
-          position: absolute;
-          top: calc(100% + 8px);
-          right: 0;
-          width: 250px;
-          background: var(--bg-primary);
-          border: 1px solid var(--border-color);
-          border-radius: var(--radius-md);
-          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.02);
-          overflow: hidden;
-          z-index: 1000;
-          padding: 0.25rem 0;
-          display: flex;
-          flex-direction: column;
-          font-family: var(--font-body);
-        }
-
-        [data-theme="dark"] .profile-dropdown {
-          background: var(--bg-primary);
-          border-color: var(--border-color);
-          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-        
-        .animate-fade-in-up {
-          animation: fadeInUp 0.15s ease-out;
-          transform-origin: top right;
-        }
-
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(4px) scale(0.98); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        .dropdown-header-link {
-          display: block;
-          text-decoration: none;
-          color: inherit;
-          transition: background 0.15s ease;
-          margin: 0.15rem 0.35rem 0;
-          border-radius: var(--radius-md);
-        }
-
-        .dropdown-header-link:hover {
-          background: rgba(0, 0, 0, 0.03);
-        }
-
-        [data-theme="dark"] .dropdown-header-link:hover {
-          background: rgba(255, 255, 255, 0.04);
-        }
-
-        .dropdown-header {
-          padding: 0.5rem 0.6rem;
-          display: flex;
-          align-items: center;
-          gap: 0.6rem;
-        }
-
-        .dropdown-avatar-large {
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          background: rgba(37, 99, 235, 0.08);
-          color: var(--primary-color);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 600;
-          font-size: 0.95rem;
-          flex-shrink: 0;
-          border: 1px solid rgba(37, 99, 235, 0.12);
-        }
-
-        [data-theme="dark"] .dropdown-avatar-large {
-          background: rgba(96, 165, 250, 0.15);
-          color: #60a5fa;
-          border-color: rgba(96, 165, 250, 0.2);
-        }
-
-        .dropdown-user-info {
-          display: flex;
-          flex-direction: column;
-          flex: 1;
-          min-width: 0;
-        }
-
-        .dropdown-user-info strong {
-          color: var(--text-primary);
-          font-size: 0.85rem;
-          font-weight: 600;
-          letter-spacing: -0.01em;
-          line-height: 1.2;
-        }
-
-        .dropdown-user-info span {
-          color: var(--text-muted);
-          font-size: 0.7rem;
-          margin-top: 1px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .dropdown-divider {
-          height: 1px;
-          background: var(--border-color);
-          margin: 0.35rem 0;
-          opacity: 0.5;
-        }
-
-        .dropdown-group-label {
-          display: block;
-          padding: 0.25rem 0.75rem 0.15rem;
-          font-size: 0.6rem;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          color: var(--text-muted);
-          opacity: 0.7;
-        }
-
-        .dropdown-menu-items {
-          display: flex;
-          flex-direction: column;
-          padding: 0 0.35rem;
-          list-style: none;
-          margin: 0;
-          gap: 0.05rem;
-        }
-
-        .profile-dropdown :global(.dropdown-item) {
-          display: flex;
-          align-items: center;
-          padding: 0.35rem 0.5rem;
-          color: var(--text-secondary);
-          text-decoration: none;
-          font-size: 0.8rem;
-          font-weight: 500;
-          border-radius: var(--radius-md);
-          transition: all 0.15s ease;
-          background: transparent;
-          border: none;
-          cursor: pointer;
-          width: 100%;
-          text-align: left;
-        }
-
-        .profile-dropdown :global(.menu-item-text) {
-          flex: 1;
-          margin-left: 0.6rem;
-          font-size: 0.8rem;
-        }
-
-        .profile-dropdown :global(.menu-icon-container) {
-          width: 24px;
-          height: 24px;
-          border-radius: 4px;
-          background: rgba(0, 0, 0, 0.03);
-          color: var(--text-muted);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.15s ease;
-          flex-shrink: 0;
-        }
-
-        [data-theme="dark"] .profile-dropdown :global(.menu-icon-container) {
-          background: rgba(255, 255, 255, 0.04);
-        }
-
-        .profile-dropdown :global(.dropdown-item:hover) {
-          background: rgba(0, 0, 0, 0.03);
-          color: var(--text-primary);
-        }
-
-        [data-theme="dark"] .profile-dropdown :global(.dropdown-item:hover) {
-          background: rgba(255, 255, 255, 0.04);
-          color: var(--text-primary);
-        }
-
-        .profile-dropdown :global(.dropdown-item:hover) :global(.menu-icon-container) {
-          background: rgba(37, 99, 235, 0.08);
-          color: var(--primary-color);
-        }
-
-        [data-theme="dark"] .profile-dropdown :global(.dropdown-item:hover) :global(.menu-icon-container) {
-          background: rgba(96, 165, 250, 0.15);
-          color: #60a5fa;
-        }
-
-        .profile-dropdown :global(.dropdown-item.active) {
-          background: rgba(37, 99, 235, 0.04);
-          color: var(--primary-color);
-          font-weight: 600;
-        }
-
-        [data-theme="dark"] .profile-dropdown :global(.dropdown-item.active) {
-          background: rgba(96, 165, 250, 0.08);
-          color: #60a5fa;
-        }
-
-        .profile-dropdown :global(.dropdown-item.active) :global(.menu-icon-container) {
-          background: var(--primary-color);
-          color: white;
-        }
-
-        [data-theme="dark"] .profile-dropdown :global(.dropdown-item.active) :global(.menu-icon-container) {
-          background: #60a5fa;
-          color: #0f172a;
-        }
-
-        .theme-toggle-btn {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          width: 100%;
-        }
-
-        .theme-switch {
-          width: 30px;
-          height: 16px;
-          background: var(--border-color);
-          border-radius: 999px;
-          position: relative;
-          transition: all 0.2s ease;
-        }
-        
-        .theme-switch.active {
-          background: var(--primary-color);
-          border-color: var(--primary-color);
-        }
-
-        .theme-switch-handle {
-          width: 10px;
-          height: 10px;
-          background: white;
-          border-radius: 50%;
-          position: absolute;
-          top: 3px;
-          left: 3px;
-          transition: transform 0.2s ease;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.15);
-        }
-
-        [data-theme="dark"] .theme-switch-handle {
-          background: #e2e8f0;
-        }
-
-        .theme-switch.active .theme-switch-handle {
-          transform: translateX(14px);
-          background: white;
-        }
-
-        .logout-group {
-          margin-top: 0.1rem;
-        }
-
-        .profile-dropdown :global(.dropdown-item.text-danger) {
-          color: #dc2626;
-        }
-
-        [data-theme="dark"] .profile-dropdown :global(.dropdown-item.text-danger) {
-          color: #ef4444;
-        }
-
-        .profile-dropdown :global(.dropdown-item.text-danger) :global(.menu-icon-container) {
-          color: currentColor;
-        }
-
-        .profile-dropdown :global(.dropdown-item.text-danger:hover) {
-          background: #fef2f2;
-          color: #b91c1c;
-        }
-
-        [data-theme="dark"] .profile-dropdown :global(.dropdown-item.text-danger:hover) {
-          background: rgba(239, 68, 68, 0.08);
-          color: #fca5a5;
-        }
-
-        .profile-dropdown :global(.dropdown-item.text-danger:hover) :global(.menu-icon-container) {
-          background: rgba(239, 68, 68, 0.08);
-          color: #b91c1c;
-        }
-
-        [data-theme="dark"] .profile-dropdown :global(.dropdown-item.text-danger:hover) :global(.menu-icon-container) {
-          background: rgba(239, 68, 68, 0.15);
-          color: #fca5a5;
-        }
-
-        /* Mobile Menu Button */
-        .mobile-menu-btn {
-          display: none;
-          width: 32px;
-          height: 32px;
-          border-radius: var(--radius-md);
-          background: var(--bg-primary);
-          border: 1.5px solid var(--border-color);
-          color: var(--text-primary);
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 150ms ease;
-          flex-shrink: 0;
-        }
-        .mobile-menu-btn:hover {
-          background: rgba(37, 99, 235, 0.08);
-          border-color: var(--primary-color);
-          color: var(--primary-color);
-        }
-
-        /* Mobile Drawer */
-        .mobile-drawer {
-          position: absolute;
-          top: calc(100% + 0px);
-          left: 0;
-          right: 0;
-          background: var(--bg-secondary);
-          border-bottom: 1px solid var(--border-color);
-          box-shadow: 0 12px 40px rgba(0, 100, 40, 0.12);
-          padding: 1.5rem;
-          z-index: 999;
-        }
-
-        .mobile-nav {
-          display: flex;
-          flex-direction: column;
-          gap: 0.35rem;
-        }
-
-        :global(.mobile-nav-link) {
-          display: block;
-          padding: 0.875rem 1rem;
-          font-size: 1rem;
-          font-weight: 600;
-          color: var(--text-secondary);
-          border-radius: var(--radius-md);
-          transition: all 150ms ease;
-        }
-        :global(.mobile-nav-link:hover),
-        :global(.mobile-nav-link.active) {
-          color: var(--primary-color);
-          background: rgba(37, 99, 235, 0.08);
-        }
-
-        .mobile-nav-divider {
-          height: 1px;
-          background: var(--border-color);
-          margin: 0.75rem 0;
-        }
-
-        @media (max-width: 900px) {
-          .desktop-nav { display: none; }
-          .mobile-menu-btn { display: flex; }
-          .header-actions .btn-outline-danger span { display: none; }
-          .location-btn .loc-text { display: none; }
-        }
-
-        @media (max-width: 640px) {
-          .header-container { padding: 0 1rem; }
-          .logo-tagline { display: none; }
-          .header-actions .btn-outline-danger { display: none; }
-        }
-      `}</style>
     </>
   );
 });
