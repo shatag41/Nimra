@@ -1352,9 +1352,9 @@ export function CheckoutSuccess({ message, orderId }: CheckoutSuccessProps) {
       <style jsx>{`
         .co-success {
           text-align: center;
-          max-width: 520px;
-          margin: 3rem auto;
-          padding: 3.5rem 2rem;
+          max-width: 440px;
+          margin: 1.5rem auto;
+          padding: 2.25rem 1.5rem;
           border-radius: var(--radius-2xl);
           border: 1px solid var(--glass-border);
           box-shadow: var(--shadow-2xl);
@@ -1363,20 +1363,20 @@ export function CheckoutSuccess({ message, orderId }: CheckoutSuccessProps) {
         }
 
         .co-success-icon {
-          font-size: 4rem;
-          margin-bottom: 1.25rem;
+          font-size: 2.75rem;
+          margin-bottom: 0.75rem;
         }
 
         .co-success h2 {
-          font-size: 2rem;
-          margin-bottom: 0.75rem;
+          font-size: 1.50rem;
+          margin-bottom: 0.5rem;
           font-weight: 800;
         }
 
         .co-success p {
           color: var(--text-secondary);
-          margin-bottom: 1.5rem;
-          font-size: 1rem;
+          margin-bottom: 1rem;
+          font-size: 0.92rem;
         }
 
         .co-success strong {
@@ -1384,16 +1384,16 @@ export function CheckoutSuccess({ message, orderId }: CheckoutSuccessProps) {
           background: rgba(148, 163, 184, 0.06);
           border: 1.5px solid var(--border-color);
           border-radius: var(--radius-md);
-          padding: 0.75rem 1rem;
+          padding: 0.5rem 0.85rem;
           font-family: var(--font-heading);
           color: var(--text-primary);
-          font-size: 1.1rem;
-          margin-bottom: 2.5rem;
+          font-size: 0.95rem;
+          margin-bottom: 1.5rem;
         }
 
         .success-actions {
           display: flex;
-          gap: 1rem;
+          gap: 0.75rem;
           justify-content: center;
         }
 
