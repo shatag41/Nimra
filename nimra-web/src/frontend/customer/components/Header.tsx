@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLocation } from '../contexts/LocationContext';
 import { fetchNotifications, saveNotification } from '@/utils/api';
 import LogoutConfirmationModal from './LogoutConfirmationModal';
+import { AppTheme, applyTheme, initializeTheme, THEME_CHANGE_EVENT } from '../utils/theme';
 
 interface HeaderProps {
   companyInfo: CompanyInfo;
@@ -16,7 +17,7 @@ interface HeaderProps {
 
 export default React.memo(function Header({ companyInfo }: HeaderProps) {
   const [mounted, setMounted] = useState(false);
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<AppTheme>('light');
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
@@ -37,12 +38,12 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
 
   useEffect(() => {
     setMounted(true);
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-    const activeTheme = savedTheme === 'dark' || savedTheme === 'light' ? savedTheme : 'light';
-    setTheme(activeTheme);
-    document.documentElement.setAttribute('data-theme', activeTheme);
-    document.documentElement.style.colorScheme = activeTheme;
-    document.body.setAttribute('data-theme', activeTheme);
+    setTheme(initializeTheme());
+
+    const handleThemeChange = (event: Event) => {
+      setTheme((event as CustomEvent<AppTheme>).detail);
+    };
+    window.addEventListener(THEME_CHANGE_EVENT, handleThemeChange);
 
     const transitionTimeout = setTimeout(() => {
       document.documentElement.classList.add('theme-transition');
@@ -63,6 +64,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
     return () => {
       window.removeEventListener('scroll', handleScroll);
       document.removeEventListener('click', handleClickOutside);
+      window.removeEventListener(THEME_CHANGE_EVENT, handleThemeChange);
       clearTimeout(transitionTimeout);
     };
   }, []);
@@ -111,10 +113,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    document.documentElement.setAttribute('data-theme', newTheme);
-    document.documentElement.style.colorScheme = newTheme;
-    document.body.setAttribute('data-theme', newTheme);
+    applyTheme(newTheme, true);
   };
 
   const getNavLinks = () => {
@@ -656,7 +655,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
         }
 
         .header.scrolled {
-          background: rgba(255, 255, 255, 0.97);
+          background: var(--nav-bg);
           box-shadow: 0 2px 20px rgba(0, 100, 40, 0.1);
         }
 

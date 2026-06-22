@@ -30,7 +30,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
   const spotlightProducts = products.slice(0, 3);
 
   return (
-    <>
+    <div className="home-page">
       {/* ─── 1. HERO CAROUSEL ───────────────────────────────────────────────── */}
       <section className="hero-section">
         {banners.map((banner, idx) => (
@@ -837,7 +837,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           display: flex;
           align-items: center;
           justify-content: center;
-          background: linear-gradient(180deg, #f1f5f9, #f8fafc);
+          background: var(--product-image-bg);
           position: relative;
           overflow: hidden;
           padding: 0.85rem;
@@ -1259,6 +1259,6 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           .trust-divider { display: none; }
         }
       `}</style>
-    </>
+    </div>
   );
 }

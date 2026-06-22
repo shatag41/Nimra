@@ -52,8 +52,10 @@ export default async function RootLayout({
             __html: `
               (function() {
                 try {
-                  var savedTheme = localStorage.getItem('theme');
+                  var savedTheme = localStorage.getItem('nimra_theme') || localStorage.getItem('theme');
                   var activeTheme = savedTheme === 'dark' || savedTheme === 'light' ? savedTheme : 'light';
+                  localStorage.setItem('nimra_theme', activeTheme);
+                  localStorage.removeItem('theme');
                   document.documentElement.setAttribute('data-theme', activeTheme);
                   document.documentElement.style.colorScheme = activeTheme;
                   document.body && document.body.setAttribute('data-theme', activeTheme);

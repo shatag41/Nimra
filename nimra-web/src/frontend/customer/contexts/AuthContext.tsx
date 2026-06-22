@@ -67,24 +67,11 @@ export const clearBrowserSession = () => {
 
   if (typeof window === 'undefined') return;
 
-  window.document.cookie.split(';').forEach((cookie) => {
-    const name = cookie.split('=')[0]?.trim();
-    if (!name) return;
-    const hostParts = window.location.hostname.split('.');
-    const domains = hostParts.length > 1
-      ? [window.location.hostname, `.${hostParts.slice(-2).join('.')}`]
-      : [window.location.hostname];
-
-    window.document.cookie = `${name}=; Max-Age=0; path=/`;
-    domains.forEach((domain) => {
-      window.document.cookie = `${name}=; Max-Age=0; path=/; domain=${domain}`;
-    });
-  });
-
-  Object.keys(window.localStorage).forEach((key) => {
-    window.localStorage.removeItem(key);
-  });
-  window.sessionStorage.clear();
+  // Authentication cleanup must never remove durable UI preferences such as
+  // theme, location, cart, notification state, or recently viewed products.
+  window.localStorage.removeItem('nimra_admin_user');
+  window.localStorage.removeItem('nimra_admin_active_tab');
+  window.sessionStorage.removeItem(TAB_SESSION_KEY);
 };
 
 const readStoredUser = (): User | null => {

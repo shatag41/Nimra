@@ -1,32 +1,33 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { AppTheme, applyTheme, initializeTheme, THEME_CHANGE_EVENT } from '../utils/theme';
 
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<AppTheme>('light');
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-    const activeTheme = savedTheme === 'dark' || savedTheme === 'light' ? savedTheme : 'light';
-    setTheme(activeTheme);
-    document.documentElement.setAttribute('data-theme', activeTheme);
-    document.documentElement.style.colorScheme = activeTheme;
-    document.body.setAttribute('data-theme', activeTheme);
+    setTheme(initializeTheme());
+
+    const handleThemeChange = (event: Event) => {
+      setTheme((event as CustomEvent<AppTheme>).detail);
+    };
+    window.addEventListener(THEME_CHANGE_EVENT, handleThemeChange);
 
     const transitionTimeout = setTimeout(() => {
       document.documentElement.classList.add('theme-transition');
     }, 150);
 
-    return () => clearTimeout(transitionTimeout);
+    return () => {
+      clearTimeout(transitionTimeout);
+      window.removeEventListener(THEME_CHANGE_EVENT, handleThemeChange);
+    };
   }, []);
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    document.documentElement.setAttribute('data-theme', newTheme);
-    document.documentElement.style.colorScheme = newTheme;
-    document.body.setAttribute('data-theme', newTheme);
+    applyTheme(newTheme, true);
   };
 
   return (
