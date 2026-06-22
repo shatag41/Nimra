@@ -23,7 +23,7 @@ function doGet(e) {
   } else if (action === 'getCancellationRequests') {
     return jsonResponse(getCancellationRequests(spreadsheet));
   } else if (action === 'getInquiries') {
-    return jsonResponse(getSheetData(spreadsheet.getSheetByName('Inquiries')));
+    return jsonResponse(getSheetData(ensureInquiriesSheet(spreadsheet)));
   } else if (action === 'getUsers') {
     return jsonResponse(getUsersData(spreadsheet));
   } else if (action === 'getNotifications') {
@@ -88,6 +88,9 @@ function doPost(e) {
     } else if (params.type === 'notificationCRUD') {
       Logger.log("doPost: Routing to notificationCRUD()");
       return jsonResponse(handleNotificationCRUD(spreadsheet, params));
+    } else if (params.type === 'inquiryCRUD') {
+      Logger.log("doPost: Routing to inquiryCRUD()");
+      return jsonResponse(handleInquiryCRUD(spreadsheet, params));
     } else if (params.type === 'login') {
       Logger.log("doPost: Routing to handleAuthLogin()");
       return jsonResponse(handleAuthLogin(spreadsheet, params));
@@ -134,28 +137,411 @@ function doPost(e) {
 function saveInquiry(spreadsheet, params) {
   Logger.log("saveInquiry: Starting inquiry validation.");
   var name = String(params.name || '').trim();
-  var email = String(params.email || '').trim();
+  var email = normalizeEmail(params.email);
   var phone = String(params.phone || '').trim();
   var subject = String(params.subject || '').trim();
   var message = String(params.message || '').trim();
+  var customerId = String(params.customerId || params.userId || params.customerID || '').trim() || 'Guest';
+  var submissionKey = String(params.idempotencyKey || params.submissionKey || '').trim();
 
   // Validate required fields (Email is optional, Name, Phone (10 digits), Subject, and Message are required)
-  if (!name || !/^[0-9]{10}$/.test(phone) || !subject || !message) {
+  if (!name || (email && !isValidEmail(email)) || !/^[0-9]{10}$/.test(phone) || !subject || !message) {
     Logger.log("saveInquiry Validation Failure. Name=" + name + ", Phone=" + phone + ", Subject=" + subject);
     return { success: false, message: 'Invalid inquiry payload. Required fields are missing or invalid.' };
   }
 
-  var sheet = spreadsheet.getSheetByName('Inquiries');
-  if (!sheet) {
-    Logger.log("saveInquiry: Inquiries sheet not found. Creating it...");
-    sheet = spreadsheet.insertSheet('Inquiries');
-    sheet.getRange(1, 1, 1, 6).setValues([['Timestamp', 'Name', 'Email', 'Phone', 'Subject', 'Message']]);
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  var timestamp = new Date();
+  var inquiryId = '';
+  var inquirySaved = false;
+  var emailResult = { sent: false };
+  var notificationResult = { created: false };
+  try {
+    var sheet = ensureInquiriesSheet(spreadsheet);
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var existingInquiry = findInquiryBySubmissionKey(sheet, headers, submissionKey);
+    if (existingInquiry) {
+      if (!existingInquiry.notificationSent) {
+        try {
+          notificationResult = createInquiryAdminNotification(spreadsheet, existingInquiry.inquiryId, existingInquiry.name, existingInquiry.subject);
+        } catch (retryNotificationError) {
+          notificationResult = { created: false, error: getErrorMessage(retryNotificationError) };
+        }
+        markInquiryNotificationResult(sheet, headers, existingInquiry.rowNumber, notificationResult);
+      } else {
+        notificationResult = { created: false, duplicatePrevented: true };
+      }
+      if (!existingInquiry.emailSent) {
+        try {
+          emailResult = sendInquiryAdminEmail(spreadsheet, existingInquiry);
+        } catch (retryEmailError) {
+          emailResult = { sent: false, error: getErrorMessage(retryEmailError) };
+        }
+        markInquiryEmailResult(sheet, headers, existingInquiry.rowNumber, emailResult, new Date());
+      } else {
+        emailResult = { sent: true };
+      }
+      return {
+        success: true,
+        inquiryId: existingInquiry.inquiryId,
+        status: existingInquiry.status || 'New',
+        message: 'Inquiry already submitted successfully',
+        duplicatePrevented: true,
+        adminNotificationCreated: existingInquiry.notificationSent || notificationResult.created || notificationResult.duplicatePrevented,
+        adminEmailSent: existingInquiry.emailSent || emailResult.sent,
+        adminEmailError: emailResult.sent ? '' : emailResult.error
+      };
+    }
+    inquiryId = generateInquiryId(sheet, headers, timestamp);
+
+    var inquiryValues = {
+      'Inquiry ID': inquiryId,
+      'Submission Key': submissionKey,
+      'Customer ID': customerId,
+      'Timestamp': timestamp,
+      'Name': name,
+      'Email': email,
+      'Phone': phone,
+      'Subject': subject,
+      'Message': message,
+      'Status': 'New',
+      'Admin Notification Sent': '',
+      'Admin Notification ID': '',
+      'Admin Email Sent At': '',
+      'Admin Email Error': '',
+      'Reviewed At': '',
+      'Reviewed By': ''
+    };
+    var rowData = headers.map(function(header) {
+      return inquiryValues[header] !== undefined ? inquiryValues[header] : '';
+    });
+
+    Logger.log("saveInquiry: Appending row for " + name + " as " + inquiryId);
+    sheet.appendRow(rowData);
+    var rowNumber = sheet.getLastRow();
+    inquirySaved = true;
+
+    try {
+      notificationResult = createInquiryAdminNotification(spreadsheet, inquiryId, name, subject);
+      markInquiryNotificationResult(sheet, headers, rowNumber, notificationResult);
+    } catch (notificationError) {
+      notificationResult = { created: false, error: getErrorMessage(notificationError) };
+      Logger.log('saveInquiry admin notification failure: ' + notificationResult.error);
+      markInquiryNotificationResult(sheet, headers, rowNumber, notificationResult);
+    }
+
+    try {
+      emailResult = sendInquiryAdminEmail(spreadsheet, {
+        inquiryId: inquiryId,
+        customerId: customerId,
+        name: name,
+        email: email,
+        phone: phone,
+        subject: subject,
+        message: message,
+        timestamp: timestamp
+      });
+    } catch (emailError) {
+      emailResult = { sent: false, error: getErrorMessage(emailError) };
+      Logger.log('saveInquiry admin email failure: ' + emailResult.error);
+    }
+    markInquiryEmailResult(sheet, headers, rowNumber, emailResult, new Date());
+  } catch (error) {
+    Logger.log("saveInquiry notification/email failure: " + getErrorMessage(error));
+    if (!inquirySaved) throw error;
+  } finally {
+    lock.releaseLock();
   }
 
-  var timestamp = new Date();
-  Logger.log("saveInquiry: Appending row for " + name);
-  sheet.appendRow([timestamp, name, email, phone, subject, message]);
-  return { success: true, message: 'Inquiry submitted successfully' };
+  var response = {
+    success: true,
+    inquiryId: inquiryId,
+    status: 'New',
+    message: 'Inquiry submitted successfully',
+    adminNotificationCreated: notificationResult.created === true,
+    adminEmailSent: emailResult.sent === true
+  };
+  if (!emailResult.sent && emailResult.error) {
+    response.adminEmailError = emailResult.error;
+    response.emailHint = 'Run authorizeNimraEmailSending once in Apps Script, then deploy a new Web App version with Execute as Me.';
+  }
+  return response;
+}
+
+function ensureInquiriesSheet(spreadsheet) {
+  var sheet = spreadsheet.getSheetByName('Inquiries');
+  if (!sheet) {
+    Logger.log("ensureInquiriesSheet: Inquiries sheet not found. Creating it...");
+    sheet = spreadsheet.insertSheet('Inquiries');
+  }
+
+  var requiredHeaders = [
+    'Inquiry ID',
+    'Submission Key',
+    'Customer ID',
+    'Timestamp',
+    'Name',
+    'Email',
+    'Phone',
+    'Subject',
+    'Message',
+    'Status',
+    'Admin Notification Sent',
+    'Admin Notification ID',
+    'Admin Email Sent At',
+    'Admin Email Error',
+    'Reviewed At',
+    'Reviewed By'
+  ];
+
+  if (sheet.getLastRow() === 0 || sheet.getLastColumn() === 0) {
+    sheet.getRange(1, 1, 1, requiredHeaders.length).setValues([requiredHeaders]);
+    return sheet;
+  }
+
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(function(header) {
+    return String(header || '').trim();
+  });
+
+  for (var i = 0; i < requiredHeaders.length; i++) {
+    if (headers.indexOf(requiredHeaders[i]) === -1) {
+      sheet.getRange(1, headers.length + 1).setValue(requiredHeaders[i]);
+      headers.push(requiredHeaders[i]);
+    }
+  }
+
+  var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return sheet;
+
+  var idIndex = headers.indexOf('Inquiry ID');
+  var customerIdIndex = headers.indexOf('Customer ID');
+  var statusIndex = headers.indexOf('Status');
+  var timestampIndex = headers.indexOf('Timestamp');
+  var seenIds = {};
+  for (var row = 1; row < data.length; row++) {
+    var rowNumber = row + 1;
+    var currentId = String(data[row][idIndex] || '').trim();
+    if (!currentId || seenIds[currentId]) {
+      var rowDate = data[row][timestampIndex] instanceof Date ? data[row][timestampIndex] : new Date(data[row][timestampIndex] || Date.now());
+      currentId = generateInquiryId(sheet, headers, rowDate, seenIds);
+      sheet.getRange(rowNumber, idIndex + 1).setValue(currentId);
+    }
+    seenIds[currentId] = true;
+    if (!String(data[row][customerIdIndex] || '').trim()) sheet.getRange(rowNumber, customerIdIndex + 1).setValue('Guest');
+    if (!String(data[row][statusIndex] || '').trim()) sheet.getRange(rowNumber, statusIndex + 1).setValue('New');
+  }
+
+  return sheet;
+}
+
+function findInquiryBySubmissionKey(sheet, headers, submissionKey) {
+  if (!submissionKey) return null;
+  var keyIndex = headers.indexOf('Submission Key');
+  var idIndex = headers.indexOf('Inquiry ID');
+  if (keyIndex < 0 || idIndex < 0 || sheet.getLastRow() <= 1) return null;
+
+  var data = sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).getValues();
+  var statusIndex = headers.indexOf('Status');
+  var notificationIndex = headers.indexOf('Admin Notification Sent');
+  var emailIndex = headers.indexOf('Admin Email Sent At');
+  for (var i = 0; i < data.length; i++) {
+    if (String(data[i][keyIndex] || '').trim() !== submissionKey) continue;
+    return {
+      inquiryId: String(data[i][idIndex] || '').trim(),
+      customerId: String(data[i][headers.indexOf('Customer ID')] || 'Guest'),
+      name: String(data[i][headers.indexOf('Name')] || ''),
+      email: String(data[i][headers.indexOf('Email')] || ''),
+      phone: String(data[i][headers.indexOf('Phone')] || ''),
+      subject: String(data[i][headers.indexOf('Subject')] || ''),
+      message: String(data[i][headers.indexOf('Message')] || ''),
+      timestamp: data[i][headers.indexOf('Timestamp')] instanceof Date ? data[i][headers.indexOf('Timestamp')] : new Date(data[i][headers.indexOf('Timestamp')]),
+      rowNumber: i + 2,
+      status: statusIndex >= 0 ? String(data[i][statusIndex] || '') : 'New',
+      notificationSent: notificationIndex >= 0 && String(data[i][notificationIndex] || '').toLowerCase() === 'yes',
+      emailSent: emailIndex >= 0 && Boolean(data[i][emailIndex])
+    };
+  }
+  return null;
+}
+
+function generateInquiryId(sheet, headers, date, reservedIds) {
+  var idIndex = headers.indexOf('Inquiry ID');
+  var stamp = Utilities.formatDate(date || new Date(), Session.getScriptTimeZone(), 'yyyyMMdd-HHmmss');
+  var existing = reservedIds || {};
+  var data = sheet.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    var current = String(data[i][idIndex] || '').trim();
+    if (current) existing[current] = true;
+  }
+
+  var candidate = '';
+  do {
+    candidate = 'INQ-' + stamp + '-' + Math.floor(Math.random() * 900 + 100);
+  } while (existing[candidate]);
+  existing[candidate] = true;
+  return candidate;
+}
+
+function createInquiryAdminNotification(spreadsheet, inquiryId, name, subject) {
+  getNotificationsData(spreadsheet);
+  var sheet = spreadsheet.getSheetByName('Notifications');
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  ensureColumn(sheet, headers, 'Type');
+  ensureColumn(sheet, headers, 'InquiryID');
+  var existing = findNotificationByInquiryId(spreadsheet, inquiryId);
+  if (existing) {
+    return { created: false, id: existing.ID, duplicatePrevented: true };
+  }
+
+  var title = 'New inquiry: ' + subject;
+  var message = 'Inquiry ' + inquiryId + ' from ' + name + ' is waiting for review.';
+  var result = handleNotificationCRUD(spreadsheet, {
+    action: 'create',
+    notification: {
+      Timestamp: new Date().toISOString(),
+      Title: title,
+      Message: message,
+      Read: false,
+      Status: 'Published',
+      InquiryID: inquiryId,
+      Type: 'Inquiry'
+    }
+  });
+  return { created: result.success === true, id: result.ID || '', error: result.success ? '' : result.message };
+}
+
+function findNotificationByInquiryId(spreadsheet, inquiryId) {
+  var sheet = spreadsheet.getSheetByName('Notifications');
+  if (!sheet) return null;
+  var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return null;
+  var headers = data[0].map(function(header) { return String(header || '').trim(); });
+  var inquiryIdIndex = headers.indexOf('InquiryID');
+  if (inquiryIdIndex === -1) inquiryIdIndex = headers.indexOf('Inquiry ID');
+  if (inquiryIdIndex === -1) return null;
+  var idIndex = headers.indexOf('ID');
+  if (idIndex === -1) idIndex = headers.indexOf('NotificationID');
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][inquiryIdIndex] || '').trim() === String(inquiryId).trim()) {
+      return { ID: idIndex >= 0 ? data[i][idIndex] : '' };
+    }
+  }
+  return null;
+}
+
+function markInquiryNotificationResult(sheet, headers, rowNumber, result) {
+  var sentIndex = headers.indexOf('Admin Notification Sent');
+  var idIndex = headers.indexOf('Admin Notification ID');
+  if (sentIndex >= 0) sheet.getRange(rowNumber, sentIndex + 1).setValue(result.created || result.duplicatePrevented ? 'Yes' : 'No');
+  if (idIndex >= 0 && result.id) sheet.getRange(rowNumber, idIndex + 1).setValue(result.id);
+}
+
+function markInquiryEmailResult(sheet, headers, rowNumber, result, sentAt) {
+  var sentAtIndex = headers.indexOf('Admin Email Sent At');
+  var errorIndex = headers.indexOf('Admin Email Error');
+  if (sentAtIndex >= 0) sheet.getRange(rowNumber, sentAtIndex + 1).setValue(result.sent ? sentAt : '');
+  if (errorIndex >= 0) sheet.getRange(rowNumber, errorIndex + 1).setValue(result.sent ? '' : (result.error || 'Unknown email error'));
+}
+
+function sendInquiryAdminEmail(spreadsheet, inquiry) {
+  var adminEmail = getConfiguredAdminEmail(spreadsheet);
+  if (!adminEmail) {
+    Logger.log('sendInquiryAdminEmail skipped: Admin email address is not configured.');
+    return { sent: false, error: 'Admin email address is not configured.' };
+  }
+  Logger.log('sendInquiryAdminEmail: Sending inquiry ' + inquiry.inquiryId + ' to ' + adminEmail);
+
+  var submittedAt = Utilities.formatDate(inquiry.timestamp, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss z');
+  var subject = 'NIMRA New Inquiry: ' + inquiry.inquiryId;
+  var plainBody =
+    'A new customer inquiry has been submitted.\n\n' +
+    'Inquiry ID: ' + inquiry.inquiryId + '\n' +
+    'Customer ID: ' + inquiry.customerId + '\n' +
+    'Customer Name: ' + inquiry.name + '\n' +
+    'Email: ' + (inquiry.email || 'Not provided') + '\n' +
+    'Mobile Number: ' + inquiry.phone + '\n' +
+    'Subject: ' + inquiry.subject + '\n' +
+    'Message: ' + inquiry.message + '\n' +
+    'Submission Date/Time: ' + submittedAt;
+  var htmlBody =
+    '<p>A new customer inquiry has been submitted.</p>' +
+    '<table cellpadding="6" cellspacing="0" style="border-collapse:collapse;">' +
+    inquiryEmailRow('Inquiry ID', inquiry.inquiryId) +
+    inquiryEmailRow('Customer ID', inquiry.customerId) +
+    inquiryEmailRow('Customer Name', inquiry.name) +
+    inquiryEmailRow('Email', inquiry.email || 'Not provided') +
+    inquiryEmailRow('Mobile Number', inquiry.phone) +
+    inquiryEmailRow('Subject', inquiry.subject) +
+    inquiryEmailRow('Message', inquiry.message) +
+    inquiryEmailRow('Submission Date/Time', submittedAt) +
+    '</table>';
+
+  return sendNimraEmail(adminEmail, subject, plainBody, htmlBody, 'NIMRA Admin Alerts');
+}
+
+function inquiryEmailRow(label, value) {
+  return '<tr><td style="font-weight:700;border:1px solid #ddd;">' + escapeHtml(label) + '</td><td style="border:1px solid #ddd;">' + escapeHtml(value) + '</td></tr>';
+}
+
+function getConfiguredAdminEmail(spreadsheet) {
+  var info = getCompanyInfoData(spreadsheet.getSheetByName('CompanyInfo')) || {};
+  var email = normalizeEmail(
+    Session.getEffectiveUser().getEmail() ||
+    NIMRA_OVERRIDE_TEST_EMAIL ||
+    info.AdminEmail ||
+    info['Admin Email'] ||
+    info.Admin_Email ||
+    info.Email ||
+    'tsenterprises.nat@gmail.com'
+  );
+  return isValidEmail(email) ? email : '';
+}
+
+function testInquiryAdminEmail() {
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var result = sendInquiryAdminEmail(spreadsheet, {
+    inquiryId: 'INQ-EMAIL-TEST',
+    customerId: 'Guest',
+    name: 'Inquiry Email Test',
+    email: 'guest@example.com',
+    phone: '9999999999',
+    subject: 'Admin inquiry email test',
+    message: 'This is a test of the existing NIMRA email flow for inquiry notifications.',
+    timestamp: new Date()
+  });
+  Logger.log('testInquiryAdminEmail result: ' + JSON.stringify(result));
+  if (!result.sent) throw new Error(result.error || 'Inquiry admin email was not sent.');
+  return 'Inquiry admin email sent successfully to ' + getConfiguredAdminEmail(spreadsheet);
+}
+
+function handleInquiryCRUD(spreadsheet, params) {
+  var action = String(params.action || '').trim();
+  var inquiry = params.inquiry || {};
+  var inquiryId = String(inquiry.ID || inquiry.InquiryID || inquiry['Inquiry ID'] || params.inquiryId || '').trim();
+  if (action !== 'review' && action !== 'update') {
+    return { success: false, message: 'Unsupported inquiry action.' };
+  }
+  if (!inquiryId) return { success: false, message: 'Inquiry ID is required.' };
+
+  var sheet = ensureInquiriesSheet(spreadsheet);
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0] || [];
+  var idIndex = headers.indexOf('Inquiry ID');
+  var statusIndex = headers.indexOf('Status');
+  var reviewedAtIndex = headers.indexOf('Reviewed At');
+  var reviewedByIndex = headers.indexOf('Reviewed By');
+  var reviewedBy = String(params.reviewedBy || inquiry.ReviewedBy || 'Admin').trim();
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idIndex] || '').trim() !== inquiryId) continue;
+    sheet.getRange(i + 1, statusIndex + 1).setValue('Reviewed');
+    if (reviewedAtIndex >= 0) sheet.getRange(i + 1, reviewedAtIndex + 1).setValue(new Date());
+    if (reviewedByIndex >= 0) sheet.getRange(i + 1, reviewedByIndex + 1).setValue(reviewedBy);
+    return { success: true, message: 'Inquiry marked as reviewed.', inquiryId: inquiryId, status: 'Reviewed' };
+  }
+
+  return { success: false, message: 'Inquiry ID not found.' };
 }
 
 function saveOrder(spreadsheet, params) {
@@ -1455,6 +1841,7 @@ function handleNotificationCRUD(spreadsheet, params) {
       else if (key === 'Title') rowValues[j] = notification.Timestamp || new Date().toISOString();
       else if (key === 'Message') rowValues[j] = notification.Title;
       else if (key === 'Type') rowValues[j] = notification.Message;
+      else if (key === 'InquiryID' || key === 'Inquiry ID') rowValues[j] = notification.InquiryID || notification['Inquiry ID'] || '';
       else if (key === 'Active') rowValues[j] = true; // Set to true/active so it's not filtered out
       else if (key === 'CreatedAt') rowValues[j] = new Date().toISOString();
       else rowValues[j] = '';
@@ -1465,6 +1852,8 @@ function handleNotificationCRUD(spreadsheet, params) {
       else if (key === 'Message') rowValues[j] = notification.Message;
       else if (key === 'Read') rowValues[j] = notification.Read !== undefined ? notification.Read : false;
       else if (key === 'Status') rowValues[j] = notification.Status || 'Published';
+      else if (key === 'Type') rowValues[j] = notification.Type || '';
+      else if (key === 'InquiryID' || key === 'Inquiry ID') rowValues[j] = notification.InquiryID || notification['Inquiry ID'] || '';
       else if (key === 'CreatedAt') rowValues[j] = new Date().toISOString();
       else if (key === 'Active') rowValues[j] = true;
       else rowValues[j] = '';

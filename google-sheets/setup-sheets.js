@@ -94,8 +94,23 @@ function setupNIMRASheets() {
 
   var inquiriesSheet = getOrCreateSheet(ss, 'Inquiries');
   if (inquiriesSheet.getLastRow() === 0) {
-    inquiriesSheet.getRange(1, 1, 1, 6).setValues([[
-      'Timestamp', 'Name', 'Email', 'Phone', 'Subject', 'Message'
+    inquiriesSheet.getRange(1, 1, 1, 16).setValues([[
+      'Inquiry ID',
+      'Submission Key',
+      'Customer ID',
+      'Timestamp',
+      'Name',
+      'Email',
+      'Phone',
+      'Subject',
+      'Message',
+      'Status',
+      'Admin Notification Sent',
+      'Admin Notification ID',
+      'Admin Email Sent At',
+      'Admin Email Error',
+      'Reviewed At',
+      'Reviewed By'
     ]]);
   }
 

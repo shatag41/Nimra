@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { CompanyInfo } from '@/types/cms';
 import { submitInquiry } from '@/utils/api';
+import { useAuth } from '@/frontend/customer/contexts/AuthContext';
 
 interface ContactClientProps {
   companyInfo: CompanyInfo;
@@ -22,6 +23,7 @@ function getMapEmbedUrl(embedUrl?: string, fallbackAddress?: string) {
 }
 
 export default function ContactClient({ companyInfo }: ContactClientProps) {
+  const { user } = useAuth();
   const searchParams = useSearchParams();
   const [mapTab, setMapTab] = useState<'office' | 'plant'>('office');
   const product = searchParams.get('product');
@@ -76,7 +78,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
     setStatus({ type: null, message: '' });
 
     try {
-      const response = await submitInquiry(form);
+      const response = await submitInquiry({ ...form, customerId: user?.ID ? String(user.ID) : undefined });
       if (response.success) {
         setStatus({
           type: 'success',

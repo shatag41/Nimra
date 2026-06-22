@@ -29,6 +29,7 @@ import {
   saveCompanyInfo,
   fetchCancellationRequests,
   reviewCancellationRequest,
+  markInquiryReviewed,
 } from '@/utils/api';
 import { clearBrowserSession, useAuth } from '@/frontend/customer/contexts/AuthContext';
 
@@ -192,6 +193,36 @@ export const useAdminData = (initialCMSData: CMSData) => {
       return false;
     } catch (err) {
       showAlert('Failed to review cancellation request.', 'error');
+      return false;
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
+  const handleInquiryReview = async (inquiry: Inquiry) => {
+    const inquiryId = inquiry['Inquiry ID'] || inquiry.InquiryID || inquiry.ID;
+    if (!inquiryId) {
+      showAlert('Cannot mark inquiry reviewed because its ID is missing.', 'error');
+      return false;
+    }
+
+    setSaveLoading(true);
+    try {
+      const res = await markInquiryReviewed(inquiryId, currentUser?.name || 'Admin');
+      if (res.success) {
+        showAlert(res.message || 'Inquiry marked as reviewed.');
+        setInquiries(prev => prev.map(item => {
+          const itemId = item['Inquiry ID'] || item.InquiryID || item.ID;
+          return String(itemId) === String(inquiryId)
+            ? { ...item, Status: 'Reviewed', 'Reviewed At': new Date().toISOString(), 'Reviewed By': currentUser?.name || 'Admin' }
+            : item;
+        }));
+        return true;
+      }
+      showAlert(res.message, 'error');
+      return false;
+    } catch (err) {
+      showAlert('Failed to update inquiry.', 'error');
       return false;
     } finally {
       setSaveLoading(false);
@@ -486,6 +517,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
     performLogout,
     handleUpdateStatusSubmit,
     handleCancellationReview,
+    handleInquiryReview,
     handleProductSubmit,
     handleProductDelete,
     handleBannerSubmit,

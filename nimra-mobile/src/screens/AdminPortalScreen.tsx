@@ -29,6 +29,7 @@ import {
   fetchOrders,
   updateOrderStatus,
   fetchInquiries,
+  markInquiryReviewed,
   fetchUsers,
   saveUser,
   fetchNotifications,
@@ -379,6 +380,32 @@ export default function AdminPortalScreen({ isDark, companyInfo, onRefresh, onNa
     }
   };
 
+  const handleInquiryReview = async (inq: Inquiry) => {
+    const inquiryId = inq['Inquiry ID'] || inq.InquiryID || inq.ID;
+    if (!inquiryId) {
+      Alert.alert('Error', 'This inquiry does not have an ID. Refresh the data and try again.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const result = await markInquiryReviewed(inquiryId, currentUser?.name || 'Admin');
+      if (!result.success) {
+        Alert.alert('Error', result.message || 'Unable to update the inquiry.');
+        return;
+      }
+      setInquiries((prev) => prev.map((item) => {
+        const itemId = item['Inquiry ID'] || item.InquiryID || item.ID;
+        return String(itemId) === String(inquiryId)
+          ? { ...item, Status: 'Reviewed', 'Reviewed At': new Date().toISOString(), 'Reviewed By': currentUser?.name || 'Admin' }
+          : item;
+      }));
+    } catch (error) {
+      Alert.alert('Error', 'Unable to update the inquiry.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!authChecked) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
@@ -541,11 +568,16 @@ export default function AdminPortalScreen({ isDark, companyInfo, onRefresh, onNa
         {activeSubTab === 'Inquiries' && (
           <View style={styles.tabContent}>
             {inquiries.map((inq, idx) => (
-              <View key={idx} style={[styles.itemCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+              <View key={String(inq['Inquiry ID'] || inq.InquiryID || inq.ID || idx)} style={[styles.itemCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
                 <View style={styles.itemHeader}>
                   <Text style={[styles.itemId, { color: theme.text }]}>{inq.Name}</Text>
-                  <Text style={{ fontSize: 10, color: theme.textMuted }}>{new Date(inq.Timestamp).toLocaleDateString()}</Text>
+                  <Text style={{ fontSize: 10, color: !inq.Status || inq.Status === 'New' ? '#f97316' : COLORS.primary }}>
+                    {!inq.Status || inq.Status === 'New' ? 'New' : 'Reviewed'}
+                  </Text>
                 </View>
+                <Text style={[styles.itemAddress, { color: theme.textMuted }]}>Inquiry ID: {inq['Inquiry ID'] || inq.InquiryID || inq.ID || 'Legacy record'}</Text>
+                <Text style={[styles.itemAddress, { color: theme.textMuted }]}>Customer ID: {inq['Customer ID'] || inq.CustomerID || 'Guest'}</Text>
+                <Text style={[styles.itemAddress, { color: theme.textMuted }]}>{new Date(inq.Timestamp).toLocaleString()}</Text>
                 <Text style={[styles.inqSubject, { color: COLORS.primary }]}>{inq.Subject}</Text>
                 <Text style={[styles.inqMessage, { color: theme.text }]}>{inq.Message}</Text>
                 <Text style={[styles.itemAddress, { color: theme.textMuted }]}>Phone: {inq.Phone}</Text>
@@ -558,6 +590,15 @@ export default function AdminPortalScreen({ isDark, companyInfo, onRefresh, onNa
                     <Text style={[styles.actionBtnText, { color: theme.text }]}>💬 WhatsApp</Text>
                   </TouchableOpacity>
                 </View>
+                {(!inq.Status || inq.Status === 'New') && (
+                  <TouchableOpacity
+                    style={[styles.actionBtn, { borderColor: COLORS.primary, marginTop: space[2] }]}
+                    disabled={loading || !(inq['Inquiry ID'] || inq.InquiryID || inq.ID)}
+                    onPress={() => handleInquiryReview(inq)}
+                  >
+                    <Text style={[styles.actionBtnText, { color: COLORS.primary }]}>Mark reviewed</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             ))}
             {inquiries.length === 0 && <Text style={[styles.emptyText, { color: theme.textMuted }]}>No inquiries logged.</Text>}

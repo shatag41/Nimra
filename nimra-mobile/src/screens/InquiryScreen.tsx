@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { COLORS } from '../styles/theme';
 import { submitInquiry } from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 
 interface InquiryScreenProps {
   isDark: boolean;
@@ -19,6 +20,7 @@ interface InquiryScreenProps {
 
 export default function InquiryScreen({ isDark, prefillParams, onClearPrefill }: InquiryScreenProps) {
   const theme = isDark ? COLORS.dark : COLORS.light;
+  const { user } = useAuth();
   
   const [form, setForm] = useState({
     name: '',
@@ -78,7 +80,7 @@ export default function InquiryScreen({ isDark, prefillParams, onClearPrefill }:
     setStatus({ type: null, message: '' });
 
     try {
-      const response = await submitInquiry(form);
+      const response = await submitInquiry({ ...form, customerId: user?.ID ? String(user.ID) : undefined });
       if (response.success) {
         setStatus({
           type: 'success',

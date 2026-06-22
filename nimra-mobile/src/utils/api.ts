@@ -254,8 +254,13 @@ export const fetchCMSData = async (): Promise<CMSData> => {
 };
 
 // Submit Inquiry to Google Sheets
+const pendingInquiryKeys = new Map<string, string>();
+
 export const submitInquiry = async (inquiry: InquirySubmission): Promise<{ success: boolean; message: string }> => {
   const url = getAPIUrl();
+  const payloadKey = JSON.stringify([inquiry.customerId || '', inquiry.name, inquiry.email, inquiry.phone, inquiry.subject, inquiry.message]);
+  const idempotencyKey = inquiry.idempotencyKey || pendingInquiryKeys.get(payloadKey) || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  pendingInquiryKeys.set(payloadKey, idempotencyKey);
   if (!url) {
     console.log("No Apps Script URL configured. Mock submitting inquiry:", inquiry);
     await new Promise((resolve) => setTimeout(resolve, 800));
@@ -268,10 +273,11 @@ export const submitInquiry = async (inquiry: InquirySubmission): Promise<{ succe
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ ...inquiry, type: 'inquiry' })
+      body: JSON.stringify({ ...inquiry, idempotencyKey, type: 'inquiry' })
     });
     if (!res.ok) throw new Error("Post inquiry failed");
     const result = await res.json();
+    if (result.success) pendingInquiryKeys.delete(payloadKey);
     return result;
   } catch (err) {
     console.error("Error submitting inquiry:", err);
@@ -485,6 +491,30 @@ export const fetchInquiries = async (): Promise<Inquiry[]> => {
   } catch (err) {
     console.error(err);
     return [];
+  }
+};
+
+export const markInquiryReviewed = async (
+  inquiryId: string | number,
+  reviewedBy = 'Admin'
+): Promise<{ success: boolean; message: string }> => {
+  const url = getAPIUrl();
+  if (!url) return { success: true, message: 'Mock updated' };
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'inquiryCRUD',
+        action: 'review',
+        inquiryId,
+        reviewedBy,
+      }),
+    });
+    return await res.json();
+  } catch (err) {
+    console.error(err);
+    return { success: false, message: 'Connection error' };
   }
 };
 

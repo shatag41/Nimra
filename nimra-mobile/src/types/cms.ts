@@ -54,6 +54,8 @@ export interface CMSData {
 
 export interface InquirySubmission {
   type?: 'inquiry';
+  idempotencyKey?: string;
+  customerId?: string;
   name: string;
   email: string;
   phone: string;
@@ -150,11 +152,22 @@ export interface Notification {
 }
 
 export interface Inquiry {
+  ID?: string | number;
+  InquiryID?: string | number;
+  'Inquiry ID'?: string | number;
+  'Submission Key'?: string;
+  CustomerID?: string | number;
+  'Customer ID'?: string | number;
   Timestamp: string;
   Name: string;
   Email: string;
   Phone: string;
   Subject: string;
   Message: string;
+  Status?: 'New' | 'Reviewed' | string;
+  ReviewedAt?: string;
+  'Reviewed At'?: string;
+  ReviewedBy?: string;
+  'Reviewed By'?: string;
 }
 

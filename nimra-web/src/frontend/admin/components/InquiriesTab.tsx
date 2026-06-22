@@ -11,6 +11,8 @@ interface InquiriesTabProps {
   setInquiryStartDate: (val: string) => void;
   inquiryEndDate: string;
   setInquiryEndDate: (val: string) => void;
+  handleInquiryReview: (inquiry: Inquiry) => Promise<boolean>;
+  saveLoading: boolean;
 }
 
 export default function InquiriesTab({
@@ -22,6 +24,8 @@ export default function InquiriesTab({
   setInquiryStartDate,
   inquiryEndDate,
   setInquiryEndDate,
+  handleInquiryReview,
+  saveLoading,
 }: InquiriesTabProps) {
   return (
     <div className="inquiries-tab card glass">
@@ -76,17 +80,26 @@ export default function InquiriesTab({
             </tr>
           </thead>
           <tbody>
-            {filteredInquiries.map((inq, index) => (
-              <tr key={index}>
+            {filteredInquiries.map((inq, index) => {
+              const inquiryId = inq['Inquiry ID'] || inq.InquiryID || inq.ID;
+              const customerId = inq['Customer ID'] || inq.CustomerID || 'Guest';
+              const isNew = !inq.Status || inq.Status === 'New';
+              return (
+              <tr key={String(inquiryId || index)}>
                 <td>{new Date(inq.Timestamp).toLocaleString()}</td>
                 <td>
                   <div><strong>{inq.Name}</strong></div>
                   <small>{inq.Phone}</small>
                   {inq.Email && <div><small>{inq.Email}</small></div>}
+                  <div><small>Customer ID: {customerId}</small></div>
                 </td>
                 <td>
+                  <div><small>Inquiry ID: {inquiryId || 'Legacy record'}</small></div>
                   <div style={{ fontWeight: 800, color: 'var(--primary-color)' }}>{inq.Subject}</div>
                   <p className="message-cell">{inq.Message}</p>
+                  <span className={`status-badge ${isNew ? 'status-pending' : 'status-delivered'}`}>
+                    {isNew ? 'New' : 'Reviewed'}
+                  </span>
                 </td>
                 <td className="sticky-action-col">
                   <div className="actions-flex vertical">
@@ -101,10 +114,21 @@ export default function InquiriesTab({
                     >
                       💬 WhatsApp
                     </a>
+                    {isNew && (
+                      <button
+                        type="button"
+                        className="btn-table btn-view"
+                        disabled={saveLoading || !inquiryId}
+                        onClick={() => void handleInquiryReview(inq)}
+                      >
+                        Mark reviewed
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
-            ))}
+              );
+            })}
             {filteredInquiries.length === 0 && (
               <tr>
                 <td colSpan={4} className="empty-td">No inquiries found.</td>

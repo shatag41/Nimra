@@ -99,6 +99,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
     performLogout,
     handleUpdateStatusSubmit,
     handleCancellationReview,
+    handleInquiryReview,
     handleProductSubmit,
     handleProductDelete,
     handleBannerSubmit,
@@ -367,6 +368,8 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                   setInquiryStartDate={filters.setInquiryStartDate}
                   inquiryEndDate={filters.inquiryEndDate}
                   setInquiryEndDate={filters.setInquiryEndDate}
+                  handleInquiryReview={handleInquiryReview}
+                  saveLoading={saveLoading}
                 />
               )}
 

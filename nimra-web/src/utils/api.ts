@@ -321,12 +321,20 @@ export const fetchCMSData = async (): Promise<CMSData> => {
 };
 
 // Submit Inquiry via internal proxy to Google Sheets
+const pendingInquiryKeys = new Map<string, string>();
+
 export const submitInquiry = async (inquiry: InquirySubmission): Promise<{ success: boolean; message: string }> => {
+  const payloadKey = JSON.stringify([inquiry.customerId || '', inquiry.name, inquiry.email, inquiry.phone, inquiry.subject, inquiry.message]);
+  const idempotencyKey = inquiry.idempotencyKey || pendingInquiryKeys.get(payloadKey) ||
+    (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  pendingInquiryKeys.set(payloadKey, idempotencyKey);
   try {
     const res = await fetch('/api/cms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...inquiry, type: 'inquiry' }),
+      body: JSON.stringify({ ...inquiry, idempotencyKey, type: 'inquiry' }),
     });
     const text = await res.text();
     
@@ -348,6 +356,7 @@ export const submitInquiry = async (inquiry: InquirySubmission): Promise<{ succe
         message: result.message || result.error || `Failed to submit inquiry. Please try again later.`,
       };
     }
+    pendingInquiryKeys.delete(payloadKey);
     return {
       success: true,
       message: result.message || 'Inquiry submitted successfully!',
@@ -535,6 +544,29 @@ export const fetchInquiries = async (): Promise<Inquiry[]> => {
   });
   const data = await readJsonResponse<{ inquiries?: Inquiry[] } | Inquiry[]>(res, []);
   return Array.isArray(data) ? data : (data.inquiries || []);
+};
+
+export const markInquiryReviewed = async (
+  inquiryId: string | number,
+  reviewedBy = 'Admin'
+): Promise<{ success: boolean; message: string }> => {
+  try {
+    const res = await fetch('/api/cms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'inquiryCRUD',
+        action: 'review',
+        inquiryId,
+        reviewedBy,
+      }),
+    });
+    const data = await res.json();
+    return { success: data.success, message: data.message || 'Inquiry updated' };
+  } catch (err) {
+    console.error('Error marking inquiry reviewed:', err);
+    return { success: false, message: 'Failed to update inquiry' };
+  }
 };
 
 export const fetchUsers = async (): Promise<AdminUser[]> => {
