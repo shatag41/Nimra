@@ -3,7 +3,6 @@ import dynamic from 'next/dynamic';
 import LoadingState from '@/frontend/customer/components/LoadingState';
 
 const OrdersClient = dynamic(() => import('@/frontend/customer/components/OrdersClient'), {
-  ssr: false,
   loading: () => <LoadingState label="Loading orders" />
 });
 

@@ -39,6 +39,11 @@ export default function OrdersClient() {
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
   const [orderToCancel, setOrderToCancel] = useState<OrderRecord | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleCancelOrder = async () => {
     if (!orderToCancel) return;
@@ -135,7 +140,7 @@ export default function OrdersClient() {
     });
   }, [orders, deferredSearchQuery, activeTab, dateFilter]);
 
-  if (authLoading) return null;
+  if (!mounted || authLoading) return null;
 
   if (!isAuthenticated) {
     return (
