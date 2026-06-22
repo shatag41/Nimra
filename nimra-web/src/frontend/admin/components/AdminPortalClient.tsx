@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 
 import { CMSData, OrderRecord, Product, Banner, FAQ, AdminUser } from '@/types/cms';
@@ -32,39 +32,39 @@ import UserModal from './UserModal';
 // Lazy-loaded Tab components
 const DashboardTab = dynamic(() => import('./DashboardTab'), {
   ssr: false,
-  loading: () => <div className="tab-loading-indicator">Loading Dashboard...</div>,
+  loading: () => null,
 });
 const OrdersTab = dynamic(() => import('./OrdersTab'), {
   ssr: false,
-  loading: () => <div className="tab-loading-indicator">Loading Orders...</div>,
+  loading: () => null,
 });
 const ProductsTab = dynamic(() => import('./ProductsTab'), {
   ssr: false,
-  loading: () => <div className="tab-loading-indicator">Loading Products...</div>,
+  loading: () => null,
 });
 const BannersTab = dynamic(() => import('./BannersTab'), {
   ssr: false,
-  loading: () => <div className="tab-loading-indicator">Loading Banners...</div>,
+  loading: () => null,
 });
 const FAQsTab = dynamic(() => import('./FAQsTab'), {
   ssr: false,
-  loading: () => <div className="tab-loading-indicator">Loading FAQs...</div>,
+  loading: () => null,
 });
 const InquiriesTab = dynamic(() => import('./InquiriesTab'), {
   ssr: false,
-  loading: () => <div className="tab-loading-indicator">Loading Inquiries...</div>,
+  loading: () => null,
 });
 const UsersTab = dynamic(() => import('./UsersTab'), {
   ssr: false,
-  loading: () => <div className="tab-loading-indicator">Loading Users...</div>,
+  loading: () => null,
 });
 const NotificationsTab = dynamic(() => import('./NotificationsTab'), {
   ssr: false,
-  loading: () => <div className="tab-loading-indicator">Loading Notifications...</div>,
+  loading: () => null,
 });
 const SettingsTab = dynamic(() => import('./SettingsTab'), {
   ssr: false,
-  loading: () => <div className="tab-loading-indicator">Loading Settings...</div>,
+  loading: () => null,
 });
 
 interface AdminPortalClientProps {
@@ -72,14 +72,10 @@ interface AdminPortalClientProps {
 }
 
 export default function AdminPortalClient({ initialCMSData }: AdminPortalClientProps) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
   // 1. Data hook
   const {
     currentUser,
     setCurrentUser,
-    authChecked,
     activeTab,
     setActiveTab,
     orders,
@@ -228,14 +224,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
     }
   };
 
-  if (!currentUser || !mounted) {
-    return (
-      <div className="main-loading-overlay">
-        <div className="spinner"></div>
-        <p>Loading Admin Portal...</p>
-      </div>
-    );
-  }
+  if (!currentUser) return null;
 
   return (
     <>
@@ -271,16 +260,8 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             </div>
           )}
 
-          {loading && (
-            <div className="main-loading-overlay">
-              <div className="spinner"></div>
-              <p>Loading NIMRA Databases...</p>
-            </div>
-          )}
-
           {/* TAB CONTENTS */}
-          {!loading && (
-            <div className="tab-viewport">
+          <div className={`tab-viewport ${loading ? 'is-refreshing' : ''}`}>
               {activeTab === 'dashboard' && (
                 <DashboardTab
                   orders={orders}
@@ -406,8 +387,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                   saveLoading={saveLoading}
                 />
               )}
-            </div>
-          )}
+          </div>
         </main>
 
         {/* ==================================================== */}

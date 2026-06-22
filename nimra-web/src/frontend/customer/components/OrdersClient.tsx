@@ -107,13 +107,13 @@ export default function OrdersClient() {
       let matchesDate = true;
       if (dateFilter !== 'all') {
         const orderDate = new Date(order.createdAt || '');
-        if (!Number.isNaN(orderDate.getTime())) {
-          const diffTime = Math.abs(new Date().getTime() - orderDate.getTime());
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          if (dateFilter === '30days') matchesDate = diffDays <= 30;
-          else if (dateFilter === '6months') matchesDate = diffDays <= 180;
-          else if (dateFilter === 'year') matchesDate = diffDays <= 365;
-        }
+        if (Number.isNaN(orderDate.getTime())) return false;
+        const diffTime = new Date().getTime() - orderDate.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays < 0) return false;
+        if (dateFilter === '30days') matchesDate = diffDays <= 30;
+        else if (dateFilter === '6months') matchesDate = diffDays <= 180;
+        else if (dateFilter === 'year') matchesDate = diffDays <= 365;
       }
 
       if (!matchesDate) return false;
@@ -135,14 +135,7 @@ export default function OrdersClient() {
     });
   }, [orders, deferredSearchQuery, activeTab, dateFilter]);
 
-  if (authLoading) {
-    return (
-      <div className="loading-state">
-        <div className="loader"></div>
-        <p>Verifying authentication...</p>
-      </div>
-    );
-  }
+  if (authLoading) return null;
 
   if (!isAuthenticated) {
     return (
@@ -341,12 +334,7 @@ export default function OrdersClient() {
             </div>
           )}
 
-          {loadingOrders ? (
-            <div className="loading-state">
-              <div className="loader"></div>
-              <p>Syncing orders...</p>
-            </div>
-          ) : activeTab === 'checkout-required' ? (
+          {activeTab === 'checkout-required' ? (
             /* ── Checkout Required: show current cart items ── */
             cartItems.length > 0 ? (
               <div className="orders-cards-list">
@@ -365,7 +353,7 @@ export default function OrdersClient() {
                     </div>
                     <div className="header-id-column">
                       <span className="meta-label">STATUS</span>
-                      <span className="meta-value" style={{ color: '#f59e0b', fontWeight: 700 }}>Checkout Required</span>
+                      <span className="meta-value checkout-required-status">Checkout Required</span>
                     </div>
                   </div>
 
@@ -399,27 +387,7 @@ export default function OrdersClient() {
                       </div>
 
                       <div className="actions-column" onClick={(e) => e.stopPropagation()}>
-                        <Link
-                          href="/checkout"
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '0.45rem',
-                            padding: '0.65rem 1.25rem',
-                            background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-                            color: '#fff',
-                            fontWeight: 700,
-                            fontSize: '0.875rem',
-                            borderRadius: '10px',
-                            textDecoration: 'none',
-                            boxShadow: '0 4px 16px rgba(37,99,235,0.35)',
-                            letterSpacing: '0.01em',
-                            transition: 'all 0.2s ease',
-                            width: '100%',
-                            boxSizing: 'border-box' as const,
-                          }}
-                        >
+                        <Link href="/checkout" className="orders-checkout-link">
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M5 12h14M12 5l7 7-7 7"/>
                           </svg>
@@ -745,146 +713,6 @@ export default function OrdersClient() {
           border: 1px solid rgba(37, 99, 235, 0.2);
         }
 
-        /* Grid Layout */
-        .orders-layout-grid {
-          display: grid;
-          grid-template-columns: 240px 1fr;
-          gap: 1.5rem;
-          align-items: start;
-        }
-
-        /* Sidebar Filters */
-        .orders-sidebar {
-          background: var(--bg-secondary);
-          border: 1px solid var(--border-color);
-          border-radius: var(--radius-md);
-          padding: 1.25rem;
-          display: flex;
-          flex-direction: column;
-          gap: 1.5rem;
-          position: sticky;
-          top: 85px;
-        }
-
-        .sidebar-section h3 {
-          font-size: 0.875rem;
-          font-weight: 700;
-          margin-bottom: 0.75rem;
-          color: var(--text-primary);
-          text-transform: uppercase;
-          letter-spacing: 0.03em;
-        }
-
-        .filter-options {
-          display: flex;
-          flex-direction: column;
-          gap: 0.5rem;
-        }
-
-        .filter-label {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          font-size: 0.875rem;
-          color: var(--text-secondary);
-          cursor: pointer;
-          font-weight: 500;
-        }
-
-        .filter-radio {
-          accent-color: var(--primary-color);
-          cursor: pointer;
-        }
-
-        .refresh-btn {
-          width: 100%;
-          justify-content: center;
-          gap: 0.35rem;
-          font-size: 0.8125rem;
-          padding: 0.5rem;
-          border-radius: var(--radius-sm);
-          border: 1px solid var(--border-color);
-          background: var(--bg-secondary);
-          color: var(--text-secondary);
-        }
-        .refresh-btn:hover {
-          background: var(--bg-tertiary);
-          color: var(--text-primary);
-        }
-
-        /* Main Section */
-        .orders-main-content {
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-        }
-
-        .orders-priority-strip {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 0.75rem;
-          padding: 0.65rem 0.85rem;
-          border: 1px solid rgba(var(--primary-rgb), 0.18);
-          border-radius: var(--radius-sm);
-          background: rgba(var(--primary-rgb), 0.06);
-          color: var(--text-secondary);
-          font-size: 0.82rem;
-        }
-
-        .orders-priority-strip strong {
-          color: var(--primary-color);
-          font-size: 0.84rem;
-        }
-
-        /* Search Bar */
-        .search-bar-wrapper {
-          position: relative;
-          display: flex;
-          align-items: center;
-          padding: 0.5rem;
-          border: 1px solid var(--border-color);
-          background: var(--bg-secondary);
-          border-radius: var(--radius-md);
-          box-shadow: var(--shadow-sm);
-        }
-
-        .search-icon {
-          position: absolute;
-          left: 1rem;
-          color: var(--text-muted);
-          pointer-events: none;
-        }
-
-        .search-input {
-          width: 100%;
-          min-height: 38px;
-          padding: 0.5rem 1rem 0.5rem 2.5rem;
-          border: none;
-          background: transparent;
-          color: var(--text-primary);
-          font-size: 0.875rem;
-        }
-        .search-input:focus {
-          outline: none;
-        }
-
-        .search-clear-btn {
-          position: absolute;
-          right: 1rem;
-          background: rgba(0, 0, 0, 0.05);
-          border: none;
-          width: 18px;
-          height: 18px;
-          border-radius: 50%;
-          color: var(--text-muted);
-          cursor: pointer;
-          font-size: 0.75rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
         /* Cards List */
         .orders-cards-list {
           display: flex;
@@ -1203,13 +1031,6 @@ export default function OrdersClient() {
         }
 
         @media (max-width: 900px) {
-          .orders-layout-grid {
-            grid-template-columns: 1fr;
-            gap: 1.25rem;
-          }
-          .orders-sidebar {
-            position: static;
-          }
           .card-body-content-split {
             grid-template-columns: 1fr;
             gap: 1.25rem;
@@ -1236,13 +1057,6 @@ export default function OrdersClient() {
             padding-left: 0;
             grid-column: span 2;
             margin-top: 0.25rem;
-          }
-        }
-
-        @media (max-width: 640px) {
-          .orders-priority-strip {
-            align-items: flex-start;
-            flex-direction: column;
           }
         }
 
@@ -1283,25 +1097,6 @@ export default function OrdersClient() {
         }
 
         /* ── Loading ── */
-        .loading-state {
-          min-height: 300px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          color: var(--text-muted);
-          gap: 1rem;
-        }
-
-        .loader {
-          width: 36px;
-          height: 36px;
-          border: 3px solid var(--border-color);
-          border-top: 3px solid var(--primary-color);
-          border-radius: 50%;
-          animation: spin 0.8s linear infinite;
-        }
-
         /* ── Details Modal ── */
         .modal-overlay {
           position: fixed;
@@ -1693,10 +1488,6 @@ export default function OrdersClient() {
             align-items: flex-start;
             gap: 1rem;
             margin-bottom: 1.5rem;
-          }
-          .refresh-btn {
-            width: 100%;
-            justify-content: center;
           }
         }
 

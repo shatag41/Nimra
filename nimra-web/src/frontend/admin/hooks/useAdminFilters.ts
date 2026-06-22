@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 export const useAdminFilters = () => {
   const [globalSearch, setGlobalSearch] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
 
   // Filters State
   const [orderStatusFilter, setOrderStatusFilter] = useState('All');

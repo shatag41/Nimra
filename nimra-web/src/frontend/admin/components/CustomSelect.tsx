@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
 
 export interface CustomSelectOption {
   value: string;
@@ -25,7 +24,6 @@ export default function CustomSelect({
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -41,17 +39,6 @@ export default function CustomSelect({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  useEffect(() => {
-    if (isOpen && containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      setCoords({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-        width: rect.width
-      });
-    }
-  }, [isOpen]);
 
   const selectedOpt = options.find(o => o.value === value);
 
@@ -82,17 +69,8 @@ export default function CustomSelect({
           </span>
         </div>
       </div>
-      {isOpen && typeof window !== 'undefined' && createPortal(
-        <div 
-          className="custom-select-options-list"
-          style={{
-            position: 'absolute',
-            top: `${coords.top}px`,
-            left: `${coords.left}px`,
-            width: `${coords.width}px`,
-            zIndex: 999999
-          }}
-        >
+      {isOpen && (
+        <div className="custom-select-options-list">
           {options.map((opt) => (
             <div 
               key={opt.value} 
@@ -105,8 +83,7 @@ export default function CustomSelect({
               {opt.label}
             </div>
           ))}
-        </div>,
-        document.body
+        </div>
       )}
     </div>
   );

@@ -66,7 +66,9 @@ export default React.memo(function OrdersTab({
     orderSort !== 'latest' || 
     orderStartDate !== '' || 
     orderEndDate !== '';
-  const activeOrders = filteredOrders.filter((order) => order.status !== 'Delivered' && order.status !== 'Cancelled');
+  const visibleOrders = orderStatusFilter === 'All'
+    ? filteredOrders.filter((order) => order.status !== 'Delivered' && order.status !== 'Cancelled')
+    : filteredOrders;
   const pendingCancellationCount = cancellationRequests.filter((request) => request.status === 'Pending').length;
 
   const reviewCancellation = async (request: CancellationRequest, decision: 'Approved' | 'Rejected') => {
@@ -88,7 +90,7 @@ export default React.memo(function OrdersTab({
           className={`btn ${ordersView === 'active' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
           onClick={() => setOrdersView('active')}
         >
-          Active Orders ({activeOrders.length})
+          Orders ({visibleOrders.length})
         </button>
         <button
           type="button"
@@ -282,7 +284,7 @@ export default React.memo(function OrdersTab({
             </tr>
           </thead>
           <tbody>
-            {activeOrders.map((o, idx) => (
+            {visibleOrders.map((o, idx) => (
               <tr key={o.orderId || idx}>
                 <td><strong>{o.orderId}</strong></td>
                 <td>{o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'N/A'}</td>
@@ -308,7 +310,7 @@ export default React.memo(function OrdersTab({
                 </td>
               </tr>
             ))}
-            {activeOrders.length === 0 && (
+            {visibleOrders.length === 0 && (
               <tr>
                 <td colSpan={7} className="empty-td">No active orders found.</td>
               </tr>

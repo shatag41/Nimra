@@ -6,7 +6,6 @@ import Header from './Header';
 import Footer from './Footer';
 import { CompanyInfo } from '@/types/cms';
 import { useAuth } from '../contexts/AuthContext';
-import GlobalLoadingScreen from './GlobalLoadingScreen';
 
 interface LayoutWrapperProps {
   children: React.ReactNode;
@@ -64,24 +63,18 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
     </div>
   );
 
-  // Only show full-screen loader on protected routes during authentication check
   const isProtectedRoute = (isAdmin && !isAdminLogin) || isCheckout;
 
-  if (!mounted && isProtectedRoute) {
-    return renderBareShell(<GlobalLoadingScreen />);
-  }
-
-  if (isLoading && isProtectedRoute) {
-    return renderBareShell(<GlobalLoadingScreen />);
-  }
+  if (!mounted && isProtectedRoute) return renderBareShell(null);
+  if (isLoading && isProtectedRoute) return renderBareShell(null);
 
   // Also block access if not authenticated
   if (isAdmin && !isAdminLogin && (!isAuthenticated || user?.Role !== 'Admin')) {
-    return renderBareShell(isLoading ? <GlobalLoadingScreen /> : null);
+    return renderBareShell(null);
   }
 
   if (!isAuthenticated && isCheckout) {
-    return renderBareShell(isLoading ? <GlobalLoadingScreen /> : null);
+    return renderBareShell(null);
   }
 
   if (isAdmin || isAuthPage) {
