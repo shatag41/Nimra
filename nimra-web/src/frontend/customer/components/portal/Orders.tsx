@@ -26,7 +26,7 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
       <div className="panel-head">
         <div>
           <span className="eyebrow" style={{ color: 'var(--primary-color)', background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.2)', borderRadius: '999px', padding: '0.2rem 0.75rem', fontSize: '0.7rem' }}>Orders</span>
-          <h2>Recent Activity</h2>
+          <h2 style={{ marginTop: '0.15rem' }}>Recent Activity</h2>
         </div>
         <button className="refresh-btn" type="button" onClick={onRefresh} disabled={loadingOrders}>
           {loadingOrders ? 'Refreshing...' : '↻ Refresh'}
@@ -70,6 +70,38 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
           <Link href="/products" className="btn btn-primary">Browse Products</Link>
         </div>
       )}
+
+      <style jsx>{`
+        :global(.orders-panel) {
+          padding: 0.65rem 0.85rem !important;
+        }
+        .panel-head {
+          margin-bottom: 0.3rem;
+        }
+        .panel-head h2 {
+          margin: 0 !important;
+          font-size: 1.15rem !important;
+        }
+        .refresh-btn {
+          padding: 0.25rem 0.55rem !important;
+          font-size: 0.75rem !important;
+          border-width: 1px !important;
+          border-radius: 5px !important;
+        }
+        :global(.orders-panel .table-wrap) {
+          max-height: 260px !important;
+          overflow-y: auto !important;
+        }
+        :global(.orders-table th),
+        :global(.orders-table td) {
+          padding: 0.45rem 0.75rem !important;
+          font-size: 0.82rem;
+        }
+        :global(.orders-table th) {
+          padding-top: 0.5rem !important;
+          padding-bottom: 0.5rem !important;
+        }
+      `}</style>
     </div>
   );
 }
