@@ -153,20 +153,8 @@ function getRequiredOrderHeaders() {
     'Order ID',
     'Order Date',
     'Customer User ID',
-    'Customer Name',
-    'Mobile Number',
-    'Alternate Mobile Number',
-    'Email',
     'Address Type',
     'Saved Address ID',
-    'House/Flat No.',
-    'Building/Society Name',
-    'Area/Locality',
-    'Landmark',
-    'Full Address',
-    'City',
-    'State',
-    'Pincode',
     'Delivery Instructions',
     'Products',
     'Quantities',
@@ -233,10 +221,36 @@ function ensureOrdersSetupSheet(sheet) {
     return;
   }
 
+  removeDeprecatedOrderColumns(sheet);
+  existingHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] || [];
+
   for (var i = 0; i < requiredHeaders.length; i++) {
     if (existingHeaders.indexOf(requiredHeaders[i]) < 0) {
       sheet.getRange(1, sheet.getLastColumn() + 1).setValue(requiredHeaders[i]);
       existingHeaders.push(requiredHeaders[i]);
+    }
+  }
+}
+
+function removeDeprecatedOrderColumns(sheet) {
+  var deprecated = [
+    'Customer Name',
+    'Mobile Number',
+    'Alternate Mobile Number',
+    'Email',
+    'House/Flat No.',
+    'Building/Society Name',
+    'Area/Locality',
+    'Landmark',
+    'Full Address',
+    'City',
+    'State',
+    'Pincode'
+  ];
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] || [];
+  for (var i = headers.length - 1; i >= 0; i--) {
+    if (deprecated.indexOf(headers[i]) >= 0) {
+      sheet.deleteColumn(i + 1);
     }
   }
 }

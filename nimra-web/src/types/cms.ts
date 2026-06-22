@@ -74,17 +74,17 @@ export interface CartItem {
 export interface OrderCustomer {
   userId?: string | number;
   savedAddressId?: string;
-  name: string;
-  mobile: string;
+  name?: string;
+  mobile?: string;
   altMobile?: string;
-  email: string;
-  flatNo: string;
+  email?: string;
+  flatNo?: string;
   buildingName?: string;
-  locality: string;
+  locality?: string;
   landmark?: string;
-  pincode: string;
-  state: string;
-  city: string;
+  pincode?: string;
+  state?: string;
+  city?: string;
   addressType?: 'Home' | 'Work' | 'Other';
   instructions?: string;
   saveAddress?: boolean;

@@ -181,9 +181,21 @@ function saveOrder(spreadsheet, params) {
   var userId         = String(params.userId || customer.userId || customer.userID || customer.ID || '').trim();
   var savedAddressId = String(customer.savedAddressId || params.savedAddressId || '').trim();
   var selectedSavedAddress = null;
+  var usersForOrder = null;
+  var profileForOrder = null;
+
+  if (userId) {
+    usersForOrder = getUsersData(spreadsheet);
+    for (var u = 0; u < usersForOrder.length; u++) {
+      if (String(usersForOrder[u].ID).trim() === userId) {
+        profileForOrder = usersForOrder[u];
+        break;
+      }
+    }
+  }
 
   if (userId && savedAddressId) {
-    var savedAddress = findUserSavedAddress(spreadsheet, userId, savedAddressId);
+    var savedAddress = findUserSavedAddress(spreadsheet, userId, savedAddressId, usersForOrder);
     if (savedAddress) {
       selectedSavedAddress = savedAddress;
       name = String(savedAddress.name || name || '').trim();
@@ -201,6 +213,28 @@ function saveOrder(spreadsheet, params) {
     }
   }
 
+  if (userId && !selectedSavedAddress && !flatNo && !locality) {
+    selectedSavedAddress = findUserSavedAddressForOrder(spreadsheet, userId, savedAddressId, addressType, usersForOrder);
+    if (selectedSavedAddress) {
+      savedAddressId = selectedSavedAddress.id || savedAddressId;
+      flatNo = String(selectedSavedAddress.flatNo || '').trim();
+      buildingName = String(selectedSavedAddress.buildingName || '').trim();
+      locality = String(selectedSavedAddress.locality || '').trim();
+      landmark = String(selectedSavedAddress.landmark || '').trim();
+      city = String(selectedSavedAddress.city || '').trim();
+      state = String(selectedSavedAddress.state || '').trim();
+      pincode = String(selectedSavedAddress.pincode || '').trim();
+      addressType = String(selectedSavedAddress.type || addressType || 'Home').trim();
+    }
+  }
+
+  if (profileForOrder) {
+    name = String(name || profileForOrder.Name || '').trim();
+    mobile = String(mobile || profileForOrder.Mobile || '').trim();
+    altMobile = String(altMobile || profileForOrder.AlternateMobile || '').trim();
+    email = normalizeEmail(email || profileForOrder.Username);
+  }
+
   // Build composite Full Address from granular fields (also accept legacy address field)
   var fullAddress = String(customer.address || '').trim();
   if (!fullAddress) {
@@ -210,7 +244,7 @@ function saveOrder(spreadsheet, params) {
 
   // If email not provided, try to fetch it from the Users sheet via userId
   if ((!email || !isValidEmail(email)) && userId) {
-    var users = getUsersData(spreadsheet);
+    var users = usersForOrder || getUsersData(spreadsheet);
     for (var i = 0; i < users.length; i++) {
       if (String(users[i].ID).trim() === userId && isValidEmail(users[i].Username)) {
         email = normalizeEmail(users[i].Username);
@@ -281,27 +315,15 @@ function saveOrder(spreadsheet, params) {
   }).join(' | ');
 
   // ── Row order MUST match ensureOrdersSheet headers exactly ───────────────
-  // Keep an immutable customer/address snapshot on every order. Saved addresses
-  // can be edited later and older orders may not have a user ID, so orders must
-  // never depend on another sheet for ownership or delivery details.
+  // Customer/contact/address details are intentionally not written to Orders.
+  // Orders keep only the user/address references; delivery details live in
+  // Users/UserAddresses and are resolved at read time.
   var orderValues = {
     'Order ID': orderId,
     'Order Date': timestamp,
     'Customer User ID': userId,
-    'Customer Name': name,
-    'Mobile Number': mobile,
-    'Alternate Mobile Number': altMobile,
-    'Email': email,
     'Address Type': addressType,
     'Saved Address ID': savedAddressId,
-    'House/Flat No.': flatNo,
-    'Building/Society Name': buildingName,
-    'Area/Locality': locality,
-    'Landmark': landmark,
-    'Full Address': fullAddress,
-    'City': city,
-    'State': state,
-    'Pincode': pincode,
     'Delivery Instructions': instructions,
     'Products': products,
     'Quantities': quantities,
@@ -809,13 +831,9 @@ function updateOrderCancellationAudit(spreadsheet, orderId, requestId, decision,
 }
 
 function ensureOrdersSheet(spreadsheet) {
-  // Customer details are deliberate order snapshots. Do not remove them: doing
-  // so makes legacy orders unmatchable when Customer User ID is blank.
   var requiredHeaders = [
-    'Order ID', 'Order Date', 'Customer User ID', 'Customer Name',
-    'Mobile Number', 'Alternate Mobile Number', 'Email', 'Address Type',
-    'Saved Address ID', 'House/Flat No.', 'Building/Society Name',
-    'Area/Locality', 'Landmark', 'Full Address', 'City', 'State', 'Pincode',
+    'Order ID', 'Order Date', 'Customer User ID', 'Address Type',
+    'Saved Address ID',
     'Delivery Instructions', 'Products', 'Quantities', 'Subtotal',
     'Delivery Charge', 'Total Amount', 'Payment Method', 'Order Status',
     'Source', 'Created At', 'Updated At', 'Cancellation Status',
@@ -834,6 +852,15 @@ function ensureOrdersSheet(spreadsheet) {
   }
 
   var existingHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] || [];
+  if (hasDeprecatedOrderColumns(existingHeaders)) {
+    var existingData = sheet.getDataRange().getValues();
+    for (var r = 1; r < existingData.length; r++) {
+      compactOrderRow(spreadsheet, existingHeaders, existingData[r], requiredHeaders);
+    }
+    removeDeprecatedOrderColumns(sheet);
+    existingHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] || [];
+  }
+
   for (var i = 0; i < requiredHeaders.length; i++) {
     if (existingHeaders.indexOf(requiredHeaders[i]) < 0) {
       sheet.getRange(1, sheet.getLastColumn() + 1).setValue(requiredHeaders[i]);
@@ -842,6 +869,41 @@ function ensureOrdersSheet(spreadsheet) {
   }
 
   return sheet;
+}
+
+function getDeprecatedOrderHeaders() {
+  return [
+    'Customer Name',
+    'Mobile Number',
+    'Alternate Mobile Number',
+    'Email',
+    'House/Flat No.',
+    'Building/Society Name',
+    'Area/Locality',
+    'Landmark',
+    'Full Address',
+    'City',
+    'State',
+    'Pincode'
+  ];
+}
+
+function hasDeprecatedOrderColumns(headers) {
+  var deprecated = getDeprecatedOrderHeaders();
+  for (var i = 0; i < headers.length; i++) {
+    if (deprecated.indexOf(headers[i]) >= 0) return true;
+  }
+  return false;
+}
+
+function removeDeprecatedOrderColumns(sheet) {
+  var deprecated = getDeprecatedOrderHeaders();
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] || [];
+  for (var i = headers.length - 1; i >= 0; i--) {
+    if (deprecated.indexOf(headers[i]) >= 0) {
+      sheet.deleteColumn(i + 1);
+    }
+  }
 }
 
 function normalizeDigits(value) {

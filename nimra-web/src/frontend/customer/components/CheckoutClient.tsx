@@ -271,13 +271,11 @@ export default function CheckoutClient() {
 
     setStatus({ kind: 'loading', message: 'Placing your order…' });
 
-    const compositeAddress = [form.flatNo, form.buildingName, form.locality, form.landmark]
-      .filter(Boolean).join(', ');
-
     let selectedSavedAddressId = selectedAddressId || undefined;
 
-    // 1. Persist to the user profile when adding/editing an address.
-    if (form.saveAddress && user) {
+    // 1. Persist/refresh the selected address first so the order can store only
+    // the saved-address reference, not customer/contact/address snapshots.
+    if (user && (form.saveAddress || isEditingAddress || !selectedSavedAddressId)) {
       const newSavedAddr: SavedAddress = {
         id: selectedAddressId || Date.now().toString(),
         type: form.addressType,
@@ -350,21 +348,9 @@ export default function CheckoutClient() {
       customer: {
         userId: user?.ID,
         savedAddressId: selectedSavedAddressId,
-        name: form.name,
-        mobile: form.mobile,
-        altMobile: form.altMobile || undefined,
-        email: form.email,
-        flatNo: form.flatNo,
-        buildingName: form.buildingName || undefined,
-        locality: form.locality,
-        landmark: form.landmark || undefined,
-        pincode: form.pincode,
-        state: form.state,
-        city: form.city,
         addressType: form.addressType,
         instructions: form.instructions || undefined,
         saveAddress: form.saveAddress,
-        address: `${compositeAddress}, ${form.city}, ${form.state} - ${form.pincode}, ${form.country}`,
       },
       items: cart.items,
       subtotal: cart.subtotal,
