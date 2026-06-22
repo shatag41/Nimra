@@ -171,7 +171,7 @@ export default function CustomerPortalClient() {
           <section className="portal-grid">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <Orders orders={orders} loadingOrders={loadingOrders} onRefresh={refreshOrders} />
-              <RecentlyViewedProducts products={products} />
+              <RecentlyViewedProducts products={products} onAdd={handleProductAdded} />
             </div>
 
             <aside className="side-stack">

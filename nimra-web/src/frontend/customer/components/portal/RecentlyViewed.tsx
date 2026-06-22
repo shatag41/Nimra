@@ -5,13 +5,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Product } from '@/types/cms';
 import { useCart } from '@/frontend/customer/hooks/useCart';
-import { formatCurrency } from '../../utils/commerce';
+import { formatCurrency, isOrderable } from '../../utils/commerce';
 
 interface RecentlyViewedProductsProps {
   products: Product[];
+  onAdd?: (product: Product) => void;
 }
 
-export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps) {
+export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProductsProps) {
   const [viewedProducts, setViewedProducts] = React.useState<Product[]>([]);
   const { addProduct } = useCart();
   const router = useRouter();
@@ -43,11 +44,13 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
     };
   }, [loadViewedProducts]);
 
-  const handleBuyNow = (product: Product, event: React.MouseEvent) => {
+  const handleAddToCart = (product: Product, event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
     addProduct(product);
-    router.push('/checkout');
+    if (onAdd) {
+      onAdd(product);
+    }
   };
 
   return (
@@ -71,14 +74,24 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
                 <h3 className="rv-title">{product.Name}</h3>
                 <div className="rv-footer">
                   <span className="rv-price">{formatCurrency(Number(product.Price))}</span>
-                  <button
-                    type="button"
-                    onClick={(e) => handleBuyNow(product, e)}
-                    className="btn btn-primary btn-sm rv-btn"
-                    style={{ cursor: 'pointer', border: 'none' }}
-                  >
-                    Buy Now
-                  </button>
+                  {isOrderable(product) ? (
+                    <button
+                      type="button"
+                      onClick={(e) => handleAddToCart(product, e)}
+                      className="btn btn-primary btn-sm rv-btn"
+                      style={{ cursor: 'pointer', border: 'none' }}
+                    >
+                      Add to Cart
+                    </button>
+                  ) : (
+                    <Link
+                      href="/contact?subject=RUSH%20Soda%20Launch"
+                      className="btn btn-secondary btn-sm rv-btn"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Notify Me
+                    </Link>
+                  )}
                 </div>
               </div>
             </div>
