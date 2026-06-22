@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { CompanyInfo } from '@/types/cms';
 import { submitInquiry } from '@/utils/api';
@@ -39,6 +39,20 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
       ? `Hello, I'd like to check pricing and delivery availability for the ${product}. Please contact me.`
       : '',
   }));
+
+  const customerName = String(user?.Name || '').trim();
+  const customerEmail = String(user?.Username || '').trim();
+  const customerPhone = String(user?.Mobile || '').replace(/\D/g, '').slice(-10);
+
+  useEffect(() => {
+    if (!user) return;
+    setForm((prev) => ({
+      ...prev,
+      name: prev.name || customerName,
+      email: prev.email || customerEmail,
+      phone: prev.phone || customerPhone,
+    }));
+  }, [user, customerName, customerEmail, customerPhone]);
 
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({
@@ -84,7 +98,13 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
           type: 'success',
           message: 'Inquiry submitted successfully! Our representative will contact you shortly.',
         });
-        setForm({ name: '', email: '', phone: '', subject: '', message: '' });
+        setForm({
+          name: customerName,
+          email: customerEmail,
+          phone: customerPhone,
+          subject: '',
+          message: '',
+        });
       } else {
         setStatus({
           type: 'error',

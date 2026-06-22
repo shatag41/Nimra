@@ -30,6 +30,20 @@ export default function InquiryScreen({ isDark, prefillParams, onClearPrefill }:
     message: '',
   });
 
+  const customerName = String(user?.Name || '').trim();
+  const customerEmail = String(user?.Username || '').trim();
+  const customerPhone = String(user?.Mobile || '').replace(/\D/g, '').slice(-10);
+
+  useEffect(() => {
+    if (!user) return;
+    setForm((prev) => ({
+      ...prev,
+      name: prev.name || customerName,
+      email: prev.email || customerEmail,
+      phone: prev.phone || customerPhone,
+    }));
+  }, [user, customerName, customerEmail, customerPhone]);
+
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({
     type: null,
@@ -47,15 +61,13 @@ export default function InquiryScreen({ isDark, prefillParams, onClearPrefill }:
   // Prefill when redirected from products or other screens
   useEffect(() => {
     if (prefillParams) {
-      setForm({
-        name: '',
-        email: '',
-        phone: '',
+      setForm((prev) => ({
+        ...prev,
         subject: prefillParams.subject || '',
         message: prefillParams.product 
           ? `Hello, I'd like to check pricing and delivery availability for the ${prefillParams.product}. Please contact me.`
           : '',
-      });
+      }));
       // Clear parent prefill params after parsing to allow form resets
       onClearPrefill();
     }
@@ -86,7 +98,13 @@ export default function InquiryScreen({ isDark, prefillParams, onClearPrefill }:
           type: 'success',
           message: 'Inquiry submitted successfully! Our representative will contact you shortly.',
         });
-        setForm({ name: '', email: '', phone: '', subject: '', message: '' });
+        setForm({
+          name: customerName,
+          email: customerEmail,
+          phone: customerPhone,
+          subject: '',
+          message: '',
+        });
       } else {
         setStatus({
           type: 'error',
