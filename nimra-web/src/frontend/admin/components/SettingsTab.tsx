@@ -31,11 +31,11 @@ export default function SettingsTab({
   return (
     <div className="settings-tab">
       <form onSubmit={handleSettingsSubmit} className="settings-form">
-        <div className="settings-header-banner" style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '2rem' }}>
-          <div className="settings-banner-icon" style={{ fontSize: '2rem' }}>⚙️</div>
+        <div className="settings-header-banner">
+          <div className="settings-banner-icon">⚙️</div>
           <div>
-            <h3 style={{ margin: 0 }}>NIMRA Brand & Contact Configurator</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '4px 0 0 0' }}>
+            <h3>NIMRA Brand & Contact Configurator</h3>
+            <p className="settings-banner-desc">
               These settings sync instantly across all checkout panels, headers, maps, and social integrations on both Customer Web and Customer Mobile applications.
             </p>
           </div>
@@ -100,7 +100,7 @@ export default function SettingsTab({
               onChange={(e) => handleSettingsFieldChange('OfficeAddress', e.target.value)}
             />
           </div>
-          <div className="form-group" style={{ marginTop: '1.25rem' }}>
+          <div className="form-group">
             <label>Packaging Plant Address Location Description</label>
             <input
               required
@@ -124,7 +124,7 @@ export default function SettingsTab({
               onChange={(e) => handleSettingsFieldChange('AboutStory', e.target.value)}
             />
           </div>
-          <div className="form-group" style={{ marginTop: '1.25rem' }}>
+          <div className="form-group">
             <label>Quality Standards Narrative Text</label>
             <textarea
               rows={3}
@@ -134,7 +134,7 @@ export default function SettingsTab({
           </div>
         </div>
 
-        <button type="submit" className="btn btn-primary" style={{ marginTop: '1rem', width: '100%', display: 'flex', justifyContent: 'center' }} disabled={saveLoading}>
+        <button type="submit" className="btn btn-primary settings-submit-btn" disabled={saveLoading}>
           {saveLoading ? 'Saving Info...' : '💾 Overwrite Company Info'}
         </button>
       </form>

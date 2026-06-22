@@ -48,7 +48,7 @@ export default function FAQModal({
             />
           </div>
 
-          <div className="form-group" style={{ zIndex: 12, position: 'relative' }}>
+          <div className="form-group form-row-relative">
             <label>FAQ Registry Status</label>
             <CustomSelect
               value={editingFAQ.Active !== false ? 'true' : 'false'}
