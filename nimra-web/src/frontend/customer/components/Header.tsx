@@ -65,6 +65,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
       window.removeEventListener('scroll', handleScroll);
       document.removeEventListener('click', handleClickOutside);
       window.removeEventListener(THEME_CHANGE_EVENT, handleThemeChange);
+
       clearTimeout(transitionTimeout);
     };
   }, []);
@@ -77,7 +78,16 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
         try {
           readIds = JSON.parse(localStorage.getItem(key) || '[]');
         } catch {}
-        const updated = data.map(n => {
+        
+        const filteredData = data.filter(n => {
+           const type = String(n.Type || '').toLowerCase();
+           if (type === 'admin' || type === 'inquiry') {
+             return String(n.Message) === "Your inquiry has been reviewed";
+           }
+           return true;
+        });
+
+        const updated = filteredData.map(n => {
           const isRead = readIds.includes(String(n.ID)) || n.Read === true || n.Read === 'true';
           return { ...n, Read: isRead };
         });
@@ -107,6 +117,32 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
       await saveNotification({ ID: id, Read: true }, 'update');
     } catch (err) {
       console.error('Failed to mark notification as read:', err);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      const unread = notifications.filter(n => n.Read !== true && n.Read !== 'true');
+      if (!unread.length) return;
+      
+      setNotifications(prev => prev.map(n => ({ ...n, Read: true })));
+      
+      if (activeUser) {
+        const key = `nimra_read_notifs_${activeUser.ID || activeUser.Username}`;
+        let readIds: string[] = [];
+        try {
+          readIds = JSON.parse(localStorage.getItem(key) || '[]');
+        } catch {}
+        
+        unread.forEach(n => {
+          if (!readIds.includes(String(n.ID))) readIds.push(String(n.ID));
+        });
+        localStorage.setItem(key, JSON.stringify(readIds));
+      }
+      
+      await Promise.all(unread.map(n => saveNotification({ ID: n.ID, Read: true }, 'update')));
+    } catch (err) {
+      console.error('Failed to mark all as read:', err);
     }
   };
 
@@ -231,13 +267,20 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
 
                 {notificationDropdownOpen && (
                   <div className="profile-dropdown notification-dropdown-menu animate-fade-in-up">
-                    <div className="dropdown-header">
+                    <div className="dropdown-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <strong>Notifications</strong>
+                      {unreadCount > 0 && (
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleMarkAllAsRead(); }}
+                          style={{ background: 'none', border: 'none', color: 'var(--primary-color)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
+                        >
+                          Mark all as read
+                        </button>
+                      )}
                     </div>
                     <div className="dropdown-divider"></div>
                     {notifications.length === 0 ? (
                       <div className="notification-empty-state">
-                        No new notifications
                       </div>
                     ) : (
                       <div className="notification-list">

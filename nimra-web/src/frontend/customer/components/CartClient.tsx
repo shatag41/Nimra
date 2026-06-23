@@ -5,7 +5,7 @@ import { useCart } from '@/frontend/customer/hooks/useCart';
 import { CartItemsList, CartSummary } from './portal/Cart';
 
 export default function CartClient() {
-  const { items } = useCart();
+  const { items, clearCart } = useCart();
 
   if (items.length === 0) {
     return (
@@ -34,8 +34,19 @@ export default function CartClient() {
           <p>Review your selected products and proceed to checkout.</p>
         </div>
 
-        <div className="cart-actions-top">
+        <div className="cart-actions-top" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
            <Link href="/products" className="btn btn-secondary btn-sm">← Continue Shopping</Link>
+           <button 
+             className="btn btn-danger btn-sm" 
+             style={{ background: 'transparent', color: '#ef4444', border: '1px solid #ef4444' }}
+             onClick={() => {
+               if (window.confirm('Are you sure you want to remove all items from your cart?')) {
+                 clearCart();
+               }
+             }}
+           >
+             Clear Cart
+           </button>
         </div>
 
         <div className="cart-layout animate-fade-in">

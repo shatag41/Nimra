@@ -280,12 +280,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         );
       },
       clearCart() {
-        cartMutationVersionRef.current += 1;
-        activeStorageKeyRef.current = storageKey;
-        setActiveStorageKey(storageKey);
-        setHydrated(true);
-        setItems([]);
-      },
+        updateCartItems(() => []);
+        toast.success('Cart cleared successfully.');
+      }
     };
   }, [activeStorageKey, hydrated, items, storageKey, updateCartItems]);
 

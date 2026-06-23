@@ -46,32 +46,38 @@ export default function OrderDetailsModal({
   return (
     <div className="order-details-overlay" onClick={() => setSelectedOrder(null)}>
       <div className="order-details-modal card animate-scale-in" onClick={(event) => event.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Order Details</h2>
-          <button type="button" className="close-modal-btn" onClick={() => setSelectedOrder(null)} aria-label="Close order details">
-            x
-          </button>
-        </div>
-
-        <div className="modal-scroll-area">
-          <div className="details-meta-grid">
-            <div>
-              <span className="meta-label">Order ID</span>
-              <span className="meta-value">#{selectedOrder.orderId || 'N/A'}</span>
+        <div className="modal-header summary-card">
+          <div className="summary-card-top">
+            <div className="summary-title-row">
+              <h2>Order #{selectedOrder.orderId || 'N/A'}</h2>
+              <span className={`status-badge ${status.toLowerCase()}`}>{status}</span>
             </div>
-            <div>
+            <button type="button" className="close-modal-btn" onClick={() => setSelectedOrder(null)} aria-label="Close order details">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          
+          <div className="summary-card-details">
+            <div className="summary-item">
               <span className="meta-label">Order Date</span>
               <span className="meta-value">{formatDate(selectedOrder.createdAt)}</span>
             </div>
-            <div>
-              <span className="meta-label">Payment Method</span>
-              <span className="meta-value">{selectedOrder.paymentMethod || 'Cash on Delivery'}</span>
-            </div>
-            <div>
+            <div className="summary-item">
               <span className="meta-label">Total Amount</span>
               <span className="meta-value-price">{formatCurrency(Number(selectedOrder.total || 0))}</span>
             </div>
+            <div className="summary-item">
+              <span className="meta-label">Customer</span>
+              <span className="meta-value">{customer.name || 'N/A'}</span>
+            </div>
+            <div className="summary-item">
+              <span className="meta-label">Payment Method</span>
+              <span className="meta-value">{selectedOrder.paymentMethod || 'Cash on Delivery'}</span>
+            </div>
           </div>
+        </div>
+
+        <div className="modal-scroll-area">
 
           <div className="items-section">
             <h3>Ordered Items</h3>
@@ -165,22 +171,37 @@ export default function OrderDetailsModal({
           box-shadow: var(--shadow-xl);
         }
 
-        .modal-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 1rem;
-          padding: 1rem 1.25rem;
+        .summary-card {
+          padding: 1.25rem 1.5rem;
           border-bottom: 1px solid var(--border-color);
           background: var(--bg-secondary);
         }
 
-        .modal-header h2 {
+        .summary-card-top {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 1rem;
+        }
+
+        .summary-title-row {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+
+        .summary-title-row h2 {
           margin: 0;
-          font-size: 1.1rem;
+          font-size: 1.2rem;
+          font-weight: 800;
+          letter-spacing: -0.01em;
+          color: var(--text-primary);
         }
 
         .close-modal-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
           width: 32px;
           height: 32px;
           border-radius: 999px;
@@ -188,6 +209,28 @@ export default function OrderDetailsModal({
           background: var(--bg-tertiary);
           color: var(--text-primary);
           cursor: pointer;
+          transition: all var(--transition-fast);
+        }
+        .close-modal-btn:hover {
+          background: rgba(220, 38, 38, 0.1);
+          color: #dc2626;
+          border-color: rgba(220, 38, 38, 0.2);
+        }
+
+        .summary-card-details {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 1rem;
+          background: var(--bg-primary);
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-md);
+          padding: 0.85rem 1rem;
+        }
+
+        .summary-item {
+          display: flex;
+          flex-direction: column;
+          gap: 0.2rem;
         }
 
         .modal-scroll-area {
@@ -198,19 +241,7 @@ export default function OrderDetailsModal({
           gap: 1.25rem;
         }
 
-        .details-meta-grid {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 1rem;
-          padding: 1rem;
-          border: 1px solid var(--border-color);
-          border-radius: var(--radius-md);
-          background: var(--bg-secondary);
-        }
-
         .meta-label {
-          display: block;
-          margin-bottom: 0.2rem;
           font-size: 0.68rem;
           font-weight: 700;
           color: var(--text-muted);
@@ -222,6 +253,7 @@ export default function OrderDetailsModal({
         .meta-value-price {
           color: var(--text-primary);
           font-weight: 700;
+          font-size: 0.9rem;
           overflow-wrap: anywhere;
         }
 

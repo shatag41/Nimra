@@ -148,6 +148,64 @@ export interface AdminUser {
   Mobile?: string;
   Password?: string;
   Role: 'Admin' | 'Manager' | 'Customer';
+  /** @deprecated use flatNo + buildingName + locality instead */
+  address?: string;
+}
+
+export interface OrderSubmission {
+  type: 'order';
+  userId?: string | number;
+  customer: OrderCustomer;
+  items: CartItem[];
+  subtotal: number;
+  deliveryCharge: number;
+  total: number;
+  paymentMethod?: string;
+  source?: 'Website' | 'Mobile App' | string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface OrderRecord extends OrderSubmission {
+  orderId: string;
+  status: 'Pending' | 'Confirmed' | 'Processing' | 'Dispatched' | 'Out for Delivery' | 'Delivered' | 'Cancelled';
+  createdAt: string;
+  updatedAt?: string;
+  cancellationStatus?: CancellationRequest['status'];
+  cancellationRequestId?: string;
+}
+
+export interface CancellationStatusHistoryItem {
+  status: 'Requested' | 'Pending' | 'Approved' | 'Rejected' | 'Cancelled';
+  at: string;
+  by?: string;
+  remarks?: string;
+}
+
+export interface CancellationRequest {
+  requestId: string;
+  orderId: string;
+  customerName: string;
+  customerMobile: string;
+  customerEmail?: string;
+  orderTotal: number;
+  paymentMethod?: string;
+  reason?: string;
+  requestDate: string;
+  approvalDate?: string;
+  adminName?: string;
+  adminRemarks?: string;
+  refundStatus?: string;
+  status: 'Pending' | 'Approved' | 'Rejected';
+  statusHistory: CancellationStatusHistoryItem[];
+}
+
+export interface AdminUser {
+  ID: string | number;
+  Username: string;
+  Mobile?: string;
+  Password?: string;
+  Role: 'Admin' | 'Manager' | 'Customer';
   Name: string;
   Active?: boolean | string;
   SavedAddresses?: string;
@@ -162,6 +220,7 @@ export interface Notification {
   Read?: boolean | string;
   Status?: string;
   CreatedAt?: string;
+  Type?: string;
 }
 
 export interface Inquiry {

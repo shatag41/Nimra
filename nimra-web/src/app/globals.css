@@ -549,15 +549,10 @@ html.theme-transition .footer-inner {
   to   { transform: rotate(360deg); }
 }
 
-.animate-fade-in    { /* animation removed */ }
 .animate-float      { animation: float 6s ease-in-out infinite; }
 .animate-float-slow { animation: floatSlow 8s ease-in-out infinite; }
 .animate-pulse-glow { animation: pulse-glow 2.5s infinite; }
-.animate-slide-up   { /* animation removed */ }
-.animate-slide-left { /* animation removed */ }
-.animate-scale-in   { /* animation removed */ }
 .animate-shimmer    { animation: shimmer 2s linear infinite; }
-
 /* ── Layout ────────────────────────────────────────────────────────────────── */
 .container {
   width: 100%;
