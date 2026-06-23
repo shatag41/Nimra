@@ -768,12 +768,12 @@ export const saveCompanyInfo = async (companyInfo: CompanyInfo): Promise<{ succe
   }
 };
 
-export const syncCart = async (userId: string | number, items: CartItem[]): Promise<{ success: boolean; message: string }> => {
+export const syncCart = async (userId: string | number, items: CartItem[], updatedAt = new Date().toISOString()): Promise<{ success: boolean; message: string }> => {
   try {
     const res = await fetch('/api/cms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'cartSync', userId, items }),
+      body: JSON.stringify({ type: 'cartSync', userId, items, updatedAt }),
     });
     const data = await res.json();
     return { success: data.success, message: data.message || 'Cart synced' };

@@ -6,8 +6,9 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/frontend/customer/hooks/useAuth';
 import { useCustomerOrders, clearCustomerOrdersCache } from '@/frontend/customer/hooks/useCustomerOrders';
 import { useCart } from '../contexts/CartProvider';
-import { OrderRecord, Product } from '@/types/cms';
+import { OrderRecord } from '@/types/cms';
 import { formatCurrency } from '../utils/commerce';
+import { createReorderCheckoutDraft } from '../utils/reorderDraft';
 import { requestOrderCancellation } from '@/utils/api';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
@@ -32,11 +33,11 @@ const formatDate = (value?: string) => {
 
 export default function OrdersClient() {
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { orders, loadingOrders, refreshOrders } = useCustomerOrders();
-  const { addProduct, items: cartItems, subtotal, totalItems } = useCart();
+  const { items: cartItems, subtotal, totalItems } = useCart();
 
-  const [activeTab, setActiveTab] = useState<OrderTab>('active');
+  const [activeTab, setActiveTab] = useState<OrderTab>('all');
   const [dateFilter, setDateFilter] = useState<'all' | '30days' | '6months' | 'year'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const deferredSearchQuery = useDeferredValue(searchQuery);
@@ -44,6 +45,8 @@ export default function OrdersClient() {
   const [orderToCancel, setOrderToCancel] = useState<OrderRecord | null>(null);
   const [cancelling, setCancelling] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [visibleOrderCount, setVisibleOrderCount] = useState(10);
+  const loadMoreRef = React.useRef<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
     setMounted(true);
@@ -75,31 +78,17 @@ export default function OrdersClient() {
 
   const handleReorder = (order: OrderRecord) => {
     try {
-      order.items.forEach((item) => {
-        const dummyProduct: Product = {
-          ID: item.productId,
-          Name: item.name,
-          Category: item.category,
-          Volume: item.volume,
-          Price: item.price,
-          Description: '',
-          ImageUrl: item.imageUrl,
-          Active: true,
-        };
-        addProduct(dummyProduct, item.quantity);
-      });
-      toast.success(
-        <div className="toast-reorder-content">
-          <span>Items from order {order.orderId} added to cart.</span>
-          <button onClick={() => router.push('/cart')} className="toast-btn">
-            Go to Cart
-          </button>
-        </div>,
-        { duration: 5000 }
-      );
+      const draft = createReorderCheckoutDraft(order);
+      if (!draft) {
+        toast.error('This order has no reorderable items.');
+        return;
+      }
+      toast.success(`Reordering ${draft.items.length} product${draft.items.length === 1 ? '' : 's'} from ${order.orderId}`);
+      setSelectedOrder(null);
+      router.push('/checkout?reorder=1');
     } catch (error) {
       console.error(error);
-      toast.error('Failed to add items to cart.');
+      toast.error('Failed to start reorder checkout.');
     }
   };
 
@@ -144,6 +133,16 @@ export default function OrdersClient() {
       }
     });
   }, [orders, deferredSearchQuery, activeTab, dateFilter]);
+
+  React.useEffect(() => {
+    const target = loadMoreRef.current;
+    if (!target || visibleOrderCount >= filteredOrders.length) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) setVisibleOrderCount((count) => Math.min(count + 10, filteredOrders.length));
+    }, { rootMargin: '300px' });
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [filteredOrders.length, visibleOrderCount]);
 
   if (!mounted || authLoading) return null;
 
@@ -420,7 +419,7 @@ export default function OrdersClient() {
             )
           ) : filteredOrders.length > 0 ? (
             <div className="orders-cards-list">
-              {filteredOrders.map((order) => {
+              {filteredOrders.slice(0, visibleOrderCount).map((order) => {
                 const hasPendingCancellation = order.cancellationStatus === 'Pending';
                 const isCancelable = ['pending', 'confirmed'].includes(order.status.toLowerCase()) && !hasPendingCancellation;
                 const statusLower = order.status.toLowerCase();
@@ -470,7 +469,7 @@ export default function OrdersClient() {
                             <div key={idx} className="amazon-item-row">
                               <div className="item-img-wrapper">
                                 {item.imageUrl ? (
-                                  <img src={item.imageUrl} alt={item.name} className="item-img" />
+                                  <img src={item.imageUrl} alt={item.name} className="item-img" loading="lazy" decoding="async" />
                                 ) : (
                                   <span className="fallback-box">📦</span>
                                 )}
@@ -512,6 +511,7 @@ export default function OrdersClient() {
                   </div>
                 );
               })}
+              {visibleOrderCount < filteredOrders.length && <div ref={loadMoreRef} aria-hidden="true" style={{ height: 1 }} />}
             </div>
           ) : (
             <div className="empty-orders card animate-scale-in">

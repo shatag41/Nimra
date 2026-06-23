@@ -6,9 +6,26 @@ export const FREE_DELIVERY_MINIMUM = 500;
 export const productId = (product: Product) => String(product.ID || product.Name);
 
 export const priceOf = (value: number | string) => {
-  const parsed = Number(value);
+  const parsed = typeof value === 'number' ? value : Number(String(value).replace(/[^0-9.-]+/g, ''));
   return Number.isFinite(parsed) ? parsed : 0;
 };
+
+const comparableText = (value: unknown) =>
+  String(value || '').toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '');
+
+const displayNameWithoutVolume = (value: unknown) =>
+  String(value || '').replace(/\s*\([^()]*\)\s*$/, '').trim();
+
+export const normalizeCartItem = (item: CartItem): CartItem => ({
+  ...item,
+  productId: String(item.productId || item.name),
+  name: displayNameWithoutVolume(item.name),
+  category: String(item.category || ''),
+  volume: String(item.volume || ''),
+  price: priceOf(item.price || 0),
+  imageUrl: String(item.imageUrl || ''),
+  quantity: Math.max(1, Math.floor(Number(item.quantity) || 1)),
+});
 
 export const normalizeCategory = (category: string) => {
   const value = category.trim();
@@ -33,8 +50,85 @@ export const productToCartItem = (product: Product, quantity = 1): CartItem => (
   quantity,
 });
 
+export const findMatchingProduct = (item: CartItem, products: Product[] = []) => {
+  const normalized = normalizeCartItem(item);
+  const itemProductId = comparableText(normalized.productId);
+  const itemName = comparableText(normalized.name);
+  const itemNameFromId = comparableText(displayNameWithoutVolume(normalized.productId));
+  const itemVolume = comparableText(normalized.volume);
+
+  return products.find((product) => {
+    const catalogId = comparableText(product.ID);
+    const catalogName = comparableText(product.Name);
+    const catalogVolume = comparableText(product.Volume);
+
+    if (catalogId && itemProductId === catalogId) return true;
+    if (catalogName && (itemName === catalogName || itemNameFromId === catalogName)) return true;
+    if (catalogName && itemVolume && catalogVolume && (itemName.includes(catalogName) || itemNameFromId.includes(catalogName)) && itemVolume === catalogVolume) return true;
+    return false;
+  });
+};
+
+export const hydrateCartItemFromCatalog = (item: CartItem, products: Product[] = []): CartItem => {
+  const normalized = normalizeCartItem(item);
+  const product = findMatchingProduct(normalized, products);
+  if (!product) return normalized;
+
+  return {
+    ...productToCartItem(product, normalized.quantity),
+    price: priceOf(product.Price) || normalized.price,
+  };
+};
+
+export const mergeCartItems = (items: CartItem[]) => {
+  const merged = new Map<string, CartItem>();
+
+  items.map(normalizeCartItem).forEach((item) => {
+    const existing = merged.get(item.productId);
+    if (!existing) {
+      merged.set(item.productId, item);
+      return;
+    }
+
+    const preferredMetadata = item.price > 0 ? item : existing;
+    merged.set(item.productId, {
+      ...existing,
+      ...preferredMetadata,
+      quantity: existing.quantity + item.quantity,
+      price: preferredMetadata.price || existing.price || item.price,
+    });
+  });
+
+  return Array.from(merged.values());
+};
+
+export const mergeCartSnapshots = (items: CartItem[]) => {
+  const merged = new Map<string, CartItem>();
+
+  items.map(normalizeCartItem).forEach((item) => {
+    const existing = merged.get(item.productId);
+    if (!existing) {
+      merged.set(item.productId, item);
+      return;
+    }
+
+    const preferredMetadata = item.price > 0 ? item : existing;
+    merged.set(item.productId, {
+      ...existing,
+      ...preferredMetadata,
+      quantity: item.quantity || existing.quantity,
+      price: preferredMetadata.price || existing.price || item.price,
+    });
+  });
+
+  return Array.from(merged.values());
+};
+
+export const hydrateCartItemsFromCatalog = (items: CartItem[], products: Product[] = []) =>
+  mergeCartSnapshots(items.map((item) => hydrateCartItemFromCatalog(item, products)));
+
 export const cartSubtotal = (items: CartItem[]) =>
-  items.reduce((total, item) => total + item.price * item.quantity, 0);
+  items.reduce((total, item) => total + priceOf(item.price) * item.quantity, 0);
 
 export const deliveryChargeFor = (subtotal: number) =>
   subtotal > 0 && subtotal < FREE_DELIVERY_MINIMUM ? DELIVERY_CHARGE : 0;

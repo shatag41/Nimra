@@ -699,6 +699,17 @@ function saveOrder(spreadsheet, params) {
   var quantities = items.map(function(item) {
     return item.quantity;
   }).join(' | ');
+  var itemsJson = JSON.stringify(items.map(function(item) {
+    return {
+      productId: String(item.productId || item.name || ''),
+      name: String(item.name || ''),
+      category: String(item.category || ''),
+      volume: String(item.volume || ''),
+      price: parseCurrencyNumber(item.price),
+      imageUrl: String(item.imageUrl || ''),
+      quantity: Math.max(1, Number(item.quantity || 1))
+    };
+  }));
 
   // ── Row order MUST match ensureOrdersSheet headers exactly ───────────────
   // Customer/contact/address details are intentionally not written to Orders.
@@ -713,6 +724,7 @@ function saveOrder(spreadsheet, params) {
     'Delivery Instructions': instructions,
     'Products': products,
     'Quantities': quantities,
+    'Items JSON': itemsJson,
     'Subtotal': subtotal,
     'Delivery Charge': deliveryCharge,
     'Total Amount': totalAmount,
@@ -748,6 +760,25 @@ function getAllOrders(spreadsheet, userId, mobile, email) {
   var data = sheet.getDataRange().getValues();
   if (data.length <= 1) return [];
   var headers = data[0];
+
+  // Customer portal requests are scoped by user/contact. Keep this path fast:
+  // avoid resolving every saved address/user/profile when the row already has
+  // the durable Customer User ID (new orders) or legacy contact columns.
+  var hasScope = Boolean(String(userId || '').trim() || normalizeDigits(mobile) || normalizeEmail(email));
+  if (hasScope) {
+    var addressOwnerById = String(userId || '').trim() ? buildAddressOwnerLookupFast(spreadsheet) : {};
+    var scopedOrders = [];
+    for (var s = 1; s < data.length; s++) {
+      if (orderRowMatchesScopeFast(headers, data[s], userId, mobile, email, addressOwnerById)) {
+        scopedOrders.push(rowToOrderFast(headers, data[s]));
+      }
+    }
+    // Customer requests include user ID plus current email/mobile, so this fast
+    // pass covers both referenced orders and legacy contact-based rows without
+    // invoking the much slower full address/profile resolver.
+    return scopedOrders;
+  }
+
   var users = getUsersData(spreadsheet);
   var customerLookup = buildOrderCustomerLookup(spreadsheet, users);
   var orders = [];
@@ -758,6 +789,133 @@ function getAllOrders(spreadsheet, userId, mobile, email) {
     }
   }
   return orders;
+}
+
+function orderRowValue(headers, row, name) {
+  var index = headers.indexOf(name);
+  return index >= 0 ? row[index] : '';
+}
+
+function buildAddressOwnerLookupFast(spreadsheet) {
+  var lookup = {};
+  var sheet = spreadsheet.getSheetByName('UserAddresses');
+  if (!sheet || sheet.getLastRow() <= 1) return lookup;
+
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0] || [];
+  var addressIdIndex = headers.indexOf('AddressId');
+  var customerIdIndex = headers.indexOf('CustomerId');
+  if (addressIdIndex < 0 || customerIdIndex < 0) return lookup;
+
+  for (var i = 1; i < data.length; i++) {
+    var addressId = String(data[i][addressIdIndex] || '').trim();
+    var customerId = String(data[i][customerIdIndex] || '').trim();
+    if (addressId && customerId) lookup[addressId] = customerId;
+  }
+  return lookup;
+}
+
+function orderRowMatchesScopeFast(headers, row, userId, mobile, email, addressOwnerById) {
+  var requestedUserId = String(userId || '').trim();
+  var requestedMobile = normalizeDigits(mobile);
+  var requestedEmail = normalizeEmail(email);
+
+  if (requestedUserId && String(orderRowValue(headers, row, 'Customer User ID') || '').trim() === requestedUserId) return true;
+  if (requestedUserId && addressOwnerById) {
+    var savedAddressId = String(orderRowValue(headers, row, 'Saved Address ID') || '').trim();
+    if (savedAddressId && String(addressOwnerById[savedAddressId] || '').trim() === requestedUserId) return true;
+  }
+  if (requestedMobile && normalizeDigits(orderRowValue(headers, row, 'Mobile Number')) === requestedMobile) return true;
+  if (requestedEmail && normalizeEmail(orderRowValue(headers, row, 'Email')) === requestedEmail) return true;
+  return false;
+}
+
+function parseOrderItemsFast(headers, row) {
+  function value(name) {
+    return orderRowValue(headers, row, name);
+  }
+
+  var items = [];
+  try {
+    var storedItems = JSON.parse(String(value('Items JSON') || '[]'));
+    if (Array.isArray(storedItems)) {
+      items = storedItems.map(function(item) {
+        return {
+          productId: String(item.productId || item.ID || item.id || item.name || ''),
+          name: String(item.name || item.Name || ''),
+          category: String(item.category || item.Category || ''),
+          volume: String(item.volume || item.Volume || ''),
+          price: parseCurrencyNumber(item.price || item.Price),
+          imageUrl: String(item.imageUrl || item.ImageUrl || item.image || ''),
+          quantity: Math.max(1, Number(item.quantity || item.qty || 1))
+        };
+      });
+    }
+  } catch (ignoreInvalidItemsJson) {}
+
+  if (items.length) return items;
+
+  var products = String(value('Products') || '').split(' | ');
+  var quantities = String(value('Quantities') || '').split(' | ');
+  return products.filter(Boolean).map(function(displayName, index) {
+    var parsed = String(displayName).match(/^(.*?)\s*\(([^()]*)\)\s*$/);
+    var name = parsed ? parsed[1].trim() : String(displayName).trim();
+    var volume = parsed ? parsed[2].trim() : '';
+    return {
+      productId: name,
+      name: name,
+      category: '',
+      volume: volume,
+      price: 0,
+      imageUrl: '',
+      quantity: Math.max(1, Number(quantities[index] || 1))
+    };
+  });
+}
+
+function rowToOrderFast(headers, row) {
+  function value(name) {
+    return orderRowValue(headers, row, name);
+  }
+
+  var savedAddressId = value('Saved Address ID') || '';
+  var customer = {
+    userId: String(value('Customer User ID') || '').trim(),
+    savedAddressId: savedAddressId,
+    name: value('Customer Name') || '',
+    mobile: normalizeDigits(value('Mobile Number')),
+    altMobile: normalizeDigits(value('Alternate Mobile Number')),
+    email: normalizeEmail(value('Email')),
+    flatNo: value('House/Flat No.'),
+    buildingName: value('Building/Society Name'),
+    locality: value('Area/Locality'),
+    landmark: value('Landmark'),
+    address: value('Full Address'),
+    city: value('City'),
+    state: value('State'),
+    pincode: normalizeDigits(value('Pincode')),
+    addressType: value('Address Type') || 'Home',
+    instructions: value('Delivery Instructions')
+  };
+
+  return {
+    type: 'order',
+    orderId: value('Order ID'),
+    status: value('Order Status') || 'Pending',
+    createdAt: toISOString(value('Order Date')),
+    updatedAt: toISOString(value('Updated At')) || toISOString(value('Order Date')),
+    customer: customer,
+    items: parseOrderItemsFast(headers, row),
+    subtotal: Number(value('Subtotal') || 0),
+    deliveryCharge: Number(value('Delivery Charge') || 0),
+    total: Number(value('Total Amount') || 0),
+    paymentMethod: value('Payment Method') || 'Cash on Delivery',
+    source: value('Source') || 'Website',
+    savedAddressId: savedAddressId,
+    cancellationStatus: value('Cancellation Status') || '',
+    cancellationRequestId: value('Cancellation Request ID') || '',
+    statusHistory: parseStatusHistory(value('Status History'))
+  };
 }
 
 function trackOrder(spreadsheet, orderId, mobile, userId, email) {
@@ -974,17 +1132,36 @@ function rowToOrder(headers, row, spreadsheet, users, customerLookup) {
 
   var products = String(value('Products') || '').split(' | ');
   var quantities = String(value('Quantities') || '').split(' | ');
-  var items = products.filter(Boolean).map(function(name, index) {
-    return {
-      productId: name,
-      name: name,
-      category: '',
-      volume: '',
-      price: 0,
-      imageUrl: '',
-      quantity: Number(quantities[index] || 1)
-    };
-  });
+  var items = [];
+  try {
+    var storedItems = JSON.parse(String(value('Items JSON') || '[]'));
+    if (Array.isArray(storedItems)) items = storedItems;
+  } catch (ignoreInvalidItemsJson) {}
+
+  // Legacy rows did not retain prices. Recover them from the current catalog so
+  // old orders can still be reordered without silently creating zero-value carts.
+  if (!items.length) {
+    var catalog = getSheetData(spreadsheet.getSheetByName('Products')) || [];
+    items = products.filter(Boolean).map(function(displayName, index) {
+      var parsed = String(displayName).match(/^(.*?)\s*\(([^()]*)\)\s*$/);
+      var name = parsed ? parsed[1].trim() : String(displayName).trim();
+      var volume = parsed ? parsed[2].trim() : '';
+      var product = catalog.filter(function(candidate) {
+        var candidateName = String(candidate.Name || '').trim().toLowerCase();
+        var candidateVolume = String(candidate.Volume || '').trim().toLowerCase();
+        return candidateName === name.toLowerCase() && (!volume || candidateVolume === volume.toLowerCase());
+      })[0] || {};
+      return {
+        productId: String(product.ID || name),
+        name: String(product.Name || name),
+        category: String(product.Category || ''),
+        volume: String(product.Volume || volume),
+        price: parseCurrencyNumber(product.Price),
+        imageUrl: String(product.ImageUrl || ''),
+        quantity: Math.max(1, Number(quantities[index] || 1))
+      };
+    });
+  }
 
   var userId = String(value('Customer User ID') || '').trim();
   var savedAddressId = value('Saved Address ID') || '';
@@ -1220,7 +1397,7 @@ function ensureOrdersSheet(spreadsheet) {
   var requiredHeaders = [
     'Order ID', 'Order Date', 'Customer User ID', 'Address Type',
     'Saved Address ID',
-    'Delivery Instructions', 'Products', 'Quantities', 'Subtotal',
+    'Delivery Instructions', 'Products', 'Quantities', 'Items JSON', 'Subtotal',
     'Delivery Charge', 'Total Amount', 'Payment Method', 'Order Status',
     'Source', 'Created At', 'Updated At', 'Cancellation Status',
     'Cancellation Request ID', 'Status History'
@@ -1238,15 +1415,8 @@ function ensureOrdersSheet(spreadsheet) {
   }
 
   var existingHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] || [];
-  if (hasDeprecatedOrderColumns(existingHeaders)) {
-    var existingData = sheet.getDataRange().getValues();
-    for (var r = 1; r < existingData.length; r++) {
-      compactOrderRow(spreadsheet, existingHeaders, existingData[r], requiredHeaders);
-    }
-    removeDeprecatedOrderColumns(sheet);
-    existingHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] || [];
-  }
-
+  // Keep legacy contact columns in place. They are durable ownership evidence
+  // for historical rows and must never be deleted during a normal API request.
   for (var i = 0; i < requiredHeaders.length; i++) {
     if (existingHeaders.indexOf(requiredHeaders[i]) < 0) {
       sheet.getRange(1, sheet.getLastColumn() + 1).setValue(requiredHeaders[i]);
@@ -1294,6 +1464,11 @@ function removeDeprecatedOrderColumns(sheet) {
 
 function normalizeDigits(value) {
   return String(value || '').replace(/\D/g, '').trim();
+}
+
+function parseCurrencyNumber(value) {
+  var parsed = Number(String(value || 0).replace(/[^0-9.-]+/g, ''));
+  return isNaN(parsed) ? 0 : parsed;
 }
 
 function orderBelongsToUser(order, userId, mobile, email) {
@@ -2988,6 +3163,8 @@ function updateUserLastLogin(spreadsheet, userId) {
 function handleCartSync(spreadsheet, params) {
   var userId = String(params.userId || '').trim();
   var items = params.items || [];
+  var incomingUpdatedAt = params.updatedAt ? new Date(params.updatedAt) : new Date();
+  if (isNaN(incomingUpdatedAt.getTime())) incomingUpdatedAt = new Date();
   
   if (!userId) {
     return { success: false, message: 'userId is required for cart sync' };
@@ -3010,9 +3187,13 @@ function handleCartSync(spreadsheet, params) {
   }
   
   var cartJson = JSON.stringify(items);
-  var now = new Date().toISOString();
+  var now = incomingUpdatedAt.toISOString();
   
   if (rowIndex !== -1) {
+    var existingUpdatedAt = new Date(data[rowIndex - 1][2]);
+    if (!isNaN(existingUpdatedAt.getTime()) && incomingUpdatedAt.getTime() < existingUpdatedAt.getTime()) {
+      return { success: true, message: 'Stale cart sync ignored', staleIgnored: true };
+    }
     sheet.getRange(rowIndex, 2, 1, 2).setValues([[cartJson, now]]);
   } else {
     sheet.appendRow([userId, cartJson, now]);

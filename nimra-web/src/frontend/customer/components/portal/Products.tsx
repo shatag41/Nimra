@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Product } from '@/types/cms';
 import { useCart } from '@/frontend/customer/hooks/useCart';
-import { formatCurrency, isOrderable, normalizeCategory, trackProductView } from '../../utils/commerce';
+import { formatCurrency, isOrderable, normalizeCategory, productId, trackProductView } from '../../utils/commerce';
 
 interface ProductCardProps {
   product: Product;
@@ -13,8 +13,8 @@ interface ProductCardProps {
 
 export const CatalogCard = React.memo(function CatalogCard({ product, onAdd }: ProductCardProps) {
   const { addProduct, updateQuantity, items } = useCart();
-  const id = String(product.ID || product.Name);
-  const cartItem = items.find((item) => item.productId === id) ?? null;
+  const id = productId(product);
+  const cartItem = items.find((item) => String(item.productId) === id) ?? null;
   const inCart = cartItem !== null && cartItem.quantity > 0;
   const orderable = isOrderable(product);
 
@@ -100,6 +100,7 @@ export const CatalogCard = React.memo(function CatalogCard({ product, onAdd }: P
                   className="qty-btn qty-minus"
                   onClick={(event) => {
                     event.preventDefault();
+                    event.stopPropagation();
                     handleDecrease();
                   }}
                   aria-label="Decrease quantity"
@@ -112,6 +113,7 @@ export const CatalogCard = React.memo(function CatalogCard({ product, onAdd }: P
                   className="qty-btn qty-plus"
                   onClick={(event) => {
                     event.preventDefault();
+                    event.stopPropagation();
                     handleIncrease();
                   }}
                   aria-label="Increase quantity"

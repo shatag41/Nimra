@@ -31,7 +31,7 @@ export const fallbackData: any = {
         pincode: '411001',
       },
       items: [
-        { productId: '1', name: 'NIMRA 500ml Bottle', quantity: 2 },
+        { productId: '2', name: 'NIMRA 500ml Bottle', category: 'Packaged Drinking Water', volume: '500ml', price: 10, imageUrl: '', quantity: 2 },
       ],
       subtotal: 20,
       deliveryCharge: 0,

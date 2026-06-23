@@ -2,14 +2,17 @@
 
 import React, { FormEvent, useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useCart } from '@/frontend/customer/hooks/useCart';
 import { useAuth } from '@/frontend/customer/hooks/useAuth';
 import { useLocation } from '@/frontend/customer/contexts/LocationContext';
 import { submitOrder, saveUser } from '@/utils/api';
-import { clearCustomerOrdersCache } from '@/frontend/customer/hooks/useCustomerOrders';
+import { primeCustomerOrderCache } from '@/frontend/customer/hooks/useCustomerOrders';
 import { toast } from 'sonner';
 import { CheckoutForm, CheckoutSummary, CheckoutSuccess, SavedAddress, WORLD_DATA } from './portal/Checkout';
 import { migrateLegacyLocalAddresses, normalizeSavedAddresses, persistUserSavedAddresses } from '@/frontend/customer/utils/userAddresses';
+import { clearReorderCheckoutDraft, readReorderCheckoutDraft, ReorderCheckoutDraft, totalsForCheckoutItems } from '@/frontend/customer/utils/reorderDraft';
+import type { CartItem, OrderRecord } from '@/types/cms';
 
 const initialForm = {
   name: '',
@@ -33,16 +36,29 @@ type FormState = typeof initialForm;
 
 export default function CheckoutClient() {
   const cart = useCart();
+  const searchParams = useSearchParams();
   const { user, updateUserSession } = useAuth();
   const [form, setForm] = useState<FormState>(initialForm);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [status, setStatus] = useState<{ kind: 'idle' | 'loading' | 'success' | 'error'; message: string; orderId?: string }>({ kind: 'idle', message: '' });
+  const [reorderDraft, setReorderDraft] = useState<ReorderCheckoutDraft | null>(null);
   
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [isEditingAddress, setIsEditingAddress] = useState(true);
 
   const location = useLocation();
+  const isReorderCheckout = Boolean(reorderDraft);
+  const checkoutItems: CartItem[] = reorderDraft?.items || cart.items;
+  const checkoutTotals = totalsForCheckoutItems(checkoutItems);
+
+  useEffect(() => {
+    if (searchParams.get('reorder') === '1') {
+      setReorderDraft(readReorderCheckoutDraft());
+    } else {
+      setReorderDraft(null);
+    }
+  }, [searchParams]);
 
   // Load saved addresses from the user profile on mount/login.
   useEffect(() => {
@@ -259,8 +275,8 @@ export default function CheckoutClient() {
 
   const placeOrder = async (event: FormEvent) => {
     event.preventDefault();
-    if (cart.items.length === 0) {
-      toast.error('Your cart is empty.');
+    if (checkoutItems.length === 0) {
+      toast.error(isReorderCheckout ? 'This reorder has no products to checkout.' : 'Your cart is empty.');
       return;
     }
 
@@ -353,18 +369,49 @@ export default function CheckoutClient() {
         instructions: form.instructions || undefined,
         saveAddress: form.saveAddress,
       },
-      items: cart.items,
-      subtotal: cart.subtotal,
-      deliveryCharge: cart.deliveryCharge,
-      total: cart.grandTotal,
+      items: checkoutItems,
+      subtotal: checkoutTotals.subtotal,
+      deliveryCharge: checkoutTotals.deliveryCharge,
+      total: checkoutTotals.grandTotal,
       paymentMethod: 'Cash on Delivery' as const,
-      source: 'Website' as const,
+      source: isReorderCheckout ? 'Website Reorder' : 'Website' as const,
     };
 
     const result = await submitOrder(orderData);
     if (result.success) {
-      clearCustomerOrdersCache(user?.ID);
-      cart.clearCart();
+      const now = new Date().toISOString();
+      const savedOrder: OrderRecord = {
+        ...orderData,
+        orderId: result.orderId || `NIMRA-${Date.now()}`,
+        status: 'Pending',
+        createdAt: now,
+        updatedAt: now,
+        customer: {
+          ...orderData.customer,
+          userId: user?.ID,
+          name: form.name,
+          mobile: form.mobile,
+          altMobile: form.altMobile,
+          email: form.email || user?.Username,
+          flatNo: form.flatNo,
+          buildingName: form.buildingName,
+          locality: form.locality,
+          landmark: form.landmark,
+          pincode: form.pincode,
+          state: form.state,
+          city: form.city,
+          addressType: form.addressType,
+          savedAddressId: selectedSavedAddressId,
+          instructions: form.instructions,
+        },
+      };
+      primeCustomerOrderCache(savedOrder, [user?.ID, user?.Username, user?.Mobile]);
+      if (isReorderCheckout) {
+        clearReorderCheckoutDraft();
+        setReorderDraft(null);
+      } else {
+        cart.clearCart();
+      }
       setForm(initialForm);
       setStatus({ kind: 'success', message: result.message, orderId: result.orderId });
       if (result.emailError) {
@@ -385,17 +432,23 @@ export default function CheckoutClient() {
     return <div className="loading-state" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>Loading Checkout...</div>;
   }
 
-  if (cart.items.length === 0 && status.kind !== 'success') {
+  if (checkoutItems.length === 0 && status.kind !== 'success') {
     return (
       <section className="checkout-page">
         <div className="container">
           <div className="page-header animate-slide-up">
             <span className="badge badge-primary">Checkout</span>
-            <h1>Your Cart is Empty</h1>
-            <p>You have no items to checkout. Add NIMRA products to continue.</p>
+            <h1>{searchParams.get('reorder') === '1' ? 'Reorder Not Available' : 'Your Cart is Empty'}</h1>
+            <p>
+              {searchParams.get('reorder') === '1'
+                ? 'The reorder draft expired or has no valid products. Please choose Reorder again from your order history.'
+                : 'You have no items to checkout. Add NIMRA products to continue.'}
+            </p>
           </div>
           <div className="empty-cart-action">
-             <Link href="/products" className="btn btn-primary">Continue Shopping</Link>
+             <Link href={searchParams.get('reorder') === '1' ? '/orders' : '/products'} className="btn btn-primary">
+              {searchParams.get('reorder') === '1' ? 'Back to Orders' : 'Continue Shopping'}
+             </Link>
           </div>
         </div>
         <style jsx>{styles}</style>
@@ -407,7 +460,9 @@ export default function CheckoutClient() {
     <section className="checkout-page">
       <div className="container">
         <div className="checkout-actions-top">
-           <Link href="/cart" className="btn btn-secondary btn-sm">← Back to Cart</Link>
+          <Link href={isReorderCheckout ? '/orders' : '/cart'} className="btn btn-secondary btn-sm">
+            {isReorderCheckout ? 'Back to Orders' : 'Back to Cart'}
+          </Link>
         </div>
 
         {status.kind === 'success' ? (
@@ -433,7 +488,14 @@ export default function CheckoutClient() {
                 locationLoading={location.loading}
                 onDetectLocation={handleDetectLocation}
               />
-              <CheckoutSummary status={status} />
+              <CheckoutSummary
+                status={status}
+                items={checkoutItems}
+                subtotal={checkoutTotals.subtotal}
+                deliveryCharge={checkoutTotals.deliveryCharge}
+                grandTotal={checkoutTotals.grandTotal}
+                isReorder={isReorderCheckout}
+              />
             </form>
           </div>
         )}

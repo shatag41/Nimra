@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { Product } from '@/types/cms';
 import { useCart } from '@/frontend/customer/hooks/useCart';
 import { CatalogCard } from './portal/Products';
-import { CartToast } from './portal/Notifications';
 import { normalizeCategory } from '../utils/commerce';
 import RushSodaPromo from './RushSodaPromo';
 
@@ -25,10 +24,9 @@ export default function ProductsClient({ products }: ProductsClientProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'outofstock'>('all');
   const [sizeFilter, setSizeFilter] = useState<'all' | 'jar' | 'bottle'>('all');
-  const [cartToast, setCartToast] = useState<{ name: string; visible: boolean }>({ name: '', visible: false });
   const { addProduct } = useCart();
-  const cartToastTimer = useRef<number | null>(null);
   const deferredSearchQuery = useDeferredValue(searchQuery);
+  const processedAddIdRef = useRef<string | null>(null);
 
   const filteredProducts = useMemo(() => products.filter((product) => {
     const matchesCategory = activeTab === 'All' ? true : normalizeCategory(product.Category) === activeTab;
@@ -53,51 +51,24 @@ export default function ProductsClient({ products }: ProductsClientProps) {
     return true;
   }), [activeTab, deferredSearchQuery, products, sizeFilter, statusFilter]);
 
-  const showCartToast = useCallback((product: Product) => {
-    setCartToast({ name: product.Name, visible: true });
-    if (cartToastTimer.current) {
-      window.clearTimeout(cartToastTimer.current);
-    }
-    cartToastTimer.current = window.setTimeout(() => {
-      setCartToast((t) => ({ ...t, visible: false }));
-      cartToastTimer.current = null;
-    }, 3000);
-  }, []);
-
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const addId = params.get('add');
-      if (addId) {
+      if (addId && processedAddIdRef.current !== addId) {
+        processedAddIdRef.current = addId;
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
         const targetProduct = products.find((p) => String(p.ID) === addId);
         if (targetProduct) {
-          window.setTimeout(() => {
-            addProduct(targetProduct);
-            showCartToast(targetProduct);
-          }, 0);
-          const newUrl = window.location.pathname;
-          window.history.replaceState({}, '', newUrl);
+          addProduct(targetProduct);
         }
       }
     }
-  }, [addProduct, products, showCartToast]);
-
-  useEffect(() => {
-    return () => {
-      if (cartToastTimer.current) {
-        window.clearTimeout(cartToastTimer.current);
-      }
-    };
-  }, []);
+  }, [addProduct, products]);
 
   return (
     <div className="products-page container">
-      <CartToast
-        visible={cartToast.visible}
-        name={cartToast.name}
-        onClose={() => setCartToast((t) => ({ ...t, visible: false }))}
-      />
-
       {/* Page Header */}
       <div className="page-header animate-slide-up">
         <span className="badge badge-primary">Products</span>
@@ -197,7 +168,7 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           ) : filteredProducts.length > 0 ? (
             <div className="catalog-grid animate-fade-in">
               {filteredProducts.map((product) => (
-                <CatalogCard key={String(product.ID || product.Name)} product={product} onAdd={showCartToast} />
+                <CatalogCard key={String(product.ID || product.Name)} product={product} />
               ))}
             </div>
           ) : (

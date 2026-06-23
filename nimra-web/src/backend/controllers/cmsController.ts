@@ -2,11 +2,13 @@ import { NextResponse } from 'next/server';
 import { fallbackData } from '../models/fallbackData';
 
 const APPS_SCRIPT_URL = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || process.env.EXPO_PUBLIC_APPS_SCRIPT_URL || '';
-const APPS_SCRIPT_TIMEOUT_MS = 20000;
+const APPS_SCRIPT_TIMEOUT_MS = 30000;
 
 let cachedCMSData: any = null;
 let lastFetchTime = 0;
 const CACHE_TTL = 300000; // 5 minutes cache
+const LIVE_GET_CACHE_TTL = 15000;
+const liveGetCache = new Map<string, { data: any; expiresAt: number }>();
 
 // Store OTPs in-memory for local fallback mode
 const localOTPCache = new Map<string, { otp: string; expiresAt: number }>();
@@ -14,6 +16,13 @@ const localOTPCache = new Map<string, { otp: string; expiresAt: number }>();
 function invalidateCMSCache() {
   cachedCMSData = null;
   lastFetchTime = 0;
+  liveGetCache.clear();
+}
+
+function getLiveCacheKey(action: string | null, userId: string, mobile: string, email: string) {
+  // Order history must reflect newly appended orders immediately. Other live
+  // actions do not currently use this scoped cache.
+  return '';
 }
 
 // Proxy GET requests to Google Apps Script
@@ -31,6 +40,14 @@ export async function handleGet(req: Request) {
 
   // If fetching main CMS data (action is null), serve from in-memory cache if fresh
   const now = Date.now();
+  const liveCacheKey = getLiveCacheKey(action, userId, mobile, email);
+  const liveCached = liveCacheKey ? liveGetCache.get(liveCacheKey) : null;
+  if (liveCached && liveCached.expiresAt > now) {
+    return NextResponse.json(liveCached.data, {
+      headers: { 'Cache-Control': 'private, max-age=10, stale-while-revalidate=30' },
+    });
+  }
+
   if (!action && cachedCMSData && (now - lastFetchTime < CACHE_TTL)) {
     return NextResponse.json(cachedCMSData, { headers: cacheHeaders });
   }
@@ -62,6 +79,9 @@ export async function handleGet(req: Request) {
         if (!action) {
           cachedCMSData = data;
           lastFetchTime = now;
+        }
+        if (liveCacheKey) {
+          liveGetCache.set(liveCacheKey, { data, expiresAt: Date.now() + LIVE_GET_CACHE_TTL });
         }
         return NextResponse.json(data, { headers: cacheHeaders });
       }
@@ -183,6 +203,14 @@ export async function handlePost(req: Request) {
     
     if (payload.type === 'order') {
       const orderId = `NIMRA-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      const now = new Date().toISOString();
+      fallbackData.orders.unshift({
+        ...payload,
+        orderId,
+        status: 'Pending',
+        createdAt: now,
+        updatedAt: now,
+      });
       return NextResponse.json({
         success: true,
         message: 'Order placed successfully (local fallback mode)',

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useCart } from '@/frontend/customer/hooks/useCart';
 import { useLocation } from '@/frontend/customer/contexts/LocationContext';
 import { formatCurrency } from '../../utils/commerce';
+import type { CartItem } from '@/types/cms';
 import type { User } from '@/frontend/customer/contexts/AuthContext';
 
 export interface SavedAddress {
@@ -1104,16 +1105,25 @@ export function CheckoutForm({
 
 interface CheckoutSummaryProps {
   status: { kind: 'idle' | 'loading' | 'success' | 'error'; message: string };
+  items?: CartItem[];
+  subtotal?: number;
+  deliveryCharge?: number;
+  grandTotal?: number;
+  isReorder?: boolean;
 }
 
-export function CheckoutSummary({ status }: CheckoutSummaryProps) {
+export function CheckoutSummary({ status, items, subtotal, deliveryCharge, grandTotal, isReorder }: CheckoutSummaryProps) {
   const cart = useCart();
+  const checkoutItems = items || cart.items;
+  const checkoutSubtotal = subtotal ?? cart.subtotal;
+  const checkoutDeliveryCharge = deliveryCharge ?? cart.deliveryCharge;
+  const checkoutGrandTotal = grandTotal ?? cart.grandTotal;
 
   return (
     <aside className="co-summary glass">
-      <h2>Order Summary</h2>
+      <h2>{isReorder ? 'Reorder Summary' : 'Order Summary'}</h2>
       <div className="co-items">
-        {cart.items.map((item) => (
+        {checkoutItems.map((item) => (
           <div className="co-item-row" key={item.productId}>
             <div className="co-item-info">
               <span className="co-item-name">{item.name}</span>
@@ -1126,17 +1136,17 @@ export function CheckoutSummary({ status }: CheckoutSummaryProps) {
       <div className="co-totals">
         <div className="sum-row">
           <span>Subtotal</span>
-          <strong>{formatCurrency(cart.subtotal)}</strong>
+          <strong>{formatCurrency(checkoutSubtotal)}</strong>
         </div>
         <div className="sum-row">
           <span>Delivery</span>
-          <strong className={!cart.deliveryCharge ? 'co-free' : ''}>
-            {cart.deliveryCharge ? formatCurrency(cart.deliveryCharge) : 'Free'}
+          <strong className={!checkoutDeliveryCharge ? 'co-free' : ''}>
+            {checkoutDeliveryCharge ? formatCurrency(checkoutDeliveryCharge) : 'Free'}
           </strong>
         </div>
         <div className="sum-row total">
           <span>Total</span>
-          <strong>{formatCurrency(cart.grandTotal)}</strong>
+          <strong>{formatCurrency(checkoutGrandTotal)}</strong>
         </div>
       </div>
       <div className="co-payment-badge">
