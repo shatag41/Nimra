@@ -21,17 +21,75 @@ interface CartContextValue {
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
-const showAddedToast = (message: string, description = '1 item selected. You can review it before checkout.') => toast.success(message, {
-  id: 'cart-added',
-  description,
-  action: {
-    label: 'Go to Cart',
-    onClick: () => {
-      window.location.assign('/cart');
-    },
-  },
-  duration: 5000,
-});
+const showAddedToast = (title: string) => {
+  toast.custom((t) => (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px',
+      background: 'var(--bg-primary, #ffffff)',
+      border: '1px solid var(--border-color, #e5e7eb)',
+      borderRadius: '999px',
+      padding: '8px 12px 8px 16px',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+      color: 'var(--text-primary, #000)',
+      fontSize: '0.9rem',
+      width: 'max-content',
+      maxWidth: '90vw',
+      margin: '0 auto',
+      pointerEvents: 'auto'
+    }}>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+      <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>
+        {title}
+      </span>
+      <button 
+        onClick={() => { toast.dismiss(t); window.location.assign('/cart'); }}
+        style={{
+          background: 'var(--primary-color, #2563eb)',
+          color: 'white',
+          border: 'none',
+          padding: '6px 14px',
+          borderRadius: '999px',
+          fontSize: '0.8rem',
+          fontWeight: 700,
+          cursor: 'pointer',
+          whiteSpace: 'nowrap',
+          marginLeft: '4px'
+        }}
+      >
+        Go to Cart &rarr;
+      </button>
+      <button 
+        onClick={() => toast.dismiss(t)}
+        style={{
+          background: 'none',
+          border: 'none',
+          color: 'var(--text-muted, #6b7280)',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '4px',
+          marginLeft: '2px'
+        }}
+        aria-label="Close"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  ), {
+    id: 'cart-added',
+    position: 'bottom-center',
+    duration: 4000,
+  });
+};
 const getStorageKey = (user: ReturnType<typeof useAuth>['user']) => {
   if (!user) return 'nimra-cart';
   const ownerId = String(user.ID || user.Username || user.Mobile || '').trim();
@@ -175,7 +233,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           if (!existing) return [...current, nextItem];
           return current;
         });
-        showAddedToast(`Added ${product.Name} to cart`);
+        showAddedToast(product.Name);
       },
       addItems(newItems, message) {
         const normalizedItems = mergeCartItems(newItems.map(normalizeCartItem));
@@ -187,10 +245,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           return mergeCartItems([...current, ...normalizedItems]);
         });
         const quantity = normalizedItems.reduce((sum, item) => sum + item.quantity, 0);
-        showAddedToast(
-          message || `Added ${quantity} item${quantity === 1 ? '' : 's'} to cart`,
-          `${quantity} item${quantity === 1 ? '' : 's'} selected. You can review before checkout.`
-        );
+        showAddedToast(message || `${quantity} item${quantity === 1 ? '' : 's'} added`);
       },
       updateQuantity(productId, quantity) {
         const targetProductId = String(productId);

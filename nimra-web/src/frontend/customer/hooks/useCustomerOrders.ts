@@ -117,7 +117,16 @@ export function useCustomerOrders() {
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
 
-  const cacheKey = user?.ID ? String(user.ID) : (user?.Username || '');
+  const userId = user?.ID || '';
+  const userName = user?.Name || '';
+  const userEmail = user?.Username || '';
+  const userMobile = user?.Mobile || '';
+  const userAltMobile = user?.AlternateMobile || '';
+  const userSavedAddresses = user?.SavedAddresses || '';
+  const cacheKey = userId ? String(userId) : userEmail;
+  const enrichOrdersForUser = useCallback((sourceOrders: OrderRecord[]) => (
+    sourceOrders.map((order) => enrichOrderCustomer(order, user))
+  ), [userId, userName, userEmail, userMobile, userAltMobile, userSavedAddresses]);
 
   // Pre-fill state from cache for instant navigation/loading
   useEffect(() => {
@@ -136,14 +145,14 @@ export function useCustomerOrders() {
     }
     if (ordersCache[cacheKey]) {
       queueMicrotask(() => {
-        setOrders(ordersCache[cacheKey].map((order) => enrichOrderCustomer(order, user)));
+        setOrders(enrichOrdersForUser(ordersCache[cacheKey]));
         setLoadingOrders(false);
       });
     }
-  }, [isAuthenticated, cacheKey, user]);
+  }, [isAuthenticated, cacheKey, enrichOrdersForUser]);
 
   const loadOrders = useCallback(async (forceRefetch = false) => {
-    if (!isAuthenticated || !user) {
+    if (!isAuthenticated || (!userId && !userEmail && !userMobile)) {
       setLoadingOrders(false);
       return;
     }
@@ -164,23 +173,23 @@ export function useCustomerOrders() {
     try {
       let fetchPromise = activeFetches[key];
       if (forceRefetch || !fetchPromise) {
-        fetchPromise = fetchCustomerOrders(user.ID || '', user.Username || '', user.Mobile || '').then(async (customerOrders) => {
+        fetchPromise = fetchCustomerOrders(userId || '', userEmail || '', userMobile || '').then(async (customerOrders) => {
           const needsCatalog = customerOrders.some((order) => (order.items || []).some((item) =>
             !Number(item.price || 0) || !item.imageUrl || !item.category || !item.volume
           ));
 
-          if (!needsCatalog) return customerOrders.map((order) => enrichOrderCustomer(order, user));
+          if (!needsCatalog) return enrichOrdersForUser(customerOrders);
 
           const products = await fetchProducts();
           return customerOrders.map((order) => ({
-            ...enrichOrderCustomer(order, user),
+            ...enrichOrdersForUser([order])[0],
             items: hydrateCartItemsFromCatalog(order.items || [], products),
           }));
         });
         activeFetches[key] = fetchPromise;
       }
       const data = await fetchPromise;
-      const sortedData = mergeOrders(ordersCache[key] || [], data.map((order) => enrichOrderCustomer(order, user)));
+      const sortedData = mergeOrders(ordersCache[key] || [], enrichOrdersForUser(data));
       writeOrdersCache(key, sortedData);
       setOrders(sortedData);
     } catch (err) {
@@ -189,7 +198,7 @@ export function useCustomerOrders() {
       activeFetches[key] = null;
       setLoadingOrders(false);
     }
-  }, [isAuthenticated, user, cacheKey]);
+  }, [isAuthenticated, userId, userEmail, userMobile, cacheKey, enrichOrdersForUser]);
 
   useEffect(() => {
     if (!authLoading) {
@@ -205,13 +214,13 @@ export function useCustomerOrders() {
       const detail = (event as CustomEvent<{ key?: string }>).detail;
       if (detail?.key && detail.key !== cacheKey) return;
       if (ordersCache[cacheKey]) {
-        setOrders(ordersCache[cacheKey].map((order) => enrichOrderCustomer(order, user)));
+        setOrders(enrichOrdersForUser(ordersCache[cacheKey]));
         setLoadingOrders(false);
       }
     };
     window.addEventListener('nimra-orders-cache-updated', handleCacheUpdate);
     return () => window.removeEventListener('nimra-orders-cache-updated', handleCacheUpdate);
-  }, [cacheKey, user]);
+  }, [cacheKey, enrichOrdersForUser]);
 
   const metrics = useMemo(() => {
     const totalSpend = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
