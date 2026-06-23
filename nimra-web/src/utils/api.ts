@@ -163,9 +163,10 @@ const getProxyUrl = (): string => {
     return '/api/cms';
   }
   // Server-side: use localhost (Next.js dev) or the VERCEL_URL in production
+  const port = process.env.PORT || 3000;
   const base = process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`
-    : 'http://localhost:3000';
+    : `http://localhost:${port}`;
   return `${base}/api/cms`;
 };
 

@@ -8313,3 +8313,319 @@ select {
   }
 }
 
+/* =========================================================
+   STRICT OVERRIDES FOR DASHBOARD (COMPACT & PREMIUM UI)
+========================================================= */
+
+/* --- 1. SUMMARY STATS CARDS (4 COLUMNS, COMPACT) --- */
+.stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 0.35rem !important;
+    margin-bottom: 0.5rem !important;
+    width: 100% !important;
+    align-items: stretch !important;
+}
+
+.stat-card {
+    min-width: 0 !important;
+    min-height: 0 !important;
+    padding: 0.4rem 0.5rem !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    gap: 0.15rem !important;
+    box-sizing: border-box !important;
+}
+
+.stat-card .stat-label,
+.stat-card .stat-desc {
+    font-size: 0.55rem !important;
+    line-height: 1.1 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.stat-card .stat-val {
+    font-size: 0.95rem !important;
+    line-height: 1.05 !important;
+    letter-spacing: -0.02em !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* --- 2. CHARTS GRID (2 COLUMNS, PERFECT ALIGNMENT, PREMIUM UI) --- */
+.charts-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.6rem !important;
+    width: 100% !important;
+    align-items: stretch !important;
+    margin-bottom: 0.6rem !important;
+}
+
+.charts-grid .chart-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    min-height: 10rem !important;
+    padding: 0.6rem !important;
+    background: var(--bg-primary, #ffffff) !important;
+    border: 1px solid var(--border-light, rgba(0,0,0,0.05)) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+}
+
+.charts-grid .chart-card:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+    border-color: rgba(var(--primary-rgb), 0.15) !important;
+}
+
+[data-theme="dark"] .charts-grid .chart-card {
+    background: #1e293b !important;
+    border-color: rgba(255,255,255,0.05) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-theme="dark"] .charts-grid .chart-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+    border-color: rgba(255,255,255,0.1) !important;
+}
+
+.charts-grid .chart-wrapper,
+.charts-grid .donut-chart-flex {
+    flex: 1 !important;
+    min-height: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    gap: 0.5rem !important;
+}
+
+.charts-grid .svg-chart {
+    width: 100% !important;
+    max-height: 8.5rem !important;
+}
+
+/* Perfect Grid Centering for Donut */
+.charts-grid .donut-chart-container {
+    display: grid !important;
+    place-items: center !important;
+    position: relative !important;
+}
+
+.charts-grid .donut-svg {
+    grid-area: 1 / 1 !important;
+    width: 100px !important;
+    height: 100px !important;
+    display: block !important;
+}
+
+.charts-grid .donut-chart-text {
+    grid-area: 1 / 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    pointer-events: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    z-index: 10 !important;
+}
+
+.charts-grid .chart-card h3 {
+    font-size: 0.7rem !important;
+    font-weight: 600 !important;
+    margin: 0 0 0.2rem 0 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.03em !important;
+    color: var(--text-secondary) !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* Responsive Grids */
+@media (max-width: 1024px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+    .charts-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+}
+
+@media (max-width: 640px) {
+    .stats-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+}
+
+/* --- 3. CANCELLATION APPROVALS TABLE (PREMIUM COMPACT UI) --- */
+.cancellation-card {
+    padding: 0.8rem 1rem !important;
+    background: var(--bg-primary, #ffffff) !important;
+    border: 1px solid var(--border-light, rgba(0,0,0,0.05)) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+    margin-bottom: 0 !important;
+}
+
+[data-theme="dark"] .cancellation-card {
+    background: #1e293b !important;
+    border-color: rgba(255,255,255,0.05) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+.dashboard-cancellation-table table {
+    min-width: 0 !important;
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 0.35rem !important;
+}
+
+.dashboard-cancellation-table .compact-table th {
+    padding: 0.4rem 0.6rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    color: var(--text-muted) !important;
+    border-bottom: 1px solid var(--border-light, rgba(0,0,0,0.05)) !important;
+}
+
+.dashboard-cancellation-table .compact-table td {
+    padding: 0.5rem 0.6rem !important;
+    font-size: 0.8rem !important;
+    line-height: 1.3 !important;
+    vertical-align: middle !important;
+    background: var(--bg-secondary) !important;
+    transition: background 0.2s ease !important;
+}
+
+.dashboard-cancellation-table .compact-table tr:hover td {
+    background: rgba(var(--primary-rgb), 0.04) !important;
+}
+
+[data-theme="dark"] .dashboard-cancellation-table .compact-table tr:hover td {
+    background: rgba(255,255,255,0.04) !important;
+}
+
+.dashboard-cancellation-table .compact-table td:first-child {
+    border-top-left-radius: 8px !important;
+    border-bottom-left-radius: 8px !important;
+}
+
+.dashboard-cancellation-table .compact-table td:last-child {
+    border-top-right-radius: 8px !important;
+    border-bottom-right-radius: 8px !important;
+}
+
+.dashboard-cancellation-table .compact-table small {
+    font-size: 0.65rem !important;
+    color: var(--text-muted) !important;
+    display: block !important;
+    margin-top: 0.15rem !important;
+}
+
+/* Premium Inputs */
+.dashboard-cancellation-table .form-input.remarks-textarea {
+    font-size: 0.75rem !important;
+    padding: 0.35rem 0.5rem !important;
+    min-height: 0 !important;
+    height: 2rem !important;
+    line-height: 1.2 !important;
+    resize: none !important;
+    margin: 0 !important;
+    border-radius: 6px !important;
+    border: 1px solid var(--border-color) !important;
+    background: var(--bg-primary) !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.dashboard-cancellation-table .form-input.remarks-textarea:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1) !important;
+    outline: none !important;
+}
+
+/* Premium Action Buttons */
+.dashboard-cancellation-table .btn-table {
+    padding: 0.3rem 0.6rem !important;
+    font-size: 0.7rem !important;
+    font-weight: 600 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    border-radius: 6px !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border: 1px solid transparent !important;
+}
+
+.dashboard-cancellation-table .btn-reject {
+    color: #ef4444 !important;
+    background: rgba(239, 68, 68, 0.1) !important;
+}
+
+.dashboard-cancellation-table .btn-reject:hover {
+    background: #ef4444 !important;
+    color: white !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25) !important;
+}
+
+.dashboard-cancellation-table .btn-approve {
+    color: #10b981 !important;
+    background: rgba(16, 185, 129, 0.1) !important;
+}
+
+.dashboard-cancellation-table .btn-approve:hover {
+    background: #10b981 !important;
+    color: white !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25) !important;
+}
+
+/* Header Tweaks */
+.activity-card-header {
+    margin-bottom: 0.6rem !important;
+    align-items: center !important;
+    padding-bottom: 0.4rem !important;
+    border-bottom: 1px solid var(--border-light, rgba(0,0,0,0.05)) !important;
+}
+
+.activity-card-header h3 {
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    color: var(--text-primary) !important;
+    margin-bottom: 0.15rem !important;
+}
+
+.activity-card-header p {
+    font-size: 0.75rem !important;
+    color: var(--text-secondary) !important;
+    margin: 0 !important;
+}
+
+.cancellation-count-btn {
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    padding: 0.35rem 0.75rem !important;
+    border-radius: 8px !important;
+    background: rgba(245, 158, 11, 0.15) !important;
+    color: #d97706 !important;
+    border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+
+[data-theme="dark"] .cancellation-count-btn {
+    color: #fbbf24 !important;
+}

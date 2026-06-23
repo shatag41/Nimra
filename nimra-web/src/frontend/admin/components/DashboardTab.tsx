@@ -76,23 +76,46 @@ export default function DashboardTab({ orders, filteredInquiries, filteredOrders
     <div className="overview-tab">
       {/* Stats Cards */}
       <div className="stats-grid">
-        <div className="stat-card glass">
-          <span className="stat-label">Total Revenue</span>
+        <div className="stat-card glass card-revenue">
+          <div className="stat-header">
+            <span className="stat-label">Total Revenue</span>
+            <div className="stat-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+          </div>
           <strong className="stat-val">{formatCurrency(totalRevenue)}</strong>
           <span className="stat-desc">From completed orders</span>
         </div>
-        <div className="stat-card glass">
-          <span className="stat-label">Total Orders</span>
+        
+        <div className="stat-card glass card-orders">
+          <div className="stat-header">
+            <span className="stat-label">Total Orders</span>
+            <div className="stat-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0"/></svg>
+            </div>
+          </div>
           <strong className="stat-val">{orders.length}</strong>
           <span className="stat-desc">All tracking statuses</span>
         </div>
-        <div className="stat-card glass">
-          <span className="stat-label">Average Order Value</span>
+        
+        <div className="stat-card glass card-aov">
+          <div className="stat-header">
+            <span className="stat-label">Avg. Order Value</span>
+            <div className="stat-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8M12 18V6"/></svg>
+            </div>
+          </div>
           <strong className="stat-val">{formatCurrency(avgOrderValue)}</strong>
           <span className="stat-desc">Per completed delivery</span>
         </div>
-        <div className="stat-card glass">
-          <span className="stat-label">Total Customers</span>
+        
+        <div className="stat-card glass card-customers">
+          <div className="stat-header">
+            <span className="stat-label">Total Customers</span>
+            <div className="stat-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+          </div>
           <strong className="stat-val">{totalCustomers}</strong>
           <span className="stat-desc">Unique mobile registers</span>
         </div>
