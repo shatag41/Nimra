@@ -118,7 +118,6 @@ html, body {
   width: 100%;
   color: var(--text-primary);
   font-family: var(--font-body);
-  scroll-behavior: smooth;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -151,7 +150,6 @@ body {
 
 main {
   flex: 1;
-  animation: mainFadeIn var(--transition-slow) ease-out forwards;
 }
 
 @keyframes mainFadeIn {
@@ -551,13 +549,13 @@ html.theme-transition .footer-inner {
   to   { transform: rotate(360deg); }
 }
 
-.animate-fade-in    { animation: fadeIn var(--transition-normal) forwards; }
+.animate-fade-in    { /* animation removed */ }
 .animate-float      { animation: float 6s ease-in-out infinite; }
 .animate-float-slow { animation: floatSlow 8s ease-in-out infinite; }
 .animate-pulse-glow { animation: pulse-glow 2.5s infinite; }
-.animate-slide-up   { animation: slideUp 0.5s ease-out forwards; }
-.animate-slide-left { animation: slideInLeft 0.5s ease-out forwards; }
-.animate-scale-in   { animation: scaleIn 0.3s ease-out forwards; }
+.animate-slide-up   { /* animation removed */ }
+.animate-slide-left { /* animation removed */ }
+.animate-scale-in   { /* animation removed */ }
 .animate-shimmer    { animation: shimmer 2s linear infinite; }
 
 /* ── Layout ────────────────────────────────────────────────────────────────── */

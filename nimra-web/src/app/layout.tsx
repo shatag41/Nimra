@@ -45,7 +45,7 @@ export default async function RootLayout({
   const data = await fetchCMSData();
 
   return (
-    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
