@@ -91,23 +91,25 @@ export default function SettingsTab({
           <div className="settings-section-title">
             <span>📍</span> Operations & Plant Locations
           </div>
-          <div className="form-group">
-            <label>Office Address Location Description</label>
-            <input
-              required
-              type="text"
-              value={companyInfo.OfficeAddress || ''}
-              onChange={(e) => handleSettingsFieldChange('OfficeAddress', e.target.value)}
-            />
-          </div>
-          <div className="form-group">
-            <label>Packaging Plant Address Location Description</label>
-            <input
-              required
-              type="text"
-              value={companyInfo.PlantAddress || ''}
-              onChange={(e) => handleSettingsFieldChange('PlantAddress', e.target.value)}
-            />
+          <div className="settings-grid">
+            <div className="form-group">
+              <label>Office Address Location Description</label>
+              <input
+                required
+                type="text"
+                value={companyInfo.OfficeAddress || ''}
+                onChange={(e) => handleSettingsFieldChange('OfficeAddress', e.target.value)}
+              />
+            </div>
+            <div className="form-group">
+              <label>Packaging Plant Address Location Description</label>
+              <input
+                required
+                type="text"
+                value={companyInfo.PlantAddress || ''}
+                onChange={(e) => handleSettingsFieldChange('PlantAddress', e.target.value)}
+              />
+            </div>
           </div>
         </div>
 
@@ -116,21 +118,23 @@ export default function SettingsTab({
           <div className="settings-section-title">
             <span>📖</span> Brand Story & Quality Standards
           </div>
-          <div className="form-group">
-            <label>About Us Brand Story Narrative</label>
-            <textarea
-              rows={4}
-              value={companyInfo.AboutStory || ''}
-              onChange={(e) => handleSettingsFieldChange('AboutStory', e.target.value)}
-            />
-          </div>
-          <div className="form-group">
-            <label>Quality Standards Narrative Text</label>
-            <textarea
-              rows={3}
-              value={companyInfo.QualityText || ''}
-              onChange={(e) => handleSettingsFieldChange('QualityText', e.target.value)}
-            />
+          <div className="settings-grid">
+            <div className="form-group">
+              <label>About Us Brand Story Narrative</label>
+              <textarea
+                rows={4}
+                value={companyInfo.AboutStory || ''}
+                onChange={(e) => handleSettingsFieldChange('AboutStory', e.target.value)}
+              />
+            </div>
+            <div className="form-group">
+              <label>Quality Standards Narrative Text</label>
+              <textarea
+                rows={3}
+                value={companyInfo.QualityText || ''}
+                onChange={(e) => handleSettingsFieldChange('QualityText', e.target.value)}
+              />
+            </div>
           </div>
         </div>
 

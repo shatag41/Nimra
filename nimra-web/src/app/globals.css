@@ -7274,13 +7274,18 @@ select {
 
 /* Settings tab compact styles */
 .settings-tab {
-  padding: 0.5rem !important;
+  padding: 0 !important;
 }
 .settings-tab .settings-header-banner {
   display: flex;
   gap: 1rem;
   align-items: center;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
 }
 .settings-tab .settings-banner-icon {
   font-size: 1.75rem;
@@ -7288,49 +7293,85 @@ select {
 .settings-tab .settings-banner-desc {
   color: var(--text-secondary);
   font-size: 0.825rem;
-  margin: 2px 0 0 0;
+  margin: 4px 0 0 0;
+  line-height: 1.4;
 }
 .settings-tab .settings-section {
-  padding: 1rem !important;
+  padding: 1.25rem 1.5rem !important;
   margin-bottom: 1rem !important;
-  border-radius: var(--radius-md) !important;
+  border-radius: var(--radius-lg) !important;
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: var(--shadow-sm) !important;
 }
 .settings-tab .settings-section-title {
-  font-size: 0.95rem !important;
-  margin-bottom: 0.75rem !important;
-  padding-bottom: 0.35rem !important;
+  font-size: 1rem !important;
+  margin-bottom: 1.25rem !important;
+  padding-bottom: 0.5rem !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  font-weight: 700 !important;
+  color: var(--text-primary) !important;
 }
 .settings-tab .settings-grid {
-  gap: 0.85rem !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 1rem 1.5rem !important;
+  align-items: stretch !important;
 }
 .settings-tab .form-group {
-  gap: 0.25rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.35rem !important;
+  margin: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
 }
 .settings-tab .form-group label {
   font-size: 0.8rem !important;
   font-weight: 600 !important;
-  margin-bottom: 2px !important;
+  margin-bottom: auto !important;
+  color: var(--text-secondary) !important;
 }
 .settings-tab .form-group input,
 .settings-tab .form-group textarea {
-  min-height: 34px !important;
-  padding: 0.4rem 0.75rem !important;
-  font-size: 0.825rem !important;
+  width: 100% !important;
+  min-height: 38px !important;
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.85rem !important;
   border-radius: 8px !important;
+  border: 1px solid var(--border-color) !important;
+  background: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  transition: all var(--transition-fast) !important;
+}
+.settings-tab .form-group input:focus,
+.settings-tab .form-group textarea:focus {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1) !important;
+  outline: none !important;
 }
 .settings-tab .form-group textarea {
-  min-height: 80px !important;
+  min-height: 100px !important;
+  resize: vertical !important;
 }
 .settings-tab .settings-section .form-group + .form-group,
 .settings-tab .settings-section .form-group + .settings-grid,
 .settings-tab .settings-section .settings-grid + .form-group {
-  margin-top: 0.75rem;
+  margin-top: 1rem !important;
 }
 .settings-tab .settings-submit-btn {
-  margin-top: 1rem !important;
+  margin-top: 1.5rem !important;
   width: 100% !important;
   display: flex !important;
   justify-content: center !important;
+  align-items: center !important;
+  height: 44px !important;
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
+  border-radius: var(--radius-md) !important;
 }
 
 /* Button Refinements */
