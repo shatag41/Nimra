@@ -8515,27 +8515,38 @@ select {
 .stat-card {
     min-width: 0 !important;
     min-height: 0 !important;
-    padding: 0.4rem 0.5rem !important;
+    padding: 0.6rem 0.75rem !important;
     margin: 0 !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: center !important;
-    gap: 0.15rem !important;
+    gap: 0.25rem !important;
     box-sizing: border-box !important;
+}
+
+.stat-card .stat-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+}
+
+.stat-card .stat-icon svg {
+    width: 16px !important;
+    height: 16px !important;
 }
 
 .stat-card .stat-label,
 .stat-card .stat-desc {
-    font-size: 0.55rem !important;
-    line-height: 1.1 !important;
+    font-size: 0.65rem !important;
+    line-height: 1.2 !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
 }
 
 .stat-card .stat-val {
-    font-size: 0.95rem !important;
-    line-height: 1.05 !important;
+    font-size: 1.15rem !important;
+    line-height: 1.1 !important;
     letter-spacing: -0.02em !important;
     white-space: nowrap !important;
     overflow: hidden !important;
