@@ -140,19 +140,19 @@ export default function Header({
                 <span className="menu-label">Edit Profile</span>
               </button>
               <div
-                className="menu-item"
+                className="menu-item theme-menu-item"
                 role="button"
                 tabIndex={0}
                 onClick={(e) => {
                   e.stopPropagation();
-                  const themeToggle = document.querySelector<HTMLElement>('.theme-toggle-btn');
+                  const themeToggle = document.querySelector<HTMLElement>('.theme-menu-item .theme-toggle-btn');
                   themeToggle?.click();
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     e.stopPropagation();
-                    const themeToggle = document.querySelector<HTMLElement>('.theme-toggle-btn');
+                    const themeToggle = document.querySelector<HTMLElement>('.theme-menu-item .theme-toggle-btn');
                     themeToggle?.click();
                   }
                 }}
