@@ -44,7 +44,6 @@ export function Profile({ user }: ProfileProps) {
             <h2 className="profile-name" title={name || 'Account Details'}>
               {name || 'Account Details'}
             </h2>
-            <span className="badge badge-primary profile-badge">Customer</span>
           </div>
         </div>
 
@@ -69,11 +68,11 @@ export function Profile({ user }: ProfileProps) {
 
       <style jsx>{`
         .profile-card {
-          padding: 1.1rem;
+          padding: 0.85rem;
           display: flex;
           flex-direction: column;
-          gap: 0.85rem;
-          border-radius: 12px;
+          gap: 0.6rem;
+          border-radius: 10px;
           background: var(--bg-secondary);
           border: 1px solid var(--border-color);
           box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
@@ -87,25 +86,25 @@ export function Profile({ user }: ProfileProps) {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          gap: 0.75rem;
+          gap: 0.5rem;
         }
         .profile-identity {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
+          gap: 0.5rem;
           min-width: 0;
           flex: 1;
         }
         .profile-avatar {
-          width: 36px;
-          height: 36px;
+          width: 32px;
+          height: 32px;
           border-radius: 50%;
           background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
           color: white;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 1rem;
+          font-size: 0.9rem;
           font-weight: 800;
           box-shadow: 0 2px 8px rgba(37, 99, 235, 0.12);
           flex-shrink: 0;
@@ -118,42 +117,31 @@ export function Profile({ user }: ProfileProps) {
           flex: 1;
         }
         .profile-name {
-          font-size: 1.05rem;
+          font-size: 0.95rem;
           font-weight: 700;
           color: var(--text-primary);
           margin: 0;
-          line-height: 1.2;
+          line-height: 1.1;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
         }
-        .profile-badge {
-          align-self: start;
-          font-size: 0.6rem;
-          padding: 0.1rem 0.4rem;
-          border-radius: 999px;
-          background: rgba(37, 99, 235, 0.08);
-          color: var(--primary-color);
-          border: 1px solid rgba(37, 99, 235, 0.15);
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
-        }
+
         .profile-completion {
           display: flex;
           flex-direction: column;
           align-items: flex-end;
-          gap: 0.2rem;
+          gap: 0.15rem;
           flex-shrink: 0;
         }
         .profile-percent {
-          font-size: 0.78rem;
+          font-size: 0.7rem;
           font-weight: 800;
           color: var(--primary-color);
           line-height: 1;
         }
         .profile-progress-track {
-          width: 48px;
+          width: 42px;
           height: 3.5px;
           background: var(--bg-tertiary);
           border-radius: 999px;
@@ -168,17 +156,17 @@ export function Profile({ user }: ProfileProps) {
         .profile-details-list {
           display: flex;
           flex-direction: column;
-          gap: 0.15rem;
+          gap: 0;
           background: rgba(150, 150, 150, 0.01);
-          padding: 0.6rem 0.75rem;
-          border-radius: 8px;
+          padding: 0.4rem 0.6rem;
+          border-radius: 6px;
           border: 1px solid rgba(150, 150, 150, 0.05);
         }
         .profile-detail-item {
           display: flex;
           align-items: flex-start;
-          gap: 0.65rem;
-          padding: 0.35rem 0;
+          gap: 0.5rem;
+          padding: 0.25rem 0;
           border-bottom: 1px solid rgba(150, 150, 150, 0.05);
         }
         .profile-detail-item:last-child {
@@ -186,9 +174,9 @@ export function Profile({ user }: ProfileProps) {
           border-bottom: none;
         }
         .profile-detail-label {
-          width: 66px;
+          width: 60px;
           flex-shrink: 0;
-          font-size: 0.7rem;
+          font-size: 0.65rem;
           font-weight: 800;
           text-transform: uppercase;
           letter-spacing: 0.05em;
@@ -198,13 +186,13 @@ export function Profile({ user }: ProfileProps) {
         }
         .profile-detail-value {
           flex: 1;
-          font-size: 0.85rem;
+          font-size: 0.8rem;
           color: var(--text-secondary);
           font-weight: 600;
           text-align: left;
           overflow-wrap: break-word;
           word-break: break-word;
-          line-height: 1.35;
+          line-height: 1.25;
         }
         .profile-detail-value.not-provided {
           color: var(--text-muted);

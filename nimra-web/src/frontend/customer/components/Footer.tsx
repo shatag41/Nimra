@@ -236,9 +236,9 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
           transition: all 200ms ease;
         }
         .cert-badge:hover {
-          background: rgba(255, 255, 255, 0.08);
-          color: #ffffff;
-          border-color: rgba(255, 255, 255, 0.2);
+          background: #ffffff;
+          color: #0f172a;
+          border-color: #ffffff;
         }
 
         .footer-links {
