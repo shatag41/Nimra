@@ -4640,10 +4640,10 @@ td {
 /* Admin Portal Standardized Buttons Override */
 .admin-container .btn,
 .modal-backdrop .btn {
-    height: 34px;
-    padding: 0 0.85rem;
-    font-size: 0.85rem;
-    border-radius: 12px;
+    height: 24px;
+    padding: 0 0.45rem;
+    font-size: 0.7rem;
+    border-radius: 6px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -4651,17 +4651,17 @@ td {
 
 .admin-container .btn svg,
 .modal-backdrop .btn svg {
-    width: 18px;
-    height: 18px;
+    width: 12px;
+    height: 12px;
 }
 
 .btn-add {
-    gap: 0.5rem;
+    gap: 0.25rem;
 }
 
 .actions-flex {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.25rem;
 }
 
 .actions-flex.vertical {
@@ -4669,9 +4669,9 @@ td {
 }
 
 .btn-table {
-    padding: 0.5rem 1rem;
-    font-size: 0.825rem;
-    border-radius: var(--radius-md);
+    padding: 0.25rem 0.45rem;
+    font-size: 0.7rem;
+    border-radius: 4px;
     font-weight: 600;
 }
 
@@ -8349,35 +8349,73 @@ select {
   box-shadow: none;
 }
 
-.orders-tab .filter-bar {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  align-items: end;
-  gap: 12px;
-  width: 100%;
-  overflow: visible;
-  padding: 0.68rem;
+.admin-container .filter-bar {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  justify-content: space-between !important;
+  align-items: flex-end !important;
+  gap: 8px !important;
+  width: 100% !important;
+  overflow: visible !important;
+  padding: 0.4rem 0.6rem !important;
+  margin-bottom: 0.4rem !important;
+  background: var(--bg-secondary) !important;
+  border-radius: var(--radius-md) !important;
+  height: auto !important;
+  min-height: 0 !important;
 }
 
-.orders-tab .filter-group {
-  min-width: 0;
-  max-width: 240px;
+.admin-container .filter-group {
+  flex: 1 1 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 3px !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  width: auto !important;
 }
 
-.orders-tab .filter-group label {
-  display: block;
-  margin-bottom: 0.35rem;
+.admin-container .filter-group label {
+  white-space: nowrap !important;
+  margin-bottom: 0 !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  color: var(--text-secondary) !important;
+  line-height: 1 !important;
+  padding: 0 !important;
 }
 
-.orders-tab .custom-select-container,
-.orders-tab .filter-input {
-  width: 100%;
-  min-width: 0;
+.admin-container .filter-input,
+.admin-container .custom-select-container,
+.admin-container .custom-select-container .custom-select-trigger,
+.admin-container .date-input-wrap {
+  width: 100% !important;
+  min-width: 0 !important;
 }
 
-.orders-tab .filter-input,
-.orders-tab .custom-select-container .custom-select-trigger {
-  height: 40px;
+.admin-container .filter-input,
+.admin-container .custom-select-container .custom-select-trigger {
+  height: 32px !important;
+  min-height: 32px !important;
+  font-size: 0.85rem !important;
+  padding: 0 0.5rem !important;
+}
+
+.admin-container .date-input-wrap.gap-2 {
+  gap: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.admin-container .date-input-wrap .btn-clear {
+  width: 24px !important;
+  height: 24px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
 }
 
 .tab-viewport {
@@ -8410,10 +8448,6 @@ select {
   .nav-link {
     padding-inline: 0.45rem;
   }
-
-  .orders-tab .filter-bar {
-    grid-template-columns: repeat(3, minmax(140px, 1fr));
-  }
 }
 
 @media (max-width: 1100px) {
@@ -8438,7 +8472,18 @@ select {
   }
 
   .orders-tab .filter-bar {
+    display: grid;
     grid-template-columns: repeat(2, minmax(140px, 1fr));
+  }
+  
+  .orders-tab .filter-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .orders-tab .filter-group label {
+    margin-bottom: 0.2rem;
   }
 }
 
