@@ -25,7 +25,7 @@ const RecommendationCard = dynamic(
 );
 
 const RushPortalBanner = dynamic(
-  () => import('./portal/Banners').then((mod) => mod.RushPortalBanner),
+  () => import('./portal/Banners').then((mod) => mod.RushSodaPromoTeaser),
   { ssr: false, loading: () => <div className="loading-state">Loading banner...</div> }
 );
 
