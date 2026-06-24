@@ -32,6 +32,7 @@ import {
   markInquiryReviewed,
 } from '@/utils/api';
 import { clearBrowserSession, useAuth } from '@/frontend/customer/contexts/AuthContext';
+import { toast } from 'sonner';
 
 export interface CurrentUser {
   id?: string | number;
@@ -78,12 +79,13 @@ export const useAdminData = (initialCMSData: CMSData) => {
   // Loading and Notification UI
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
-  const [alertMsg, setAlertMsg] = useState({ text: '', type: 'success' }); // success or error
-
   // Alerts
   const showAlert = (text: string, type: 'success' | 'error' = 'success') => {
-    setAlertMsg({ text, type });
-    setTimeout(() => setAlertMsg({ text: '', type: 'success' }), 4000);
+    if (type === 'success') {
+      toast.success(text);
+    } else {
+      toast.error(text);
+    }
   };
 
   // Check auth on mount
@@ -522,7 +524,6 @@ export const useAdminData = (initialCMSData: CMSData) => {
     companyInfo,
     loading,
     saveLoading,
-    alertMsg,
     showAlert,
     refreshData,
     performLogout,

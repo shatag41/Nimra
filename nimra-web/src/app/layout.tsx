@@ -85,7 +85,31 @@ export default async function RootLayout({
             </StyledJsxRegistry>
           </AuthProvider>
         </GoogleOAuthProvider>
-        <Toaster richColors position="top-right" />
+        <Toaster 
+          richColors 
+          position="top-right" 
+          closeButton
+          toastOptions={{
+            style: {
+              padding: '8px 12px',
+              minHeight: '40px',
+              width: 'fit-content',
+              minWidth: '240px',
+              maxWidth: '320px',
+              fontSize: '0.85rem',
+              borderRadius: '8px',
+              gap: '8px',
+              alignItems: 'center',
+            },
+            classNames: {
+              toast: 'compact-toast',
+              title: 'compact-toast-title',
+              icon: 'compact-toast-icon',
+              closeButton: 'compact-toast-close'
+            }
+          }}
+          offset="80px"
+        />
       </body>
     </html>
   );

@@ -89,7 +89,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
     companyInfo,
     loading,
     saveLoading,
-    alertMsg,
+    saveLoading,
     showAlert,
     refreshData,
     performLogout,
@@ -253,12 +253,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             handleLogout={() => setIsLogoutModalOpen(true)}
           />
 
-          {/* ALERTS */}
-          {alertMsg.text && (
-            <div className={`toast animate-fade-in ${alertMsg.type}`}>
-              {alertMsg.text}
-            </div>
-          )}
+          {/* ALERTS DEPRECATED - now handled by sonner */}
 
           {/* TAB CONTENTS */}
           <div className={`tab-viewport ${loading ? 'is-refreshing' : ''}`}>

@@ -597,6 +597,28 @@ body > section[aria-label^="Notifications"] [data-sonner-toast] {
   pointer-events: auto !important;
 }
 
+/* Compact Sonner Toast Overrides */
+[data-sonner-toast] [data-icon] {
+  width: 16px !important;
+  height: 16px !important;
+  margin-right: 4px !important;
+}
+
+[data-sonner-toast] [data-title] {
+  font-size: 0.85rem !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+}
+
+[data-sonner-toast] [data-close-button] {
+  transform: scale(0.8);
+  opacity: 0.8;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+  opacity: 1;
+}
+
 .section-sm { padding: 1.5rem 0; }
 .section-lg { padding: 4rem 0; }
 

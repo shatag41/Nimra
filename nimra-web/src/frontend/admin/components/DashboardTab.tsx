@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { OrderRecord, Inquiry, CancellationRequest, Product, AdminUser } from '@/types/cms';
 import { formatCurrency } from '@/frontend/customer/utils/commerce';
 import { calculateDonutStats, calculateLineChartData, formatDateLabel, ChartPoint } from '../utils/chartUtils';
+import { toast } from 'sonner';
 import LogoutConfirmationModal from '@/frontend/customer/components/LogoutConfirmationModal';
 
 interface DashboardTabProps {
@@ -22,7 +23,6 @@ export default function DashboardTab({ orders, products, users, filteredInquirie
   // Confirmation Modal State
   const [confirmAction, setConfirmAction] = useState<{request: CancellationRequest, decision: 'Approved' | 'Rejected'} | null>(null);
   const [isProcessingAction, setIsProcessingAction] = useState(false);
-  const [toastMsg, setToastMsg] = useState<{text: string, type: 'success' | 'error'} | null>(null);
 
   // Stats calculations
   const now = new Date();
@@ -66,16 +66,15 @@ export default function DashboardTab({ orders, products, users, filteredInquirie
           delete next[request.requestId];
           return next;
         });
-        setToastMsg({ text: `Successfully ${decision.toLowerCase()} request.`, type: 'success' });
+        toast.success(`Successfully ${decision.toLowerCase()} request.`);
       } else {
-        setToastMsg({ text: `Failed to process request.`, type: 'error' });
+        toast.error(`Failed to process request.`);
       }
     } catch (e) {
-      setToastMsg({ text: `Error processing request.`, type: 'error' });
+      toast.error(`Error processing request.`);
     } finally {
       setIsProcessingAction(false);
       setConfirmAction(null);
-      setTimeout(() => setToastMsg(null), 3000);
     }
   };
 
@@ -114,12 +113,7 @@ export default function DashboardTab({ orders, products, users, filteredInquirie
 
   return (
     <div className="overview-tab">
-      {/* Toast Notification */}
-      {toastMsg && (
-        <div className={`toast animate-fade-in ${toastMsg.type === 'success' ? 'toast-success' : 'toast-error'}`} style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 9999, padding: '1rem', borderRadius: '8px', background: toastMsg.type === 'success' ? '#10b981' : '#ef4444', color: 'white', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
-          {toastMsg.text}
-        </div>
-      )}
+      {/* Toast Notification DEPRECATED - now handled by sonner */}
 
       {/* Stats Cards */}
       <div className="stats-grid">
