@@ -506,7 +506,7 @@ export default function CheckoutClient() {
 }
 
 const styles = `
-  .checkout-page { padding-top: 0; padding-bottom: 4rem; min-height: 90vh; font-family: var(--font-body); }
+  .checkout-page { padding-top: 0; padding-bottom: 1rem; min-height: 90vh; font-family: var(--font-body); }
   
   .checkout-actions-top { margin-top: 1rem; margin-bottom: 1rem; display: flex; justify-content: flex-start; }
 

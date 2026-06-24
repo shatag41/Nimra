@@ -4179,47 +4179,101 @@ td {
 }
 
 .stat-card {
-    padding: 0.5rem 0.6rem;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--glass-border);
-    background: var(--glass-bg);
-    backdrop-filter: blur(16px);
+    padding: 1.15rem 1.25rem;
+    border-radius: var(--radius-xl);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.7) 100%);
+    backdrop-filter: blur(24px);
     display: flex;
     flex-direction: column;
-    gap: 0.15rem;
-    transition: all var(--transition-normal);
-    box-shadow: var(--shadow-md);
+    gap: 0.5rem;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.04), 0 2px 5px -2px rgba(0, 0, 0, 0.02);
     position: relative;
     overflow: hidden;
 }
 
+[data-theme="dark"] .stat-card {
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%);
+    box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
 .stat-card:hover {
     transform: translateY(-3px);
-    box-shadow: var(--shadow-xl);
+    box-shadow: 0 16px 24px -5px rgba(0, 0, 0, 0.08), 0 8px 12px -5px rgba(0, 0, 0, 0.03);
     border-color: rgba(var(--primary-rgb), 0.3);
+}
+
+[data-theme="dark"] .stat-card:hover {
+    box-shadow: 0 16px 24px -5px rgba(0, 0, 0, 0.4);
+    border-color: rgba(var(--primary-rgb), 0.5);
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 4px; height: 100%;
+    background: var(--primary-color);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.stat-card:hover::before {
+    opacity: 1;
 }
 
 .stat-card::after {
     content: '';
     position: absolute;
-    top: 0;
-    right: 0;
-    width: 150px;
-    height: 150px;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
+    top: -20px;
+    right: -20px;
+    width: 140px;
+    height: 140px;
+    background: radial-gradient(circle, rgba(var(--primary-rgb), 0.08) 0%, transparent 70%);
     opacity: 0;
-    transition: opacity var(--transition-normal);
+    transition: opacity 0.4s ease, transform 0.4s ease;
     pointer-events: none;
+    transform: scale(0.8);
 }
 
 .stat-card:hover::after {
     opacity: 1;
+    transform: scale(1);
+}
+
+.stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 0.2rem;
+}
+
+.stat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary-color);
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), background 0.3s ease, color 0.3s ease;
+}
+
+.stat-card:hover .stat-icon {
+    transform: scale(1.1) rotate(5deg);
+    background: var(--primary-color);
+    color: #ffffff;
 }
 
 .stat-label {
     color: var(--text-secondary);
-    font-size: 0.78rem;
-    font-weight: 700;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
 }
 
 /* SETTINGS TAB STYLING */
@@ -4336,17 +4390,27 @@ td {
 }
 
 .stat-val {
-    font-size: 1.2rem;
+    font-size: 1.7rem;
     font-family: var(--font-heading);
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    line-height: 1.1;
+    background: none;
+    -webkit-text-fill-color: initial;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
 }
 
 .stat-desc {
     color: var(--text-muted);
-    font-size: 0.74rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
 }
 
 .charts-grid {
@@ -7356,15 +7420,20 @@ select {
   pointer-events: none !important;
 }
 .donut-total-count {
-  font-size: 1.4rem !important;
+  font-size: 1.6rem !important;
+  font-weight: 800 !important;
+  font-family: var(--font-heading) !important;
   color: var(--text-primary) !important;
   line-height: 1 !important;
   margin-bottom: 2px !important;
+  letter-spacing: -0.02em !important;
 }
 .donut-total-label {
-  font-size: 0.75rem !important;
+  font-size: 0.8rem !important;
   color: var(--text-secondary) !important;
   font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
 }
 .legend-list-grid {
   display: grid !important;
@@ -8372,33 +8441,35 @@ select {
     min-width: 0 !important;
     height: 100% !important;
     min-height: 10rem !important;
-    padding: 0.6rem !important;
-    background: var(--bg-primary, #ffffff) !important;
-    border: 1px solid var(--border-light, rgba(0,0,0,0.05)) !important;
-    border-radius: 12px !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.03) !important;
-    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease !important;
+    padding: 1.25rem 1.5rem !important;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.6) 100%) !important;
+    backdrop-filter: blur(24px) !important;
+    border: 1px solid rgba(0, 0, 0, 0.04) !important;
+    border-radius: var(--radius-xl) !important;
+    box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.03), 0 2px 5px -2px rgba(0, 0, 0, 0.02) !important;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
+    position: relative !important;
 }
 
 .charts-grid .chart-card:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04) !important;
-    border-color: rgba(var(--primary-rgb), 0.15) !important;
+    transform: translateY(-3px) !important;
+    box-shadow: 0 16px 24px -5px rgba(0, 0, 0, 0.06), 0 8px 12px -5px rgba(0, 0, 0, 0.03) !important;
+    border-color: rgba(var(--primary-rgb), 0.2) !important;
 }
 
 [data-theme="dark"] .charts-grid .chart-card {
-    background: #1e293b !important;
-    border-color: rgba(255,255,255,0.05) !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
+    box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
 }
 
 [data-theme="dark"] .charts-grid .chart-card:hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
-    border-color: rgba(255,255,255,0.1) !important;
+    box-shadow: 0 16px 24px -5px rgba(0, 0, 0, 0.4) !important;
+    border-color: rgba(var(--primary-rgb), 0.4) !important;
 }
 
 .charts-grid .chart-wrapper,
@@ -8408,13 +8479,19 @@ select {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    overflow: hidden !important;
-    gap: 0.5rem !important;
+    overflow: visible !important;
+    gap: 1.5rem !important;
 }
 
 .charts-grid .svg-chart {
     width: 100% !important;
     max-height: 8.5rem !important;
+    overflow: visible !important;
+    transition: filter 0.3s ease !important;
+}
+
+.charts-grid .chart-card:hover .svg-chart {
+    filter: drop-shadow(0 8px 12px rgba(var(--primary-rgb), 0.15)) !important;
 }
 
 /* Perfect Grid Centering for Donut */
@@ -8422,13 +8499,19 @@ select {
     display: grid !important;
     place-items: center !important;
     position: relative !important;
+    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+.charts-grid .chart-card:hover .donut-chart-container {
+    transform: scale(1.05) !important;
 }
 
 .charts-grid .donut-svg {
     grid-area: 1 / 1 !important;
-    width: 100px !important;
-    height: 100px !important;
+    width: 120px !important;
+    height: 120px !important;
     display: block !important;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05)) !important;
 }
 
 .charts-grid .donut-chart-text {
@@ -8444,12 +8527,13 @@ select {
 }
 
 .charts-grid .chart-card h3 {
-    font-size: 0.7rem !important;
-    font-weight: 600 !important;
-    margin: 0 0 0.2rem 0 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.03em !important;
-    color: var(--text-secondary) !important;
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+    font-family: var(--font-heading) !important;
+    margin: 0 0 1rem 0 !important;
+    text-transform: capitalize !important;
+    letter-spacing: 0.01em !important;
+    color: var(--text-primary) !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;

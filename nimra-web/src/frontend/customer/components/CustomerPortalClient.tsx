@@ -56,6 +56,39 @@ export default function CustomerPortalClient() {
     return orderable.slice(0, 4);
   }, [products]);
 
+  const validOrders = React.useMemo(() => orders.filter(o => o.status?.toLowerCase() !== 'cancelled'), [orders]);
+  const totalSpent = React.useMemo(() => validOrders.reduce((sum, o) => sum + Number(o.total || 0), 0), [validOrders]);
+  
+  const getReorderFrequency = React.useCallback(() => {
+    if (orders.length < 2) return 'Not enough data';
+    const sorted = [...orders].sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    const firstDate = new Date(sorted[sorted.length - 1].createdAt || 0);
+    const lastDate = new Date(sorted[0].createdAt || 0);
+    const daysDiff = (lastDate.getTime() - firstDate.getTime()) / (1000 * 3600 * 24);
+    const freq = daysDiff / (orders.length - 1);
+    return freq < 1 ? '< 1 day' : `${Math.round(freq)} days`;
+  }, [orders]);
+
+  const getFavoriteProduct = React.useCallback(() => {
+    const counts: Record<string, number> = {};
+    orders.forEach(o => {
+      (o.items || []).forEach((item: any) => {
+        counts[item.name] = (counts[item.name] || 0) + (Number(item.quantity) || 1);
+      });
+    });
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    return sorted.length > 0 ? sorted[0][0] : 'None';
+  }, [orders]);
+
+  const accountAgeDays = user?.CreatedAt ? Math.max(0, Math.floor((Date.now() - new Date(user.CreatedAt).getTime()) / (1000 * 3600 * 24))) : 0;
+  
+  const parsedAddresses = React.useMemo(() => {
+    try { return user?.SavedAddresses ? JSON.parse(user.SavedAddresses) : []; } catch (e) { return []; }
+  }, [user?.SavedAddresses]);
+  const defaultAddress = parsedAddresses.find((a: any) => a.isDefault);
+  const homeAddresses = parsedAddresses.filter((a: any) => a.type === 'Home').length;
+  const workAddresses = parsedAddresses.filter((a: any) => a.type === 'Work').length;
+
   if (!mounted || isLoading) {
     return (
       <div className="portal-page">
@@ -125,11 +158,28 @@ export default function CustomerPortalClient() {
           <Addresses />
         </section>
       ) : tab === 'profile' ? (
-        <section className="portal-grid portal-tab-section" style={{ gridTemplateColumns: '1fr', maxWidth: '640px', margin: '0 auto' }}>
+        <section className="portal-centered-content portal-tab-section" style={{ maxWidth: '640px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <section className="metric-grid" aria-label="Profile summary" style={{ gridTemplateColumns: 'repeat(3, 1fr)', margin: '0 auto 1.5rem', padding: '0' }}>
+            <div className="metric-card">
+              <span>Member Since</span>
+              <strong style={{ fontSize: '1.2rem' }}>{user?.CreatedAt ? new Date(user.CreatedAt).toLocaleDateString() : 'N/A'}</strong>
+              <small>Account creation date</small>
+            </div>
+            <div className="metric-card">
+              <span>Account Age</span>
+              <strong>{accountAgeDays} <span style={{fontSize: '1rem'}}>days</span></strong>
+              <small>Active duration</small>
+            </div>
+            <div className="metric-card">
+              <span>Engagement</span>
+              <strong style={{ fontSize: '1.2rem' }}>{orders.length > 10 ? 'VIP Member' : orders.length > 0 ? 'Active Buyer' : 'New User'}</strong>
+              <small>Current status</small>
+            </div>
+          </section>
           <EditProfileForm user={user} onUpdate={(updatedUser) => login(updatedUser)} />
         </section>
       ) : tab === 'notifications' ? (
-        <section className="portal-grid portal-tab-section" style={{ gridTemplateColumns: '1fr', maxWidth: '800px', margin: '0 auto' }}>
+        <section className="portal-centered-content portal-tab-section" style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <PortalNotifications />
         </section>
       ) : (
@@ -220,7 +270,7 @@ export default function CustomerPortalClient() {
 }
 
 const portalStyles = `
-  .portal-page { min-height: 100vh; background: var(--bg-primary); padding-bottom: 4rem; }
+  .portal-page { min-height: 100vh; background: var(--bg-primary); padding-bottom: 1rem; }
 
   /* ── Cart Toast Banner ── */
   .cart-toast-banner {

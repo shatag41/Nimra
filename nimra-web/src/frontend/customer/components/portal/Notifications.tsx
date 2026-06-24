@@ -28,7 +28,7 @@ export function CartToast({ visible, name, onClose }: CartToastProps) {
   );
 }
 
-export function PortalNotifications() {
+export function PortalNotifications({ hideKPIs }: { hideKPIs?: boolean } = {}) {
   const [notifications, setNotifications] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const { user } = useAuth();
@@ -116,30 +116,53 @@ export function PortalNotifications() {
   }
 
   const unreadCount = notifications.filter(n => n.Read !== true && n.Read !== 'true').length;
+  const adminNotifs = notifications.filter(n => String(n.Type || '').toLowerCase() === 'admin').length;
+  const promoNotifs = notifications.filter(n => String(n.Type || '').toLowerCase() === 'promotional').length;
 
   return (
-    <div className="panel notifications-panel" style={{ padding: '2rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-        <div>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 700, margin: '0' }}>Notifications</h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.9rem', marginTop: '0.5rem' }}>Stay updated with NIMRA's latest updates and news.</p>
+    <>
+      {!hideKPIs && (
+        <section className="metric-grid" aria-label="Notifications summary" style={{ gridTemplateColumns: 'repeat(3, 1fr)', margin: '0 auto 1.5rem', padding: '0' }}>
+          <div className="metric-card">
+            <span>Unread Alerts</span>
+            <strong style={{ color: unreadCount > 0 ? '#ef4444' : 'inherit', fontSize: '1.4rem' }}>{unreadCount}</strong>
+            <small>Messages requiring attention</small>
+          </div>
+          <div className="metric-card">
+            <span>System & Admin</span>
+            <strong>{adminNotifs}</strong>
+            <small>Important account updates</small>
+          </div>
+          <div className="metric-card">
+            <span>Promotions</span>
+            <strong>{promoNotifs}</strong>
+            <small>Offers and discounts</small>
+          </div>
+        </section>
+      )}
+
+      <div className="panel notifications-panel" style={{ padding: '2rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+          <div>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 700, margin: '0' }}>Notifications</h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.9rem', marginTop: '0.5rem' }}>Stay updated with NIMRA's latest updates and news.</p>
+          </div>
+          {unreadCount > 0 && (
+            <button 
+              onClick={handleMarkAllAsRead}
+              className="btn btn-secondary btn-sm"
+            >
+              Mark all as read
+            </button>
+          )}
         </div>
-        {unreadCount > 0 && (
-          <button 
-            onClick={handleMarkAllAsRead}
-            className="btn btn-secondary btn-sm"
-          >
-            Mark all as read
-          </button>
-        )}
-      </div>
-      
-      {notifications.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-          No notifications available at the moment.
-        </div>
-      ) : (
-        <div className="notifications-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        
+        {notifications.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+            No notifications available at the moment.
+          </div>
+        ) : (
+          <div className="notifications-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '400px', overflowY: 'auto', paddingRight: '0.5rem' }}>
           {(() => {
             const unreadNotifs = notifications.filter(n => n.Read !== true && n.Read !== 'true');
             return unreadNotifs.length > 0 && (
@@ -217,6 +240,7 @@ export function PortalNotifications() {
         </div>
       )}
     </div>
+    </>
   );
 }
 

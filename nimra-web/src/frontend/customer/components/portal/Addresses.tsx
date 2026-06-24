@@ -280,6 +280,29 @@ export function Addresses() {
         )}
       </div>
 
+      <section className="metric-grid addresses-metrics" aria-label="Addresses summary" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: '2rem', padding: '0' }}>
+        <div className="metric-card">
+          <span>Saved Locations</span>
+          <strong>{addresses.length}</strong>
+          <small>Total saved addresses</small>
+        </div>
+        <div className="metric-card">
+          <span>Default Location</span>
+          <strong style={{ fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}>{addresses.find(a => a.isDefault)?.city || 'None'}</strong>
+          <small>Your primary delivery zone</small>
+        </div>
+        <div className="metric-card">
+          <span>Home Addresses</span>
+          <strong>{addresses.filter(a => String(a.type).toLowerCase() === 'home').length}</strong>
+          <small>Saved home locations</small>
+        </div>
+        <div className="metric-card">
+          <span>Work Addresses</span>
+          <strong>{addresses.filter(a => String(a.type).toLowerCase() === 'work').length}</strong>
+          <small>Saved work locations</small>
+        </div>
+      </section>
+
       {isAdding ? (
         <div className="address-form-wrapper">
           <div className="address-form-panel glass animate-fade-in-up">

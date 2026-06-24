@@ -6,12 +6,24 @@ interface LogoutConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  title?: string;
+  description?: string;
+  confirmText?: string;
+  cancelText?: string;
+  confirmButtonClass?: string;
+  isProcessing?: boolean;
 }
 
 const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
   isOpen,
   onClose,
   onConfirm,
+  title = 'Logout Confirmation',
+  description = 'Are you sure you want to log out?',
+  confirmText = 'Confirm Logout',
+  cancelText = 'Cancel',
+  confirmButtonClass = 'btn btn-error',
+  isProcessing = false,
 }: LogoutConfirmationModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
@@ -20,7 +32,7 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
   useEffect(() => {
     if (isOpen) {
       const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
+        if (e.key === 'Escape' && !isProcessing) {
           onClose();
         }
         if (e.key === 'Tab') {
@@ -56,7 +68,7 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
         activeElementBeforeModal?.focus();
       };
     }
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, isProcessing]);
 
   useEffect(() => {
     if (isOpen) {
@@ -78,7 +90,7 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
       <div
         ref={overlayRef}
         className="modal-overlay"
-        onClick={onClose}
+        onClick={() => !isProcessing && onClose()}
         role="presentation"
         aria-hidden="true"
       />
@@ -91,27 +103,29 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
         onClick={(e) => e.stopPropagation()}
       >
         <h2 id="modal-title" className="modal-title">
-          Logout Confirmation
+          {title}
         </h2>
         <p id="modal-description" className="modal-description">
-          Are you sure you want to log out?
+          {description}
         </p>
         <div className="modal-actions">
           <button
             ref={cancelButtonRef}
             className="btn btn-secondary"
             onClick={onClose}
-            aria-label="Cancel logout"
+            aria-label={cancelText}
+            disabled={isProcessing}
           >
-            Cancel
+            {cancelText}
           </button>
           <button
             ref={confirmButtonRef}
-            className="btn btn-error"
+            className={confirmButtonClass}
             onClick={onConfirm}
-            aria-label="Confirm logout"
+            aria-label={confirmText}
+            disabled={isProcessing}
           >
-            Confirm Logout
+            {isProcessing ? 'Processing...' : confirmText}
           </button>
         </div>
       </div>

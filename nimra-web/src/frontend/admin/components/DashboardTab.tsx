@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { OrderRecord, Inquiry, CancellationRequest } from '@/types/cms';
+import { OrderRecord, Inquiry, CancellationRequest, Product, AdminUser } from '@/types/cms';
 import { formatCurrency } from '@/frontend/customer/utils/commerce';
 import { calculateDonutStats, calculateLineChartData, formatDateLabel, ChartPoint } from '../utils/chartUtils';
+import LogoutConfirmationModal from '@/frontend/customer/components/LogoutConfirmationModal';
 
 interface DashboardTabProps {
   orders: OrderRecord[];
+  products: Product[];
+  users: AdminUser[];
   filteredInquiries: Inquiry[];
   filteredOrders: OrderRecord[];
   cancellationRequests: CancellationRequest[];
@@ -12,30 +15,67 @@ interface DashboardTabProps {
   onOpenCancellationRequests: () => void;
 }
 
-export default function DashboardTab({ orders, filteredInquiries, filteredOrders, cancellationRequests, onReviewCancellation, onOpenCancellationRequests }: DashboardTabProps) {
+export default function DashboardTab({ orders, products, users, filteredInquiries, filteredOrders, cancellationRequests, onReviewCancellation, onOpenCancellationRequests }: DashboardTabProps) {
   const [hoveredPoint, setHoveredPoint] = useState<ChartPoint | null>(null);
   const [remarksByRequest, setRemarksByRequest] = useState<Record<string, string>>({});
+  
+  // Confirmation Modal State
+  const [confirmAction, setConfirmAction] = useState<{request: CancellationRequest, decision: 'Approved' | 'Rejected'} | null>(null);
+  const [isProcessingAction, setIsProcessingAction] = useState(false);
+  const [toastMsg, setToastMsg] = useState<{text: string, type: 'success' | 'error'} | null>(null);
 
   // Stats calculations
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  // Financials
   const deliveredOrders = orders.filter(o => o.status === 'Delivered');
   const totalRevenue = deliveredOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
   const avgOrderValue = deliveredOrders.length > 0 ? totalRevenue / deliveredOrders.length : 0;
-  const uniqueMobiles = new Set(orders.map(o => o.customer?.mobile).filter(Boolean));
-  const totalCustomers = uniqueMobiles.size;
+
+  // Customers
+  const customerOrdersMap = new Map<string, number>();
+  orders.forEach(o => {
+    if (o.customer?.mobile) {
+      customerOrdersMap.set(o.customer.mobile, (customerOrdersMap.get(o.customer.mobile) || 0) + 1);
+    }
+  });
+
+  const totalCustomers = customerOrdersMap.size;
 
   // Chart calculations
   const { statusStats, totalOrdersCount } = calculateDonutStats(orders);
   const { linePoints, linePathD, areaPathD, chartMax } = calculateLineChartData(orders);
   const pendingCancellationRequests = cancellationRequests.filter((request) => request.status === 'Pending');
 
-  const reviewCancellation = async (request: CancellationRequest, decision: 'Approved' | 'Rejected') => {
-    const success = await onReviewCancellation(request.requestId, decision, remarksByRequest[request.requestId] || '');
-    if (success) {
-      setRemarksByRequest((prev) => {
-        const next = { ...prev };
-        delete next[request.requestId];
-        return next;
-      });
+  const initiateReview = (request: CancellationRequest, decision: 'Approved' | 'Rejected') => {
+    setConfirmAction({ request, decision });
+  };
+
+  const executeReview = async () => {
+    if (!confirmAction) return;
+    setIsProcessingAction(true);
+    try {
+      const { request, decision } = confirmAction;
+      const success = await onReviewCancellation(request.requestId, decision, remarksByRequest[request.requestId] || '');
+      if (success) {
+        setRemarksByRequest((prev) => {
+          const next = { ...prev };
+          delete next[request.requestId];
+          return next;
+        });
+        setToastMsg({ text: `Successfully ${decision.toLowerCase()} request.`, type: 'success' });
+      } else {
+        setToastMsg({ text: `Failed to process request.`, type: 'error' });
+      }
+    } catch (e) {
+      setToastMsg({ text: `Error processing request.`, type: 'error' });
+    } finally {
+      setIsProcessingAction(false);
+      setConfirmAction(null);
+      setTimeout(() => setToastMsg(null), 3000);
     }
   };
 
@@ -74,14 +114,19 @@ export default function DashboardTab({ orders, filteredInquiries, filteredOrders
 
   return (
     <div className="overview-tab">
+      {/* Toast Notification */}
+      {toastMsg && (
+        <div className={`toast animate-fade-in ${toastMsg.type === 'success' ? 'toast-success' : 'toast-error'}`} style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 9999, padding: '1rem', borderRadius: '8px', background: toastMsg.type === 'success' ? '#10b981' : '#ef4444', color: 'white', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+          {toastMsg.text}
+        </div>
+      )}
+
       {/* Stats Cards */}
       <div className="stats-grid">
         <div className="stat-card glass card-revenue">
           <div className="stat-header">
             <span className="stat-label">Total Revenue</span>
-            <div className="stat-icon">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            </div>
+            <div className="stat-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
           </div>
           <strong className="stat-val">{formatCurrency(totalRevenue)}</strong>
           <span className="stat-desc">From completed orders</span>
@@ -90,9 +135,7 @@ export default function DashboardTab({ orders, filteredInquiries, filteredOrders
         <div className="stat-card glass card-orders">
           <div className="stat-header">
             <span className="stat-label">Total Orders</span>
-            <div className="stat-icon">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0"/></svg>
-            </div>
+            <div className="stat-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0"/></svg></div>
           </div>
           <strong className="stat-val">{orders.length}</strong>
           <span className="stat-desc">All tracking statuses</span>
@@ -101,9 +144,7 @@ export default function DashboardTab({ orders, filteredInquiries, filteredOrders
         <div className="stat-card glass card-aov">
           <div className="stat-header">
             <span className="stat-label">Avg. Order Value</span>
-            <div className="stat-icon">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8M12 18V6"/></svg>
-            </div>
+            <div className="stat-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8M12 18V6"/></svg></div>
           </div>
           <strong className="stat-val">{formatCurrency(avgOrderValue)}</strong>
           <span className="stat-desc">Per completed delivery</span>
@@ -112,9 +153,7 @@ export default function DashboardTab({ orders, filteredInquiries, filteredOrders
         <div className="stat-card glass card-customers">
           <div className="stat-header">
             <span className="stat-label">Total Customers</span>
-            <div className="stat-icon">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            </div>
+            <div className="stat-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
           </div>
           <strong className="stat-val">{totalCustomers}</strong>
           <span className="stat-desc">Unique mobile registers</span>
@@ -293,17 +332,17 @@ export default function DashboardTab({ orders, filteredInquiries, filteredOrders
               {pendingCancellationRequests.length} Pending
             </button>
           </div>
-          <div className="table-responsive dashboard-cancellation-table">
+          <div className="table-responsive dashboard-cancellation-table" style={{ maxHeight: '400px', overflowY: 'auto' }}>
             <table className="admin-table compact-table">
-              <thead>
+              <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)' }}>
                 <tr>
-                  <th>Status</th>
-                  <th>Order</th>
-                  <th>Customer</th>
-                  <th>Requested</th>
-                  <th>Payment / Refund</th>
-                  <th>Admin Remarks</th>
-                  <th className="sticky-action-col">Actions</th>
+                  <th style={{ background: 'var(--bg-secondary)' }}>Status</th>
+                  <th style={{ background: 'var(--bg-secondary)' }}>Order</th>
+                  <th style={{ background: 'var(--bg-secondary)' }}>Customer</th>
+                  <th style={{ background: 'var(--bg-secondary)' }}>Requested</th>
+                  <th style={{ background: 'var(--bg-secondary)' }}>Payment / Refund</th>
+                  <th style={{ background: 'var(--bg-secondary)' }}>Admin Remarks</th>
+                  <th className="sticky-action-col" style={{ background: 'var(--bg-secondary)' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -335,8 +374,8 @@ export default function DashboardTab({ orders, filteredInquiries, filteredOrders
                     </td>
                     <td className="sticky-action-col">
                       <div className="actions-flex row-wrap">
-                        <button type="button" className="btn-table btn-reject" onClick={() => reviewCancellation(request, 'Rejected')}>✗ Reject</button>
-                        <button type="button" className="btn-table btn-approve" onClick={() => reviewCancellation(request, 'Approved')}>✓ Approve</button>
+                        <button type="button" className="btn-table btn-reject" onClick={() => initiateReview(request, 'Rejected')}>✗ Reject</button>
+                        <button type="button" className="btn-table btn-approve" onClick={() => initiateReview(request, 'Approved')}>✓ Approve</button>
                       </div>
                     </td>
                   </tr>
@@ -375,8 +414,8 @@ export default function DashboardTab({ orders, filteredInquiries, filteredOrders
                   rows={2}
                 />
                 <div className="cancellation-mobile-actions">
-                  <button type="button" className="btn-table btn-reject" onClick={() => reviewCancellation(request, 'Rejected')}>✗ Reject</button>
-                  <button type="button" className="btn-table btn-approve" onClick={() => reviewCancellation(request, 'Approved')}>✓ Approve</button>
+                  <button type="button" className="btn-table btn-reject" onClick={() => initiateReview(request, 'Rejected')}>✗ Reject</button>
+                  <button type="button" className="btn-table btn-approve" onClick={() => initiateReview(request, 'Approved')}>✓ Approve</button>
                 </div>
               </div>
             ))}
@@ -387,6 +426,19 @@ export default function DashboardTab({ orders, filteredInquiries, filteredOrders
         </div>
 
       </div>
+
+      {/* Confirmation Modal using Reusable Component */}
+      <LogoutConfirmationModal
+        isOpen={confirmAction !== null}
+        onClose={() => setConfirmAction(null)}
+        onConfirm={executeReview}
+        title="Confirm Action"
+        description={confirmAction ? `Are you sure you want to ${confirmAction.decision === 'Approved' ? 'approve' : 'reject'} this cancellation request?` : ''}
+        confirmText="Confirm"
+        cancelText="Cancel"
+        confirmButtonClass={confirmAction?.decision === 'Approved' ? 'btn btn-primary' : 'btn btn-error'}
+        isProcessing={isProcessingAction}
+      />
     </div>
   );
 }

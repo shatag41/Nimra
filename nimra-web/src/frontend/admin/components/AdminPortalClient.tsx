@@ -265,6 +265,8 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
               {activeTab === 'dashboard' && (
                 <DashboardTab
                   orders={orders}
+                  products={products}
+                  users={users}
                   filteredInquiries={filteredInquiries}
                   filteredOrders={filteredOrders}
                   cancellationRequests={cancellationRequests}

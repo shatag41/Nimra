@@ -60,7 +60,7 @@ export default function CartClient() {
 }
 
 const styles = `
-  .cart-page { padding-top: 0.5rem; padding-bottom: 4rem; min-height: 90vh; font-family: var(--font-body); }
+  .cart-page { padding-top: 0.5rem; padding-bottom: 1rem; min-height: 90vh; font-family: var(--font-body); }
   
   /* ── Page Header ── */
   .page-header {

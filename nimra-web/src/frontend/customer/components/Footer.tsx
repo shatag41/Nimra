@@ -28,7 +28,7 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
               <div className="footer-col brand-col">
                 <Link href="/" className="footer-logo">
                   <div className="footer-logo-icon">
-                    <svg width="26" height="26" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="20" height="20" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M50 5C50 5 15 45 15 65C15 84.33 30.67 100 50 100C69.33 100 85 84.33 85 65C85 45 50 5 50 5Z" fill="white"/>
                       <text x="50" y="76" textAnchor="middle" fontSize="42" fontWeight="900" fontFamily="inherit" fill="#2563eb" letterSpacing="-1">N</text>
                     </svg>
@@ -67,19 +67,19 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
                 <ul className="contact-details">
                   <li>
                     <span className="contact-icon">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                     </span>
                     <a href={`tel:${companyInfo.Phone}`}>{companyInfo.Phone}</a>
                   </li>
                   <li>
                     <span className="contact-icon">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
                     </span>
                     <a href={`mailto:${companyInfo.Email}`}>{companyInfo.Email}</a>
                   </li>
                   <li>
                     <span className="contact-icon">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                     </span>
                     <span>{companyInfo.OfficeAddress}</span>
                   </li>
@@ -141,84 +141,79 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
           position: relative;
           color: #94a3b8;
           font-size: 0.9rem;
-          margin-top: 2rem;
+          margin-top: 0;
         }
 
         .footer-wave {
           color: #172554;
           line-height: 0;
           margin-bottom: -1px;
+          height: 35px;
         }
 
         .footer-inner {
           background: #172554;
-          padding: 4rem 0 2rem;
+          padding: 1.5rem 0 1rem;
+        }
+
+        .footer-inner .container {
+          max-width: 1400px;
         }
 
         .footer-grid {
           display: grid;
-          grid-template-columns: 1.3fr 0.8fr 1fr 1.1fr;
-          gap: 3rem;
-          margin-bottom: 3rem;
+          grid-template-columns: 1.4fr 0.8fr 1fr 1.1fr;
+          gap: 1.5rem;
+          margin-bottom: 1.5rem;
         }
 
         .footer-col h3 {
-          color: #FFFFFF;
+          color: #94a3b8;
           font-family: var(--font-heading);
-          font-size: 0.95rem;
+          font-size: 0.75rem;
           font-weight: 700;
-          margin-bottom: 1.25rem;
+          margin-bottom: 1rem;
           text-transform: uppercase;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.12em;
           position: relative;
-          padding-bottom: 0.75rem;
-        }
-        .footer-col h3::after {
-          content: '';
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 32px;
-          height: 2px;
-          background: #3b82f6;
-          border-radius: 2px;
         }
 
         :global(.footer-logo) {
           display: inline-flex;
           align-items: center;
-          gap: 0.65rem;
-          margin-bottom: 1rem;
+          gap: 0.5rem;
+          margin-bottom: 0.75rem;
           text-decoration: none;
-          transition: opacity 150ms ease;
+          transition: opacity 200ms ease;
         }
-        :global(.footer-logo:hover) { opacity: 0.85; }
+        :global(.footer-logo:hover) { opacity: 0.9; }
 
         .footer-logo-icon {
-          width: 42px;
-          height: 42px;
-          border-radius: 10px;
-          background: rgba(59, 130, 246, 0.2);
-          border: 1px solid rgba(59, 130, 246, 0.3);
+          width: 28px;
+          height: 28px;
+          border-radius: 6px;
+          background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(37, 99, 235, 0.05));
+          border: 1px solid rgba(255, 255, 255, 0.1);
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
 
         .footer-logo-text {
           font-family: var(--font-heading);
           font-weight: 800;
-          font-size: 1.5rem;
-          color: #FFFFFF;
-          letter-spacing: -0.02em;
+          font-size: 1.15rem;
+          color: #ffffff;
+          letter-spacing: -0.01em;
         }
 
         .brand-pitch {
-          line-height: 1.7;
-          color: #7BAA8C;
-          font-size: 0.88rem;
-          margin-bottom: 1.25rem;
+          line-height: 1.6;
+          color: #cbd5e1;
+          font-size: 0.85rem;
+          margin-bottom: 1rem;
         }
 
         .footer-certs {
@@ -231,95 +226,103 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
           display: inline-flex;
           align-items: center;
           padding: 0.25rem 0.65rem;
-          background: rgba(59, 130, 246, 0.12);
-          border: 1px solid rgba(59, 130, 246, 0.25);
-          border-radius: 999px;
-          font-size: 0.72rem;
-          font-weight: 700;
-          color: #3b82f6;
-          letter-spacing: 0.03em;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 4px;
+          font-size: 0.7rem;
+          font-weight: 600;
+          color: #94a3b8;
+          letter-spacing: 0.05em;
+          transition: all 200ms ease;
+        }
+        .cert-badge:hover {
+          background: rgba(255, 255, 255, 0.08);
+          color: #ffffff;
+          border-color: rgba(255, 255, 255, 0.2);
         }
 
         .footer-links {
           list-style: none;
           display: flex;
           flex-direction: column;
-          gap: 0.5rem;
+          gap: 0.4rem;
         }
         :global(.footer-links a) {
-          color: #7BAA8C;
-          font-size: 0.9rem;
+          color: #cbd5e1;
+          font-size: 0.85rem;
           display: inline-flex;
           align-items: center;
-          gap: 0.4rem;
-          transition: all 150ms ease;
-          padding: 0.2rem 0;
-        }
-        :global(.footer-links a::before) {
-          content: '→';
-          opacity: 0;
-          transform: translateX(-6px);
-          transition: all 150ms ease;
-          color: #3b82f6;
-          font-size: 0.8rem;
+          transition: all 200ms ease;
+          padding: 0.1rem 0;
+          position: relative;
         }
         :global(.footer-links a:hover) {
-          color: #FFFFFF;
-          transform: translateX(4px);
-        }
-        :global(.footer-links a:hover::before) {
-          opacity: 1;
-          transform: translateX(0);
+          color: #ffffff;
         }
 
         .contact-details {
           list-style: none;
           display: flex;
           flex-direction: column;
-          gap: 1rem;
+          gap: 0.75rem;
         }
         .contact-details li {
           display: flex;
           align-items: flex-start;
-          gap: 0.75rem;
-          color: #7BAA8C;
-          font-size: 0.88rem;
+          gap: 0.6rem;
+          color: #cbd5e1;
+          font-size: 0.85rem;
           line-height: 1.5;
+          transition: color 200ms ease;
+        }
+        .contact-details li:hover {
+          color: #ffffff;
         }
         .contact-icon {
-          width: 30px;
-          height: 30px;
-          border-radius: 8px;
-          background: rgba(59, 130, 246, 0.12);
+          width: 18px;
+          height: 18px;
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
+          color: #64748b;
+          margin-top: 2px;
+          transition: color 200ms ease;
+        }
+        .contact-details li:hover .contact-icon {
           color: #3b82f6;
-          margin-top: 1px;
         }
         .contact-details a {
-          color: #7BAA8C;
-          transition: color 150ms ease;
+          color: inherit;
+          text-decoration: none;
         }
-        .contact-details a:hover { color: #FFFFFF; }
 
-        .address-block { }
+        .address-block {
+          padding-left: 0.5rem;
+          border-left: 1px solid rgba(255,255,255,0.08);
+          transition: border-color 200ms ease;
+        }
+        .address-block:hover {
+          border-color: rgba(59, 130, 246, 0.4);
+        }
         .address-label {
           display: inline-flex;
           align-items: center;
           gap: 0.4rem;
-          font-size: 0.78rem;
-          font-weight: 700;
-          color: #3b82f6;
+          font-size: 0.7rem;
+          font-weight: 600;
+          color: #94a3b8;
           text-transform: uppercase;
-          letter-spacing: 0.06em;
-          margin-bottom: 0.4rem;
+          letter-spacing: 0.08em;
+          margin-bottom: 0.35rem;
+        }
+        .address-label svg {
+          opacity: 0.7;
         }
         .address-block p {
-          color: #7BAA8C;
-          font-size: 0.875rem;
-          line-height: 1.6;
+          color: #cbd5e1;
+          font-size: 0.85rem;
+          line-height: 1.5;
         }
 
         .footer-bottom {
@@ -328,28 +331,29 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
           align-items: center;
           flex-wrap: wrap;
           gap: 1rem;
-          padding-top: 1.75rem;
-          border-top: 1px solid rgba(255,255,255,0.08);
+          padding-top: 1.25rem;
+          border-top: 1px solid rgba(255,255,255,0.06);
         }
 
         .footer-copy {
           color: #64748b;
-          font-size: 0.85rem;
+          font-size: 0.8rem;
+          letter-spacing: 0.02em;
         }
-        .footer-copy strong { color: #7BAA8C; }
+        .footer-copy strong { color: #94a3b8; font-weight: 600; }
 
         .footer-bottom-links {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
+          gap: 1rem;
           color: #64748b;
-          font-size: 0.85rem;
+          font-size: 0.8rem;
         }
         .footer-bottom-links a {
           color: #64748b;
-          transition: color 150ms ease;
+          transition: color 200ms ease;
         }
-        .footer-bottom-links a:hover { color: #FFFFFF; }
+        .footer-bottom-links a:hover { color: #cbd5e1; }
 
         .whatsapp-fab {
           position: fixed;
@@ -377,8 +381,8 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
           .footer-grid { grid-template-columns: 1fr 1fr; }
         }
         @media (max-width: 640px) {
-          .footer-grid { grid-template-columns: 1fr; gap: 2rem; }
-          .footer-inner { padding: 3rem 0 1.5rem; }
+          .footer-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+          .footer-inner { padding: 2rem 0 1.5rem; }
           .footer-bottom { flex-direction: column; text-align: center; }
           .whatsapp-fab { width: 54px; height: 54px; bottom: 1.5rem; right: 1.5rem; }
         }

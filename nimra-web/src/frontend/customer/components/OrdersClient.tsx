@@ -494,11 +494,11 @@ export default function OrdersClient() {
                           <button onClick={() => handleReorder(order)} className="amazon-action-btn primary-action">
                             Reorder
                           </button>
-                          <button onClick={() => setSelectedOrder(order)} className="amazon-action-btn">
+                          <button onClick={(e) => { e.stopPropagation(); setSelectedOrder(order); }} className="amazon-action-btn">
                             View details
                           </button>
                           {isCancelable && (
-                            <button onClick={() => setOrderToCancel(order)} className="amazon-action-btn danger-action">
+                            <button onClick={(e) => { e.stopPropagation(); setOrderToCancel(order); }} className="amazon-action-btn danger-action">
                               Cancel Order
                             </button>
                           )}
@@ -557,7 +557,7 @@ export default function OrdersClient() {
       <style jsx>{`
         .orders-page {
           padding-top: 0.5rem;
-          padding-bottom: 4rem;
+          padding-bottom: 1rem;
           min-height: 90vh;
           font-family: var(--font-body);
         }
