@@ -181,14 +181,35 @@ export function CheckoutForm({
           </div>
 
           <div className="compact-card-body">
-            <div className="info-block">
-              <span className="info-label">Deliver To</span>
-              <strong className="info-val">{selectedAddress.name || user?.Name || 'Not provided'}</strong>
-              <span className="info-sub">{(selectedAddress.mobile || user?.Mobile || '')} {selectedAddress.altMobile && ` | Alt: ${selectedAddress.altMobile}`}</span>
-              {(selectedAddress.email || user?.Username) && <span className="info-email">{selectedAddress.email || user?.Username}</span>}
+            <div className="info-grid-2x2">
+              <div className="info-block">
+                <span className="info-label">Full Name</span>
+                <strong className="info-val">{selectedAddress.name || user?.Name || 'Not provided'}</strong>
+              </div>
+              <div className="info-block">
+                <span className="info-label">Mobile Number</span>
+                <span className="info-sub">{selectedAddress.mobile || user?.Mobile || 'Not provided'}</span>
+              </div>
+              <div className="info-block">
+                <span className="info-label">Email Address</span>
+                <span className="info-email">{selectedAddress.email || user?.Username || 'Not provided'}</span>
+              </div>
+              <div className="checkout-alt-mobile-section" style={{ borderTop: 'none', paddingTop: 0, marginTop: 0 }}>
+                <label className="info-label" style={{ marginBottom: '0.15rem', display: 'block' }}>Alt. Mobile <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(Optional)</span></label>
+                <input
+                  className="checkout-alt-mobile-input"
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={10}
+                  placeholder="10-digit number"
+                  value={form.altMobile}
+                  onChange={(e) => { update('altMobile', e.target.value.replace(/\D/g, '')); clearError('altMobile'); }}
+                />
+                {errors.altMobile && <span className="error-hint">{errors.altMobile}</span>}
+              </div>
             </div>
 
-            <div className="info-block" style={{ marginTop: '1rem' }}>
+            <div className="info-block" style={{ marginTop: '0.15rem' }}>
               <span className="info-label">Address</span>
               <p className="address-text-display">
                 {selectedAddress.flatNo ? (
@@ -226,25 +247,11 @@ export function CheckoutForm({
           )}
 
           {/* Delivery Instructions — always visible below Change Address */}
-          <div className="checkout-alt-mobile-section">
-            <label className="change-label">Alternate Mobile Number <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(Optional)</span></label>
-            <input
-              className="checkout-alt-mobile-input"
-              type="tel"
-              inputMode="numeric"
-              maxLength={10}
-              placeholder="Enter 10-digit alternate mobile number"
-              value={form.altMobile}
-              onChange={(e) => { update('altMobile', e.target.value.replace(/\D/g, '')); clearError('altMobile'); }}
-            />
-            {errors.altMobile && <span className="error-hint">{errors.altMobile}</span>}
-          </div>
-
           <div className="delivery-instructions-section">
-            <label className="change-label">Delivery Instructions <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(Optional)</span></label>
+            <label className="change-label" style={{ marginBottom: '0.25rem' }}>Delivery Instructions <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(Optional)</span></label>
             <textarea
               className="delivery-instructions-textarea"
-              rows={2}
+              rows={1}
               placeholder="e.g. Leave with security, call before delivery..."
               value={form.instructions}
               onChange={(e) => update('instructions', e.target.value)}
@@ -502,8 +509,8 @@ export function CheckoutForm({
 
       <style jsx>{`
         .checkout-form-container {
-          padding: 2.25rem;
-          border-radius: var(--radius-2xl);
+          padding: 1.15rem;
+          border-radius: var(--radius-xl);
           border: 1px solid var(--glass-border);
           box-shadow: var(--shadow-xl);
           background: var(--glass-bg);
@@ -514,7 +521,7 @@ export function CheckoutForm({
         .compact-address-card-wrapper {
           display: flex;
           flex-direction: column;
-          gap: 1.5rem;
+          gap: 0.5rem;
         }
 
         .compact-card-header {
@@ -522,8 +529,8 @@ export function CheckoutForm({
           justify-content: space-between;
           align-items: flex-start;
           border-bottom: 1px solid var(--border-color);
-          padding-bottom: 1.25rem;
-          gap: 1rem;
+          padding-bottom: 0.65rem;
+          gap: 0.5rem;
         }
 
         .header-title-box {
@@ -588,12 +595,12 @@ export function CheckoutForm({
         .action-link-btn {
           display: inline-flex;
           align-items: center;
-          gap: 0.4rem;
-          padding: 0.42rem 1rem;
+          gap: 0.3rem;
+          padding: 0.35rem 0.75rem;
           border-radius: 999px;
           border: none;
           font-weight: 700;
-          font-size: 0.8rem;
+          font-size: 0.75rem;
           letter-spacing: 0.02em;
           cursor: pointer;
           text-decoration: none !important;
@@ -633,46 +640,55 @@ export function CheckoutForm({
         .compact-card-body {
           display: flex;
           flex-direction: column;
-          gap: 1.25rem;
+          gap: 0.65rem;
+        }
+
+        .info-grid-2x2 {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 0.5rem 0.75rem;
+          align-items: start;
         }
 
         .info-block {
           display: flex;
           flex-direction: column;
-          gap: 0.35rem;
+          gap: 0.15rem;
         }
 
         .info-label {
-          font-size: 0.75rem;
+          font-size: 0.7rem;
           font-weight: 700;
           text-transform: uppercase;
           color: var(--text-muted);
-          letter-spacing: 0.05em;
+          letter-spacing: 0.03em;
         }
 
         .info-val {
-          font-size: 1.05rem;
+          font-size: 0.9rem;
           color: var(--text-primary);
           font-weight: 700;
         }
 
         .info-sub {
-          font-size: 0.88rem;
+          font-size: 0.8rem;
           color: var(--text-secondary);
           font-weight: 600;
         }
 
         .info-email {
-          font-size: 0.85rem;
+          font-size: 0.78rem;
           color: var(--text-muted);
         }
 
         .address-text-display {
-          font-size: 1rem;
-          line-height: 1.6;
+          font-size: 0.85rem;
+          line-height: 1.4;
           margin: 0;
           font-weight: 500;
           color: var(--text-primary);
+          word-break: break-word;
+          overflow-wrap: anywhere;
         }
 
         .delivery-instruction-box {
@@ -686,32 +702,32 @@ export function CheckoutForm({
         }
 
         .change-address-panel {
-          margin-top: 0.75rem;
+          margin-top: 0.25rem;
           border-top: 1px solid var(--border-color);
-          padding-top: 1.25rem;
+          padding-top: 0.5rem;
         }
 
         .delivery-instructions-section {
-          margin-top: 1.25rem;
+          margin-top: 0.25rem;
           border-top: 1px solid var(--border-color);
-          padding-top: 1.25rem;
+          padding-top: 0.5rem;
         }
 
         .checkout-alt-mobile-section {
-          margin-top: 1.25rem;
+          margin-top: 0.25rem;
           border-top: 1px solid var(--border-color);
-          padding-top: 1.25rem;
+          padding-top: 0.5rem;
         }
 
         .checkout-alt-mobile-input {
           width: 100%;
           box-sizing: border-box;
-          padding: 0.75rem 1rem;
-          border-radius: var(--radius-lg);
+          padding: 0.4rem 0.65rem;
+          border-radius: var(--radius-md);
           border: 1.5px solid var(--border-color);
           background: rgba(148, 163, 184, 0.04);
           color: var(--text-primary);
-          font: inherit;
+          font-size: 0.8rem;
           outline: none;
         }
 
@@ -722,14 +738,14 @@ export function CheckoutForm({
 
         .delivery-instructions-textarea {
           width: 100%;
-          padding: 0.75rem 1rem;
-          border-radius: var(--radius-lg);
+          padding: 0.4rem 0.65rem;
+          border-radius: var(--radius-md);
           border: 1.5px solid var(--border-color);
           background: rgba(148, 163, 184, 0.04);
           color: var(--text-primary);
-          font-size: 0.9rem;
+          font-size: 0.8rem;
           font-family: inherit;
-          line-height: 1.5;
+          line-height: 1.3;
           resize: none;
           transition: border-color 0.2s, box-shadow 0.2s;
           outline: none;
@@ -748,30 +764,30 @@ export function CheckoutForm({
 
         .change-label {
           display: block;
-          font-size: 0.8rem;
+          font-size: 0.75rem;
           font-weight: 700;
           text-transform: uppercase;
           color: var(--text-muted);
-          margin-bottom: 0.75rem;
-          letter-spacing: 0.05em;
+          margin-bottom: 0.35rem;
+          letter-spacing: 0.03em;
         }
 
         .address-pill-list {
           display: flex;
-          gap: 0.75rem;
+          gap: 0.4rem;
           flex-wrap: wrap;
         }
 
         .address-pill-btn {
           display: inline-flex;
           align-items: center;
-          gap: 0.5rem;
-          padding: 0.5rem 1rem;
+          gap: 0.35rem;
+          padding: 0.3rem 0.7rem;
           border-radius: 999px;
           border: 1.5px solid var(--border-color);
           background: rgba(148, 163, 184, 0.04);
           color: var(--text-secondary);
-          font-size: 0.82rem;
+          font-size: 0.75rem;
           font-weight: 600;
           cursor: pointer;
           transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -791,8 +807,8 @@ export function CheckoutForm({
         }
 
         .pill-dot {
-          width: 8px;
-          height: 8px;
+          width: 6px;
+          height: 6px;
           border-radius: 50%;
           background: var(--text-muted);
           transition: background 0.2s;
@@ -813,12 +829,12 @@ export function CheckoutForm({
           justify-content: space-between;
           align-items: center;
           border-bottom: 1px solid var(--border-color);
-          padding-bottom: 1rem;
-          margin-bottom: 1.5rem;
+          padding-bottom: 0.75rem;
+          margin-bottom: 1rem;
         }
 
         .form-section-header h3 {
-          font-size: 1.3rem;
+          font-size: 1.15rem;
           font-weight: 700;
           margin: 0;
         }
@@ -872,24 +888,24 @@ export function CheckoutForm({
         .form-fields-group {
           display: flex;
           flex-direction: column;
-          gap: 1.25rem;
+          gap: 1rem;
         }
 
         .group-title {
-          font-size: 0.85rem;
+          font-size: 0.8rem;
           font-weight: 700;
           text-transform: uppercase;
           color: var(--primary-color);
           letter-spacing: 0.05em;
           border-bottom: 1.5px solid rgba(37, 99, 235, 0.15);
-          padding-bottom: 0.35rem;
-          margin: 0.5rem 0 0;
+          padding-bottom: 0.25rem;
+          margin: 0.25rem 0 0;
         }
 
         .co-field {
           display: flex;
           flex-direction: column;
-          gap: 0.4rem;
+          gap: 0.25rem;
         }
 
         .co-field label {
@@ -900,13 +916,13 @@ export function CheckoutForm({
 
         .co-field input, .co-field textarea, .form-select {
           width: 100%;
-          padding: 0.75rem 1rem;
+          padding: 0.55rem 0.85rem;
           border: 1.5px solid var(--border-color);
-          border-radius: var(--radius-lg);
+          border-radius: var(--radius-md);
           background: rgba(15, 23, 42, 0.2);
           color: var(--text-primary);
           font-family: var(--font-body);
-          font-size: 0.9rem;
+          font-size: 0.85rem;
           transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
@@ -940,13 +956,13 @@ export function CheckoutForm({
         .form-grid-three {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 1.25rem;
+          gap: 0.85rem;
         }
 
         .form-grid-two {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 1.25rem;
+          gap: 0.85rem;
         }
 
         .form-select {
@@ -963,19 +979,19 @@ export function CheckoutForm({
 
         .type-pill {
           flex: 1;
-          padding: 0.7rem;
+          padding: 0.4rem;
           border: 1.5px solid var(--border-color);
-          border-radius: var(--radius-lg);
+          border-radius: var(--radius-md);
           background: rgba(148, 163, 184, 0.05);
           color: var(--text-secondary);
           font-weight: 600;
-          font-size: 0.82rem;
+          font-size: 0.75rem;
           cursor: pointer;
           transition: all 0.2s ease;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 0.35rem;
+          gap: 0.25rem;
         }
 
         .type-pill:hover {
@@ -1012,20 +1028,20 @@ export function CheckoutForm({
         .form-save-actions-bar {
           display: flex;
           justify-content: flex-end;
-          gap: 1rem;
-          margin-top: 1.75rem;
-          padding-top: 1.25rem;
+          gap: 0.85rem;
+          margin-top: 1.25rem;
+          padding-top: 1rem;
           border-top: 1px solid var(--border-color);
         }
 
         .btn-cancel-edit {
-          padding: 0.7rem 1.25rem;
+          padding: 0.55rem 1rem;
           background: transparent;
           border: 1px solid var(--border-color);
           border-radius: var(--radius-md);
           color: var(--text-secondary);
           font-weight: 600;
-          font-size: 0.88rem;
+          font-size: 0.85rem;
           cursor: pointer;
           transition: all 0.2s;
         }
@@ -1036,13 +1052,13 @@ export function CheckoutForm({
         }
 
         .btn-use-address-form {
-          padding: 0.7rem 1.5rem;
+          padding: 0.55rem 1.25rem;
           background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
           border: none;
           border-radius: var(--radius-md);
           color: #ffffff;
           font-weight: 700;
-          font-size: 0.88rem;
+          font-size: 0.85rem;
           cursor: pointer;
           transition: all 0.2s;
           box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
@@ -1073,9 +1089,9 @@ export function CheckoutForm({
 
         /* Mobile Adjustments */
         @media (max-width: 640px) {
-          .form-grid-three, .form-grid-two {
+          .info-grid-2x2, .form-grid-three, .form-grid-two {
             grid-template-columns: 1fr;
-            gap: 1rem;
+            gap: 0.75rem;
           }
           
           .compact-card-header {
@@ -1175,7 +1191,7 @@ export function CheckoutSummary({ status, items, subtotal, deliveryCharge, grand
       <style jsx>{`
         .co-summary {
           border-radius: var(--radius-xl);
-          padding: 1.75rem;
+          padding: 1.15rem;
           border: 1px solid var(--glass-border);
           box-shadow: var(--shadow-xl);
           background: var(--glass-bg);
@@ -1195,10 +1211,10 @@ export function CheckoutSummary({ status, items, subtotal, deliveryCharge, grand
           max-height: 220px;
           overflow-y: auto;
           border-bottom: 1px solid var(--border-color);
-          padding-bottom: 1rem;
-          margin-bottom: 1rem;
+          padding-bottom: 0.75rem;
+          margin-bottom: 0.75rem;
           display: grid;
-          gap: 0.75rem;
+          gap: 0.5rem;
         }
 
         .co-item-row {
@@ -1227,10 +1243,10 @@ export function CheckoutSummary({ status, items, subtotal, deliveryCharge, grand
 
         .co-totals {
           border-bottom: 1px solid var(--border-color);
-          padding-bottom: 1rem;
-          margin-bottom: 1rem;
+          padding-bottom: 0.75rem;
+          margin-bottom: 0.75rem;
           display: grid;
-          gap: 0.6rem;
+          gap: 0.4rem;
         }
 
         .sum-row {
@@ -1257,26 +1273,26 @@ export function CheckoutSummary({ status, items, subtotal, deliveryCharge, grand
           align-items: center;
           justify-content: center;
           gap: 0.4rem;
-          padding: 0.6rem;
+          padding: 0.5rem;
           border-radius: var(--radius-md);
           background: rgba(37, 99, 235, 0.08);
           border: 1px solid rgba(37, 99, 235, 0.15);
-          font-size: 0.82rem;
+          font-size: 0.8rem;
           font-weight: 700;
           color: var(--primary-color);
-          margin-bottom: 1rem;
+          margin-bottom: 0.85rem;
         }
 
         .btn-place-order {
           width: 100%;
-          padding: 0.85rem;
+          padding: 0.7rem;
           font-family: var(--font-heading);
           font-weight: 700;
-          font-size: 0.95rem;
+          font-size: 0.9rem;
           color: #ffffff;
           background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
           border: none;
-          border-radius: var(--radius-lg);
+          border-radius: var(--radius-md);
           cursor: pointer;
           box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
           transition: all 0.2s ease;

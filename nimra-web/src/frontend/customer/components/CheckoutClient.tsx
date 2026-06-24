@@ -506,11 +506,11 @@ export default function CheckoutClient() {
 }
 
 const styles = `
-  .checkout-page { padding-top: 0; padding-bottom: 1rem; min-height: 90vh; font-family: var(--font-body); }
+  .checkout-page { padding-top: 0; padding-bottom: 1rem; min-height: calc(100vh - 200px); font-family: var(--font-body); }
   
   .checkout-actions-top { margin-top: 1rem; margin-bottom: 1rem; display: flex; justify-content: flex-start; }
 
-  .checkout-grid { display: grid; grid-template-columns: 1fr 340px; gap: 2rem; align-items: start; }
+  .checkout-grid { display: grid; grid-template-columns: 1fr 340px; gap: 1.25rem; align-items: start; }
 
   @media (max-width: 900px) { .checkout-grid { grid-template-columns: 1fr; } }
 `;
