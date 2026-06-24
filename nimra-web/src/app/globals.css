@@ -8306,18 +8306,48 @@ select {
   font-weight: 700;
 }
 
+.orders-mode-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 1.25rem;
+}
+
+.orders-mode-tabs .btn {
+  height: 36px;
+  padding: 0 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 0.85rem;
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.orders-mode-tabs .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  filter: brightness(1.05);
+}
+
+.orders-mode-tabs .btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
 .orders-tab .filter-bar {
   display: grid;
-  grid-template-columns: repeat(5, minmax(130px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   align-items: end;
-  gap: 0.75rem;
+  gap: 12px;
   width: 100%;
   overflow: visible;
-  padding: 0.85rem;
+  padding: 0.68rem;
 }
 
 .orders-tab .filter-group {
   min-width: 0;
+  max-width: 240px;
 }
 
 .orders-tab .filter-group label {
@@ -8329,6 +8359,11 @@ select {
 .orders-tab .filter-input {
   width: 100%;
   min-width: 0;
+}
+
+.orders-tab .filter-input,
+.orders-tab .custom-select-container .custom-select-trigger {
+  height: 40px;
 }
 
 .tab-viewport {

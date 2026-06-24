@@ -89,7 +89,6 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
     companyInfo,
     loading,
     saveLoading,
-    saveLoading,
     showAlert,
     refreshData,
     performLogout,
