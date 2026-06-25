@@ -16,7 +16,7 @@ interface DashboardTabProps {
   onOpenCancellationRequests: () => void;
 }
 
-export default function DashboardTab({ orders, products, users, filteredInquiries, filteredOrders, cancellationRequests, onReviewCancellation, onOpenCancellationRequests }: DashboardTabProps) {
+const DashboardTab = React.memo(function DashboardTab({ orders, products, users, filteredInquiries, filteredOrders, cancellationRequests, onReviewCancellation, onOpenCancellationRequests }: DashboardTabProps) {
   const [hoveredPoint, setHoveredPoint] = useState<ChartPoint | null>(null);
   const [remarksByRequest, setRemarksByRequest] = useState<Record<string, string>>({});
   
@@ -435,4 +435,6 @@ export default function DashboardTab({ orders, products, users, filteredInquirie
       />
     </div>
   );
-}
+});
+
+export default DashboardTab;

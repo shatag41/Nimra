@@ -252,9 +252,10 @@ let clientCMSCache: CMSData | null = null;
 const normalizeImageUrl = (url: unknown): string => {
   const value = String(url || '').trim();
   if (!value) return '';
-  if (value.startsWith('/uploads/')) return `/api${value}`;
+  if (value.startsWith('/uploads/')) return `/api/file${value.substring(8)}`;
+  if (value.startsWith('uploads/')) return `/api/file/${value.substring(8)}`;
+  if (value.startsWith('/api/uploads/')) return `/api/file/${value.substring(13)}`;
   if (/^(https?:|data:|blob:|\/)/i.test(value)) return value;
-  if (value.startsWith('uploads/')) return `/api/${value}`;
   return `/${value.replace(/^\/+/, '')}`;
 };
 
@@ -288,7 +289,7 @@ export const fetchCMSData = async (): Promise<CMSData> => {
   try {
     const fetchOptions: RequestInit & { next?: { revalidate: number } } =
       typeof window === 'undefined'
-        ? { cache: 'no-store' }
+        ? { next: { revalidate: 300 } }
         : { cache: 'no-store' };
 
     const url = typeof window === 'undefined'

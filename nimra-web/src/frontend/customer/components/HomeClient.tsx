@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Banner, Product, FAQ, CompanyInfo } from '@/types/cms';
 
 interface HomeClientProps {
@@ -160,9 +161,12 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           <div className="story-grid">
             <div className="story-image-container">
               <div className="story-img-wrapper">
-                <img
+                <Image
                   src="https://images.unsplash.com/photo-1612442443556-09b5b309e637?auto=format&fit=crop&q=80&w=800"
                   alt="Pure water purification process"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  style={{ objectFit: 'cover' }}
                   className="story-img animate-float-slow"
                 />
                 <div className="story-img-overlay" />
@@ -240,7 +244,13 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
             {spotlightProducts.map((product, i) => (
               <div key={product.ID} className="product-preview-card" style={{ animationDelay: `${i * 0.1}s` }}>
                 <div className="prod-img-box">
-                  <img src={product.ImageUrl} alt={product.Name} loading="lazy" decoding="async" />
+                  <Image 
+                    src={product.ImageUrl} 
+                    alt={product.Name} 
+                    fill
+                    style={{ objectFit: 'contain' }}
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                  />
                   <div className="prod-img-overlay" />
                 </div>
                 <div className="prod-info-box">
@@ -683,6 +693,8 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           overflow: hidden;
           box-shadow: var(--shadow-xl);
           position: relative;
+          aspect-ratio: 4/3;
+          width: 100%;
         }
 
         .story-img {

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { fallbackData } from '../models/fallbackData';
 
 const APPS_SCRIPT_URL = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || process.env.EXPO_PUBLIC_APPS_SCRIPT_URL || '';
-const APPS_SCRIPT_TIMEOUT_MS = 30000;
+const APPS_SCRIPT_TIMEOUT_MS = 4000;
 
 let cachedCMSData: any = null;
 let lastFetchTime = 0;
