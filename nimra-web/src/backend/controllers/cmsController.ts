@@ -75,6 +75,19 @@ export async function handleGet(req: Request) {
       const text = await res.text();
       if (!text.trim().startsWith('<')) {
         const data = JSON.parse(text);
+        
+        // Rewrite ImageUrls from /uploads/ or /api/uploads/ to /api/file/ for dynamic serving
+        const rewriteImageUrl = (items: any[]) => {
+          if (!items) return;
+          items.forEach(item => {
+            if (item.ImageUrl && (item.ImageUrl.startsWith('/uploads/') || item.ImageUrl.startsWith('/api/uploads/'))) {
+              item.ImageUrl = item.ImageUrl.replace(/^\/(api\/uploads|uploads)\//, '/api/file/');
+            }
+          });
+        };
+        rewriteImageUrl(data.products);
+        rewriteImageUrl(data.banners);
+
         // Save successfully fetched main CMS data to cache
         if (!action) {
           cachedCMSData = data;
@@ -99,11 +112,22 @@ export async function handleGet(req: Request) {
     return NextResponse.json(cachedCMSData, { headers: cacheHeaders });
   }
 
+  // Rewrite ImageUrls from /uploads/ or /api/uploads/ to /api/file/ for dynamic serving
+  const rewriteLocalImageUrl = (items: any[]) => {
+    if (!items) return items;
+    return items.map(item => {
+      if (item.ImageUrl && (item.ImageUrl.startsWith('/uploads/') || item.ImageUrl.startsWith('/api/uploads/'))) {
+        return { ...item, ImageUrl: item.ImageUrl.replace(/^\/(api\/uploads|uploads)\//, '/api/file/') };
+      }
+      return item;
+    });
+  };
+
   // Use fallback data
   if (action === 'getBanners') {
-    return NextResponse.json(fallbackData.banners, { headers: cacheHeaders });
+    return NextResponse.json(rewriteLocalImageUrl(fallbackData.banners), { headers: cacheHeaders });
   } else if (action === 'getProducts') {
-    return NextResponse.json(fallbackData.products, { headers: cacheHeaders });
+    return NextResponse.json(rewriteLocalImageUrl(fallbackData.products), { headers: cacheHeaders });
   } else if (action === 'getFAQs') {
     return NextResponse.json(fallbackData.faqs, { headers: cacheHeaders });
   } else if (action === 'getCompanyInfo') {
@@ -131,8 +155,8 @@ export async function handleGet(req: Request) {
   } else {
     // Return all customer CMS collections
     return NextResponse.json({
-      banners: fallbackData.banners,
-      products: fallbackData.products,
+      banners: rewriteLocalImageUrl(fallbackData.banners),
+      products: rewriteLocalImageUrl(fallbackData.products),
       faqs: fallbackData.faqs,
       companyInfo: fallbackData.companyInfo
     }, { headers: cacheHeaders });

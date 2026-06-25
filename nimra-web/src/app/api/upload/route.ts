@@ -72,7 +72,7 @@ export async function POST(req: Request) {
     }
 
     const extension = ALLOWED_TYPES.get(file.type);
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', scope);
+    const uploadDir = path.join(process.cwd(), '.storage', 'uploads', scope);
     const fileName = `${Date.now()}-${randomUUID()}.${extension}`;
     const diskPath = path.join(uploadDir, fileName);
 
@@ -80,7 +80,7 @@ export async function POST(req: Request) {
     await writeFile(diskPath, buffer, { flag: 'wx' });
 
     const storagePath = `/uploads/${scope}/${fileName}`;
-    const url = `/api/uploads/${scope}/${fileName}`;
+    const url = `/api/file/${scope}/${fileName}`;
 
     return NextResponse.json({
       success: true,

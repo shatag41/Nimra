@@ -18,8 +18,10 @@ export async function GET(
 ) {
   try {
     const { path: pathSegments } = await params;
-    const uploadRoot = path.resolve(process.cwd(), 'public', 'uploads');
+    console.log(`[Uploads API] Requested path segments:`, pathSegments);
+    const uploadRoot = path.resolve(process.cwd(), '.storage', 'uploads');
     const requestedPath = path.resolve(uploadRoot, ...pathSegments);
+    console.log(`[Uploads API] Resolving to:`, requestedPath);
 
     if (!requestedPath.startsWith(uploadRoot + path.sep)) {
       return NextResponse.json({ success: false, message: 'Invalid file path.' }, { status: 400 });
@@ -43,7 +45,8 @@ export async function GET(
         'Cache-Control': 'public, max-age=31536000, immutable',
       },
     });
-  } catch {
+  } catch (error) {
+    console.error(`[Uploads API] Error:`, error);
     return NextResponse.json({ success: false, message: 'File not found.' }, { status: 404 });
   }
 }

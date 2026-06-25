@@ -64,7 +64,7 @@ export default function ImageUploadField({
       formData.append('file', file);
       formData.append('scope', scope);
 
-      const res = await fetch('/api/uploads', {
+      const res = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
