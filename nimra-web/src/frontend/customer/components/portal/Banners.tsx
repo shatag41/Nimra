@@ -81,7 +81,12 @@ export function RushSodaPromoTeaser() {
           color: white;
           position: relative;
           overflow: hidden;
-          padding: 5rem 0;
+          padding: 3rem 0;
+          margin: 2rem auto;
+          max-width: 1000px;
+          width: calc(100% - 2rem);
+          border-radius: 24px;
+          box-shadow: 0 20px 40px rgba(0,0,0,0.2);
         }
         .container {
           width: 100%;
@@ -106,14 +111,14 @@ export function RushSodaPromoTeaser() {
         .rush-grid {
           display: grid;
           grid-template-columns: 1.2fr 0.8fr;
-          gap: 4rem;
+          gap: 2rem;
           align-items: center;
         }
         .rush-title {
-          font-size: clamp(2rem, 4vw, 3.2rem);
+          font-size: clamp(1.5rem, 3vw, 2.2rem);
           font-weight: 900;
           color: white;
-          margin: 1rem 0 1.5rem;
+          margin: 0.75rem 0 1rem;
           letter-spacing: -0.025em;
           line-height: 1.1;
         }
