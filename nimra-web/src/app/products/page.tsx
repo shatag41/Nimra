@@ -1,9 +1,11 @@
 import React from 'react';
-import dynamic from 'next/dynamic';
+import dynamicImport from 'next/dynamic';
 import { fetchCMSData } from '@/utils/api';
 import LoadingState from '@/frontend/customer/components/LoadingState';
 
-const ProductsClient = dynamic(() => import('@/frontend/customer/components/ProductsClient'), {
+export const dynamic = 'force-dynamic';
+
+const ProductsClient = dynamicImport(() => import('@/frontend/customer/components/ProductsClient'), {
   loading: () => <LoadingState label="Loading products" />
 });
 

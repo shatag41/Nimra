@@ -21,6 +21,8 @@ const formatDate = (value?: string) => {
 };
 
 export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
+  const displayedOrders = orders.slice(0, 4);
+
   return (
     <div className="panel orders-panel">
       <div className="panel-head">
@@ -35,7 +37,7 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
 
       {loadingOrders ? (
         <div className="empty-state">Loading your orders...</div>
-      ) : orders.length > 0 ? (
+      ) : displayedOrders.length > 0 ? (
         <div className="table-wrap">
           <table className="orders-table">
             <thead>
@@ -48,7 +50,7 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
               </tr>
             </thead>
             <tbody>
-              {orders.map((order) => (
+              {displayedOrders.map((order) => (
                 <tr key={order.orderId}>
                   <td className="order-id">{order.orderId}</td>
                   <td>{formatDate(order.createdAt)}</td>
@@ -74,6 +76,9 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
         }
         .panel-head {
           margin-bottom: 0.3rem;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
         }
         .panel-head h2 {
           margin: 0 !important;
@@ -86,8 +91,7 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
           border-radius: 5px !important;
         }
         :global(.orders-panel .table-wrap) {
-          max-height: 260px !important;
-          overflow-y: auto !important;
+          overflow-x: auto !important;
         }
         :global(.orders-table th),
         :global(.orders-table td) {

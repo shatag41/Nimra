@@ -221,10 +221,7 @@ export default function CustomerPortalClient() {
           <section className="portal-grid">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <Orders 
-                orders={orders.filter(o => {
-                  const s = String(o.status || '').toLowerCase();
-                  return s !== 'delivered' && s !== 'cancelled';
-                })} 
+                orders={orders}
                 loadingOrders={loadingOrders} 
                 onRefresh={refreshOrders} 
               />

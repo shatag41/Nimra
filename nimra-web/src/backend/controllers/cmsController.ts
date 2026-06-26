@@ -1,8 +1,47 @@
 import { NextResponse } from 'next/server';
 import { fallbackData } from '../models/fallbackData';
+import { promises as fs } from 'fs';
+import path from 'path';
 
-const APPS_SCRIPT_URL = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || process.env.EXPO_PUBLIC_APPS_SCRIPT_URL || '';
-const APPS_SCRIPT_TIMEOUT_MS = 4000;
+const getAppsScriptUrl = () => {
+  return process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || process.env.EXPO_PUBLIC_APPS_SCRIPT_URL || '';
+};
+const APPS_SCRIPT_TIMEOUT_MS = 45000;
+
+const DB_PATH = path.join(process.cwd(), 'src', 'data', 'db.json');
+let localDBLoaded = false;
+
+async function syncLocalDB(action: 'load' | 'save') {
+  try {
+    if (action === 'load') {
+      const fileContent = await fs.readFile(DB_PATH, 'utf-8');
+      const data = JSON.parse(fileContent);
+      if (data.banners) fallbackData.banners = data.banners;
+      if (data.products) fallbackData.products = data.products;
+      if (data.faqs) fallbackData.faqs = data.faqs;
+      if (data.companyInfo) fallbackData.companyInfo = data.companyInfo;
+      if (data.orders) fallbackData.orders = data.orders;
+      if (data.inquiries) fallbackData.inquiries = data.inquiries;
+      if (data.users) fallbackData.users = data.users;
+      if (data.notifications) fallbackData.notifications = data.notifications;
+      localDBLoaded = true;
+    } else {
+      const data = {
+        banners: fallbackData.banners,
+        products: fallbackData.products,
+        faqs: fallbackData.faqs,
+        companyInfo: fallbackData.companyInfo,
+        orders: fallbackData.orders,
+        inquiries: fallbackData.inquiries,
+        users: fallbackData.users,
+        notifications: fallbackData.notifications,
+      };
+      await fs.writeFile(DB_PATH, JSON.stringify(data, null, 2), 'utf-8');
+    }
+  } catch (err) {
+    console.error(`[CMS Controller] DB Sync error (${action}):`, err);
+  }
+}
 
 let cachedCMSData: any = null;
 let lastFetchTime = 0;
@@ -27,6 +66,7 @@ function getLiveCacheKey(action: string | null, userId: string, mobile: string, 
 
 // Proxy GET requests to Google Apps Script
 export async function handleGet(req: Request) {
+  await syncLocalDB('load');
   const requestUrl = new URL(req.url);
   const action = requestUrl.searchParams.get('action');
   const userId = requestUrl.searchParams.get('userId') || '';
@@ -52,9 +92,11 @@ export async function handleGet(req: Request) {
     return NextResponse.json(cachedCMSData, { headers: cacheHeaders });
   }
   
-  if (APPS_SCRIPT_URL) {
+  const urlVal = getAppsScriptUrl();
+  if (urlVal) {
     try {
-      const targetUrl = new URL(APPS_SCRIPT_URL);
+      console.log(`[CMS API Proxy] GET Request: action="${action || 'main'}" -> Fetching from Google Sheets URL...`);
+      const targetUrl = new URL(urlVal);
       requestUrl.searchParams.forEach((value, key) => targetUrl.searchParams.set(key, value));
 
       // Allow for Google Apps Script cold starts while keeping a bounded fallback.
@@ -68,43 +110,69 @@ export async function handleGet(req: Request) {
           'Accept': 'application/json',
         },
         signal: controller.signal,
-        next: { revalidate: shouldUseLiveData ? 0 : 300 },
+        cache: 'no-store',
       });
       clearTimeout(timeoutId);
 
       const text = await res.text();
       if (!text.trim().startsWith('<')) {
         const data = JSON.parse(text);
-        
-        // Rewrite ImageUrls from /uploads/ or /api/uploads/ to /api/file/ for dynamic serving
-        const rewriteImageUrl = (items: any[]) => {
-          if (!items) return;
-          items.forEach(item => {
-            if (item.ImageUrl && (item.ImageUrl.startsWith('/uploads/') || item.ImageUrl.startsWith('/api/uploads/'))) {
-              item.ImageUrl = item.ImageUrl.replace(/^\/(api\/uploads|uploads)\//, '/api/file/');
-            }
-          });
-        };
-        rewriteImageUrl(data.products);
-        rewriteImageUrl(data.banners);
 
-        // Save successfully fetched main CMS data to cache
-        if (!action) {
-          cachedCMSData = data;
-          lastFetchTime = now;
+        // Guard: only accept data that looks like a CMS payload (has products
+        // or banners arrays). This prevents an order-confirmation response from
+        // being cached and served as the catalog.
+        const hasCMSShape = !action && (Array.isArray(data.banners) || Array.isArray(data.products));
+        if (!action && !hasCMSShape) {
+          console.warn(`[CMS API Proxy] GET Request: action="main" -> Response did not have expected CMS shape, falling through to fallback.`);
+          // Fall through to local fallback below
+        } else {
+          // Rewrite ImageUrls to /uploads/ endpoint
+          const rewriteImageUrl = (items: any[]) => {
+            if (!items) return;
+            const placeholder = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+            items.forEach(item => {
+              if (item.ImageUrl) {
+                if (/^(https?:)/i.test(item.ImageUrl) && !item.ImageUrl.includes('localhost') && !item.ImageUrl.includes('127.0.0.1')) {
+                  item.ImageUrl = placeholder;
+                  return;
+                }
+                if (item.ImageUrl.includes('photo-') || item.ImageUrl.includes('unsplash.com')) {
+                  item.ImageUrl = placeholder;
+                  return;
+                }
+                const cleaned = item.ImageUrl.replace(/^(https?:\/\/[^\/]+)/i, '')
+                                             .replace(/^\/?(api\/file|api\/uploads|uploads)\//, '')
+                                             .replace(/^\/+/, '');
+                item.ImageUrl = cleaned ? `/uploads/${cleaned}` : placeholder;
+              }
+            });
+          };
+          rewriteImageUrl(data.products);
+          rewriteImageUrl(data.banners);
+
+          // Save successfully fetched main CMS data to cache
+          if (!action) {
+            cachedCMSData = data;
+            lastFetchTime = now;
+          }
+          if (liveCacheKey) {
+            liveGetCache.set(liveCacheKey, { data, expiresAt: Date.now() + LIVE_GET_CACHE_TTL });
+          }
+          console.log(`[CMS API Proxy] GET Request: action="${action || 'main'}" -> Successfully fetched from Google Sheets. Count of products: ${data.products?.length || 0}, banners: ${data.banners?.length || 0}`);
+          return NextResponse.json(data, { headers: cacheHeaders });
         }
-        if (liveCacheKey) {
-          liveGetCache.set(liveCacheKey, { data, expiresAt: Date.now() + LIVE_GET_CACHE_TTL });
-        }
-        return NextResponse.json(data, { headers: cacheHeaders });
+      } else {
+        console.warn(`[CMS API Proxy] GET Request: action="${action || 'main'}" -> Returned non-JSON/HTML error response.`);
       }
     } catch (err: any) {
       if (err.name === 'AbortError') {
-        console.warn(`[CMS API Proxy] Google Sheets fetch timed out (${APPS_SCRIPT_TIMEOUT_MS / 1000}s limit) for action: ${action || 'main'}. Serving cached or fallback data.`);
+        console.warn(`[CMS API Proxy] GET Request: action="${action || 'main'}" -> Google Sheets fetch timed out (${APPS_SCRIPT_TIMEOUT_MS / 1000}s limit).`);
       } else {
-        console.error('Google Sheets GET fetch failed, using local fallback:', err);
+        console.error(`[CMS API Proxy] GET Request: action="${action || 'main'}" -> Google Sheets GET fetch failed:`, err);
       }
     }
+  } else {
+    console.log(`[CMS API Proxy] GET Request: action="${action || 'main'}" -> NEXT_PUBLIC_APPS_SCRIPT_URL is not set. Serving from local fallback (db.json).`);
   }
 
   // Fallback: If live fetch failed/timed out and we have stale CMS cache for main action, return it
@@ -112,12 +180,22 @@ export async function handleGet(req: Request) {
     return NextResponse.json(cachedCMSData, { headers: cacheHeaders });
   }
 
-  // Rewrite ImageUrls from /uploads/ or /api/uploads/ to /api/file/ for dynamic serving
+  // Rewrite ImageUrls to /uploads/ endpoint
   const rewriteLocalImageUrl = (items: any[]) => {
     if (!items) return items;
+    const placeholder = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
     return items.map(item => {
-      if (item.ImageUrl && (item.ImageUrl.startsWith('/uploads/') || item.ImageUrl.startsWith('/api/uploads/'))) {
-        return { ...item, ImageUrl: item.ImageUrl.replace(/^\/(api\/uploads|uploads)\//, '/api/file/') };
+      if (item.ImageUrl) {
+        if (/^(https?:)/i.test(item.ImageUrl) && !item.ImageUrl.includes('localhost') && !item.ImageUrl.includes('127.0.0.1')) {
+          return { ...item, ImageUrl: placeholder };
+        }
+        if (item.ImageUrl.includes('photo-') || item.ImageUrl.includes('unsplash.com')) {
+          return { ...item, ImageUrl: placeholder };
+        }
+        const cleaned = item.ImageUrl.replace(/^(https?:\/\/[^\/]+)/i, '')
+                                     .replace(/^\/?(api\/file|api\/uploads|uploads)\//, '')
+                                     .replace(/^\/+/, '');
+        return { ...item, ImageUrl: cleaned ? `/uploads/${cleaned}` : placeholder };
       }
       return item;
     });
@@ -165,6 +243,7 @@ export async function handleGet(req: Request) {
 
 // Proxy POST requests to Google Apps Script
 export async function handlePost(req: Request) {
+  await syncLocalDB('load');
   try {
     const body = await req.json();
     const payload = { ...body };
@@ -189,9 +268,11 @@ export async function handlePost(req: Request) {
       }
     }
 
-    if (APPS_SCRIPT_URL) {
+    const urlValPost = getAppsScriptUrl();
+    if (urlValPost) {
       try {
-        const res = await fetch(APPS_SCRIPT_URL, {
+        console.log(`[CMS API Proxy] POST Request: type="${payload.type}" -> Fetching from Google Sheets URL...`);
+        const res = await fetch(urlValPost, {
           method: 'POST',
           redirect: 'follow',
           headers: {
@@ -204,13 +285,15 @@ export async function handlePost(req: Request) {
         const text = await res.text();
         if (!text.trim().startsWith('<')) {
           const data = JSON.parse(text);
+          console.log(`[CMS API Proxy] POST Request: type="${payload.type}" -> Successfully processed by Google Sheets.`);
           invalidateCMSCache();
           return NextResponse.json(data);
         }
         backendError = 'Apps Script returned a non-JSON response. Check the Web App deployment URL and access settings.';
+        console.warn(`[CMS API Proxy] POST Request: type="${payload.type}" -> Returned non-JSON/HTML response.`);
       } catch (err) {
         backendError = err instanceof Error ? err.message : 'Google Sheets POST failed.';
-        console.error('Google Sheets POST failed:', err);
+        console.error(`[CMS API Proxy] POST Request: type="${payload.type}" -> Google Sheets POST failed:`, err);
       }
 
       return NextResponse.json(
@@ -235,6 +318,7 @@ export async function handlePost(req: Request) {
         createdAt: now,
         updatedAt: now,
       });
+      await syncLocalDB('save');
       return NextResponse.json({
         success: true,
         message: 'Order placed successfully (local fallback mode)',
@@ -295,6 +379,7 @@ export async function handlePost(req: Request) {
             ID: fallbackData.users[userIndex].ID,
           };
           delete fallbackData.users[userIndex].otp;
+          await syncLocalDB('save');
           return NextResponse.json({ success: true, message: 'User updated successfully', ID: fallbackData.users[userIndex].ID });
         }
 
@@ -307,6 +392,7 @@ export async function handlePost(req: Request) {
           ...incomingUser,
         };
         fallbackData.users.push(newUser);
+        await syncLocalDB('save');
         return NextResponse.json({ success: true, message: 'User created successfully', ID: newUser.ID });
       }
 
@@ -320,6 +406,7 @@ export async function handlePost(req: Request) {
           return NextResponse.json({ success: false, message: 'Notification ID is required.' }, { status: 400 });
         }
         fallbackData.notifications = fallbackData.notifications.filter((n: any) => String(n.ID) !== String(idToDelete));
+        await syncLocalDB('save');
         return NextResponse.json({ success: true, message: 'Notification deleted successfully' });
       }
       if (action === 'update') {
@@ -332,6 +419,7 @@ export async function handlePost(req: Request) {
             ...fallbackData.notifications[notifIndex],
             ...incomingNotif,
           };
+          await syncLocalDB('save');
           return NextResponse.json({ success: true, message: 'Notification updated successfully', ID: fallbackData.notifications[notifIndex].ID });
         }
         return NextResponse.json({ success: false, message: 'Notification not found for update.' }, { status: 404 });
@@ -346,21 +434,29 @@ export async function handlePost(req: Request) {
           ...incomingNotif,
         };
         fallbackData.notifications.push(newNotif);
+        await syncLocalDB('save');
         return NextResponse.json({ success: true, message: 'Notification created successfully', ID: newNotif.ID });
       }
       return NextResponse.json({ success: false, message: 'Unsupported notification action.' }, { status: 400 });
     } else if (payload.type === 'productCRUD') {
       const action = payload.action || 'create';
       const incomingProduct = payload.product || {};
+      if (incomingProduct.ImageUrl) {
+        incomingProduct.ImageUrl = incomingProduct.ImageUrl.replace(/^(https?:\/\/[^\/]+)/i, '')
+                                                           .replace(/^\/?(api\/file|api\/uploads|uploads)\//, '')
+                                                           .replace(/^\/+/, '');
+      }
       if (action === 'delete') {
         const idToDelete = incomingProduct.ID;
         fallbackData.products = fallbackData.products.filter((p: any) => String(p.ID) !== String(idToDelete));
+        await syncLocalDB('save');
         return NextResponse.json({ success: true, message: 'Product deleted successfully' });
       }
       if (action === 'update') {
         const idx = fallbackData.products.findIndex((p: any) => String(p.ID) === String(incomingProduct.ID));
         if (idx >= 0) {
           fallbackData.products[idx] = { ...fallbackData.products[idx], ...incomingProduct };
+          await syncLocalDB('save');
           return NextResponse.json({ success: true, message: 'Product updated successfully', ID: fallbackData.products[idx].ID });
         }
         return NextResponse.json({ success: false, message: 'Product not found.' }, { status: 404 });
@@ -368,21 +464,29 @@ export async function handlePost(req: Request) {
       if (action === 'create') {
         const newProduct = { ID: incomingProduct.ID || Date.now(), Active: true, ...incomingProduct };
         fallbackData.products.push(newProduct);
+        await syncLocalDB('save');
         return NextResponse.json({ success: true, message: 'Product created successfully', ID: newProduct.ID });
       }
       return NextResponse.json({ success: false, message: 'Unsupported product action.' }, { status: 400 });
     } else if (payload.type === 'bannerCRUD') {
       const action = payload.action || 'create';
       const incomingBanner = payload.banner || {};
+      if (incomingBanner.ImageUrl) {
+        incomingBanner.ImageUrl = incomingBanner.ImageUrl.replace(/^(https?:\/\/[^\/]+)/i, '')
+                                                         .replace(/^\/?(api\/file|api\/uploads|uploads)\//, '')
+                                                         .replace(/^\/+/, '');
+      }
       if (action === 'delete') {
         const idToDelete = incomingBanner.ID;
         fallbackData.banners = fallbackData.banners.filter((b: any) => String(b.ID) !== String(idToDelete));
+        await syncLocalDB('save');
         return NextResponse.json({ success: true, message: 'Banner deleted successfully' });
       }
       if (action === 'update') {
         const idx = fallbackData.banners.findIndex((b: any) => String(b.ID) === String(incomingBanner.ID));
         if (idx >= 0) {
           fallbackData.banners[idx] = { ...fallbackData.banners[idx], ...incomingBanner };
+          await syncLocalDB('save');
           return NextResponse.json({ success: true, message: 'Banner updated successfully', ID: fallbackData.banners[idx].ID });
         }
         return NextResponse.json({ success: false, message: 'Banner not found.' }, { status: 404 });
@@ -390,6 +494,7 @@ export async function handlePost(req: Request) {
       if (action === 'create') {
         const newBanner = { ID: incomingBanner.ID || Date.now(), Active: true, ...incomingBanner };
         fallbackData.banners.push(newBanner);
+        await syncLocalDB('save');
         return NextResponse.json({ success: true, message: 'Banner created successfully', ID: newBanner.ID });
       }
       return NextResponse.json({ success: false, message: 'Unsupported banner action.' }, { status: 400 });
@@ -399,12 +504,14 @@ export async function handlePost(req: Request) {
       if (action === 'delete') {
         const idToDelete = incomingFAQ.ID;
         fallbackData.faqs = fallbackData.faqs.filter((f: any) => String(f.ID) !== String(idToDelete));
+        await syncLocalDB('save');
         return NextResponse.json({ success: true, message: 'FAQ deleted successfully' });
       }
       if (action === 'update') {
         const idx = fallbackData.faqs.findIndex((f: any) => String(f.ID) === String(incomingFAQ.ID));
         if (idx >= 0) {
           fallbackData.faqs[idx] = { ...fallbackData.faqs[idx], ...incomingFAQ };
+          await syncLocalDB('save');
           return NextResponse.json({ success: true, message: 'FAQ updated successfully', ID: fallbackData.faqs[idx].ID });
         }
         return NextResponse.json({ success: false, message: 'FAQ not found.' }, { status: 404 });
@@ -412,6 +519,7 @@ export async function handlePost(req: Request) {
       if (action === 'create') {
         const newFAQ = { ID: incomingFAQ.ID || Date.now(), Active: true, ...incomingFAQ };
         fallbackData.faqs.push(newFAQ);
+        await syncLocalDB('save');
         return NextResponse.json({ success: true, message: 'FAQ created successfully', ID: newFAQ.ID });
       }
       return NextResponse.json({ success: false, message: 'Unsupported FAQ action.' }, { status: 400 });

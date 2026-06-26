@@ -24,7 +24,7 @@ export const mockCMSData: CMSData = {
       ID: 1,
       Title: "Pure Hydration. Healthy Living.",
       Subtitle: "NIMRA Packaged Drinking Water keeps you fresh and energized through every moment of the day.",
-      ImageUrl: "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&q=80&w=1200",
+      ImageUrl: "banners/1782400800295-50bba580-d62b-436d-985b-87fd558d5ad8.jpg",
       ButtonText: "Explore Products",
       ButtonLink: "#products",
       Active: true
@@ -33,7 +33,7 @@ export const mockCMSData: CMSData = {
       ID: 2,
       Title: "Mineral Balanced Purity",
       Subtitle: "Sourced responsibly and purified through a rigorous 10-step process for absolute safety.",
-      ImageUrl: "https://images.unsplash.com/photo-1559839914-17aae19cec71?auto=format&fit=crop&q=80&w=1200",
+      ImageUrl: "banners/1782400800918-e0be9c4d-ac54-401d-9d73-24e07c983293.jpg",
       ButtonText: "Our Quality Standards",
       ButtonLink: "/quality",
       Active: true
@@ -47,7 +47,7 @@ export const mockCMSData: CMSData = {
       Volume: "250ml",
       Price: "6.00",
       Description: "Perfect pocket-sized pure drinking water for short trips, conferences, and quick refreshments.",
-      ImageUrl: "https://images.unsplash.com/photo-1616166330003-8e550d199b26?auto=format&fit=crop&q=80&w=600",
+      ImageUrl: "products/1782400801277-e98426f2-832c-43f8-ace7-d39458d03a20.jpg",
       Active: true
     },
     {
@@ -57,7 +57,7 @@ export const mockCMSData: CMSData = {
       Volume: "500ml",
       Price: "10.00",
       Description: "Your convenient hydration companion for daily commutes, gyms, and office desks.",
-      ImageUrl: "https://images.unsplash.com/photo-1523362628745-0c100150b504?auto=format&fit=crop&q=80&w=600",
+      ImageUrl: "products/1782400801994-3a7d515e-6c24-4cc9-a482-cf2a009ef4b2.jpg",
       Active: true
     },
     {
@@ -67,7 +67,7 @@ export const mockCMSData: CMSData = {
       Volume: "1L",
       Price: "20.00",
       Description: "Standard 1 Litre bottle for absolute pure hydration at home, dining, or long travel.",
-      ImageUrl: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&q=80&w=600",
+      ImageUrl: "products/1782400802152-3726c4f7-0b51-4d97-a3c3-f66f010b587a.jpg",
       Active: true
     },
     {
@@ -77,7 +77,7 @@ export const mockCMSData: CMSData = {
       Volume: "2L",
       Price: "30.00",
       Description: "Bigger size for family picnics and long journeys. Keep clean water accessible for all.",
-      ImageUrl: "https://images.unsplash.com/photo-1563822249548-9a72b6353cd1?auto=format&fit=crop&q=80&w=600",
+      ImageUrl: "products/1782400802172-f85d909c-fcaa-4e12-8b11-0f44a10b9330.jpg",
       Active: true
     },
     {
@@ -87,7 +87,7 @@ export const mockCMSData: CMSData = {
       Volume: "5L",
       Price: "55.00",
       Description: "Family-sized purified water can for home kitchens, travel groups, and small gatherings.",
-      ImageUrl: "https://images.unsplash.com/photo-1527109011752-2d34ff6a28d6?auto=format&fit=crop&q=80&w=600",
+      ImageUrl: "products/1782400802419-1ee44415-75d3-4f21-bffb-670d157f256b.jpg",
       Specifications: "RO purified, mineral balanced, recyclable food-grade pack",
       Active: true
     },
@@ -98,7 +98,7 @@ export const mockCMSData: CMSData = {
       Volume: "20L Jar",
       Price: "80.00",
       Description: "Eco-friendly bulk jar for continuous hydration at office spaces and household kitchen units.",
-      ImageUrl: "https://images.unsplash.com/photo-1589135790587-8d77d70cfd00?auto=format&fit=crop&q=80&w=600",
+      ImageUrl: "products/1782400803066-56eeb864-6c29-4fb4-9ccf-8426b7af3c36.jpg",
       Specifications: "Returnable jar, dispenser compatible, scheduled delivery available",
       Active: true
     },
@@ -109,7 +109,7 @@ export const mockCMSData: CMSData = {
       Volume: "500ml",
       Price: "25.00",
       Description: "Upcoming extra-fizzy RUSH soda made on NIMRA's purified water base.",
-      ImageUrl: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&q=80&w=600",
+      ImageUrl: "products/1782400803737-8411a66e-1dd8-4c85-b614-ede6b58b0a88.jpg",
       Specifications: "Coming soon, carbonated beverage, launch stock managed from Sheets",
       StockStatus: "Coming Soon",
       Active: true
@@ -251,12 +251,26 @@ let clientCMSCache: CMSData | null = null;
 
 const normalizeImageUrl = (url: unknown): string => {
   const value = String(url || '').trim();
-  if (!value) return '';
-  if (value.startsWith('/uploads/')) return `/api/file${value.substring(8)}`;
-  if (value.startsWith('uploads/')) return `/api/file/${value.substring(8)}`;
-  if (value.startsWith('/api/uploads/')) return `/api/file/${value.substring(13)}`;
-  if (/^(https?:|data:|blob:|\/)/i.test(value)) return value;
-  return `/${value.replace(/^\/+/, '')}`;
+  const placeholder = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+  if (!value) return placeholder;
+  if (/^(https?:)/i.test(value) && !value.includes('localhost') && !value.includes('127.0.0.1')) {
+    return placeholder;
+  }
+  if (value.includes('photo-') || value.includes('unsplash.com')) {
+    return placeholder;
+  }
+  if (value.startsWith('/uploads/')) return value;
+  if (value.startsWith('uploads/')) return `/${value}`;
+  if (value.startsWith('/api/file/')) return `/uploads/${value.substring(10)}`;
+  if (value.startsWith('api/file/')) return `/uploads/${value.substring(9)}`;
+  if (value.startsWith('/api/uploads/')) return `/uploads/${value.substring(13)}`;
+  if (value.startsWith('api/uploads/')) return `/uploads/${value.substring(12)}`;
+  if (value.startsWith('/') && (value.includes('/products/') || value.includes('/banners/'))) {
+    const cleaned = value.replace(/^\/?(api\/file|api\/uploads|uploads)\//, '').replace(/^\/+/, '');
+    return `/uploads/${cleaned}`;
+  }
+  if (/^(data:|blob:)/i.test(value)) return value;
+  return `/uploads/${value.replace(/^\/+/, '')}`;
 };
 
 const normalizeCMSData = (data: any): CMSData => ({
@@ -287,10 +301,11 @@ export const fetchCMSData = async (): Promise<CMSData> => {
     return clientCMSCache;
   }
   try {
-    const fetchOptions: RequestInit & { next?: { revalidate: number } } =
-      typeof window === 'undefined'
-        ? { next: { revalidate: 300 } }
-        : { cache: 'no-store' };
+    // Use no-store on both server and client so Next.js's own fetch cache
+    // doesn't serve stale images/products after admin writes. The
+    // controller's in-memory cache (invalidated on every POST) handles
+    // server-side caching instead.
+    const fetchOptions: RequestInit = { cache: 'no-store' };
 
     const url = typeof window === 'undefined'
       ? getProxyUrl()
@@ -304,6 +319,16 @@ export const fetchCMSData = async (): Promise<CMSData> => {
     const data = await res.json();
 
     if (data.error) throw new Error(data.error);
+
+    // Guard: only treat the response as CMS data if it actually contains
+    // the expected catalog arrays. Prevents an order-confirmation response
+    // (which only has success/orderId fields) from overwriting the cache
+    // with an empty product list.
+    const hasCMSShape = Array.isArray(data.banners) || Array.isArray(data.products);
+    if (!hasCMSShape) {
+      console.warn('[fetchCMSData] Response did not contain CMS arrays, skipping cache update.');
+      return clientCMSCache || { banners: [], products: [], faqs: [], companyInfo: {} };
+    }
 
     const cmsData = normalizeCMSData(data);
 
@@ -391,7 +416,6 @@ export const submitOrder = async (order: OrderSubmission): Promise<{ success: bo
     let result;
     if (!text.trim().startsWith('{')) {
       console.error('API Utility: submitOrder received non-JSON response, response:', text);
-      // Since we now have local fallback in API route, this shouldn't happen, but just in case
       return {
         success: false,
         message: 'Google Sheets backend not available. Please try again later.',
@@ -406,6 +430,11 @@ export const submitOrder = async (order: OrderSubmission): Promise<{ success: bo
         message: result.message || result.error || 'Failed to place order. Please try again later.',
       };
     }
+
+    // Clear client-side CMS cache so the next page load fetches fresh
+    // product/banner data rather than serving a stale snapshot.
+    clearCMSDataCache();
+
     return {
       success: true,
       message: result.message || 'Order placed successfully',

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { fetchCMSData } from '@/utils/api';
+import { fetchCMSData, clearCMSDataCache } from '@/utils/api';
 import { Banner, Product, FAQ, CompanyInfo } from '@/types/cms';
 
 type CMSPayload = {
@@ -11,26 +11,6 @@ type CMSPayload = {
   companyInfo?: CompanyInfo;
 };
 
-let cmsCache: CMSPayload | null = null;
-let cmsRequest: Promise<CMSPayload> | null = null;
-
-const getCMSPayload = async () => {
-  if (cmsCache) return cmsCache;
-  if (!cmsRequest) {
-    cmsRequest = fetchCMSData().then((data) => {
-      cmsCache = {
-        banners: data.banners || [],
-        products: data.products || [],
-        faqs: data.faqs || [],
-        companyInfo: data.companyInfo,
-      };
-      return cmsCache;
-    }).finally(() => {
-      cmsRequest = null;
-    });
-  }
-  return cmsRequest;
-};
 
 export function useCMSData() {
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -51,7 +31,8 @@ export function useCMSData() {
     let active = true;
     const loadData = async () => {
       try {
-        const data = await getCMSPayload();
+        clearCMSDataCache();
+        const data = await fetchCMSData();
         if (active) {
           setBanners(data.banners);
           setProducts(data.products);

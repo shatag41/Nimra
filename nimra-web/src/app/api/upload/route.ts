@@ -79,8 +79,8 @@ export async function POST(req: Request) {
     await mkdir(uploadDir, { recursive: true });
     await writeFile(diskPath, buffer, { flag: 'wx' });
 
-    const storagePath = `/uploads/${scope}/${fileName}`;
-    const url = `/api/file/${scope}/${fileName}`;
+    const storagePath = `${scope}/${fileName}`;
+    const url = `/uploads/${scope}/${fileName}`;
 
     return NextResponse.json({
       success: true,
