@@ -48,9 +48,6 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
     event.preventDefault();
     event.stopPropagation();
     addProduct(product);
-    if (onAdd) {
-      onAdd(product);
-    }
   };
 
   return (
