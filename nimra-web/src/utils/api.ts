@@ -815,19 +815,15 @@ export const syncCart = async (userId: string | number, items: CartItem[], updat
 };
 
 export const fetchCart = async (userId: string | number): Promise<CartItem[]> => {
-  try {
-    const res = await fetch('/api/cms', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'getCart', userId }),
-    });
-    const data = await res.json();
-    if (data.success && Array.isArray(data.items)) {
-      return data.items;
-    }
-    return [];
-  } catch (err) {
-    console.error('Error fetching cart:', err);
-    return [];
+  const res = await fetch('/api/cms', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    cache: 'no-store',
+    body: JSON.stringify({ type: 'getCart', userId }),
+  });
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    throw new Error(data.message || 'Failed to fetch cart');
   }
+  return Array.isArray(data.items) ? data.items : [];
 };

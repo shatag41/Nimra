@@ -41,10 +41,10 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
             style={{
               backgroundImage: `
                 linear-gradient(105deg,
-                  rgba(15,23,42,0.93) 0%,
-                  rgba(30,58,138,0.82) 40%,
-                  rgba(37,99,235,0.45) 70%,
-                  rgba(59,130,246,0.15) 100%
+                  rgba(15,23,42,0.68) 0%,
+                  rgba(15,23,42,0.44) 40%,
+                  rgba(30,64,175,0.16) 70%,
+                  rgba(37,99,235,0.03) 100%
                 ),
                 url(${banner.ImageUrl})`
             }}
@@ -470,7 +470,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           cursor: pointer;
           background: linear-gradient(135deg, #3b82f6, #2563eb);
           color: white;
-          box-shadow: 0 8px 28px rgba(59, 130, 246, 0.4);
+          box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
           transition: all 200ms ease;
           position: relative;
           overflow: hidden;
@@ -478,7 +478,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         }
         .btn-hero-primary:hover {
           transform: translateY(-3px) scale(1.02);
-          box-shadow: 0 16px 40px rgba(59, 130, 246, 0.5);
+          box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
         }
 
         .hero-trust-bar {
@@ -502,12 +502,12 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         .hero-card {
           border-radius: var(--radius-xl);
           padding: 1.75rem;
-          box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+          box-shadow: 0 6px 18px rgba(0,0,0,0.14);
           max-width: 360px;
           margin-left: auto;
           border: 1px solid rgba(255,255,255,0.2);
-          background: rgba(255,255,255,0.12) !important;
-          backdrop-filter: blur(24px) !important;
+          background: rgba(15,23,42,0.4) !important;
+          backdrop-filter: none !important;
         }
 
         .hero-card-tag {
@@ -845,20 +845,23 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         }
 
         .prod-img-box {
-          height: 185px;
+          width: 100%;
+          height: auto;
+          aspect-ratio: 4 / 3;
           display: flex;
           align-items: center;
           justify-content: center;
           background: var(--product-image-bg);
           position: relative;
           overflow: hidden;
-          padding: 0.85rem;
+          padding: 0;
         }
 
         .prod-img-box img {
-          max-height: 100%;
-          max-width: 100%;
-          object-fit: contain;
+          display: block;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
           transition: transform var(--transition-normal);
           position: relative;
           z-index: 1;

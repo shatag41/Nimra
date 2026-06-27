@@ -24,6 +24,7 @@ async function syncLocalDB(action: 'load' | 'save') {
       if (data.inquiries) fallbackData.inquiries = data.inquiries;
       if (data.users) fallbackData.users = data.users;
       if (data.notifications) fallbackData.notifications = data.notifications;
+      if (data.carts) fallbackData.carts = data.carts;
       localDBLoaded = true;
     } else {
       const data = {
@@ -35,6 +36,7 @@ async function syncLocalDB(action: 'load' | 'save') {
         inquiries: fallbackData.inquiries,
         users: fallbackData.users,
         notifications: fallbackData.notifications,
+        carts: fallbackData.carts,
       };
       await fs.writeFile(DB_PATH, JSON.stringify(data, null, 2), 'utf-8');
     }
@@ -308,7 +310,43 @@ export async function handlePost(req: Request) {
 
     // Local fallback only when Google Sheets is not configured.
     
-    if (payload.type === 'order') {
+    if (payload.type === 'getCart') {
+      const userId = String(payload.userId || '').trim();
+      if (!userId) {
+        return NextResponse.json({ success: false, message: 'userId is required to get cart' }, { status: 400 });
+      }
+      const savedCart = (fallbackData.carts || []).find((cart: any) => String(cart.userId) === userId);
+      return NextResponse.json({ success: true, items: savedCart?.items || [] });
+    } else if (payload.type === 'cartSync') {
+      const userId = String(payload.userId || '').trim();
+      if (!userId) {
+        return NextResponse.json({ success: false, message: 'userId is required for cart sync' }, { status: 400 });
+      }
+
+      const carts = Array.isArray(fallbackData.carts) ? fallbackData.carts : [];
+      const cartIndex = carts.findIndex((cart: any) => String(cart.userId) === userId);
+      const incomingUpdatedAt = String(payload.updatedAt || new Date().toISOString());
+      const cartRecord = {
+        userId,
+        items: Array.isArray(payload.items) ? payload.items : [],
+        updatedAt: incomingUpdatedAt,
+      };
+
+      if (cartIndex >= 0) {
+        const existingUpdatedAt = Date.parse(String(carts[cartIndex].updatedAt || ''));
+        const nextUpdatedAt = Date.parse(incomingUpdatedAt);
+        if (Number.isFinite(existingUpdatedAt) && Number.isFinite(nextUpdatedAt) && nextUpdatedAt < existingUpdatedAt) {
+          return NextResponse.json({ success: true, message: 'Stale cart sync ignored', staleIgnored: true });
+        }
+        carts[cartIndex] = cartRecord;
+      } else {
+        carts.push(cartRecord);
+      }
+
+      fallbackData.carts = carts;
+      await syncLocalDB('save');
+      return NextResponse.json({ success: true, message: 'Cart synced successfully' });
+    } else if (payload.type === 'order') {
       const orderId = `NIMRA-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const now = new Date().toISOString();
       fallbackData.orders.unshift({

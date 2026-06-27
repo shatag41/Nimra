@@ -486,7 +486,9 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1), 0 4px 12px rgba(0,0,0,0.04);
         }
         .cat-img-box {
-          height: 140px;
+          width: 100%;
+          height: auto;
+          aspect-ratio: 4 / 3;
           position: relative;
           display: flex;
           align-items: center;
@@ -497,9 +499,10 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           overflow: hidden;
         }
         .cat-img-box img {
-          max-height: 86%;
-          max-width: 86%;
-          object-fit: contain;
+          display: block;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
           border-radius: var(--radius-md);
           transition: transform var(--transition-normal);
         }

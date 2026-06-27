@@ -94,6 +94,7 @@ export default function ProductModal({
               label="Product Image"
               required
               scope="products"
+              aspect="product"
               value={editingProduct.ImageUrl || ''}
               onChange={(url) => setEditingProduct(prev => prev ? ({ ...prev, ImageUrl: url }) : null)}
               disabled={saveLoading}

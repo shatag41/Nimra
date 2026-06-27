@@ -1,4 +1,5 @@
 export const fallbackData: any = {
+  carts: [],
   banners: [
     { ID: 1, Title: 'Pure Hydration. Healthy Living.', Subtitle: 'NIMRA Packaged Drinking Water keeps you fresh and energized through every moment of the day.', ImageUrl: 'banners/1782400800295-50bba580-d62b-436d-985b-87fd558d5ad8.jpg', ButtonText: 'Explore Products', ButtonLink: '#products', Active: true },
   ],

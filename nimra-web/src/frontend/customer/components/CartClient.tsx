@@ -5,7 +5,22 @@ import { useCart } from '@/frontend/customer/hooks/useCart';
 import { CartItemsList, CartSummary } from './portal/Cart';
 
 export default function CartClient() {
-  const { items, clearCart } = useCart();
+  const { items, clearCart, isHydrated } = useCart();
+
+  if (!isHydrated) {
+    return (
+      <section className="cart-page" aria-busy="true" aria-live="polite">
+        <div className="container">
+          <div className="page-header animate-slide-up">
+            <span className="badge badge-primary">Cart</span>
+            <h1>Loading Your Cart</h1>
+            <p>Restoring your saved items...</p>
+          </div>
+        </div>
+        <style jsx global>{styles}</style>
+      </section>
+    );
+  }
 
   if (items.length === 0) {
     return (

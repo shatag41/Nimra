@@ -6,7 +6,7 @@ interface ImageUploadFieldProps {
   label: string;
   value?: string;
   scope: 'products' | 'banners';
-  aspect?: 'square' | 'wide';
+  aspect?: 'product' | 'wide';
   required?: boolean;
   disabled?: boolean;
   onChange: (url: string) => void;
@@ -15,16 +15,11 @@ interface ImageUploadFieldProps {
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
-function formatFileSize(bytes: number) {
-  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
 export default function ImageUploadField({
   label,
   value,
   scope,
-  aspect = 'square',
+  aspect = 'product',
   required = false,
   disabled = false,
   onChange,
@@ -136,16 +131,17 @@ export default function ImageUploadField({
         />
 
         {hasImage ? (
-          <div className={`image-upload-preview ${aspect === 'wide' ? 'wide' : ''}`}>
+          <div className={`image-upload-preview ${aspect}`}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={previewSrc} alt={`${label} preview`} />
             {uploading && <div className="image-upload-progress">Uploading...</div>}
           </div>
         ) : (
-          <div className="image-upload-empty">
+          <div className={`image-upload-empty ${aspect}`}>
             <span className="image-upload-icon">Upload</span>
             <strong>Drag and drop an image here</strong>
             <small>JPG, PNG, WebP, or GIF up to 5 MB</small>
+            <small>{aspect === 'product' ? 'Recommended: 1200 × 900 px (4:3)' : 'Recommended: 1600 × 900 px (16:9)'}</small>
           </div>
         )}
 
