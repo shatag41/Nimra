@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Banner, Product, FAQ, CompanyInfo } from '@/types/cms';
+import { useCart } from '@/frontend/customer/hooks/useCart';
 
 interface HomeClientProps {
   banners: Banner[];
@@ -13,42 +14,92 @@ interface HomeClientProps {
 }
 
 export default function HomeClient({ banners, products, faqs, companyInfo }: HomeClientProps) {
-  const [activeBanner, setActiveBanner] = useState(0);
+  const cart = useCart();
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
+  const [carouselEnabled, setCarouselEnabled] = useState(true);
+  const [{ activeBanner, loadedBannerIndexes }, setCarouselState] = useState(() => ({
+    activeBanner: 0,
+    loadedBannerIndexes: new Set([0, 1]),
+  }));
+  const heroRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    if (banners.length <= 1) return;
+    if (banners.length <= 1 || !carouselEnabled) return;
     const interval = setInterval(() => {
-      setActiveBanner((prev) => (prev + 1) % banners.length);
+      setCarouselState((current) => {
+        const next = (current.activeBanner + 1) % banners.length;
+        const nextLoaded = new Set(current.loadedBannerIndexes);
+        nextLoaded.add(next);
+        nextLoaded.add((next + 1) % banners.length);
+        return { activeBanner: next, loadedBannerIndexes: nextLoaded };
+      });
     }, 6000);
     return () => clearInterval(interval);
+  }, [banners.length, carouselEnabled]);
+
+  useEffect(() => {
+    const hero = heroRef.current;
+    if (!hero) return;
+    let heroVisible = true;
+
+    const updateCarousel = () => setCarouselEnabled(heroVisible && document.visibilityState === 'visible');
+    const heroObserver = new IntersectionObserver(([entry]) => {
+      heroVisible = entry.isIntersecting;
+      hero.classList.toggle('is-visible', heroVisible);
+      updateCarousel();
+    }, { threshold: 0.05 });
+
+    const deferredSections = Array.from(document.querySelectorAll<HTMLElement>('.home-deferred-section'));
+    const sectionObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => entry.target.classList.toggle('is-visible', entry.isIntersecting));
+    }, { rootMargin: '240px 0px', threshold: 0.01 });
+
+    heroObserver.observe(hero);
+    deferredSections.forEach((section) => sectionObserver.observe(section));
+    document.addEventListener('visibilitychange', updateCarousel);
+    return () => {
+      heroObserver.disconnect();
+      sectionObserver.disconnect();
+      document.removeEventListener('visibilitychange', updateCarousel);
+    };
+  }, []);
+
+  const selectBanner = useCallback((index: number) => {
+    setCarouselState((current) => {
+      const nextLoaded = new Set(current.loadedBannerIndexes);
+      nextLoaded.add(index);
+      if (banners.length > 1) nextLoaded.add((index + 1) % banners.length);
+      return { activeBanner: index, loadedBannerIndexes: nextLoaded };
+    });
   }, [banners.length]);
 
-  const toggleFaq = (index: number) => {
-    setActiveFaq(activeFaq === index ? null : index);
-  };
+  const toggleFaq = useCallback((index: number) => {
+    setActiveFaq((current) => current === index ? null : index);
+  }, []);
 
-  const spotlightProducts = products.slice(0, 3);
+  const spotlightProducts = useMemo(() => products.slice(0, 3), [products]);
 
   return (
     <div className="home-page">
       {/* ─── 1. HERO CAROUSEL ───────────────────────────────────────────────── */}
-      <section className="hero-section">
+      <section className="hero-section" ref={heroRef}>
         {banners.map((banner, idx) => (
           <div
             key={banner.ID}
             className={`hero-slide ${idx === activeBanner ? 'active' : ''}`}
-            style={{
-              backgroundImage: `
-                linear-gradient(105deg,
-                  rgba(15,23,42,0.68) 0%,
-                  rgba(15,23,42,0.44) 40%,
-                  rgba(30,64,175,0.16) 70%,
-                  rgba(37,99,235,0.03) 100%
-                ),
-                url(${banner.ImageUrl})`
-            }}
           >
+            {loadedBannerIndexes.has(idx) && banner.ImageUrl && (
+              <Image
+                src={banner.ImageUrl}
+                alt=""
+                fill
+                priority={idx === 0}
+                quality={75}
+                sizes="100vw"
+                className="hero-slide-image"
+              />
+            )}
+            <div className="hero-slide-shade" />
             <div className="container hero-content">
               <div className="hero-copy">
                 <div className="hero-eyebrow animate-fade-in">
@@ -119,7 +170,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
               <button
                 key={idx}
                 className={`dot ${idx === activeBanner ? 'active' : ''}`}
-                onClick={() => setActiveBanner(idx)}
+                onClick={() => selectBanner(idx)}
                 aria-label={`Go to slide ${idx + 1}`}
               />
             ))}
@@ -135,7 +186,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
       </section>
 
       {/* ─── 2. STATS BAR ───────────────────────────────────────────────────── */}
-      <section className="stats-section">
+      <section className="stats-section home-deferred-section">
         <div className="container">
           <div className="stats-grid">
             {[
@@ -155,7 +206,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
       </section>
 
       {/* ─── 3. BRAND STORY ─────────────────────────────────────────────────── */}
-      <section className="story-section">
+      <section className="story-section home-deferred-section">
         <div className="story-bg-shape" />
         <div className="container">
           <div className="story-grid">
@@ -166,6 +217,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
                   alt="Pure water purification process"
                   fill
                   sizes="(max-width: 768px) 100vw, 50vw"
+                  quality={72}
                   style={{ objectFit: 'cover' }}
                   className="story-img animate-float-slow"
                 />
@@ -231,7 +283,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
       </section>
 
       {/* ─── 4. PRODUCT PREVIEW ─────────────────────────────────────────────── */}
-      <section className="product-preview-section">
+      <section className="product-preview-section home-deferred-section">
         <div className="section-bg-dots" />
         <div className="container">
           <div className="section-header">
@@ -249,7 +301,8 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
                     alt={product.Name} 
                     fill
                     style={{ objectFit: 'contain' }}
-                    sizes="(max-width: 768px) 100vw, 33vw"
+                    sizes="(max-width: 640px) calc(100vw - 2rem), (max-width: 1024px) 45vw, 360px"
+                    quality={75}
                   />
                   <div className="prod-img-overlay" />
                 </div>
@@ -265,9 +318,13 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
                       <span className="prod-price-label">From</span>
                       <span className="prod-price">₹{product.Price}</span>
                     </div>
-                    <Link href={`/products?add=${product.ID}`} className="btn btn-primary btn-sm">
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      onClick={() => cart.addProduct(product)}
+                    >
                       Order Now
-                    </Link>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -284,7 +341,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
       </section>
 
       {/* ─── 5. RUSH SODA TEASER ────────────────────────────────────────────── */}
-      <section className="rush-section">
+      <section className="rush-section home-deferred-section">
         <div className="bubble-bg">
           {[
             { left: '8%', w: '14px', delay: '0s', dur: '8s' },
@@ -306,7 +363,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
                 <span className="rush-brand">RUSH Soda</span>
               </h2>
               <p className="rush-text">
-                Prepare your taste buds for the ultimate bubbly experience. RUSH Soda — NIMRA's upcoming range of premium sparkling club sodas and carbonated refreshments. Crafted to elevate your mocktails, parties, or enjoyed chilled.
+                Prepare your taste buds for the ultimate bubbly experience. RUSH Soda — NIMRA&apos;s upcoming range of premium sparkling club sodas and carbonated refreshments. Crafted to elevate your mocktails, parties, or enjoyed chilled.
               </p>
               <div className="rush-features">
                 {['Extra Sparkling', 'Zero Impurities', 'Pure Crisp Taste', 'Event Ready'].map((f) => (
@@ -340,7 +397,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
       </section>
 
       {/* ─── 6. FAQ ─────────────────────────────────────────────────────────── */}
-      <section className="faq-section">
+      <section className="faq-section home-deferred-section">
         <div className="container">
           <div className="section-header">
             <span className="badge badge-primary">FAQ</span>
@@ -387,8 +444,6 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         .hero-slide {
           position: absolute;
           inset: 0;
-          background-size: cover;
-          background-position: center;
           opacity: 0;
           z-index: 1;
           display: flex;
@@ -396,6 +451,33 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           transition: opacity 700ms ease-in-out;
         }
         .hero-slide.active { opacity: 1; z-index: 2; }
+
+        .hero-slide-image {
+          object-fit: cover;
+          object-position: center;
+          z-index: 0;
+        }
+
+        .hero-slide-shade {
+          position: absolute;
+          inset: 0;
+          z-index: 1;
+          background: linear-gradient(105deg, rgba(15,23,42,0.68) 0%, rgba(15,23,42,0.44) 40%, rgba(30,64,175,0.16) 70%, rgba(37,99,235,0.03) 100%);
+          pointer-events: none;
+        }
+
+        .home-deferred-section {
+          content-visibility: auto;
+          contain-intrinsic-size: auto 700px;
+        }
+
+        .home-deferred-section:not(.is-visible) * {
+          animation-play-state: paused !important;
+        }
+
+        .hero-section:not(.is-visible) * {
+          animation-play-state: paused !important;
+        }
 
         .hero-content {
           color: white;
@@ -1154,6 +1236,21 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         /* ── FAQ ────────────────────────────────────────────────────────────── */
         .faq-section {
           background: var(--bg-secondary);
+          padding-top: 2.25rem;
+          padding-bottom: 2.25rem;
+        }
+
+        .faq-section .section-header {
+          margin-bottom: 1.75rem;
+        }
+
+        .faq-section .section-header h2 {
+          margin-top: 0.55rem;
+          margin-bottom: 0.45rem;
+        }
+
+        .faq-section .section-header p {
+          line-height: 1.5;
         }
 
         .faq-accordion-box {
@@ -1161,11 +1258,11 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           margin: 0 auto;
           display: flex;
           flex-direction: column;
-          gap: 0.875rem;
+          gap: 0.55rem;
         }
 
         .faq-item {
-          border-radius: var(--radius-lg);
+          border-radius: var(--radius-md);
           background: var(--bg-primary);
           border: 1.5px solid var(--border-color);
           overflow: hidden;
@@ -1179,18 +1276,18 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         }
 
         .faq-question {
-          padding: 1.25rem 1.5rem;
+          padding: 0.85rem 1.1rem;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 1rem;
+          gap: 0.75rem;
           user-select: none;
         }
 
         .faq-q-inner {
           display: flex;
           align-items: center;
-          gap: 1rem;
+          gap: 0.75rem;
         }
 
         .faq-num {
@@ -1199,9 +1296,9 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           color: var(--primary-color);
           background: rgba(0,150,58,0.1);
           border: 1px solid rgba(0,150,58,0.2);
-          width: 32px;
-          height: 32px;
-          border-radius: 8px;
+          width: 28px;
+          height: 28px;
+          border-radius: 6px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -1210,15 +1307,15 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         }
 
         .faq-question h3 {
-          font-size: 1rem;
+          font-size: 0.95rem;
           font-weight: 600;
           line-height: 1.4;
         }
 
         .faq-icon {
-          width: 34px;
-          height: 34px;
-          border-radius: 8px;
+          width: 30px;
+          height: 30px;
+          border-radius: 6px;
           background: var(--bg-secondary);
           border: 1px solid var(--border-color);
           display: flex;
@@ -1243,9 +1340,9 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         .faq-item.active .faq-answer {
           max-height: 240px;
           border-top: 1px solid var(--border-color);
-          padding: 1.25rem 1.5rem 1.25rem calc(1.5rem + 32px + 1rem);
+          padding: 0.85rem 1.1rem 0.9rem calc(1.1rem + 28px + 0.75rem);
         }
-        .faq-answer p { font-size: 0.95rem; line-height: 1.65; color: var(--text-secondary); }
+        .faq-answer p { font-size: 0.9rem; line-height: 1.55; color: var(--text-secondary); }
 
         /* ── Responsive ─────────────────────────────────────────────────────── */
         @media (max-width: 1024px) {
@@ -1272,6 +1369,12 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           .stats-grid { grid-template-columns: 1fr 1fr; }
           .hero-trust-bar { gap: 0.75rem; }
           .trust-divider { display: none; }
+          .faq-section { padding-top: 1.75rem; padding-bottom: 1.75rem; }
+          .faq-section .section-header { margin-bottom: 1.25rem; }
+          .faq-question { padding: 0.75rem 0.85rem; }
+          .faq-item.active .faq-answer {
+            padding: 0.75rem 0.85rem 0.8rem calc(0.85rem + 28px + 0.75rem);
+          }
         }
       `}</style>
     </div>

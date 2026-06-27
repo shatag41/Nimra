@@ -19,10 +19,17 @@ const categoriesData = [
   { id: 'Upcoming RUSH Soda', name: 'RUSH Soda' },
 ];
 
+const isUpcomingProduct = (product: Product) => {
+  const stockStatus = String(product.StockStatus || '');
+  return normalizeCategory(product.Category) === 'Upcoming RUSH Soda' || /coming|soon|upcoming|pre.?launch/i.test(stockStatus);
+};
+
+const isActiveProduct = (product: Product) => product.Active !== false && String(product.Active).toLowerCase() !== 'false';
+
 export default function ProductsClient({ products }: ProductsClientProps) {
   const [activeTab, setActiveTab] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'outofstock'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'upcoming'>('all');
   const [sizeFilter, setSizeFilter] = useState<'all' | 'jar' | 'bottle'>('all');
   const { addProduct } = useCart();
   const deferredSearchQuery = useDeferredValue(searchQuery);
@@ -40,8 +47,9 @@ export default function ProductsClient({ products }: ProductsClientProps) {
       : true;
     if (!matchesSearch) return false;
 
-    if (statusFilter === 'available' && !product.Active) return false;
-    if (statusFilter === 'outofstock' && product.Active) return false;
+    const isUpcoming = isUpcomingProduct(product);
+    if (statusFilter === 'available' && (!isActiveProduct(product) || isUpcoming)) return false;
+    if (statusFilter === 'upcoming' && !isUpcoming) return false;
 
     const volumeLower = (product.Volume || '').toLowerCase();
     const isJar = volumeLower.includes('20l') || volumeLower.includes('jar');
@@ -91,6 +99,7 @@ export default function ProductsClient({ products }: ProductsClientProps) {
                     onChange={() => setActiveTab(cat.id)}
                     className="filter-radio"
                   />
+                  <span className="filter-radio-control" aria-hidden="true" />
                   <span>{cat.name}</span>
                 </label>
               ))}
@@ -104,7 +113,7 @@ export default function ProductsClient({ products }: ProductsClientProps) {
                 [
                   { id: 'all', label: 'All Products' },
                   { id: 'available', label: 'Available Now' },
-                  { id: 'outofstock', label: 'Upcoming / Out of Stock' },
+                  { id: 'upcoming', label: 'Upcoming' },
                 ] as const
               ).map((opt) => (
                 <label key={opt.id} className="filter-label">
@@ -115,6 +124,7 @@ export default function ProductsClient({ products }: ProductsClientProps) {
                     onChange={() => setStatusFilter(opt.id)}
                     className="filter-radio"
                   />
+                  <span className="filter-radio-control" aria-hidden="true" />
                   <span>{opt.label}</span>
                 </label>
               ))}
@@ -139,6 +149,7 @@ export default function ProductsClient({ products }: ProductsClientProps) {
                     onChange={() => setSizeFilter(opt.id)}
                     className="filter-radio"
                   />
+                  <span className="filter-radio-control" aria-hidden="true" />
                   <span>{opt.label}</span>
                 </label>
               ))}
@@ -330,18 +341,77 @@ export default function ProductsClient({ products }: ProductsClientProps) {
         }
 
         .filter-label {
+          position: relative;
           display: flex;
           align-items: center;
-          gap: 0.5rem;
+          gap: 0.65rem;
+          min-height: 38px;
+          padding: 0.5rem 0.6rem;
+          border: 1px solid transparent;
+          border-radius: var(--radius-md);
           font-size: 0.875rem;
           color: var(--text-secondary);
           cursor: pointer;
-          font-weight: 500;
+          font-weight: 600;
+          transition: color var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
+        }
+
+        .filter-label:hover {
+          color: var(--text-primary);
+          background: var(--bg-secondary);
+          border-color: var(--border-color);
+        }
+
+        .filter-label:has(.filter-radio:checked) {
+          color: var(--primary-color);
+          background: rgba(var(--primary-rgb), 0.08);
+          border-color: rgba(var(--primary-rgb), 0.25);
         }
 
         .filter-radio {
-          accent-color: var(--primary-color);
-          cursor: pointer;
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          opacity: 0;
+          pointer-events: none;
+        }
+
+        .filter-radio-control {
+          width: 17px;
+          height: 17px;
+          border: 1.5px solid var(--text-muted);
+          border-radius: 50%;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          flex: 0 0 17px;
+          background: var(--bg-primary);
+          transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+        }
+
+        .filter-radio-control::after {
+          content: '';
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: white;
+          transform: scale(0);
+          transition: transform var(--transition-fast);
+        }
+
+        .filter-radio:checked + .filter-radio-control {
+          border-color: var(--primary-color);
+          background: var(--primary-color);
+          box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.12);
+        }
+
+        .filter-radio:checked + .filter-radio-control::after {
+          transform: scale(1);
+        }
+
+        .filter-radio:focus-visible + .filter-radio-control {
+          outline: 2px solid var(--primary-color);
+          outline-offset: 3px;
         }
 
         /* Main Area */

@@ -51,6 +51,15 @@ const CACHE_TTL = 300000; // 5 minutes cache
 const LIVE_GET_CACHE_TTL = 15000;
 const liveGetCache = new Map<string, { data: any; expiresAt: number }>();
 
+type CustomerOrderIdentity = {
+  userId?: unknown;
+  customer?: {
+    userId?: unknown;
+    email?: unknown;
+    mobile?: unknown;
+  };
+};
+
 // Store OTPs in-memory for local fallback mode
 const localOTPCache = new Map<string, { otp: string; expiresAt: number }>();
 
@@ -361,7 +370,7 @@ export async function handlePost(req: Request) {
       const customerUserId = String(payload.userId || payload.customer?.userId || '').trim();
       const customerEmail = String(payload.customer?.email || '').trim().toLowerCase();
       const customerMobile = String(payload.customer?.mobile || '').replace(/\D/g, '').slice(-10);
-      const customerOrders = fallbackData.orders.filter((order) => {
+      const customerOrders = fallbackData.orders.filter((order: CustomerOrderIdentity) => {
         const orderUserId = String(order.userId || order.customer?.userId || '').trim();
         const orderEmail = String(order.customer?.email || '').trim().toLowerCase();
         const orderMobile = String(order.customer?.mobile || '').replace(/\D/g, '').slice(-10);

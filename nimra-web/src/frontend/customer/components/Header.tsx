@@ -49,7 +49,19 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
       document.documentElement.classList.add('theme-transition');
     }, 150);
 
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    let scrollFrame = 0;
+    let lastScrolled = window.scrollY > 20;
+    const handleScroll = () => {
+      if (scrollFrame) return;
+      scrollFrame = window.requestAnimationFrame(() => {
+        const nextScrolled = window.scrollY > 20;
+        if (nextScrolled !== lastScrolled) {
+          lastScrolled = nextScrolled;
+          setIsScrolled(nextScrolled);
+        }
+        scrollFrame = 0;
+      });
+    };
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Element;
       if (!target.closest('.profile-menu-container')) {
@@ -59,10 +71,11 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
         setNotificationDropdownOpen(false);
       }
     };
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     document.addEventListener('click', handleClickOutside);
     return () => {
       window.removeEventListener('scroll', handleScroll);
+      if (scrollFrame) window.cancelAnimationFrame(scrollFrame);
       document.removeEventListener('click', handleClickOutside);
       window.removeEventListener(THEME_CHANGE_EVENT, handleThemeChange);
 
