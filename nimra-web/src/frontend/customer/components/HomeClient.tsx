@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Link from 'next/link';
 import Image from 'next/image';
 import { Banner, Product, FAQ, CompanyInfo } from '@/types/cms';
-import { useCart } from '@/frontend/customer/hooks/useCart';
 
 interface HomeClientProps {
   banners: Banner[];
@@ -14,7 +13,6 @@ interface HomeClientProps {
 }
 
 export default function HomeClient({ banners, products, faqs, companyInfo }: HomeClientProps) {
-  const cart = useCart();
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [carouselEnabled, setCarouselEnabled] = useState(true);
   const [{ activeBanner, loadedBannerIndexes }, setCarouselState] = useState(() => ({
@@ -318,13 +316,12 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
                       <span className="prod-price-label">From</span>
                       <span className="prod-price">₹{product.Price}</span>
                     </div>
-                    <button
-                      type="button"
+                    <Link
+                      href={`/products?add=${encodeURIComponent(String(product.ID))}`}
                       className="btn btn-primary btn-sm"
-                      onClick={() => cart.addProduct(product)}
                     >
                       Order Now
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </div>

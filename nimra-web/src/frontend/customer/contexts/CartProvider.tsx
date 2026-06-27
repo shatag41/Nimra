@@ -74,6 +74,27 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems(nextItems);
   }, [storageKey]);
 
+  const showAddedToCartToast = useCallback((title: string, description: string) => {
+    toast.success(title, {
+      description,
+      position: 'bottom-center',
+      duration: 5000,
+      className: 'cart-added-toast',
+      classNames: {
+        content: 'cart-added-toast__content',
+        title: 'cart-added-toast__title',
+        description: 'cart-added-toast__description',
+        icon: 'cart-added-toast__icon',
+        actionButton: 'cart-added-toast__action',
+        closeButton: 'cart-added-toast__close',
+      },
+      action: {
+        label: 'Go to Cart',
+        onClick: () => router.push('/cart'),
+      },
+    });
+  }, [router]);
+
   useEffect(() => {
     if (isLoading) return;
 
@@ -212,8 +233,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             ? { ...item, ...nextItem, quantity: item.quantity + nextItem.quantity }
             : item);
         });
-        toast.success(`${product.Name} added to cart.`);
-        router.push('/cart');
+        showAddedToCartToast(product.Name, 'Added to your cart successfully.');
       },
       addItems(newItems, message) {
         const normalizedItems = mergeCartItems(newItems.map(normalizeCartItem));
@@ -225,8 +245,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           return mergeCartItems([...current, ...normalizedItems]);
         });
         const quantity = normalizedItems.reduce((sum, item) => sum + item.quantity, 0);
-        toast.success(message || `${quantity} item${quantity === 1 ? '' : 's'} added to cart.`);
-        router.push('/cart');
+        showAddedToCartToast(
+          `${quantity} item${quantity === 1 ? '' : 's'} added to cart`,
+          message || 'Your selected items are ready in the cart.'
+        );
       },
       updateQuantity(productId, quantity) {
         const targetProductId = String(productId);
@@ -265,7 +287,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         toast.success('Cart cleared successfully.');
       }
     };
-  }, [activeStorageKey, hydrated, items, router, storageKey, updateCartItems]);
+  }, [activeStorageKey, hydrated, items, showAddedToCartToast, storageKey, updateCartItems]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
