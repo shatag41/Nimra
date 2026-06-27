@@ -746,7 +746,13 @@ function saveOrder(spreadsheet, params) {
   sheet.appendRow(rowData);
 
   var emailResult = sendOrderConfirmationEmail(email, name, orderId, products, totalAmount, mobile);
-  var response = { success: true, orderId: orderId, message: 'Order placed successfully', emailSent: emailResult.sent };
+  var response = {
+    success: true,
+    orderId: orderId,
+    message: 'Order placed successfully',
+    emailSent: emailResult.sent,
+    orders: getAllOrders(spreadsheet, userId, mobile, email)
+  };
   if (!emailResult.sent && emailResult.error) {
     response.emailError = emailResult.error;
     response.emailHint = 'Run authorizeNimraEmailSending once in Apps Script, then deploy a new Web App version with Execute as Me.';

@@ -349,18 +349,33 @@ export async function handlePost(req: Request) {
     } else if (payload.type === 'order') {
       const orderId = `NIMRA-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const now = new Date().toISOString();
-      fallbackData.orders.unshift({
+      const savedOrder = {
         ...payload,
         orderId,
         status: 'Pending',
         createdAt: now,
         updatedAt: now,
-      });
+      };
+      fallbackData.orders.unshift(savedOrder);
       await syncLocalDB('save');
+      const customerUserId = String(payload.userId || payload.customer?.userId || '').trim();
+      const customerEmail = String(payload.customer?.email || '').trim().toLowerCase();
+      const customerMobile = String(payload.customer?.mobile || '').replace(/\D/g, '').slice(-10);
+      const customerOrders = fallbackData.orders.filter((order) => {
+        const orderUserId = String(order.userId || order.customer?.userId || '').trim();
+        const orderEmail = String(order.customer?.email || '').trim().toLowerCase();
+        const orderMobile = String(order.customer?.mobile || '').replace(/\D/g, '').slice(-10);
+        return Boolean(
+          (customerUserId && orderUserId === customerUserId) ||
+          (customerEmail && orderEmail === customerEmail) ||
+          (customerMobile && orderMobile === customerMobile)
+        );
+      });
       return NextResponse.json({
         success: true,
         message: 'Order placed successfully (local fallback mode)',
-        orderId: orderId
+        orderId: orderId,
+        orders: customerOrders,
       });
     } else if (payload.type === 'requestOrderCancellation') {
       return NextResponse.json({

@@ -397,7 +397,17 @@ export const submitInquiry = async (inquiry: InquirySubmission): Promise<{ succe
   }
 };
 
-export const submitOrder = async (order: OrderSubmission): Promise<{ success: boolean; message: string; orderId?: string; emailSent?: boolean; emailError?: string; emailHint?: string }> => {
+export type SubmitOrderResult = {
+  success: boolean;
+  message: string;
+  orderId?: string;
+  orders?: OrderRecord[];
+  emailSent?: boolean;
+  emailError?: string;
+  emailHint?: string;
+};
+
+export const submitOrder = async (order: OrderSubmission): Promise<SubmitOrderResult> => {
   const payload: OrderSubmission = {
     ...order,
     paymentMethod: order.paymentMethod || 'Cash on Delivery',
@@ -439,6 +449,7 @@ export const submitOrder = async (order: OrderSubmission): Promise<{ success: bo
       success: true,
       message: result.message || 'Order placed successfully',
       orderId: result.orderId,
+      orders: Array.isArray(result.orders) ? result.orders : undefined,
       emailSent: result.emailSent,
       emailError: result.emailError,
       emailHint: result.emailHint,

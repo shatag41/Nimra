@@ -6,8 +6,8 @@ import { useSearchParams } from 'next/navigation';
 import { useCart } from '@/frontend/customer/hooks/useCart';
 import { useAuth } from '@/frontend/customer/hooks/useAuth';
 import { useLocation } from '@/frontend/customer/contexts/LocationContext';
-import { submitOrder, saveUser } from '@/utils/api';
-import { primeCustomerOrderCache } from '@/frontend/customer/hooks/useCustomerOrders';
+import { fetchCustomerOrders, submitOrder, saveUser } from '@/utils/api';
+import { primeCustomerOrderCache, replaceCustomerOrdersCache } from '@/frontend/customer/hooks/useCustomerOrders';
 import { toast } from 'sonner';
 import { CheckoutForm, CheckoutSummary, CheckoutSuccess, SavedAddress, WORLD_DATA } from './portal/Checkout';
 import { migrateLegacyLocalAddresses, normalizeSavedAddresses, persistUserSavedAddresses } from '@/frontend/customer/utils/userAddresses';
@@ -405,7 +405,22 @@ export default function CheckoutClient() {
           instructions: form.instructions,
         },
       };
-      primeCustomerOrderCache(savedOrder, [user?.ID, user?.Username, user?.Mobile]);
+      const orderCacheKey = user?.ID || user?.Username;
+      try {
+        const backendOrders = result.orders || await fetchCustomerOrders(
+          user?.ID || '',
+          user?.Username || form.email,
+          user?.Mobile || form.mobile
+        );
+        const includesPlacedOrder = backendOrders.some((order) => order.orderId === savedOrder.orderId);
+        replaceCustomerOrdersCache(
+          includesPlacedOrder ? backendOrders : [savedOrder, ...backendOrders],
+          [orderCacheKey]
+        );
+      } catch (error) {
+        console.error('Order was placed, but refreshing order history failed', error);
+        primeCustomerOrderCache(savedOrder, [orderCacheKey]);
+      }
       if (isReorderCheckout) {
         clearReorderCheckoutDraft();
         setReorderDraft(null);

@@ -94,11 +94,30 @@ const writeOrdersCache = (key: string, orders: OrderRecord[]) => {
   }
 };
 
+const readOrdersCache = (key: string) => {
+  if (ordersCache[key] || typeof window === 'undefined') return ordersCache[key] || [];
+  try {
+    const stored = sessionStorage.getItem(storageKey(key));
+    if (!stored) return [];
+    const parsed = JSON.parse(stored) as { orders?: OrderRecord[]; cachedAt?: number };
+    ordersCache[key] = Array.isArray(parsed.orders) ? parsed.orders : [];
+    cacheTimes[key] = Number(parsed.cachedAt || 0);
+  } catch {
+    sessionStorage.removeItem(storageKey(key));
+  }
+  return ordersCache[key] || [];
+};
+
 export const primeCustomerOrderCache = (order: OrderRecord, keys: Array<string | number | undefined | null>) => {
   const usableKeys = Array.from(new Set(keys.map((key) => String(key || '').trim()).filter(Boolean)));
   usableKeys.forEach((key) => {
-    writeOrdersCache(key, mergeOrders(ordersCache[key] || [], [order]));
+    writeOrdersCache(key, mergeOrders(readOrdersCache(key), [order]));
   });
+};
+
+export const replaceCustomerOrdersCache = (orders: OrderRecord[], keys: Array<string | number | undefined | null>) => {
+  const usableKeys = Array.from(new Set(keys.map((key) => String(key || '').trim()).filter(Boolean)));
+  usableKeys.forEach((key) => writeOrdersCache(key, orders));
 };
 
 export const clearCustomerOrdersCache = (userId?: string | number) => {
@@ -131,18 +150,7 @@ export function useCustomerOrders() {
   // Pre-fill state from cache for instant navigation/loading
   useEffect(() => {
     if (!isAuthenticated || !cacheKey) return;
-    if (!ordersCache[cacheKey]) {
-      try {
-        const stored = sessionStorage.getItem(storageKey(cacheKey));
-        if (stored) {
-          const parsed = JSON.parse(stored) as { orders: OrderRecord[]; cachedAt: number };
-          ordersCache[cacheKey] = parsed.orders;
-          cacheTimes[cacheKey] = parsed.cachedAt;
-        }
-      } catch {
-        sessionStorage.removeItem(storageKey(cacheKey));
-      }
-    }
+    readOrdersCache(cacheKey);
     if (ordersCache[cacheKey]) {
       queueMicrotask(() => {
         setOrders(enrichOrdersForUser(ordersCache[cacheKey]));
@@ -189,7 +197,7 @@ export function useCustomerOrders() {
         activeFetches[key] = fetchPromise;
       }
       const data = await fetchPromise;
-      const sortedData = mergeOrders(ordersCache[key] || [], enrichOrdersForUser(data));
+      const sortedData = sortOrders(enrichOrdersForUser(data));
       writeOrdersCache(key, sortedData);
       setOrders(sortedData);
     } catch (err) {
