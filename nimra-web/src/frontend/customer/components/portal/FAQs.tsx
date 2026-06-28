@@ -5,24 +5,32 @@ import { FAQ } from '@/types/cms';
 
 interface FAQsProps {
   faqs: FAQ[];
+  variant?: 'default' | 'compact';
+  limit?: number;
 }
 
-export function FAQs({ faqs }: FAQsProps) {
+export function FAQs({ faqs, variant = 'default', limit }: FAQsProps) {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
+  const visibleFaqs = typeof limit === 'number' ? faqs.slice(0, limit) : faqs;
 
   const toggleFaq = (index: number) => {
     setActiveFaq(activeFaq === index ? null : index);
   };
 
   return (
-    <div className="faq-accordion-box">
-      {faqs.map((faq, idx) => (
+    <div className={`faq-accordion-box ${variant === 'compact' ? 'compact' : ''}`}>
+      {visibleFaqs.map((faq, idx) => (
         <div
           key={faq.ID}
           className={`faq-item ${idx === activeFaq ? 'active' : ''}`}
-          onClick={() => toggleFaq(idx)}
         >
-          <div className="faq-question">
+          <button
+            type="button"
+            className="faq-question"
+            aria-expanded={idx === activeFaq}
+            aria-controls={`faq-answer-${faq.ID}`}
+            onClick={() => toggleFaq(idx)}
+          >
             <div className="faq-q-inner">
               <span className="faq-num">{String(idx + 1).padStart(2, '0')}</span>
               <h3>{faq.Question}</h3>
@@ -30,8 +38,8 @@ export function FAQs({ faqs }: FAQsProps) {
             <span className="faq-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m6 9 6 6 6-6"/></svg>
             </span>
-          </div>
-          <div className="faq-answer">
+          </button>
+          <div id={`faq-answer-${faq.ID}`} className="faq-answer">
             <p>{faq.Answer}</p>
           </div>
         </div>
@@ -50,7 +58,6 @@ export function FAQs({ faqs }: FAQsProps) {
           background: var(--bg-primary);
           border: 1.5px solid var(--border-color);
           overflow: hidden;
-          cursor: pointer;
           transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
         }
         .faq-item:hover { border-color: var(--primary-color); box-shadow: var(--shadow-md); }
@@ -60,12 +67,18 @@ export function FAQs({ faqs }: FAQsProps) {
         }
 
         .faq-question {
+          width: 100%;
           padding: 1.25rem 1.5rem;
           display: flex;
           align-items: center;
           justify-content: space-between;
           gap: 1rem;
           user-select: none;
+          border: 0;
+          background: transparent;
+          color: var(--text-primary);
+          font: inherit;
+          cursor: pointer;
         }
 
         .faq-q-inner {
@@ -128,6 +141,29 @@ export function FAQs({ faqs }: FAQsProps) {
           padding: 1.25rem 1.5rem 1.25rem calc(1.5rem + 32px + 1rem);
         }
         .faq-answer p { font-size: 0.95rem; line-height: 1.65; color: var(--text-secondary); margin: 0; }
+
+        .faq-accordion-box.compact { gap: 0.35rem; max-width: none; }
+        .compact .faq-item { border-width: 1px; border-radius: var(--radius-md); box-shadow: none; }
+        .compact .faq-item:hover { box-shadow: none; }
+        .compact .faq-item.active { box-shadow: 0 0 0 2px rgba(0,150,58,0.08); }
+        .compact .faq-question { padding: 0.5rem 0.55rem; gap: 0.45rem; }
+        .compact .faq-q-inner { gap: 0.5rem; }
+        .compact .faq-num { width: 21px; height: 21px; border-radius: 5px; font-size: 0.56rem; }
+        .compact .faq-question h3 { font-size: 0.72rem; line-height: 1.3; }
+        .compact .faq-icon { width: 22px; height: 22px; border-radius: 5px; }
+        .compact .faq-icon svg { width: 12px; height: 12px; }
+        .compact .faq-item.active .faq-answer {
+          max-height: 200px;
+          padding: 0.5rem 0.55rem 0.55rem calc(0.55rem + 21px + 0.5rem);
+        }
+        .compact .faq-answer p { font-size: 0.7rem; line-height: 1.45; }
+
+        @media (max-width: 480px) {
+          .faq-question { padding: 0.9rem; }
+          .faq-item.active .faq-answer { padding: 0.9rem; }
+          .compact .faq-question { padding: 0.5rem; }
+          .compact .faq-item.active .faq-answer { padding: 0.5rem; }
+        }
       `}</style>
     </div>
   );

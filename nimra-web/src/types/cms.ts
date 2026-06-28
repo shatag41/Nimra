@@ -209,7 +209,17 @@ export interface AdminUser {
   Name: string;
   Active?: boolean | string;
   SavedAddresses?: string;
+  EmailPreferences?: string;
   otp?: string;
+}
+
+export interface EmailPreferences {
+  orderConfirmation: boolean;
+  orderStatusUpdates: boolean;
+  deliveryUpdates: boolean;
+  promotionsOffers: boolean;
+  accountSecurity: boolean;
+  newsletter: boolean;
 }
 
 export interface Notification {

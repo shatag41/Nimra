@@ -16,6 +16,7 @@ export interface User {
   createdAt?: string;
   SavedAddresses?: string;
   RecentlyViewed?: string;
+  EmailPreferences?: string;
 }
 
 type StoredSession = {

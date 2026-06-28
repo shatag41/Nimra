@@ -1,4 +1,4 @@
-import { CMSData, InquirySubmission, OrderRecord, OrderSubmission, AdminUser, Notification, Inquiry, Product, Banner, FAQ, CompanyInfo, CartItem } from '@/types/cms';
+import { CMSData, InquirySubmission, OrderRecord, OrderSubmission, AdminUser, Notification, Inquiry, Product, Banner, FAQ, CompanyInfo, CartItem, EmailPreferences } from '@/types/cms';
 import type { User } from '@/frontend/customer/contexts/AuthContext';
 
 export type AuthRequest =
@@ -838,3 +838,43 @@ export const fetchCart = async (userId: string | number): Promise<CartItem[]> =>
   }
   return Array.isArray(data.items) ? data.items : [];
 };
+
+type AccountSettingsResponse = {
+  success: boolean;
+  message: string;
+  preferences?: EmailPreferences;
+};
+
+const accountSettingsRequest = async (payload: Record<string, unknown>): Promise<AccountSettingsResponse> => {
+  try {
+    const res = await fetch('/api/cms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
+      body: JSON.stringify({ type: 'accountSettings', ...payload }),
+    });
+    const data = await readJsonResponse<AccountSettingsResponse>(res, {
+      success: false,
+      message: 'Unable to process account settings.',
+    });
+    return data;
+  } catch (err) {
+    console.error('Account settings request failed:', err);
+    return { success: false, message: 'Unable to connect to account settings.' };
+  }
+};
+
+export const fetchEmailPreferences = (userId: string | number) =>
+  accountSettingsRequest({ action: 'getPreferences', userId });
+
+export const saveEmailPreferences = (userId: string | number, preferences: EmailPreferences) =>
+  accountSettingsRequest({ action: 'updatePreferences', userId, preferences });
+
+export const changeAccountPassword = (
+  userId: string | number,
+  currentPassword: string,
+  newPassword: string
+) => accountSettingsRequest({ action: 'changePassword', userId, currentPassword, newPassword });
+
+export const deleteCustomerAccount = (userId: string | number, currentPassword: string) =>
+  accountSettingsRequest({ action: 'deleteAccount', userId, currentPassword });

@@ -82,6 +82,9 @@ function doPost(e) {
     } else if (params.type === 'userCRUD') {
       Logger.log("doPost: Routing to userCRUD()");
       return jsonResponse(handleUserCRUD(spreadsheet, params));
+    } else if (params.type === 'accountSettings') {
+      Logger.log("doPost: Routing to accountSettings()");
+      return jsonResponse(handleAccountSettings(spreadsheet, params));
     } else if (params.type === 'userAddresses') {
       Logger.log("doPost: Routing to handleUserAddresses()");
       return jsonResponse(handleUserAddresses(spreadsheet, params));
@@ -1574,6 +1577,7 @@ function getUsersData(spreadsheet) {
         active = isActive;
       }
       else if (key === 'Alternate Mobile Number') row['AlternateMobile'] = normalizeDigits(val);
+      else if (key === 'Email Preferences') row['EmailPreferences'] = val;
       else if (key === 'SavedAddresses' || key === 'Saved Addresses') row['SavedAddresses'] = val;
       else {
         row[key] = val;
@@ -1804,6 +1808,7 @@ function handleUserCRUD(spreadsheet, params) {
     else if (key === 'Registration Date') rowValues[j] = action === 'create' ? new Date().toISOString() : data[1] ? data[1][j] : '';
     else if (key === 'SavedAddresses' || key === 'Saved Addresses') rowValues[j] = normalizeSavedAddressesForStorage(user.SavedAddresses);
     else if (key === 'RecentlyViewed') rowValues[j] = user.RecentlyViewed || '';
+    else if (key === 'Email Preferences') rowValues[j] = user.EmailPreferences || '';
     else if (isUserAddressColumn(key)) rowValues[j] = clearAddressFields ? '' : valueForUserAddressColumn(key, primaryAddress, user);
     else rowValues[j] = ''; // Keep empty for others like Last Login
   }
@@ -1892,6 +1897,8 @@ function handleUserCRUD(spreadsheet, params) {
             updatedRowValues[j] = user.SavedAddresses !== undefined && user.SavedAddresses !== null ? normalizeSavedAddressesForStorage(user.SavedAddresses) : existingValue;
           } else if (key === 'RecentlyViewed') {
             updatedRowValues[j] = user.RecentlyViewed !== undefined && user.RecentlyViewed !== null ? user.RecentlyViewed : existingValue;
+          } else if (key === 'Email Preferences') {
+            updatedRowValues[j] = user.EmailPreferences !== undefined && user.EmailPreferences !== null ? user.EmailPreferences : existingValue;
           } else if (isUserAddressColumn(key)) {
             updatedRowValues[j] = clearAddressFields ? '' : (primaryAddress ? valueForUserAddressColumn(key, primaryAddress, user) : existingValue);
           } else if (key === 'Registration Date' || key === 'Last Login') {
@@ -1908,6 +1915,91 @@ function handleUserCRUD(spreadsheet, params) {
     }
   }
   return { success: false, message: 'User ID not found.' };
+}
+
+function getDefaultEmailPreferences() {
+  return {
+    orderConfirmation: true,
+    orderStatusUpdates: true,
+    deliveryUpdates: true,
+    promotionsOffers: false,
+    accountSecurity: true,
+    newsletter: false
+  };
+}
+
+function normalizeEmailPreferences(value) {
+  var defaults = getDefaultEmailPreferences();
+  var parsed = {};
+  try {
+    parsed = typeof value === 'string' ? JSON.parse(value || '{}') : (value || {});
+  } catch (error) {
+    parsed = {};
+  }
+  var normalized = {};
+  for (var key in defaults) {
+    if (defaults.hasOwnProperty(key)) {
+      normalized[key] = typeof parsed[key] === 'boolean' ? parsed[key] : defaults[key];
+    }
+  }
+  return normalized;
+}
+
+function handleAccountSettings(spreadsheet, params) {
+  var sheet = spreadsheet.getSheetByName('Users');
+  if (!sheet) return { success: false, message: 'Users sheet not found.' };
+  ensureUsersSheetColumns(sheet);
+
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0] || [];
+  var idIndex = findHeaderIndex(headers, ['User ID', 'ID']);
+  var passwordIndex = findHeaderIndex(headers, ['Password (hashed)', 'Password']);
+  var preferencesIndex = findHeaderIndex(headers, ['Email Preferences']);
+  var userId = String(params.userId || '').trim();
+  var rowIndex = -1;
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idIndex] || '').trim() === userId) {
+      rowIndex = i;
+      break;
+    }
+  }
+  if (rowIndex < 1) return { success: false, message: 'Account not found.' };
+
+  var action = String(params.action || '');
+  if (action === 'getPreferences') {
+    var preferences = normalizeEmailPreferences(data[rowIndex][preferencesIndex]);
+    sheet.getRange(rowIndex + 1, preferencesIndex + 1).setValue(JSON.stringify(preferences));
+    return { success: true, message: 'Preferences loaded.', preferences: preferences };
+  }
+
+  if (action === 'updatePreferences') {
+    var updatedPreferences = normalizeEmailPreferences(params.preferences);
+    sheet.getRange(rowIndex + 1, preferencesIndex + 1).setValue(JSON.stringify(updatedPreferences));
+    return { success: true, message: 'Email preferences saved.', preferences: updatedPreferences };
+  }
+
+  var currentPassword = String(params.currentPassword || '');
+  var storedPassword = String(data[rowIndex][passwordIndex] || '');
+  var passwordMatches = storedPassword === currentPassword || storedPassword === hashPassword(currentPassword);
+  if (!passwordMatches) return { success: false, message: 'Current password is incorrect.' };
+
+  if (action === 'changePassword') {
+    var newPassword = String(params.newPassword || '');
+    if (newPassword.length < 6) {
+      return { success: false, message: 'New password must be at least 6 characters.' };
+    }
+    sheet.getRange(rowIndex + 1, passwordIndex + 1).setValue(hashPassword(newPassword));
+    return { success: true, message: 'Password changed successfully.' };
+  }
+
+  if (action === 'deleteAccount') {
+    deleteUserAddresses(spreadsheet, userId);
+    sheet.deleteRow(rowIndex + 1);
+    return { success: true, message: 'Account deleted successfully.' };
+  }
+
+  return { success: false, message: 'Unsupported account settings action.' };
 }
 
 function getNotificationsData(spreadsheet) {
@@ -2234,7 +2326,8 @@ function getRequiredUserHeaders() {
     'Registration Date',
     'Last Login',
     'Alternate Mobile Number',
-    'RecentlyViewed'
+    'RecentlyViewed',
+    'Email Preferences'
   ];
 }
 

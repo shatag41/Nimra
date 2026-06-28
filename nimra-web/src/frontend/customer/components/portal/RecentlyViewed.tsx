@@ -2,10 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Product } from '@/types/cms';
 import { useCart } from '@/frontend/customer/hooks/useCart';
-import { formatCurrency, isOrderable } from '../../utils/commerce';
+import { formatCurrency, isOrderable, productId } from '../../utils/commerce';
 
 interface RecentlyViewedProductsProps {
   products: Product[];
@@ -14,8 +13,7 @@ interface RecentlyViewedProductsProps {
 
 export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProductsProps) {
   const [viewedProducts, setViewedProducts] = React.useState<Product[]>([]);
-  const { addProduct } = useCart();
-  const router = useRouter();
+  const { addProduct, updateQuantity, items } = useCart();
 
   const loadViewedProducts = React.useCallback(() => {
     try {
@@ -50,6 +48,12 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
     addProduct(product);
   };
 
+  const handleQuantityChange = (cartProductId: string, quantity: number, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    updateQuantity(cartProductId, quantity);
+  };
+
   return (
     <div className="panel recently-viewed-panel animate-fade-in-up">
       <div className="panel-head compact">
@@ -61,38 +65,64 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
 
       {viewedProducts.length > 0 ? (
         <div className="recently-viewed-grid">
-          {viewedProducts.map((product) => (
-            <div key={String(product.ID || product.Name)} className="rv-card glass">
-              <div className="rv-img-box">
-                <img src={product.ImageUrl} alt={product.Name} loading="lazy" decoding="async" />
-              </div>
-              <div className="rv-info">
-                <span className="rv-vol">{product.Volume}</span>
-                <h3 className="rv-title">{product.Name}</h3>
-                <div className="rv-footer">
-                  <span className="rv-price">{formatCurrency(Number(product.Price))}</span>
-                  {isOrderable(product) ? (
-                    <button
-                      type="button"
-                      onClick={(e) => handleAddToCart(product, e)}
-                      className="btn btn-primary btn-sm rv-btn"
-                      style={{ cursor: 'pointer', border: 'none' }}
-                    >
-                      Add to Cart
-                    </button>
-                  ) : (
-                    <Link
-                      href="/contact?subject=RUSH%20Soda%20Launch"
-                      className="btn btn-secondary btn-sm rv-btn"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      Notify Me
-                    </Link>
-                  )}
+          {viewedProducts.map((product) => {
+            const cartItem = items.find((item) => String(item.productId) === productId(product));
+
+            return (
+              <div key={productId(product)} className="rv-card glass">
+                <div className="rv-img-box">
+                  <img src={product.ImageUrl} alt={product.Name} loading="lazy" decoding="async" />
+                </div>
+                <div className="rv-info">
+                  <span className="rv-vol">{product.Volume}</span>
+                  <h3 className="rv-title">{product.Name}</h3>
+                  <div className="rv-footer">
+                    <span className="rv-price">{formatCurrency(Number(product.Price))}</span>
+                    {isOrderable(product) ? (
+                      cartItem && cartItem.quantity > 0 ? (
+                        <div className="rv-qty-controls" onClick={(event) => event.stopPropagation()}>
+                          <button
+                            type="button"
+                            className="rv-qty-btn"
+                            onClick={(event) => handleQuantityChange(cartItem.productId, cartItem.quantity - 1, event)}
+                            aria-label={`Decrease ${product.Name} quantity`}
+                          >
+                            -
+                          </button>
+                          <span className="rv-qty-count">{cartItem.quantity}</span>
+                          <button
+                            type="button"
+                            className="rv-qty-btn"
+                            onClick={(event) => handleQuantityChange(cartItem.productId, cartItem.quantity + 1, event)}
+                            aria-label={`Increase ${product.Name} quantity`}
+                          >
+                            +
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={(e) => handleAddToCart(product, e)}
+                          className="btn btn-primary btn-sm rv-btn"
+                          style={{ cursor: 'pointer', border: 'none' }}
+                        >
+                          Add to Cart
+                        </button>
+                      )
+                    ) : (
+                      <Link
+                        href="/contact?subject=RUSH%20Soda%20Launch"
+                        className="btn btn-secondary btn-sm rv-btn"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Notify Me
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="empty-state-rv">
@@ -192,6 +222,37 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
         .rv-btn {
           font-size: 0.75rem !important;
           padding: 0.3rem 0.7rem !important;
+        }
+        .rv-qty-controls {
+          display: flex;
+          align-items: center;
+          overflow: hidden;
+          border: 1.5px solid var(--primary-color);
+          border-radius: 999px;
+          background: rgba(var(--primary-rgb), 0.06);
+        }
+        .rv-qty-btn {
+          width: 28px;
+          height: 28px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 0;
+          background: transparent;
+          color: var(--primary-color);
+          font-size: 1rem;
+          font-weight: 700;
+          cursor: pointer;
+        }
+        .rv-qty-btn:hover {
+          background: rgba(var(--primary-rgb), 0.15);
+        }
+        .rv-qty-count {
+          min-width: 24px;
+          text-align: center;
+          color: var(--primary-color);
+          font-size: 0.8rem;
+          font-weight: 800;
         }
         .empty-state-rv {
           min-height: 150px;

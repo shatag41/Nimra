@@ -16,6 +16,6 @@ export default async function Page() {
   const data = await fetchCMSData();
 
   return (
-    <AboutClient companyInfo={data.companyInfo} />
+    <AboutClient companyInfo={data.companyInfo} faqs={data.faqs} />
   );
 }

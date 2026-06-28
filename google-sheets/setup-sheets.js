@@ -199,7 +199,8 @@ function getRequiredUserHeaders() {
     'Registration Date',
     'Last Login',
     'Alternate Mobile Number',
-    'RecentlyViewed'
+    'RecentlyViewed',
+    'Email Preferences'
   ];
 }
 

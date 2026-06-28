@@ -453,8 +453,8 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                         </li>
                         <li>
                           <Link 
-                            href="/faqs" 
-                            className={`dropdown-item ${pathname === '/faqs' ? 'active' : ''}`} 
+                            href="/about#faqs"
+                            className={`dropdown-item ${pathname === '/about' ? 'active' : ''}`}
                             onClick={() => setProfileDropdownOpen(false)}
                           >
                             <div className="menu-icon-container">

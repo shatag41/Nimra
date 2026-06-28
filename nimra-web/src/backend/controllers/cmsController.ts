@@ -2,6 +2,37 @@ import { NextResponse } from 'next/server';
 import { fallbackData } from '../models/fallbackData';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { createHash } from 'crypto';
+
+const EMAIL_PREFERENCE_DEFAULTS = {
+  orderConfirmation: true,
+  orderStatusUpdates: true,
+  deliveryUpdates: true,
+  promotionsOffers: false,
+  accountSecurity: true,
+  newsletter: false,
+};
+
+const normalizeEmailPreferences = (value: unknown) => {
+  let parsed: Record<string, unknown> = {};
+  try {
+    parsed = typeof value === 'string' ? JSON.parse(value) : (value as Record<string, unknown>) || {};
+  } catch {
+    parsed = {};
+  }
+  return Object.fromEntries(
+    Object.entries(EMAIL_PREFERENCE_DEFAULTS).map(([key, fallback]) => [
+      key,
+      typeof parsed[key] === 'boolean' ? parsed[key] : fallback,
+    ])
+  );
+};
+
+const hashLocalPassword = (password: string) => createHash('sha256').update(password).digest('hex');
+const localPasswordMatches = (stored: unknown, supplied: string) => {
+  const current = String(stored || '');
+  return current === supplied || current === hashLocalPassword(supplied);
+};
 
 const getAppsScriptUrl = () => {
   return process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || process.env.EXPO_PUBLIC_APPS_SCRIPT_URL || '';
@@ -414,6 +445,53 @@ export async function handlePost(req: Request) {
         success: false,
         message: 'Invalid username or password'
       });
+    } else if (payload.type === 'accountSettings') {
+      const action = String(payload.action || '');
+      const userIndex = fallbackData.users.findIndex((user: any) => String(user.ID) === String(payload.userId));
+      if (userIndex < 0) {
+        return NextResponse.json({ success: false, message: 'Account not found.' }, { status: 404 });
+      }
+
+      const currentUser = fallbackData.users[userIndex];
+      if (action === 'getPreferences') {
+        const preferences = normalizeEmailPreferences(currentUser.EmailPreferences);
+        currentUser.EmailPreferences = JSON.stringify(preferences);
+        await syncLocalDB('save');
+        return NextResponse.json({ success: true, message: 'Preferences loaded.', preferences });
+      }
+
+      if (action === 'updatePreferences') {
+        const preferences = normalizeEmailPreferences(payload.preferences);
+        currentUser.EmailPreferences = JSON.stringify(preferences);
+        await syncLocalDB('save');
+        return NextResponse.json({ success: true, message: 'Email preferences saved.', preferences });
+      }
+
+      if (action === 'changePassword') {
+        const currentPassword = String(payload.currentPassword || '');
+        const newPassword = String(payload.newPassword || '');
+        if (!localPasswordMatches(currentUser.Password, currentPassword)) {
+          return NextResponse.json({ success: false, message: 'Current password is incorrect.' }, { status: 400 });
+        }
+        if (newPassword.length < 6) {
+          return NextResponse.json({ success: false, message: 'New password must be at least 6 characters.' }, { status: 400 });
+        }
+        currentUser.Password = hashLocalPassword(newPassword);
+        await syncLocalDB('save');
+        return NextResponse.json({ success: true, message: 'Password changed successfully.' });
+      }
+
+      if (action === 'deleteAccount') {
+        if (!localPasswordMatches(currentUser.Password, String(payload.currentPassword || ''))) {
+          return NextResponse.json({ success: false, message: 'Current password is incorrect.' }, { status: 400 });
+        }
+        fallbackData.users.splice(userIndex, 1);
+        fallbackData.carts = (fallbackData.carts || []).filter((cart: any) => String(cart.userId) !== String(payload.userId));
+        await syncLocalDB('save');
+        return NextResponse.json({ success: true, message: 'Account deleted successfully.' });
+      }
+
+      return NextResponse.json({ success: false, message: 'Unsupported account settings action.' }, { status: 400 });
     } else if (payload.type === 'userCRUD') {
       const action = payload.action || 'create';
       const incomingUser = payload.user || {};

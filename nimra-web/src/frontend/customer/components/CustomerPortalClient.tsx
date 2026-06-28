@@ -14,6 +14,7 @@ import { Orders } from './portal/Orders';
 import { Profile } from './portal/Profile';
 import { Addresses } from './portal/Addresses';
 import { RecentlyViewedProducts } from './portal/RecentlyViewed';
+import { FAQs } from './portal/FAQs';
 import { CartToast, PortalNotifications } from './portal/Notifications';
 import { toast } from 'sonner';
 import { saveUser, requestEmailChangeOTP } from '@/utils/api';
@@ -31,7 +32,7 @@ const RushPortalBanner = dynamic(
 
 export default function CustomerPortalClient() {
   const { user, isAuthenticated, isLoading, login } = useAuth();
-  const { products } = useCMSData();
+  const { products, faqs } = useCMSData();
   const { orders, loadingOrders, metrics, refreshOrders } = useCustomerOrders();
   const cart = useCart();
   const searchParams = useSearchParams();
@@ -55,6 +56,11 @@ export default function CustomerPortalClient() {
     const orderable = (products || []).filter(isOrderable);
     return orderable.slice(0, 4);
   }, [products]);
+
+  const activeFaqs = React.useMemo(
+    () => (faqs || []).filter((faq) => faq.Active !== false && String(faq.Active).toLowerCase() !== 'false'),
+    [faqs]
+  );
 
   const validOrders = React.useMemo(() => orders.filter(o => o.status?.toLowerCase() !== 'cancelled'), [orders]);
   const totalSpent = React.useMemo(() => validOrders.reduce((sum, o) => sum + Number(o.total || 0), 0), [validOrders]);
@@ -246,6 +252,19 @@ export default function CustomerPortalClient() {
                   {cart.totalItems > 0 ? 'Checkout' : 'Shop Products'}
                 </Link>
               </div>
+
+              {activeFaqs.length > 0 && (
+                <div className="panel portal-faq-card">
+                  <div className="portal-faq-head">
+                    <div>
+                      <span className="eyebrow portal-faq-eyebrow">FAQ</span>
+                      <h2>Quick Answers</h2>
+                    </div>
+                    <Link href="/about#faqs" className="portal-faq-link">View All FAQs</Link>
+                  </div>
+                  <FAQs faqs={activeFaqs} limit={2} variant="compact" />
+                </div>
+              )}
             </aside>
           </section>
 
@@ -411,6 +430,12 @@ const portalStyles = `
   .profile-list dt { color: var(--text-secondary); font-weight: 700; font-size: 0.875rem; }
   .profile-list dd { color: var(--text-primary); font-weight: 600; text-align: right; overflow-wrap: anywhere; font-size: 0.875rem; }
   .next-card p { color: var(--text-secondary); margin: 0.65rem 0 1.25rem; line-height: 1.6; font-size: 0.9rem; }
+  .portal-faq-card { padding: 0.7rem; }
+  .portal-faq-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 0.6rem; margin-bottom: 0.5rem; }
+  .portal-faq-head h2 { margin: 0.1rem 0 0; font-size: 0.9rem; }
+  .portal-faq-eyebrow { margin: 0; padding: 0; border: 0; background: transparent; color: var(--primary-color); font-size: 0.56rem; }
+  .portal-faq-link { color: var(--primary-color); font-size: 0.66rem; font-weight: 700; white-space: nowrap; text-decoration: none; }
+  .portal-faq-link:hover { text-decoration: underline; }
 
   .empty-state { min-height: 240px; display: grid; place-items: center; align-content: center; gap: 0.85rem; color: var(--text-secondary); text-align: center; border: 1.5px dashed var(--border-color); border-radius: var(--radius-xl); background: var(--bg-primary); padding: 2.5rem 2rem; }
   .empty-state h3 { margin: 0; color: var(--text-primary); font-size: 1.2rem; }

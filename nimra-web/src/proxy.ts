@@ -12,7 +12,7 @@ export function proxy(request: NextRequest) {
 
   const authPaths = ['/login', '/register', '/forgot-password', '/admin/login'];
   const isAuthPath = authPaths.includes(pathname);
-  const protectedCustomerPaths = ['/checkout'];
+  const protectedCustomerPaths = ['/checkout', '/settings'];
   const isProtectedCustomerPath = protectedCustomerPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
   const isAdminPath = pathname.startsWith('/admin');
 

@@ -1,11 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
-import { CompanyInfo } from '@/types/cms';
+import React, { useEffect, useMemo, useState } from 'react';
+import { CompanyInfo, FAQ } from '@/types/cms';
+import { FAQs } from './portal/FAQs';
 
 interface AboutClientProps {
   companyInfo: CompanyInfo;
+  faqs: FAQ[];
 }
+
+type AboutSection = 'story' | 'quality' | 'plant' | 'faqs';
 
 function getMapEmbedUrl(embedUrl?: string, fallbackAddress?: string) {
   if (embedUrl && /^https?:\/\//i.test(embedUrl)) {
@@ -19,10 +23,29 @@ function getMapEmbedUrl(embedUrl?: string, fallbackAddress?: string) {
   return `https://www.google.com/maps?q=${encodeURIComponent(fallbackAddress)}&output=embed`;
 }
 
-export default function AboutClient({ companyInfo }: AboutClientProps) {
-  const [activeSection, setActiveSection] = useState<'story' | 'quality' | 'plant'>('story');
+export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
+  const [activeSection, setActiveSection] = useState<AboutSection>('story');
   const [openStep, setOpenStep] = useState<number | null>(null);
   const plantMapUrl = getMapEmbedUrl(companyInfo.PlantMapEmbed, companyInfo.PlantAddress);
+  const activeFaqs = useMemo(
+    () => (faqs || []).filter((faq) => faq.Active !== false && String(faq.Active).toLowerCase() !== 'false'),
+    [faqs]
+  );
+
+  useEffect(() => {
+    const syncSectionFromHash = () => {
+      if (window.location.hash.toLowerCase() === '#faqs') setActiveSection('faqs');
+    };
+    syncSectionFromHash();
+    window.addEventListener('hashchange', syncSectionFromHash);
+    return () => window.removeEventListener('hashchange', syncSectionFromHash);
+  }, []);
+
+  const selectSection = (section: AboutSection) => {
+    setActiveSection(section);
+    const nextUrl = section === 'faqs' ? '#faqs' : window.location.pathname;
+    window.history.replaceState(null, '', nextUrl);
+  };
 
   const steps = [
     { title: '1. Source Intake', desc: 'Water is sourced responsibly from clean, underground aquifers.' },
@@ -49,9 +72,10 @@ export default function AboutClient({ companyInfo }: AboutClientProps) {
       {/* Navigation Sub-menu (Sticky Pills) */}
       <div className="submenu-bar">
         <div className="submenu-container glass">
-          <button className={`submenu-btn ${activeSection === 'story' ? 'active' : ''}`} onClick={() => setActiveSection('story')}>Our Story</button>
-          <button className={`submenu-btn ${activeSection === 'quality' ? 'active' : ''}`} onClick={() => setActiveSection('quality')}>10-Step Purification</button>
-          <button className={`submenu-btn ${activeSection === 'plant' ? 'active' : ''}`} onClick={() => setActiveSection('plant')}>Infrastructure</button>
+          <button className={`submenu-btn ${activeSection === 'story' ? 'active' : ''}`} onClick={() => selectSection('story')}>Our Story</button>
+          <button className={`submenu-btn ${activeSection === 'quality' ? 'active' : ''}`} onClick={() => selectSection('quality')}>10-Step Purification</button>
+          <button className={`submenu-btn ${activeSection === 'plant' ? 'active' : ''}`} onClick={() => selectSection('plant')}>Infrastructure</button>
+          <button className={`submenu-btn ${activeSection === 'faqs' ? 'active' : ''}`} onClick={() => selectSection('faqs')}>FAQs</button>
         </div>
       </div>
 
@@ -151,6 +175,16 @@ export default function AboutClient({ companyInfo }: AboutClientProps) {
                   )}
                 </div>
               </div>
+            </div>
+          )}
+
+          {activeSection === 'faqs' && (
+            <div id="faqs" className="fade-enter faq-content">
+              <div className="quality-intro">
+                <h2>Frequently Asked Questions</h2>
+                <p>Find answers about NIMRA products, quality, ordering, and delivery.</p>
+              </div>
+              {activeFaqs.length > 0 ? <FAQs faqs={activeFaqs} /> : <p className="faq-empty">No FAQs are available right now.</p>}
             </div>
           )}
 
@@ -378,6 +412,8 @@ export default function AboutClient({ companyInfo }: AboutClientProps) {
           line-height: 1.6;
           font-size: 0.95rem;
         }
+        .faq-content { max-width: 860px; margin: 0 auto; }
+        .faq-empty { color: var(--text-secondary); text-align: center; }
 
         .steps-grid {
           display: grid;
