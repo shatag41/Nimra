@@ -24,9 +24,8 @@ interface CartContextValue {
 
 const CartContext = createContext<CartContextValue | null>(null);
 const getStorageKey = (user: ReturnType<typeof useAuth>['user']) => {
-  if (!user) return 'nimra-cart';
-  const ownerId = String(user.ID || user.Username || user.Mobile || '').trim();
-  return ownerId ? `nimra-cart-${ownerId}` : 'nimra-cart';
+  if (!user || !user.ID) return 'nimra-cart';
+  return `nimra-cart-${user.ID}`;
 };
 
 const readStoredCartItems = (key: string): CartItem[] => {

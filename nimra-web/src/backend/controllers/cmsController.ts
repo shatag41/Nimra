@@ -322,12 +322,23 @@ export async function handleGet(req: Request) {
     return NextResponse.json({ success: false, message: 'No matching order found.' }, { headers: cacheHeaders });
   } else if (action === 'getOrders') {
     if (!userId && !mobile && !email) return NextResponse.json(fallbackData.orders, { headers: cacheHeaders });
+    if (userId) {
+      return NextResponse.json(
+        fallbackData.orders.filter((order: any) =>
+          String(order.userId || order.customer?.userId || '') === userId
+        ),
+        { headers: cacheHeaders }
+      );
+    }
     return NextResponse.json(
-      fallbackData.orders.filter((order: any) =>
-        (userId && String(order.customer.userId || '') === userId) ||
-        (mobile && order.customer.mobile.replace(/\D/g, '') === mobile.replace(/\D/g, '')) ||
-        (email && order.customer.email.toLowerCase() === email.toLowerCase())
-      ),
+      fallbackData.orders.filter((order: any) => {
+        const orderUserId = String(order.userId || order.customer?.userId || '');
+        if (orderUserId) return false;
+        return (
+          (mobile && order.customer?.mobile?.replace(/\D/g, '') === mobile.replace(/\D/g, '')) ||
+          (email && order.customer?.email?.toLowerCase() === email.toLowerCase())
+        );
+      }),
       { headers: cacheHeaders }
     );
   } else if (action === 'getInquiries') {
@@ -640,6 +651,9 @@ export async function handlePost(req: Request) {
         const newUser = {
           ID: incomingUser.ID || Date.now(),
           ...incomingUser,
+          SavedAddresses: incomingUser.SavedAddresses || '[]',
+          RecentlyViewed: incomingUser.RecentlyViewed || '[]',
+          EmailPreferences: incomingUser.EmailPreferences || JSON.stringify(EMAIL_PREFERENCE_DEFAULTS)
         };
         fallbackData.users.push(newUser);
         await syncLocalDB('save');

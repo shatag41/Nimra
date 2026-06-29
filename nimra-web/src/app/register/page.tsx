@@ -91,6 +91,14 @@ export default function RegisterPage() {
         }
       });
       if (res.success && res.user) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('nimra-cart');
+          localStorage.removeItem('nimra-cart-v2:guest');
+          localStorage.removeItem('nimra-recently-viewed');
+          localStorage.removeItem('nimra_location');
+          localStorage.removeItem('nimra_location_denied');
+          localStorage.removeItem('nimra_read_notifs_guest');
+        }
         login(res.user);
         if (res.emailError) {
           toast.warning(`Account created, but welcome email failed: ${res.emailError}`);
@@ -130,6 +138,16 @@ export default function RegisterPage() {
       });
 
       if (res.success && res.user) {
+        if (res.message === 'Registration successful') {
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('nimra-cart');
+            localStorage.removeItem('nimra-cart-v2:guest');
+            localStorage.removeItem('nimra-recently-viewed');
+            localStorage.removeItem('nimra_location');
+            localStorage.removeItem('nimra_location_denied');
+            localStorage.removeItem('nimra_read_notifs_guest');
+          }
+        }
         login(res.user);
         if (res.emailError) {
           toast.warning(`Account created, but welcome email failed: ${res.emailError}`);

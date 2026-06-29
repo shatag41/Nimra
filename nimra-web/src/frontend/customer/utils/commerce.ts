@@ -143,7 +143,19 @@ export const formatCurrency = (value: number) =>
 export const trackProductView = (product: Product) => {
   if (typeof window === 'undefined') return;
   try {
-    const key = 'nimra-recently-viewed';
+    let userId = '';
+    const cookies = document.cookie.split(';');
+    const userCookie = cookies.find(c => c.trim().startsWith('nimra_user='));
+    if (userCookie) {
+      try {
+        const userJson = decodeURIComponent(userCookie.split('=')[1]);
+        const user = JSON.parse(userJson);
+        if (user && user.ID) {
+          userId = String(user.ID);
+        }
+      } catch (e) {}
+    }
+    const key = userId ? `nimra-recently-viewed-${userId}` : 'nimra-recently-viewed';
     const existingStr = localStorage.getItem(key);
     let existing: Product[] = [];
     if (existingStr) {

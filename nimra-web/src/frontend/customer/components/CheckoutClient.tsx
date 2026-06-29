@@ -510,6 +510,7 @@ export default function CheckoutClient() {
                 deliveryCharge={checkoutTotals.deliveryCharge}
                 grandTotal={checkoutTotals.grandTotal}
                 isReorder={isReorderCheckout}
+                hasSavedAddress={savedAddresses.length > 0}
               />
             </form>
           </div>

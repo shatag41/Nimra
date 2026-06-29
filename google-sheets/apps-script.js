@@ -829,11 +829,26 @@ function orderRowMatchesScopeFast(headers, row, userId, mobile, email, addressOw
   var requestedMobile = normalizeDigits(mobile);
   var requestedEmail = normalizeEmail(email);
 
-  if (requestedUserId && String(orderRowValue(headers, row, 'Customer User ID') || '').trim() === requestedUserId) return true;
-  if (requestedUserId && addressOwnerById) {
-    var savedAddressId = String(orderRowValue(headers, row, 'Saved Address ID') || '').trim();
-    if (savedAddressId && String(addressOwnerById[savedAddressId] || '').trim() === requestedUserId) return true;
+  if (requestedUserId) {
+    if (String(orderRowValue(headers, row, 'Customer User ID') || '').trim() === requestedUserId) return true;
+    if (addressOwnerById) {
+      var savedAddressId = String(orderRowValue(headers, row, 'Saved Address ID') || '').trim();
+      if (savedAddressId && String(addressOwnerById[savedAddressId] || '').trim() === requestedUserId) return true;
+    }
+    return false;
   }
+
+  var orderUserId = String(orderRowValue(headers, row, 'Customer User ID') || '').trim();
+  if (orderUserId) {
+    return false;
+  }
+  if (addressOwnerById) {
+    var savedAddressId = String(orderRowValue(headers, row, 'Saved Address ID') || '').trim();
+    if (savedAddressId && addressOwnerById[savedAddressId]) {
+      return false;
+    }
+  }
+
   if (requestedMobile && normalizeDigits(orderRowValue(headers, row, 'Mobile Number')) === requestedMobile) return true;
   if (requestedEmail && normalizeEmail(orderRowValue(headers, row, 'Email')) === requestedEmail) return true;
   return false;
@@ -938,16 +953,25 @@ function trackOrder(spreadsheet, orderId, mobile, userId, email) {
   var orderIdIndex = headers.indexOf('Order ID');
   var userIdIndex = headers.indexOf('Customer User ID');
   var users = getUsersData(spreadsheet);
+  var requestedUserId = String(userId || '').trim();
 
   for (var i = 1; i < data.length; i++) {
     var matchesOrderId = orderId && String(data[i][orderIdIndex]).trim() === String(orderId).trim();
     var order = rowToOrder(headers, data[i], spreadsheet, users);
-    var matchesMobile = mobile && normalizeDigits(order.customer.mobile) === normalizeDigits(mobile);
-    var matchesEmail = email && normalizeEmail(order.customer.email) === normalizeEmail(email);
-    var matchesUserId = userId && userIdIndex >= 0 && String(data[i][userIdIndex]).trim() === String(userId).trim();
-    var hasUserScope = Boolean(userId || mobile || email);
-    var matchesUserScope = matchesUserId || matchesMobile || matchesEmail;
-    if ((!orderId || matchesOrderId) && (!hasUserScope || matchesUserScope)) {
+    var orderUserId = userIdIndex >= 0 ? String(data[i][userIdIndex]).trim() : '';
+
+    var isMatch = false;
+    if (requestedUserId) {
+      isMatch = orderUserId === requestedUserId;
+    } else {
+      if (!orderUserId) {
+        var matchesMobile = mobile && normalizeDigits(order.customer.mobile) === normalizeDigits(mobile);
+        var matchesEmail = email && normalizeEmail(order.customer.email) === normalizeEmail(email);
+        isMatch = (!mobile && !email) || matchesMobile || matchesEmail;
+      }
+    }
+
+    if ((!orderId || matchesOrderId) && isMatch) {
       return {
         success: true,
         order: order
@@ -955,7 +979,7 @@ function trackOrder(spreadsheet, orderId, mobile, userId, email) {
     }
   }
 
-  return { success: false, message: 'No matching order found for this Order ID and mobile number.' };
+  return { success: false, message: 'No matching order found.' };
 }
 
 function updateOrderStatus(spreadsheet, params) {
@@ -1485,8 +1509,16 @@ function orderBelongsToUser(order, userId, mobile, email) {
   var requestedMobile = normalizeDigits(mobile);
   var requestedEmail = normalizeEmail(email);
   var customer = order.customer || {};
+  var orderUserId = String(customer.userId || '').trim();
 
-  if (requestedUserId && String(customer.userId || '').trim() === requestedUserId) return true;
+  if (requestedUserId) {
+    return orderUserId === requestedUserId;
+  }
+
+  if (orderUserId) {
+    return false;
+  }
+
   if (requestedMobile && normalizeDigits(customer.mobile) === requestedMobile) return true;
   if (requestedEmail && normalizeEmail(customer.email) === requestedEmail) return true;
   return false;
@@ -1806,9 +1838,9 @@ function handleUserCRUD(spreadsheet, params) {
     else if (key === 'Role (Admin/Customer)' || key === 'Role') rowValues[j] = user.Role || 'Customer';
     else if (key === 'Status' || key === 'Active') rowValues[j] = (user.Active !== false) ? 'Active' : 'Inactive';
     else if (key === 'Registration Date') rowValues[j] = action === 'create' ? new Date().toISOString() : data[1] ? data[1][j] : '';
-    else if (key === 'SavedAddresses' || key === 'Saved Addresses') rowValues[j] = normalizeSavedAddressesForStorage(user.SavedAddresses);
-    else if (key === 'RecentlyViewed') rowValues[j] = user.RecentlyViewed || '';
-    else if (key === 'Email Preferences') rowValues[j] = user.EmailPreferences || '';
+    else if (key === 'SavedAddresses' || key === 'Saved Addresses') rowValues[j] = user.SavedAddresses ? normalizeSavedAddressesForStorage(user.SavedAddresses) : '[]';
+    else if (key === 'RecentlyViewed') rowValues[j] = user.RecentlyViewed || '[]';
+    else if (key === 'Email Preferences') rowValues[j] = user.EmailPreferences || JSON.stringify(getDefaultEmailPreferences());
     else if (isUserAddressColumn(key)) rowValues[j] = clearAddressFields ? '' : valueForUserAddressColumn(key, primaryAddress, user);
     else rowValues[j] = ''; // Keep empty for others like Last Login
   }
@@ -2280,7 +2312,10 @@ function handleAuthRegister(spreadsheet, params) {
     Mobile: mobile,
     Password: hashPassword(password),
     Role: role,
-    Active: true
+    Active: true,
+    SavedAddresses: '[]',
+    RecentlyViewed: '[]',
+    EmailPreferences: JSON.stringify(getDefaultEmailPreferences())
   };
   
   Logger.log('handleAuthRegister - newUser: ' + JSON.stringify(newUser));
@@ -2864,7 +2899,10 @@ function handleAuthGoogleSignIn(spreadsheet, params) {
     Mobile: '',
     Password: hashPassword(randomPass),
     Role: role,
-    Active: true
+    Active: true,
+    SavedAddresses: '[]',
+    RecentlyViewed: '[]',
+    EmailPreferences: JSON.stringify(getDefaultEmailPreferences())
   };
   
   var result = handleUserCRUD(spreadsheet, { action: 'create', user: newUser });

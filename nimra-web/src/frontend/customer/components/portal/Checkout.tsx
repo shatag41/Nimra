@@ -111,8 +111,36 @@ export function CheckoutForm({
 
   return (
     <div className="checkout-form-container glass">
-      {/* 1. Saved Address Compact Mode (Read-Only) */}
-      {!isEditingAddress && selectedAddress ? (
+      {savedAddresses.length === 0 ? (
+        <div className="empty-state-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 1.5rem', textAlign: 'center', gap: '0.85rem' }}>
+          <div className="empty-icon-wrapper" style={{ color: 'var(--text-muted)', background: 'rgba(148, 163, 184, 0.06)', padding: '1.5rem', borderRadius: '50%', border: '1px solid rgba(148, 163, 184, 0.12)', marginBottom: '0.25rem', display: 'grid', placeItems: 'center' }}>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+          </div>
+          <h4 style={{ fontSize: '1.15rem', margin: 0, fontWeight: 700 }}>You don't have any addresses saved</h4>
+          <p style={{ color: 'var(--text-secondary)', maxWidth: '340px', margin: 0, fontSize: '0.88rem', lineHeight: '1.45' }}>Please add an address.</p>
+          <Link
+            href="/customer-portal?tab=addresses&add=true&redirect=/checkout"
+            style={{
+              marginTop: '0.5rem',
+              padding: '0.5rem 1.25rem',
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              background: 'var(--bg-secondary)',
+              color: 'var(--primary-color)',
+              border: '1.5px solid var(--primary-color)',
+              borderRadius: 'var(--radius-md)',
+              cursor: 'pointer',
+              textDecoration: 'none',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            Add Address
+          </Link>
+        </div>
+      ) : !isEditingAddress && selectedAddress ? (
         <div className="compact-address-card-wrapper animate-fade-in">
           <div className="compact-card-header">
             <div className="header-title-box">
@@ -919,7 +947,7 @@ export function CheckoutForm({
           padding: 0.55rem 0.85rem;
           border: 1.5px solid var(--border-color);
           border-radius: var(--radius-md);
-          background: rgba(15, 23, 42, 0.2);
+          background-color: rgba(15, 23, 42, 0.2);
           color: var(--text-primary);
           font-family: var(--font-body);
           font-size: 0.85rem;
@@ -929,13 +957,13 @@ export function CheckoutForm({
         .co-field input:focus, .co-field textarea:focus, .form-select:focus {
           outline: none;
           border-color: var(--primary-color);
-          background: rgba(15, 23, 42, 0.35);
+          background-color: rgba(15, 23, 42, 0.35);
           box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
         }
 
         .co-field input.input-error, .form-select.input-error {
           border-color: #ef4444;
-          background: rgba(239, 68, 68, 0.05);
+          background-color: rgba(239, 68, 68, 0.05);
         }
 
         .error-hint {
@@ -966,10 +994,20 @@ export function CheckoutForm({
         }
 
         .form-select {
-          appearance: none;
+          -webkit-appearance: none !important;
+          -moz-appearance: none !important;
+          appearance: none !important;
           padding-right: 2.25rem;
-          background: rgba(15, 23, 42, 0.2) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%2394a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>') no-repeat right 0.85rem center;
-          background-size: 16px;
+          background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiM5NGEzYjgiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cG9seWxpbmUgcG9pbnRzPSI2IDkgMTIgMTUgMTggOSI+PC9wb2x5bGluZT48L3N2Zz4=') !important;
+          background-repeat: no-repeat !important;
+          background-position: right 0.85rem center !important;
+          background-size: 16px !important;
+          background-color: rgba(15, 23, 42, 0.2) !important;
+        }
+
+        .form-select option {
+          background-color: var(--bg-secondary) !important;
+          color: var(--text-primary) !important;
         }
 
         .address-type-pill-selectors {
@@ -1126,9 +1164,10 @@ interface CheckoutSummaryProps {
   deliveryCharge?: number;
   grandTotal?: number;
   isReorder?: boolean;
+  hasSavedAddress?: boolean;
 }
 
-export function CheckoutSummary({ status, items, subtotal, deliveryCharge, grandTotal, isReorder }: CheckoutSummaryProps) {
+export function CheckoutSummary({ status, items, subtotal, deliveryCharge, grandTotal, isReorder, hasSavedAddress = true }: CheckoutSummaryProps) {
   const cart = useCart();
   const checkoutItems = items || cart.items;
   const checkoutSubtotal = subtotal ?? cart.subtotal;
@@ -1170,11 +1209,17 @@ export function CheckoutSummary({ status, items, subtotal, deliveryCharge, grand
       </div>
       {status.message && <p className={`status-${status.kind}`}>{status.message}</p>}
       
+      {!hasSavedAddress && (
+        <p className="address-warning" style={{ color: '#ef4444', fontSize: '0.8rem', fontWeight: '700', marginBottom: '0.75rem', textAlign: 'center', lineHeight: '1.4' }}>
+          ⚠️ Please add a delivery address first to place your order.
+        </p>
+      )}
+
       <button
         type="submit"
         id="place-order-btn"
         className="btn-place-order"
-        disabled={status.kind === 'loading'}
+        disabled={status.kind === 'loading' || !hasSavedAddress}
       >
         {status.kind === 'loading' ? (
           <span className="btn-spinner-wrapper">

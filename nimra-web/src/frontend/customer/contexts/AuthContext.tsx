@@ -165,6 +165,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (typeof window !== 'undefined') {
       window.sessionStorage.setItem(TAB_SESSION_KEY, session.token);
 
+      try {
+        const guestCart1Str = localStorage.getItem('nimra-cart');
+        const guestCart2Str = localStorage.getItem('nimra-cart-v2:guest');
+        const guestCart1 = guestCart1Str ? JSON.parse(guestCart1Str) : [];
+        const guestCart2 = guestCart2Str ? JSON.parse(guestCart2Str) : [];
+        const guestItems = [...(Array.isArray(guestCart1) ? guestCart1 : []), ...(Array.isArray(guestCart2) ? guestCart2 : [])];
+        
+        if (guestItems.length > 0) {
+          const userCartKey = `nimra-cart-${userData.ID}`;
+          const userCartStr = localStorage.getItem(userCartKey);
+          const userCart = userCartStr ? JSON.parse(userCartStr) : [];
+          const userItems = Array.isArray(userCart) ? userCart : [];
+          
+          const mergedMap = new Map();
+          [...userItems, ...guestItems].forEach(item => {
+            const id = item.productId || item.id;
+            if (id) {
+              if (mergedMap.has(id)) {
+                const existing = mergedMap.get(id);
+                existing.quantity = (existing.quantity || 1) + (item.quantity || 1);
+              } else {
+                mergedMap.set(id, { ...item });
+              }
+            }
+          });
+          const mergedList = Array.from(mergedMap.values());
+          localStorage.setItem(userCartKey, JSON.stringify(mergedList));
+          
+          localStorage.removeItem('nimra-cart');
+          localStorage.removeItem('nimra-cart-v2:guest');
+        }
+      } catch (e) {
+        console.error('Error merging guest cart on login:', e);
+      }
     }
 
     if (isAdminUser) {
@@ -245,9 +279,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (!user || typeof window === 'undefined') return;
 
+    const key = `nimra-recently-viewed-${user.ID}`;
+
     // 1. Initial sync: if user has RecentlyViewed, load it into localStorage
     try {
-      const storedLocal = localStorage.getItem('nimra-recently-viewed');
+      const storedLocal = localStorage.getItem(key);
       const localIds = storedLocal ? JSON.parse(storedLocal).map((p: any) => String(p.ID || p.Name)) : [];
       
       if (user.RecentlyViewed) {
@@ -257,7 +293,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           if (JSON.stringify(localIds) !== JSON.stringify(dbIdsStr)) {
             const newLocal = dbParsed.map((id: any) => ({ ID: id, Name: String(id) }));
-            localStorage.setItem('nimra-recently-viewed', JSON.stringify(newLocal));
+            localStorage.setItem(key, JSON.stringify(newLocal));
             window.dispatchEvent(new Event('nimra-recently-viewed-updated'));
           }
         }
@@ -269,7 +305,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // 2. Listen to updates to localStorage and sync to database
     const handleUpdate = async () => {
       try {
-        const storedLocal = localStorage.getItem('nimra-recently-viewed');
+        const storedLocal = localStorage.getItem(key);
         if (!storedLocal) return;
         const localParsed = JSON.parse(storedLocal);
         const ids = localParsed.map((p: any) => p.ID || p.Name).filter(Boolean);

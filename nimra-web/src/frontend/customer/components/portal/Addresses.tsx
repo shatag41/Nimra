@@ -490,8 +490,8 @@ export function Addresses() {
                   <circle cx="12" cy="10" r="3" />
                 </svg>
               </div>
-              <h4>No Addresses Found</h4>
-              <p>You haven't saved any delivery locations yet. Add one now to speed up checkout.</p>
+              <h4>You don't have any addresses saved</h4>
+              <p>Please add an address.</p>
               <button onClick={handleAddNew} className="btn-add-address-empty">
                 Add Address
               </button>
@@ -902,7 +902,7 @@ export function Addresses() {
           padding: 0.6rem 0.85rem;
           border-radius: var(--radius-md);
           border: 1.5px solid var(--border-color);
-          background: rgba(15, 23, 42, 0.2);
+          background-color: rgba(15, 23, 42, 0.2);
           color: var(--text-primary);
           font-family: var(--font-body);
           font-size: 0.88rem;
@@ -912,13 +912,13 @@ export function Addresses() {
         .form-input:focus, .form-select:focus {
           outline: none;
           border-color: var(--primary-color);
-          background: rgba(15, 23, 42, 0.35);
+          background-color: rgba(15, 23, 42, 0.35);
           box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
         }
  
         .form-input.error-state, .form-select.error-state {
           border-color: #ef4444;
-          background: rgba(239, 68, 68, 0.05);
+          background-color: rgba(239, 68, 68, 0.05);
         }
  
         .error-message {
@@ -945,10 +945,20 @@ export function Addresses() {
         }
  
         .form-select {
-          appearance: none;
+          -webkit-appearance: none !important;
+          -moz-appearance: none !important;
+          appearance: none !important;
           padding-right: 2rem;
-          background: rgba(15, 23, 42, 0.2) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="%2394a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>') no-repeat right 0.75rem center;
-          background-size: 14px;
+          background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiM5NGEzYjgiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cG9seWxpbmUgcG9pbnRzPSI2IDkgMTIgMTUgMTggOSI+PC9wb2x5bGluZT48L3N2Zz4=') !important;
+          background-repeat: no-repeat !important;
+          background-position: right 0.75rem center !important;
+          background-size: 14px !important;
+          background-color: rgba(15, 23, 42, 0.2) !important;
+        }
+
+        .form-select option {
+          background-color: var(--bg-secondary) !important;
+          color: var(--text-primary) !important;
         }
  
         .type-selectors-wrapper {
