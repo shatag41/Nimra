@@ -92,6 +92,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
                 alt=""
                 fill
                 priority={idx === 0}
+                unoptimized
                 quality={75}
                 sizes="100vw"
                 className="hero-slide-image"
@@ -210,15 +211,17 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           <div className="story-grid">
             <div className="story-image-container">
               <div className="story-img-wrapper">
-                <Image
-                  src="https://images.unsplash.com/photo-1612442443556-09b5b309e637?auto=format&fit=crop&q=80&w=800"
-                  alt="Pure water purification process"
-                  fill
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  quality={72}
-                  style={{ objectFit: 'cover' }}
-                  className="story-img animate-float-slow"
-                />
+                {products[0]?.ImageUrl && (
+                  <Image
+                    src={products[0].ImageUrl}
+                    alt={products[0].Name}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    quality={72}
+                    style={{ objectFit: 'cover' }}
+                    className="story-img animate-float-slow"
+                  />
+                )}
                 <div className="story-img-overlay" />
               </div>
               <div className="purity-card glass">
@@ -294,14 +297,16 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
             {spotlightProducts.map((product, i) => (
               <div key={product.ID} className="product-preview-card" style={{ animationDelay: `${i * 0.1}s` }}>
                 <div className="prod-img-box">
-                  <Image 
-                    src={product.ImageUrl} 
-                    alt={product.Name} 
-                    fill
-                    style={{ objectFit: 'contain' }}
-                    sizes="(max-width: 640px) calc(100vw - 2rem), (max-width: 1024px) 45vw, 360px"
-                    quality={75}
-                  />
+                  {product.ImageUrl ? (
+                    <Image
+                      src={product.ImageUrl}
+                      alt={product.Name}
+                      fill
+                      style={{ objectFit: 'contain' }}
+                      sizes="(max-width: 640px) calc(100vw - 2rem), (max-width: 1024px) 45vw, 360px"
+                      quality={75}
+                    />
+                  ) : null}
                   <div className="prod-img-overlay" />
                 </div>
                 <div className="prod-info-box">

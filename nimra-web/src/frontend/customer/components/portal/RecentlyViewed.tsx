@@ -71,7 +71,7 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
             return (
               <div key={productId(product)} className="rv-card glass">
                 <div className="rv-img-box">
-                  <img src={product.ImageUrl} alt={product.Name} loading="lazy" decoding="async" />
+                  {product.ImageUrl ? <img src={product.ImageUrl} alt={product.Name} loading="lazy" decoding="async" /> : null}
                 </div>
                 <div className="rv-info">
                   <span className="rv-vol">{product.Volume}</span>

@@ -1,7 +1,8 @@
 import { randomUUID } from 'crypto';
-import { mkdir, writeFile } from 'fs/promises';
+import { mkdir, unlink, writeFile } from 'fs/promises';
 import path from 'path';
 import { NextResponse } from 'next/server';
+import { getUploadImageUrl, getUploadStoragePath } from '@/utils/uploadImage';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = new Map([
@@ -49,7 +50,10 @@ export async function POST(req: Request) {
     const formData = await req.formData();
     const file = formData.get('file');
     const scopeValue = String(formData.get('scope') || 'products').toLowerCase();
-    const scope = STORAGE_SCOPES.has(scopeValue) ? scopeValue : 'products';
+    if (!STORAGE_SCOPES.has(scopeValue)) {
+      return NextResponse.json({ success: false, message: 'Invalid image storage scope.' }, { status: 400 });
+    }
+    const scope = scopeValue;
 
     if (!(file instanceof File)) {
       return NextResponse.json({ success: false, message: 'Choose an image file to upload.' }, { status: 400 });
@@ -80,7 +84,7 @@ export async function POST(req: Request) {
     await writeFile(diskPath, buffer, { flag: 'wx' });
 
     const storagePath = `${scope}/${fileName}`;
-    const url = `/uploads/${scope}/${fileName}`;
+    const url = getUploadImageUrl(storagePath);
 
     return NextResponse.json({
       success: true,
@@ -94,6 +98,47 @@ export async function POST(req: Request) {
     console.error('Image upload failed:', err);
     return NextResponse.json(
       { success: false, message: 'Unable to upload image right now.' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const body = await req.json().catch(() => ({}));
+    const rawPath = String(body.path || '').trim();
+
+    if (!rawPath) {
+      return NextResponse.json({ success: false, message: 'Image path is required.' }, { status: 400 });
+    }
+
+    const storagePath = getUploadStoragePath(rawPath);
+    if (!storagePath) {
+      return NextResponse.json({ success: false, message: 'Invalid image path.' }, { status: 400 });
+    }
+
+    const uploadRoot = path.resolve(process.cwd(), '.storage', 'uploads');
+    const filePath = path.resolve(uploadRoot, ...storagePath.split('/'));
+
+    // Prevent path traversal
+    if (!filePath.startsWith(uploadRoot + path.sep)) {
+      return NextResponse.json({ success: false, message: 'Invalid file path.' }, { status: 400 });
+    }
+
+    try {
+      await unlink(filePath);
+    } catch (err: unknown) {
+      // File already gone – treat as success (idempotent)
+      if (!(err instanceof Error && 'code' in err && (err as NodeJS.ErrnoException).code === 'ENOENT')) {
+        throw err;
+      }
+    }
+
+    return NextResponse.json({ success: true, message: 'Image deleted successfully.' });
+  } catch (err) {
+    console.error('[Upload API] DELETE failed:', err);
+    return NextResponse.json(
+      { success: false, message: 'Unable to delete image right now.' },
       { status: 500 }
     );
   }

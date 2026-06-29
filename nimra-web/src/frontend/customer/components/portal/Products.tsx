@@ -73,7 +73,7 @@ export const CatalogCard = React.memo(function CatalogCard({ product, onAdd }: P
       onClick={handleClick}
     >
       <div className="cat-img-box">
-        <img src={product.ImageUrl} alt={product.Name} loading="lazy" decoding="async" />
+        {product.ImageUrl ? <img src={product.ImageUrl} alt={product.Name} loading="lazy" decoding="async" /> : null}
         {inCart && (
           <div className="cart-count-badge">{cartItem.quantity}</div>
         )}
@@ -196,7 +196,7 @@ export const RecommendationCard = React.memo(function RecommendationCard({ produ
       onClick={handleClick}
     >
       <div className="rec-img-box">
-        <img src={product.ImageUrl} alt={product.Name} loading="lazy" decoding="async" />
+        {product.ImageUrl ? <img src={product.ImageUrl} alt={product.Name} loading="lazy" decoding="async" /> : null}
       </div>
       <div className="rec-info">
         <span className="rec-vol">{product.Volume}</span>
@@ -251,7 +251,7 @@ export const PreviewCard = React.memo(function PreviewCard({ product, index }: P
       onClick={handleClick}
     >
       <div className="prod-img-box">
-        <img src={product.ImageUrl} alt={product.Name} loading="lazy" decoding="async" />
+        {product.ImageUrl ? <img src={product.ImageUrl} alt={product.Name} loading="lazy" decoding="async" /> : null}
         <div className="prod-img-overlay" />
       </div>
       <div className="prod-info-box">

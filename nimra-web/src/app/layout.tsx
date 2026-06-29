@@ -65,7 +65,7 @@ export default async function RootLayout({
           }}
         />
         {/* Preload critical hero banner image for faster LCP */}
-        {data.banners[0] && (
+        {data.banners[0]?.ImageUrl && (
           <link rel="preload" href={data.banners[0].ImageUrl} as="image" />
         )}
       </head>

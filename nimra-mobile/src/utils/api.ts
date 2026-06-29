@@ -7,7 +7,7 @@ export const mockCMSData: CMSData = {
       ID: 1,
       Title: "Pure Hydration. Healthy Living.",
       Subtitle: "NIMRA Packaged Drinking Water keeps you fresh and energized through every moment of the day.",
-      ImageUrl: "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&q=80&w=1200",
+      ImageUrl: "banners/1782400800295-50bba580-d62b-436d-985b-87fd558d5ad8.jpg",
       ButtonText: "Explore Products",
       ButtonLink: "Products",
       Active: true
@@ -16,7 +16,7 @@ export const mockCMSData: CMSData = {
       ID: 2,
       Title: "Mineral Balanced Purity",
       Subtitle: "Sourced responsibly and purified through a rigorous 10-step process for absolute safety.",
-      ImageUrl: "https://images.unsplash.com/photo-1559839914-17aae19cec71?auto=format&fit=crop&q=80&w=1200",
+      ImageUrl: "banners/1782400800918-e0be9c4d-ac54-401d-9d73-24e07c983293.jpg",
       ButtonText: "About Us",
       ButtonLink: "About",
       Active: true
@@ -30,7 +30,7 @@ export const mockCMSData: CMSData = {
       Volume: "250ml",
       Price: "6.00",
       Description: "Perfect pocket-sized pure drinking water for short trips, conferences, and quick refreshments.",
-      ImageUrl: "https://images.unsplash.com/photo-1616166330003-8e550d199b26?auto=format&fit=crop&q=80&w=600",
+      ImageUrl: "products/1782329242490-268de049-2e73-4714-a10f-58aa02c0f04b.jpg",
       Active: true
     },
     {
@@ -40,7 +40,7 @@ export const mockCMSData: CMSData = {
       Volume: "500ml",
       Price: "10.00",
       Description: "Your convenient hydration companion for daily commutes, gyms, and office desks.",
-      ImageUrl: "https://images.unsplash.com/photo-1523362628745-0c100150b504?auto=format&fit=crop&q=80&w=600",
+      ImageUrl: "products/1782400801994-3a7d515e-6c24-4cc9-a482-cf2a009ef4b2.jpg",
       Active: true
     },
     {
@@ -50,7 +50,7 @@ export const mockCMSData: CMSData = {
       Volume: "1L",
       Price: "20.00",
       Description: "Standard 1 Litre bottle for absolute pure hydration at home, dining, or long travel.",
-      ImageUrl: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&q=80&w=600",
+      ImageUrl: "products/1782400802152-3726c4f7-0b51-4d97-a3c3-f66f010b587a.jpg",
       Active: true
     },
     {
@@ -60,7 +60,7 @@ export const mockCMSData: CMSData = {
       Volume: "2L",
       Price: "30.00",
       Description: "Bigger size for family picnics and long journeys. Keep clean water accessible for all.",
-      ImageUrl: "https://images.unsplash.com/photo-1563822249548-9a72b6353cd1?auto=format&fit=crop&q=80&w=600",
+      ImageUrl: "products/1782400802172-f85d909c-fcaa-4e12-8b11-0f44a10b9330.jpg",
       Active: true
     },
     {
@@ -70,7 +70,7 @@ export const mockCMSData: CMSData = {
       Volume: "20L",
       Price: "80.00",
       Description: "Eco-friendly bulk jar for continuous hydration at office spaces and household kitchen units.",
-      ImageUrl: "https://images.unsplash.com/photo-1589135790587-8d77d70cfd00?auto=format&fit=crop&q=80&w=600",
+      ImageUrl: "products/1782500196505-68560521-c665-4639-8f60-f18b1b672dc3.png",
       Active: true
     }
   ],
@@ -117,6 +117,19 @@ export const mockCMSData: CMSData = {
 
 const getAPIUrl = (): string => {
   return process.env.EXPO_PUBLIC_APPS_SCRIPT_URL || '';
+};
+
+const getBackendUrl = (): string => (process.env.EXPO_PUBLIC_BACKEND_URL || '').replace(/\/+$/, '');
+
+const getBackendImageUrl = (value: unknown): string => {
+  const backendUrl = getBackendUrl();
+  const raw = String(value || '').trim().replace(/\\/g, '/');
+  if (!backendUrl || !raw || /^(?:https?:|data:|blob:)/i.test(raw)) return '';
+  const storagePath = raw.split(/[?#]/, 1)[0]
+    .replace(/^\/+/, '')
+    .replace(/^(?:api\/file|api\/uploads|uploads)\//i, '');
+  if (!/^(?:products|banners)\/[^/]+\.(?:jpe?g|png|webp|gif)$/i.test(storagePath) || storagePath.includes('..')) return '';
+  return `${backendUrl}/uploads/${storagePath.split('/').map(encodeURIComponent).join('/')}`;
 };
 
 export type AuthRequest =
@@ -220,7 +233,8 @@ export const sendRequest = async (payload: AuthRequest): Promise<AuthResponse> =
 
 // Fetch CMS Data
 export const fetchCMSData = async (): Promise<CMSData> => {
-  const url = getAPIUrl();
+  const backendUrl = getBackendUrl();
+  const url = backendUrl ? `${backendUrl}/api/cms` : getAPIUrl();
   if (!url) {
     console.log("No EXPO_PUBLIC_APPS_SCRIPT_URL configured.");
     return {
@@ -237,8 +251,8 @@ export const fetchCMSData = async (): Promise<CMSData> => {
     const data = await res.json();
     
     return {
-      banners: data.banners || [],
-      products: data.products || [],
+      banners: (data.banners || []).map((banner: Banner) => ({ ...banner, ImageUrl: getBackendImageUrl(banner.ImageUrl) })),
+      products: (data.products || []).map((product: Product) => ({ ...product, ImageUrl: getBackendImageUrl(product.ImageUrl) })),
       faqs: data.faqs || [],
       companyInfo: data.companyInfo || {}
     };

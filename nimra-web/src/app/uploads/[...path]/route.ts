@@ -40,11 +40,13 @@ export async function GET(
     return new NextResponse(file, {
       headers: {
         'Content-Type': contentType,
+        'Content-Length': String(file.byteLength),
         'Cache-Control': 'public, max-age=31536000, immutable',
+        'X-Content-Type-Options': 'nosniff',
       },
     });
-  } catch (error: any) {
-    if (error?.code !== 'ENOENT') {
+  } catch (error: unknown) {
+    if (!(error instanceof Error && 'code' in error && error.code === 'ENOENT')) {
       console.error(`[Uploads API] Error:`, error);
     }
     return NextResponse.json({ success: false, message: 'File not found.' }, { status: 404 });

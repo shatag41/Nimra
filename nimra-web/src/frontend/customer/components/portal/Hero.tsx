@@ -59,14 +59,15 @@ export function HomeHero({ banners }: HomeHeroProps) {
           key={banner.ID}
           className={`hero-slide ${idx === activeBanner ? 'active' : ''}`}
           style={{
-            backgroundImage: `
-              linear-gradient(105deg,
+            backgroundImage: [
+              `linear-gradient(105deg,
                 rgba(15,23,42,0.93) 0%,
                 rgba(30,58,138,0.82) 40%,
                 rgba(37,99,235,0.45) 70%,
                 rgba(59,130,246,0.15) 100%
-              ),
-              url(${banner.ImageUrl})`
+              )`,
+              banner.ImageUrl ? `url("${banner.ImageUrl}")` : null,
+            ].filter(Boolean).join(', '),
           }}
         >
           <div className="container hero-content">

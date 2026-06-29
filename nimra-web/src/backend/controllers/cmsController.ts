@@ -3,6 +3,7 @@ import { fallbackData } from '../models/fallbackData';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { createHash } from 'crypto';
+import { getUploadImageUrl, getUploadStoragePath } from '@/utils/uploadImage';
 
 const EMAIL_PREFERENCE_DEFAULTS = {
   orderConfirmation: true,
@@ -38,6 +39,68 @@ const getAppsScriptUrl = () => {
   return process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || process.env.EXPO_PUBLIC_APPS_SCRIPT_URL || '';
 };
 const APPS_SCRIPT_TIMEOUT_MS = 45000;
+type UploadScope = 'products' | 'banners';
+
+const uploadFileExists = async (storagePath: string, scope: UploadScope) => {
+  const normalized = getUploadStoragePath(storagePath);
+  if (!normalized || !normalized.startsWith(`${scope}/`)) return false;
+
+  const uploadRoot = path.resolve(process.cwd(), '.storage', 'uploads');
+  const filePath = path.resolve(uploadRoot, ...normalized.split('/'));
+  if (!filePath.startsWith(uploadRoot + path.sep)) return false;
+
+  try {
+    const fileStat = await fs.stat(filePath);
+    return fileStat.isFile() && fileStat.size > 0;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Safely delete an uploaded image file from .storage/uploads/.
+ * Silently ignores ENOENT so callers can safely call this even if the
+ * file was already removed or never existed.
+ */
+const deleteUploadedFile = async (storagePath: string): Promise<void> => {
+  const normalized = getUploadStoragePath(storagePath);
+  if (!normalized) return;
+
+  const uploadRoot = path.resolve(process.cwd(), '.storage', 'uploads');
+  const filePath = path.resolve(uploadRoot, ...normalized.split('/'));
+  if (!filePath.startsWith(uploadRoot + path.sep)) return;
+
+  try {
+    await fs.unlink(filePath);
+    console.log(`[CMS Controller] Deleted uploaded image: ${normalized}`);
+  } catch (err: unknown) {
+    if (!(err instanceof Error && 'code' in err && (err as NodeJS.ErrnoException).code === 'ENOENT')) {
+      console.error(`[CMS Controller] Failed to delete uploaded image (${normalized}):`, err);
+    }
+  }
+};
+
+const mapUploadedImagesFromStorage = async (
+  items: Array<Record<string, unknown>> | undefined,
+  scope: UploadScope,
+  fallbackItems: Array<Record<string, unknown>> = []
+) => {
+  if (!Array.isArray(items)) return items;
+  return Promise.all(items.map(async item => {
+    const fallback = fallbackItems.find(candidate => String(candidate.ID) === String(item.ID));
+    const storagePath = getUploadStoragePath(item.ImageUrl) || getUploadStoragePath(fallback?.ImageUrl);
+    const imageUrl = storagePath && await uploadFileExists(storagePath, scope)
+      ? getUploadImageUrl(storagePath)
+      : '';
+
+    return {
+      ...item,
+      // Display only files that are actually present in .storage/uploads.
+      // Sheets can stay blank; local bindings are validated before display.
+      ImageUrl: imageUrl,
+    };
+  }));
+};
 
 const DB_PATH = path.join(process.cwd(), 'src', 'data', 'db.json');
 let localDBLoaded = false;
@@ -78,7 +141,7 @@ async function syncLocalDB(action: 'load' | 'save') {
 
 let cachedCMSData: any = null;
 let lastFetchTime = 0;
-const CACHE_TTL = 300000; // 5 minutes cache
+const CACHE_TTL = 0;
 const LIVE_GET_CACHE_TTL = 15000;
 const liveGetCache = new Map<string, { data: any; expiresAt: number }>();
 
@@ -106,6 +169,44 @@ function getLiveCacheKey(action: string | null, userId: string, mobile: string, 
   return '';
 }
 
+async function saveLocalImageBinding(
+  type: 'productCRUD' | 'bannerCRUD',
+  action: string,
+  entity: Record<string, unknown>,
+  responseData: Record<string, unknown>,
+  imagePath: string
+) {
+  const collectionName = type === 'productCRUD' ? 'products' : 'banners';
+  const collection = fallbackData[collectionName] || [];
+  const id = responseData.ID ?? entity.ID;
+  if (id === undefined || id === null || String(id).trim() === '') return;
+
+  if (action === 'delete') {
+    fallbackData[collectionName] = collection.filter((item: any) => String(item.ID) !== String(id));
+    await syncLocalDB('save');
+    return;
+  }
+
+  if (!imagePath && !Object.prototype.hasOwnProperty.call(entity, 'ImageUrl')) return;
+
+  const index = collection.findIndex((item: any) => String(item.ID) === String(id));
+  const nextItem = {
+    ...(index >= 0 ? collection[index] : {}),
+    ...entity,
+    ID: id,
+    ImageUrl: imagePath || '',
+  };
+
+  if (index >= 0) {
+    collection[index] = nextItem;
+  } else {
+    collection.push(nextItem);
+  }
+
+  fallbackData[collectionName] = collection;
+  await syncLocalDB('save');
+}
+
 // Proxy GET requests to Google Apps Script
 export async function handleGet(req: Request) {
   await syncLocalDB('load');
@@ -114,11 +215,7 @@ export async function handleGet(req: Request) {
   const userId = requestUrl.searchParams.get('userId') || '';
   const mobile = requestUrl.searchParams.get('mobile') || '';
   const email = requestUrl.searchParams.get('email') || '';
-  const liveActions = new Set(['trackOrder', 'getOrders', 'getCancellationRequests', 'getInquiries', 'getUsers', 'getNotifications']);
-  const shouldUseLiveData = Boolean(action && liveActions.has(action));
-  const cacheHeaders = shouldUseLiveData
-    ? { 'Cache-Control': 'no-store' }
-    : { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' };
+  const cacheHeaders = { 'Cache-Control': 'no-store' };
 
   // If fetching main CMS data (action is null), serve from in-memory cache if fresh
   const now = Date.now();
@@ -168,29 +265,17 @@ export async function handleGet(req: Request) {
           console.warn(`[CMS API Proxy] GET Request: action="main" -> Response did not have expected CMS shape, falling through to fallback.`);
           // Fall through to local fallback below
         } else {
-          // Rewrite ImageUrls to /uploads/ endpoint
-          const rewriteImageUrl = (items: any[]) => {
-            if (!items) return;
-            const placeholder = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-            items.forEach(item => {
-              if (item.ImageUrl) {
-                if (/^(https?:)/i.test(item.ImageUrl) && !item.ImageUrl.includes('localhost') && !item.ImageUrl.includes('127.0.0.1')) {
-                  item.ImageUrl = placeholder;
-                  return;
-                }
-                if (item.ImageUrl.includes('photo-') || item.ImageUrl.includes('unsplash.com')) {
-                  item.ImageUrl = placeholder;
-                  return;
-                }
-                const cleaned = item.ImageUrl.replace(/^(https?:\/\/[^\/]+)/i, '')
-                                             .replace(/^\/?(api\/file|api\/uploads|uploads)\//, '')
-                                             .replace(/^\/+/, '');
-                item.ImageUrl = cleaned ? `/uploads/${cleaned}` : placeholder;
-              }
-            });
-          };
-          rewriteImageUrl(data.products);
-          rewriteImageUrl(data.banners);
+          // Resolve CMS image records to files served from .storage/uploads.
+          if (Array.isArray(data)) {
+            if (action === 'getBanners') {
+              data.splice(0, data.length, ...(await mapUploadedImagesFromStorage(data, 'banners', fallbackData.banners))!);
+            } else if (action === 'getProducts') {
+              data.splice(0, data.length, ...(await mapUploadedImagesFromStorage(data, 'products', fallbackData.products))!);
+            }
+          } else {
+            data.products = await mapUploadedImagesFromStorage(data.products, 'products', fallbackData.products);
+            data.banners = await mapUploadedImagesFromStorage(data.banners, 'banners', fallbackData.banners);
+          }
 
           // Save successfully fetched main CMS data to cache
           if (!action) {
@@ -200,7 +285,9 @@ export async function handleGet(req: Request) {
           if (liveCacheKey) {
             liveGetCache.set(liveCacheKey, { data, expiresAt: Date.now() + LIVE_GET_CACHE_TTL });
           }
-          console.log(`[CMS API Proxy] GET Request: action="${action || 'main'}" -> Successfully fetched from Google Sheets. Count of products: ${data.products?.length || 0}, banners: ${data.banners?.length || 0}`);
+          const productCount = Array.isArray(data) && action === 'getProducts' ? data.length : (data.products?.length || 0);
+          const bannerCount = Array.isArray(data) && action === 'getBanners' ? data.length : (data.banners?.length || 0);
+          console.log(`[CMS API Proxy] GET Request: action="${action || 'main'}" -> Successfully fetched from Google Sheets. Count of products: ${productCount}, banners: ${bannerCount}`);
           return NextResponse.json(data, { headers: cacheHeaders });
         }
       } else {
@@ -222,32 +309,11 @@ export async function handleGet(req: Request) {
     return NextResponse.json(cachedCMSData, { headers: cacheHeaders });
   }
 
-  // Rewrite ImageUrls to /uploads/ endpoint
-  const rewriteLocalImageUrl = (items: any[]) => {
-    if (!items) return items;
-    const placeholder = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-    return items.map(item => {
-      if (item.ImageUrl) {
-        if (/^(https?:)/i.test(item.ImageUrl) && !item.ImageUrl.includes('localhost') && !item.ImageUrl.includes('127.0.0.1')) {
-          return { ...item, ImageUrl: placeholder };
-        }
-        if (item.ImageUrl.includes('photo-') || item.ImageUrl.includes('unsplash.com')) {
-          return { ...item, ImageUrl: placeholder };
-        }
-        const cleaned = item.ImageUrl.replace(/^(https?:\/\/[^\/]+)/i, '')
-                                     .replace(/^\/?(api\/file|api\/uploads|uploads)\//, '')
-                                     .replace(/^\/+/, '');
-        return { ...item, ImageUrl: cleaned ? `/uploads/${cleaned}` : placeholder };
-      }
-      return item;
-    });
-  };
-
   // Use fallback data
   if (action === 'getBanners') {
-    return NextResponse.json(rewriteLocalImageUrl(fallbackData.banners), { headers: cacheHeaders });
+    return NextResponse.json(await mapUploadedImagesFromStorage(fallbackData.banners, 'banners', fallbackData.banners), { headers: cacheHeaders });
   } else if (action === 'getProducts') {
-    return NextResponse.json(rewriteLocalImageUrl(fallbackData.products), { headers: cacheHeaders });
+    return NextResponse.json(await mapUploadedImagesFromStorage(fallbackData.products, 'products', fallbackData.products), { headers: cacheHeaders });
   } else if (action === 'getFAQs') {
     return NextResponse.json(fallbackData.faqs, { headers: cacheHeaders });
   } else if (action === 'getCompanyInfo') {
@@ -275,8 +341,8 @@ export async function handleGet(req: Request) {
   } else {
     // Return all customer CMS collections
     return NextResponse.json({
-      banners: rewriteLocalImageUrl(fallbackData.banners),
-      products: rewriteLocalImageUrl(fallbackData.products),
+      banners: await mapUploadedImagesFromStorage(fallbackData.banners, 'banners', fallbackData.banners),
+      products: await mapUploadedImagesFromStorage(fallbackData.products, 'products', fallbackData.products),
       faqs: fallbackData.faqs,
       companyInfo: fallbackData.companyInfo
     }, { headers: cacheHeaders });
@@ -290,6 +356,27 @@ export async function handlePost(req: Request) {
     const body = await req.json();
     const payload = { ...body };
     let backendError = '';
+    const cmsCrudType = payload.type === 'productCRUD' || payload.type === 'bannerCRUD' ? payload.type : '';
+    const cmsCrudAction = String(payload.action || 'create');
+    const localProductImagePath = payload.type === 'productCRUD' && payload.product
+      ? getUploadStoragePath(payload.product.ImageUrl)
+      : '';
+    const localBannerImagePath = payload.type === 'bannerCRUD' && payload.banner
+      ? getUploadStoragePath(payload.banner.ImageUrl)
+      : '';
+
+    // Store the storage path in Sheets (e.g. "products/filename.jpg") so that
+    // mapUploadedImagesFromStorage can resolve it to a served URL on read.
+    // oldImagePath is a frontend-only coordination field; strip it before sending.
+    if (payload.type === 'productCRUD' && payload.product) {
+      const { oldImagePath: _op, ...productFields } = payload.product;
+      payload.product = { ...productFields, ImageUrl: localProductImagePath || '' };
+      console.log('[CMS Controller] Forwarding product payload to Sheets:', JSON.stringify(payload.product));
+    } else if (payload.type === 'bannerCRUD' && payload.banner) {
+      const { oldImagePath: _ob, ...bannerFields } = payload.banner;
+      payload.banner = { ...bannerFields, ImageUrl: localBannerImagePath || '' };
+      console.log('[CMS Controller] Forwarding banner payload to Sheets:', JSON.stringify(payload.banner));
+    }
 
     invalidateCMSCache();
 
@@ -314,6 +401,7 @@ export async function handlePost(req: Request) {
     if (urlValPost) {
       try {
         console.log(`[CMS API Proxy] POST Request: type="${payload.type}" -> Fetching from Google Sheets URL...`);
+        console.log(`[CMS API Proxy] Sending body to Sheets:`, JSON.stringify(payload));
         const res = await fetch(urlValPost, {
           method: 'POST',
           redirect: 'follow',
@@ -328,6 +416,28 @@ export async function handlePost(req: Request) {
         if (!text.trim().startsWith('<')) {
           const data = JSON.parse(text);
           console.log(`[CMS API Proxy] POST Request: type="${payload.type}" -> Successfully processed by Google Sheets.`);
+          if (cmsCrudType) {
+            const entityBody = cmsCrudType === 'productCRUD' ? body.product || {} : body.banner || {};
+            const newImagePath = cmsCrudType === 'productCRUD' ? localProductImagePath : localBannerImagePath;
+            const oldImagePath = String(entityBody.oldImagePath || '').trim();
+
+            // Delete old image from disk when replacing on update
+            if (cmsCrudAction === 'update' && oldImagePath && newImagePath && oldImagePath !== newImagePath) {
+              await deleteUploadedFile(oldImagePath);
+            }
+            // Delete image on record deletion
+            if (cmsCrudAction === 'delete' && entityBody.ImageUrl) {
+              await deleteUploadedFile(entityBody.ImageUrl);
+            }
+
+            await saveLocalImageBinding(
+              cmsCrudType,
+              cmsCrudAction,
+              entityBody,
+              data,
+              newImagePath
+            );
+          }
           invalidateCMSCache();
           return NextResponse.json(data);
         }
@@ -580,23 +690,33 @@ export async function handlePost(req: Request) {
       return NextResponse.json({ success: false, message: 'Unsupported notification action.' }, { status: 400 });
     } else if (payload.type === 'productCRUD') {
       const action = payload.action || 'create';
-      const incomingProduct = payload.product || {};
-      if (incomingProduct.ImageUrl) {
-        incomingProduct.ImageUrl = incomingProduct.ImageUrl.replace(/^(https?:\/\/[^\/]+)/i, '')
-                                                           .replace(/^\/?(api\/file|api\/uploads|uploads)\//, '')
-                                                           .replace(/^\/+/, '');
-      }
+      const { oldImagePath: _opLocal, ...productPayload } = payload.product || {};
+      const incomingProduct = {
+        ...productPayload,
+        ...(localProductImagePath ? { ImageUrl: localProductImagePath } : {}),
+      };
       if (action === 'delete') {
         const idToDelete = incomingProduct.ID;
+        const existing = fallbackData.products.find((p: any) => String(p.ID) === String(idToDelete));
         fallbackData.products = fallbackData.products.filter((p: any) => String(p.ID) !== String(idToDelete));
         await syncLocalDB('save');
+        // Delete associated image file from disk
+        if (existing?.ImageUrl) {
+          await deleteUploadedFile(existing.ImageUrl);
+        }
         return NextResponse.json({ success: true, message: 'Product deleted successfully' });
       }
       if (action === 'update') {
         const idx = fallbackData.products.findIndex((p: any) => String(p.ID) === String(incomingProduct.ID));
         if (idx >= 0) {
+          const oldImagePath = String(fallbackData.products[idx].ImageUrl || '');
           fallbackData.products[idx] = { ...fallbackData.products[idx], ...incomingProduct };
           await syncLocalDB('save');
+          // Delete old image if a different image was provided
+          const newImagePath = String(incomingProduct.ImageUrl || '');
+          if (oldImagePath && newImagePath && newImagePath !== oldImagePath) {
+            await deleteUploadedFile(oldImagePath);
+          }
           return NextResponse.json({ success: true, message: 'Product updated successfully', ID: fallbackData.products[idx].ID });
         }
         return NextResponse.json({ success: false, message: 'Product not found.' }, { status: 404 });
@@ -610,23 +730,33 @@ export async function handlePost(req: Request) {
       return NextResponse.json({ success: false, message: 'Unsupported product action.' }, { status: 400 });
     } else if (payload.type === 'bannerCRUD') {
       const action = payload.action || 'create';
-      const incomingBanner = payload.banner || {};
-      if (incomingBanner.ImageUrl) {
-        incomingBanner.ImageUrl = incomingBanner.ImageUrl.replace(/^(https?:\/\/[^\/]+)/i, '')
-                                                         .replace(/^\/?(api\/file|api\/uploads|uploads)\//, '')
-                                                         .replace(/^\/+/, '');
-      }
+      const { oldImagePath: _obLocal, ...bannerPayload } = payload.banner || {};
+      const incomingBanner = {
+        ...bannerPayload,
+        ...(localBannerImagePath ? { ImageUrl: localBannerImagePath } : {}),
+      };
       if (action === 'delete') {
         const idToDelete = incomingBanner.ID;
+        const existing = fallbackData.banners.find((b: any) => String(b.ID) === String(idToDelete));
         fallbackData.banners = fallbackData.banners.filter((b: any) => String(b.ID) !== String(idToDelete));
         await syncLocalDB('save');
+        // Delete associated image file from disk
+        if (existing?.ImageUrl) {
+          await deleteUploadedFile(existing.ImageUrl);
+        }
         return NextResponse.json({ success: true, message: 'Banner deleted successfully' });
       }
       if (action === 'update') {
         const idx = fallbackData.banners.findIndex((b: any) => String(b.ID) === String(incomingBanner.ID));
         if (idx >= 0) {
+          const oldImagePath = String(fallbackData.banners[idx].ImageUrl || '');
           fallbackData.banners[idx] = { ...fallbackData.banners[idx], ...incomingBanner };
           await syncLocalDB('save');
+          // Delete old image if a different image was provided
+          const newImagePath = String(incomingBanner.ImageUrl || '');
+          if (oldImagePath && newImagePath && newImagePath !== oldImagePath) {
+            await deleteUploadedFile(oldImagePath);
+          }
           return NextResponse.json({ success: true, message: 'Banner updated successfully', ID: fallbackData.banners[idx].ID });
         }
         return NextResponse.json({ success: false, message: 'Banner not found.' }, { status: 404 });

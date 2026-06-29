@@ -108,8 +108,8 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
                     </div>
                   </div>
                 </div>
-                <div className="about-img-box">
-                  <img src="https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&q=80&w=800" alt="Pure drop" />
+                <div className="about-img-box" aria-hidden="true">
+                  <span className="about-water-mark">NIMRA</span>
                 </div>
               </div>
             </div>
@@ -386,6 +386,16 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
           height: 100%;
           object-fit: cover;
           display: block;
+        }
+        .about-water-mark {
+          width: 100%;
+          display: grid;
+          place-items: center;
+          color: rgba(255, 255, 255, 0.92);
+          background: radial-gradient(circle at 35% 25%, #7dd3fc, #0284c7 55%, #075985);
+          font-size: clamp(2.5rem, 8vw, 6rem);
+          font-weight: 900;
+          letter-spacing: 0.12em;
         }
         .map-placeholder {
           height: 100%;

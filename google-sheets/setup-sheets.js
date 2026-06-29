@@ -14,11 +14,11 @@ function setupNIMRASheets() {
   bannersSheet.getRange(2, 1, 2, 7).setValues([
     [1, 'Pure Hydration. Healthy Living.',
       'NIMRA Packaged Drinking Water keeps you fresh and energized through every moment of the day.',
-      'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&q=80&w=1200',
+      '',
       'Explore Products', '/products', true],
     [2, 'Mineral Balanced Purity',
       'Sourced responsibly and purified through a rigorous 10-step process for absolute safety.',
-      'https://images.unsplash.com/photo-1559839914-17aae19cec71?auto=format&fit=crop&q=80&w=1200',
+      '',
       'Order Now', '/products', true]
   ]);
 
@@ -31,31 +31,31 @@ function setupNIMRASheets() {
   productsSheet.getRange(2, 1, 7, 12).setValues([
     [1, 'NIMRA 250ml Bottle', 'Packaged Drinking Water', '250ml', '6.00',
       'Perfect pocket-sized pure drinking water for short trips, conferences, and quick refreshments.',
-      'https://images.unsplash.com/photo-1616166330003-8e550d199b26?auto=format&fit=crop&q=80&w=600',
+      '',
       'RO purified, mineral balanced, food-grade PET bottle', 'In Stock', '', '', true],
     [2, 'NIMRA 500ml Bottle', 'Packaged Drinking Water', '500ml', '10.00',
       'Your convenient hydration companion for daily commutes, gyms, and office desks.',
-      'https://images.unsplash.com/photo-1523362628745-0c100150b504?auto=format&fit=crop&q=80&w=600',
+      '',
       'RO purified, mineral balanced, food-grade PET bottle', 'In Stock', '', '', true],
     [3, 'NIMRA 1 Litre Bottle', 'Mineral Water', '1L', '20.00',
       'Standard 1 Litre bottle for pure mineral-balanced hydration at home, dining, or travel.',
-      'https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&q=80&w=600',
+      '',
       'Balanced minerals, UV and ozone treated, travel pack', 'In Stock', '', '', true],
     [4, 'NIMRA 2 Litre Bottle', 'Packaged Drinking Water', '2L', '30.00',
       'Bigger size for family picnics and long journeys. Keep clean water accessible for all.',
-      'https://images.unsplash.com/photo-1563822249548-9a72b6353cd1?auto=format&fit=crop&q=80&w=600',
+      '',
       'Family bottle, tamper-evident cap, recyclable pack', 'In Stock', '', '', true],
     [5, 'NIMRA 5 Litre Can', 'Bulk Water', '5L', '55.00',
       'Family-sized purified water can for home kitchens, travel groups, and small gatherings.',
-      'https://images.unsplash.com/photo-1527109011752-2d34ff6a28d6?auto=format&fit=crop&q=80&w=600',
+      '',
       'RO purified, mineral balanced, recyclable food-grade pack', 'In Stock', '', '', true],
     [6, 'NIMRA 20 Litre Dispenser Jar', 'Bulk Water', '20L Jar', '80.00',
       'Eco-friendly bulk jar for continuous hydration at office spaces and household kitchen units.',
-      'https://images.unsplash.com/photo-1589135790587-8d77d70cfd00?auto=format&fit=crop&q=80&w=600',
+      '',
       'Returnable jar, dispenser compatible, scheduled delivery available', 'In Stock', '', '', true],
     [7, 'RUSH Club Soda 500ml', 'Upcoming RUSH Soda', '500ml', '25.00',
       'Upcoming extra-fizzy RUSH soda made on the NIMRA purified water base.',
-      'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&q=80&w=600',
+      '',
       'Coming soon, carbonated beverage, launch stock managed from Sheets', 'Coming Soon', '', '', true]
   ]);
 

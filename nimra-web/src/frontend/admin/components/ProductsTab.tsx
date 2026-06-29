@@ -2,6 +2,7 @@ import React from 'react';
 import { Product } from '@/types/cms';
 import { formatCurrency } from '@/frontend/customer/utils/commerce';
 import CustomSelect from './CustomSelect';
+import Image from 'next/image';
 
 interface ProductsTabProps {
   products: Product[];
@@ -95,8 +96,11 @@ export default React.memo(function ProductsTab({
             {filteredProducts.map((p) => (
               <tr key={p.ID}>
                 <td>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={p.ImageUrl || '/favicon.ico'} alt={p.Name} className="table-thumbnail" loading="lazy" decoding="async" />
+                  {p.ImageUrl ? (
+                    <Image src={p.ImageUrl} alt={p.Name} className="table-thumbnail" width={64} height={64} />
+                  ) : (
+                    <span className="table-thumbnail thumbnail-placeholder">No image</span>
+                  )}
                 </td>
                 <td><strong>{p.Name}</strong></td>
                 <td>{p.Category}</td>

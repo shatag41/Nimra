@@ -1,10 +1,11 @@
 export const fallbackData: any = {
   carts: [],
   banners: [
-    { ID: 1, Title: 'Pure Hydration. Healthy Living.', Subtitle: 'NIMRA Packaged Drinking Water keeps you fresh and energized through every moment of the day.', ImageUrl: 'banners/1782400800295-50bba580-d62b-436d-985b-87fd558d5ad8.jpg', ButtonText: 'Explore Products', ButtonLink: '#products', Active: true },
+    { ID: 1, Title: 'Pure Hydration. Healthy Living.', Subtitle: 'NIMRA Packaged Drinking Water keeps you fresh and energized through every moment of the day.', ImageUrl: 'banners/1782553827955-1906cdcb-a0b4-44c9-976e-39c1ab4e58a7.jpg', ButtonText: 'Explore Products', ButtonLink: '#products', Active: true },
+    { ID: 2, Title: 'Mineral Balanced Purity', Subtitle: 'Sourced responsibly and purified through a rigorous 10-step process for absolute safety.', ImageUrl: 'banners/1782328739678-fb7faa1e-0f54-474a-8662-1fc42ea8b09d.jpg', ButtonText: 'Order Now', ButtonLink: '/products', Active: true },
   ],
   products: [
-    { ID: 1, Name: 'NIMRA 250ml Bottle', Category: 'Packaged Drinking Water', Volume: '250ml', Price: '6.00', Description: 'Perfect pocket-sized pure drinking water for short trips, conferences, and quick refreshments.', ImageUrl: 'products/1782400801277-e98426f2-832c-43f8-ace7-d39458d03a20.jpg', Active: true },
+    { ID: 1, Name: 'NIMRA 250ml Bottle', Category: 'Packaged Drinking Water', Volume: '250ml', Price: '6.00', Description: 'Perfect pocket-sized pure drinking water for short trips, conferences, and quick refreshments.', ImageUrl: 'products/1782329242490-268de049-2e73-4714-a10f-58aa02c0f04b.jpg', Active: true },
     { ID: 2, Name: 'NIMRA 500ml Bottle', Category: 'Packaged Drinking Water', Volume: '500ml', Price: '10.00', Description: 'Your convenient hydration companion for daily commutes, gyms, and office desks.', ImageUrl: 'products/1782400801994-3a7d515e-6c24-4cc9-a482-cf2a009ef4b2.jpg', Active: true },
     { ID: 3, Name: 'NIMRA 1 Litre Bottle', Category: 'Packaged Drinking Water', Volume: '1L', Price: '20.00', Description: 'Standard 1 Litre bottle for absolute pure hydration at home, dining, or long travel.', ImageUrl: 'products/1782400802152-3726c4f7-0b51-4d97-a3c3-f66f010b587a.jpg', Active: true },
     { ID: 4, Name: 'NIMRA 2 Litre Bottle', Category: 'Packaged Drinking Water', Volume: '2L', Price: '30.00', Description: 'Bigger size for family picnics and long journeys. Keep clean water accessible for all.', ImageUrl: 'products/1782400802172-f85d909c-fcaa-4e12-8b11-0f44a10b9330.jpg', Active: true },

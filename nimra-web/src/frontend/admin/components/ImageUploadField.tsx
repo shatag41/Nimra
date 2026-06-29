@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import { getUploadImageUrl } from '@/utils/uploadImage';
 
 interface ImageUploadFieldProps {
   label: string;
@@ -65,11 +66,11 @@ export default function ImageUploadField({
       });
       const data = await res.json();
 
-      if (!res.ok || !data.success || !data.url) {
+      if (!res.ok || !data.success || !data.path) {
         throw new Error(data.message || 'Upload failed.');
       }
 
-      onChange(data.url);
+      onChange(data.path);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed.');
       onChange('');
@@ -94,7 +95,7 @@ export default function ImageUploadField({
     if (inputRef.current) inputRef.current.value = '';
   };
 
-  const previewSrc = localPreview || value || '';
+  const previewSrc = localPreview || getUploadImageUrl(value);
   const hasImage = Boolean(previewSrc);
 
   return (
@@ -168,7 +169,7 @@ export default function ImageUploadField({
 
         {value && !uploading && (
           <div className="image-upload-meta">
-            Stored path: <code>{value}</code>
+            Image selected from uploads storage.
           </div>
         )}
       </div>

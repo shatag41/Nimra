@@ -247,6 +247,24 @@ export const clearCMSDataCache = () => {
   clientCMSCache = null;
 };
 
+/**
+ * Delete an uploaded image file from .storage/uploads/ via the upload API.
+ * Only callable from the browser. Errors are logged but not surfaced since
+ * the server-side controller is the authoritative cleanup path.
+ */
+export const deleteUploadedImage = async (storagePath: string): Promise<void> => {
+  if (!storagePath || typeof window === 'undefined') return;
+  try {
+    await fetch('/api/upload', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: storagePath }),
+    });
+  } catch (err) {
+    console.warn('[deleteUploadedImage] Failed to delete image from storage:', err);
+  }
+};
+
 let clientCMSCache: CMSData | null = null;
 
 const normalizeImageUrl = (url: unknown): string => {
@@ -747,15 +765,29 @@ export const saveNotification = async (notification: Partial<Notification>, acti
   }
 };
 
-export const saveProduct = async (product: Partial<Product>, action: 'create' | 'update' | 'delete'): Promise<{ success: boolean; message: string; ID?: string | number }> => {
+export const saveProduct = async (
+  product: Partial<Product>,
+  action: 'create' | 'update' | 'delete',
+  oldImagePath?: string
+): Promise<{ success: boolean; message: string; ID?: string | number }> => {
   try {
     const res = await fetch('/api/cms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'productCRUD', action, product }),
+      body: JSON.stringify({ type: 'productCRUD', action, product: { ...product, oldImagePath: oldImagePath || '' } }),
     });
     const data = await res.json();
-    if (data.success) clearCMSDataCache();
+    if (data.success) {
+      clearCMSDataCache();
+      // Client-side cleanup: delete old image if image was replaced on update
+      if (action === 'update' && oldImagePath && product.ImageUrl && oldImagePath !== product.ImageUrl) {
+        await deleteUploadedImage(oldImagePath);
+      }
+      // Delete image on record deletion
+      if (action === 'delete' && oldImagePath) {
+        await deleteUploadedImage(oldImagePath);
+      }
+    }
     return { success: data.success, message: data.message || 'Product saved successfully', ID: data.ID };
   } catch (err) {
     console.error('Error saving product:', err);
@@ -763,15 +795,29 @@ export const saveProduct = async (product: Partial<Product>, action: 'create' | 
   }
 };
 
-export const saveBanner = async (banner: Partial<Banner>, action: 'create' | 'update' | 'delete'): Promise<{ success: boolean; message: string; ID?: string | number }> => {
+export const saveBanner = async (
+  banner: Partial<Banner>,
+  action: 'create' | 'update' | 'delete',
+  oldImagePath?: string
+): Promise<{ success: boolean; message: string; ID?: string | number }> => {
   try {
     const res = await fetch('/api/cms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'bannerCRUD', action, banner }),
+      body: JSON.stringify({ type: 'bannerCRUD', action, banner: { ...banner, oldImagePath: oldImagePath || '' } }),
     });
     const data = await res.json();
-    if (data.success) clearCMSDataCache();
+    if (data.success) {
+      clearCMSDataCache();
+      // Client-side cleanup: delete old image if image was replaced on update
+      if (action === 'update' && oldImagePath && banner.ImageUrl && oldImagePath !== banner.ImageUrl) {
+        await deleteUploadedImage(oldImagePath);
+      }
+      // Delete image on record deletion
+      if (action === 'delete' && oldImagePath) {
+        await deleteUploadedImage(oldImagePath);
+      }
+    }
     return { success: data.success, message: data.message || 'Banner saved successfully', ID: data.ID };
   } catch (err) {
     console.error('Error saving banner:', err);

@@ -246,8 +246,13 @@ export const useAdminData = (initialCMSData: CMSData) => {
   const handleProductSubmit = async (editingProduct: Partial<Product>) => {
     setSaveLoading(true);
     const action = editingProduct.ID ? 'update' : 'create';
+    // Capture the old image path before overwriting, for cleanup on update
+    const oldProduct = editingProduct.ID
+      ? products.find((p) => String(p.ID) === String(editingProduct.ID))
+      : undefined;
+    const oldImagePath = oldProduct?.ImageUrl || '';
     try {
-      const res = await saveProduct(editingProduct, action);
+      const res = await saveProduct(editingProduct, action, oldImagePath);
       if (res.success) {
         showAlert(res.message);
         const updatedProducts = await fetchProducts();
@@ -269,8 +274,11 @@ export const useAdminData = (initialCMSData: CMSData) => {
   const handleProductDelete = async (id: string | number) => {
     if (!confirm('Are you sure you want to delete this product?')) return false;
     setSaveLoading(true);
+    // Capture the old image path for cleanup after deletion
+    const existingProduct = products.find((p) => String(p.ID) === String(id));
+    const oldImagePath = existingProduct?.ImageUrl || '';
     try {
-      const res = await saveProduct({ ID: id }, 'delete');
+      const res = await saveProduct({ ID: id }, 'delete', oldImagePath);
       if (res.success) {
         showAlert(res.message);
         setProducts(prev => prev.filter(p => p.ID !== id));
@@ -291,8 +299,13 @@ export const useAdminData = (initialCMSData: CMSData) => {
   const handleBannerSubmit = async (editingBanner: Partial<Banner>) => {
     setSaveLoading(true);
     const action = editingBanner.ID ? 'update' : 'create';
+    // Capture the old image path before overwriting, for cleanup on update
+    const oldBanner = editingBanner.ID
+      ? banners.find((b) => String(b.ID) === String(editingBanner.ID))
+      : undefined;
+    const oldImagePath = oldBanner?.ImageUrl || '';
     try {
-      const res = await saveBanner(editingBanner, action);
+      const res = await saveBanner(editingBanner, action, oldImagePath);
       if (res.success) {
         showAlert(res.message);
         const updatedBanners = await fetchBanners();
@@ -314,8 +327,11 @@ export const useAdminData = (initialCMSData: CMSData) => {
   const handleBannerDelete = async (id: string | number) => {
     if (!confirm('Are you sure you want to delete this banner?')) return false;
     setSaveLoading(true);
+    // Capture the old image path for cleanup after deletion
+    const existingBanner = banners.find((b) => String(b.ID) === String(id));
+    const oldImagePath = existingBanner?.ImageUrl || '';
     try {
-      const res = await saveBanner({ ID: id }, 'delete');
+      const res = await saveBanner({ ID: id }, 'delete', oldImagePath);
       if (res.success) {
         showAlert(res.message);
         setBanners(prev => prev.filter(b => b.ID !== id));
