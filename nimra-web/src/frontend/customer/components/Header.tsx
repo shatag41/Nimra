@@ -93,14 +93,32 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
         } catch {}
         
         const filteredData = data.filter(n => {
-           const type = String(n.Type || '').toLowerCase();
-           if (type === 'admin' || type === 'inquiry') {
-             return String(n.Message) === "Your inquiry has been reviewed";
+           const notif = n as any;
+           const type = String(notif.Type || notif.type || '').toLowerCase();
+           if (type === 'admin' || type === 'system') {
+             return false;
            }
-           return true;
+           if (!activeUser) return false;
+           
+           const nUserId = notif.UserId ?? notif.userId ?? notif['User ID'] ?? notif['UserId'] ?? notif.CustomerID ?? notif.customerId ?? notif['Customer ID'];
+           const nUsername = notif.Username ?? notif.username ?? notif.Email ?? notif.email;
+           
+           if (nUserId !== undefined && nUserId !== null && String(nUserId).trim() !== '') {
+             return String(nUserId) === String(activeUser.ID);
+           }
+           if (nUsername !== undefined && nUsername !== null && String(nUsername).trim() !== '') {
+             return String(nUsername).toLowerCase() === String(activeUser.Username).toLowerCase();
+           }
+           return false;
         });
 
-        const updated = filteredData.map(n => {
+        const sorted = filteredData.sort((a, b) => {
+          const timeA = new Date(a.CreatedAt || a.Timestamp || 0).getTime();
+          const timeB = new Date(b.CreatedAt || b.Timestamp || 0).getTime();
+          return timeB - timeA;
+        });
+
+        const updated = sorted.map(n => {
           const isRead = readIds.includes(String(n.ID)) || n.Read === true || n.Read === 'true';
           return { ...n, Read: isRead };
         });
@@ -111,9 +129,9 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
     }
   }, [activeUser]);
 
-  const handleMarkAsRead = async (id: string | number, index: number) => {
+  const handleMarkAsRead = async (id: string | number) => {
     try {
-      setNotifications(prev => prev.map((n, i) => i === index ? { ...n, Read: true } : n));
+      setNotifications(prev => prev.map(n => String(n.ID) === String(id) ? { ...n, Read: true } : n));
       
       if (activeUser) {
         const key = `nimra_read_notifs_${activeUser.ID || activeUser.Username}`;
@@ -279,9 +297,9 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                 </button>
 
                 {notificationDropdownOpen && (
-                  <div className="profile-dropdown notification-dropdown-menu animate-fade-in-up">
-                    <div className="dropdown-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <strong>Notifications</strong>
+                  <div className="profile-dropdown notification-dropdown-menu animate-fade-in-up" style={{ width: '360px', padding: '0', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+                    <div className="dropdown-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', borderBottom: '1px solid var(--border-color)' }}>
+                      <strong style={{ fontSize: '1rem', fontWeight: 700 }}>Notifications</strong>
                       {unreadCount > 0 && (
                         <button 
                           onClick={(e) => { e.stopPropagation(); handleMarkAllAsRead(); }}
@@ -291,69 +309,59 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                         </button>
                       )}
                     </div>
-                    <div className="dropdown-divider"></div>
                     {notifications.length === 0 ? (
-                      <div className="notification-empty-state">
+                      <div className="notification-empty-state" style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                        No new notifications
                       </div>
                     ) : (
-                      <div className="notification-list">
-                        {/* RECENT (UNREAD) SECTION */}
-                        {(() => {
-                          const unreadNotifs = notifications.filter(n => n.Read !== true && n.Read !== 'true');
-                          return unreadNotifs.length > 0 && (
-                            <>
-                              <div className="notification-section-label notification-section-label-unread">
-                                Recent
+                      <>
+                        <div className="notification-list" style={{ maxHeight: '320px', overflowY: 'auto' }}>
+                          {notifications.slice(0, 10).map((n) => {
+                            const isUnread = n.Read !== true && n.Read !== 'true';
+                            return (
+                              <div 
+                                key={n.ID} 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (isUnread) handleMarkAsRead(n.ID);
+                                }}
+                                className={`notification-dropdown-item ${isUnread ? 'notification-dropdown-item-unread' : ''}`}
+                                style={{
+                                  padding: '0.85rem 1.25rem',
+                                  borderBottom: '1px solid var(--border-color)',
+                                  background: isUnread ? 'rgba(37, 99, 235, 0.03)' : 'transparent',
+                                  cursor: 'pointer',
+                                  transition: 'background 0.2s ease',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '0.2rem',
+                                  position: 'relative'
+                                }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                                  <strong className={`notification-title ${isUnread ? 'notification-title-unread' : ''}`} style={{ fontSize: '0.85rem', fontWeight: isUnread ? 700 : 600, color: 'var(--text-primary)', paddingRight: isUnread ? '12px' : '0' }}>{n.Title}</strong>
+                                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                                    {new Date(n.CreatedAt || n.Timestamp).toLocaleDateString()}
+                                  </span>
+                                </div>
+                                <p className="notification-message" style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>{n.Message}</p>
+                                {isUnread && (
+                                  <span className="notification-unread-dot" style={{ position: 'absolute', top: '16px', right: '12px', width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary-color)' }} />
+                                )}
                               </div>
-                              {unreadNotifs.map((n) => {
-                                const originalIdx = notifications.findIndex(item => item.ID === n.ID && item.Timestamp === n.Timestamp);
-                                return (
-                                  <div 
-                                    key={`unread-${n.ID}-${originalIdx}`} 
-                                    onClick={() => handleMarkAsRead(n.ID, originalIdx)}
-                                    className="notification-dropdown-item notification-dropdown-item-unread"
-                                  >
-                                    <strong className="notification-title notification-title-unread">{n.Title}</strong>
-                                    <p className="notification-message">{n.Message}</p>
-                                    <small className="notification-date">
-                                      {new Date(n.CreatedAt || n.Timestamp).toLocaleDateString()}
-                                    </small>
-                                    <span className="notification-unread-dot" />
-                                  </div>
-                                );
-                              })}
-                            </>
-                          );
-                        })()}
-
-                        {/* EARLIEST (READ) SECTION */}
-                        {(() => {
-                          const readNotifs = notifications.filter(n => n.Read === true || n.Read === 'true');
-                          return readNotifs.length > 0 && (
-                            <>
-                              <div className="notification-section-label notification-section-label-read">
-                                Earliest
-                              </div>
-                              {readNotifs.map((n) => {
-                                const originalIdx = notifications.findIndex(item => item.ID === n.ID && item.Timestamp === n.Timestamp);
-                                return (
-                                  <div 
-                                    key={`read-${n.ID}-${originalIdx}`} 
-                                    onClick={() => handleMarkAsRead(n.ID, originalIdx)}
-                                    className="notification-dropdown-item"
-                                  >
-                                    <strong className="notification-title">{n.Title}</strong>
-                                    <p className="notification-message">{n.Message}</p>
-                                    <small className="notification-date">
-                                      {new Date(n.CreatedAt || n.Timestamp).toLocaleDateString()}
-                                    </small>
-                                  </div>
-                                );
-                              })}
-                            </>
-                          );
-                        })()}
-                      </div>
+                            );
+                          })}
+                        </div>
+                        <div style={{ padding: '0.75rem 1.25rem', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'center', background: 'var(--bg-secondary)' }}>
+                          <Link 
+                            href="/customer-portal?tab=notifications" 
+                            onClick={() => setNotificationDropdownOpen(false)}
+                            style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--primary-color)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                          >
+                            View All Notifications
+                          </Link>
+                        </div>
+                      </>
                     )}
                   </div>
                 )}

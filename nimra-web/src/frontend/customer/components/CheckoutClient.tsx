@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { CheckoutForm, CheckoutSummary, CheckoutSuccess, SavedAddress, WORLD_DATA } from './portal/Checkout';
 import { migrateLegacyLocalAddresses, normalizeSavedAddresses, persistUserSavedAddresses } from '@/frontend/customer/utils/userAddresses';
 import { clearReorderCheckoutDraft, readReorderCheckoutDraft, ReorderCheckoutDraft, totalsForCheckoutItems } from '@/frontend/customer/utils/reorderDraft';
+import { formatCurrency } from '@/frontend/customer/utils/commerce';
 import type { CartItem, OrderRecord } from '@/types/cms';
 
 const initialForm = {
@@ -46,6 +47,7 @@ export default function CheckoutClient() {
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [isEditingAddress, setIsEditingAddress] = useState(true);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const location = useLocation();
   const isReorderCheckout = Boolean(reorderDraft);
@@ -273,7 +275,7 @@ export default function CheckoutClient() {
     }
   };
 
-  const placeOrder = async (event: FormEvent) => {
+  const handlePlaceOrderClick = (event: FormEvent) => {
     event.preventDefault();
     if (checkoutItems.length === 0) {
       toast.error(isReorderCheckout ? 'This reorder has no products to checkout.' : 'Your cart is empty.');
@@ -286,6 +288,10 @@ export default function CheckoutClient() {
       return;
     }
 
+    setShowConfirmModal(true);
+  };
+
+  const executeOrderPlacement = async () => {
     setStatus({ kind: 'loading', message: 'Placing your order…' });
 
     let selectedSavedAddressId = selectedAddressId || undefined;
@@ -484,7 +490,7 @@ export default function CheckoutClient() {
           <CheckoutSuccess message={status.message} orderId={status.orderId} />
         ) : (
           <div className="checkout-content-wrap">
-            <form className="checkout-grid animate-fade-in" onSubmit={placeOrder} noValidate>
+            <form className="checkout-grid animate-fade-in" onSubmit={handlePlaceOrderClick} noValidate>
               <CheckoutForm
                 form={form}
                 setForm={setForm}
@@ -516,6 +522,74 @@ export default function CheckoutClient() {
           </div>
         )}
       </div>
+      {showConfirmModal && (
+        <div className="co-confirm-modal-overlay">
+          <div className="co-confirm-modal card animate-scale-in">
+            <h3>Confirm Your Order</h3>
+            <p className="modal-desc">Please review your order details before placing it.</p>
+            
+            <div className="modal-summary-section">
+              <h4>Delivery Address</h4>
+              <p>
+                {form.flatNo && `${form.flatNo}, `}
+                {form.buildingName && `${form.buildingName}, `}
+                {form.locality && `${form.locality}, `}
+                {form.city && `${form.city}, `}
+                {form.state && `${form.state}`}
+              </p>
+              <p className="modal-phone">📞 {form.mobile} {form.altMobile ? `/ ${form.altMobile}` : ''}</p>
+            </div>
+
+            <div className="modal-summary-section">
+              <h4>Items</h4>
+              <div className="modal-items-list">
+                {checkoutItems.map((item) => (
+                  <div key={item.productId} className="modal-item-row">
+                    <span className="modal-item-name">{item.name}</span>
+                    <span className="modal-item-qty">x{item.quantity}</span>
+                    <span className="modal-item-price">{formatCurrency((item.price || 0) * item.quantity)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="modal-total-section">
+              <div className="modal-total-row">
+                <span>Subtotal</span>
+                <span>{formatCurrency(checkoutTotals.subtotal)}</span>
+              </div>
+              <div className="modal-total-row">
+                <span>Delivery Charge</span>
+                <span>{formatCurrency(checkoutTotals.deliveryCharge)}</span>
+              </div>
+              <div className="modal-total-row grand-total">
+                <span>Total Amount</span>
+                <strong>{formatCurrency(checkoutTotals.grandTotal)}</strong>
+              </div>
+            </div>
+
+            <div className="modal-actions">
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                onClick={() => setShowConfirmModal(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-primary" 
+                onClick={() => {
+                  setShowConfirmModal(false);
+                  void executeOrderPlacement();
+                }}
+              >
+                Place Order
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <style jsx>{styles}</style>
     </section>
   );
@@ -529,4 +603,122 @@ const styles = `
   .checkout-grid { display: grid; grid-template-columns: 1fr 340px; gap: 1.25rem; align-items: start; }
 
   @media (max-width: 900px) { .checkout-grid { grid-template-columns: 1fr; } }
+
+  /* ── Confirmation Modal ── */
+  .co-confirm-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+  }
+  .co-confirm-modal {
+    width: 100%;
+    max-width: 480px;
+    background: var(--glass-bg, rgba(30, 41, 59, 0.85));
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+    border-radius: var(--radius-xl, 20px);
+    padding: 1.5rem;
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5);
+    color: var(--text-primary);
+  }
+  .co-confirm-modal h3 {
+    margin-top: 0;
+    margin-bottom: 0.25rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+  .modal-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.25rem;
+  }
+  .modal-summary-section {
+    border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+    padding: 0.75rem 0;
+  }
+  .modal-summary-section h4 {
+    margin: 0 0 0.4rem 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary-color, #2563eb);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .modal-summary-section p {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.4;
+  }
+  .modal-phone {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem !important;
+  }
+  .modal-items-list {
+    max-height: 140px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .modal-item-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+  }
+  .modal-item-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-right: 0.5rem;
+  }
+  .modal-item-qty {
+    color: var(--text-secondary);
+    margin-right: 1rem;
+  }
+  .modal-total-section {
+    border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+    padding-top: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .modal-total-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+  .modal-total-row.grand-total {
+    border-top: 1px dashed var(--border-color, rgba(255, 255, 255, 0.08));
+    padding-top: 0.5rem;
+    margin-top: 0.25rem;
+    font-size: 1rem;
+    color: var(--text-primary);
+  }
+  .modal-total-row.grand-total strong {
+    color: var(--primary-color, #2563eb);
+  }
+  .modal-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+  }
+  .modal-actions .btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.6rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
 `;

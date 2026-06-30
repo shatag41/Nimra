@@ -165,23 +165,6 @@ export default function CustomerPortalClient() {
         </section>
       ) : tab === 'profile' ? (
         <section className="portal-centered-content portal-tab-section" style={{ maxWidth: '640px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <section className="metric-grid" aria-label="Profile summary" style={{ gridTemplateColumns: 'repeat(3, 1fr)', margin: '0 auto 1.5rem', padding: '0' }}>
-            <div className="metric-card">
-              <span>Member Since</span>
-              <strong style={{ fontSize: '1.2rem' }}>{user?.CreatedAt ? new Date(user.CreatedAt).toLocaleDateString() : 'N/A'}</strong>
-              <small>Account creation date</small>
-            </div>
-            <div className="metric-card">
-              <span>Account Age</span>
-              <strong>{accountAgeDays} <span style={{fontSize: '1rem'}}>days</span></strong>
-              <small>Active duration</small>
-            </div>
-            <div className="metric-card">
-              <span>Engagement</span>
-              <strong style={{ fontSize: '1.2rem' }}>{orders.length > 10 ? 'VIP Member' : orders.length > 0 ? 'Active Buyer' : 'New User'}</strong>
-              <small>Current status</small>
-            </div>
-          </section>
           <EditProfileForm user={user} onUpdate={(updatedUser) => login(updatedUser)} />
         </section>
       ) : tab === 'notifications' ? (

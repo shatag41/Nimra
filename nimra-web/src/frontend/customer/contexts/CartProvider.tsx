@@ -107,7 +107,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     queueMicrotask(async () => {
       if (cancelled) return;
       setActiveStorageKey(storageKey);
-      setHydrated(!(user && user.ID));
+      const hasLocalItems = storedItems.length > 0;
+      setHydrated(hasLocalItems || !(user && user.ID));
       setItems(storedItems);
       try {
         const [catalog, fetchedCloudItems] = await Promise.all([
