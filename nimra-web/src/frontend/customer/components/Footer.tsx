@@ -34,9 +34,9 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
             <div className="footer-col footer-brand">
               <Link href="/" className="footer-logo" aria-label={`${brandName} home`}>
                 <span className="footer-logo-icon" aria-hidden="true">
-                  <svg width="19" height="19" viewBox="0 0 100 100" fill="none">
+                  <svg width="16" height="16" viewBox="0 0 100 100" fill="none">
                     <path d="M50 5S17 43 17 64a33 33 0 0 0 66 0C83 43 50 5 50 5Z" fill="currentColor" />
-                    <text x="50" y="75" textAnchor="middle" fontSize="40" fontWeight="900" fontFamily="inherit" fill="white">N</text>
+                    <text x="50" y="75" textAnchor="middle" fontSize="40" fontWeight="400" fontFamily="inherit" fill="white">N</text>
                   </svg>
                 </span>
                 <span>{brandName}</span>
