@@ -240,6 +240,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
 
         /* ── Tabs (Pills) ── */
         .submenu-bar {
+          margin-top: -1.25rem;
           display: flex;
           justify-content: center;
           margin-bottom: 0.75rem;
