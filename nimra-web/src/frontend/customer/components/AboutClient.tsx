@@ -200,7 +200,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
 
         /* ── Page Header ── */
         .page-header {
-          margin-bottom: 0.5rem;
+          margin-bottom: 0.25rem;
           padding-bottom: 0;
           text-align: center;
         }
@@ -238,14 +238,11 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
           border: 1px solid rgba(37, 99, 235, 0.2);
         }
 
-        /* ── Sticky Tabs (Pills) ── */
+        /* ── Tabs (Pills) ── */
         .submenu-bar {
-          position: sticky;
-          top: 70px;
-          z-index: 100;
           display: flex;
           justify-content: center;
-          margin-bottom: 0.5rem;
+          margin-bottom: 0.75rem;
           padding: 0 1rem;
         }
         .submenu-container {
@@ -290,27 +287,10 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         .content-card {
           background-color: var(--bg-secondary);
           border-radius: var(--radius-2xl);
-          max-height: 75vh;
-          overflow-y: auto;
-          overflow-x: hidden;
           padding: 1rem;
           box-shadow: 0 8px 30px rgba(0,0,0,0.04);
           border: 1px solid var(--border-color);
           position: relative;
-        }
-        
-        .content-card::-webkit-scrollbar {
-          width: 8px;
-        }
-        .content-card::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .content-card::-webkit-scrollbar-thumb {
-          background: rgba(150, 150, 150, 0.25);
-          border-radius: 10px;
-        }
-        .content-card::-webkit-scrollbar-thumb:hover {
-          background: rgba(150, 150, 150, 0.4);
         }
 
         /* ── Animations ── */
@@ -519,7 +499,6 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         @media (max-width: 1024px) {
           .content-card {
             padding: 1.25rem;
-            max-height: 80vh;
           }
           .about-grid {
             grid-template-columns: 1fr;
