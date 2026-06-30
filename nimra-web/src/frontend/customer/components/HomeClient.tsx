@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Link from 'next/link';
 import Image from 'next/image';
 import { Banner, Product, FAQ, CompanyInfo } from '@/types/cms';
+import { FAQs } from './portal/FAQs';
 
 interface HomeClientProps {
   banners: Banner[];
@@ -13,7 +14,6 @@ interface HomeClientProps {
 }
 
 export default function HomeClient({ banners, products, faqs, companyInfo }: HomeClientProps) {
-  const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [carouselEnabled, setCarouselEnabled] = useState(true);
   const [{ activeBanner, loadedBannerIndexes }, setCarouselState] = useState(() => ({
     activeBanner: 0,
@@ -70,10 +70,6 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
       return { activeBanner: index, loadedBannerIndexes: nextLoaded };
     });
   }, [banners.length]);
-
-  const toggleFaq = useCallback((index: number) => {
-    setActiveFaq((current) => current === index ? null : index);
-  }, []);
 
   const spotlightProducts = useMemo(() => products.slice(0, 3), [products]);
 
@@ -399,7 +395,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
       </section>
 
       {/* ─── 6. FAQ ─────────────────────────────────────────────────────────── */}
-      <section className="faq-section home-deferred-section">
+      <section className="faq-section">
         <div className="container">
           <div className="section-header">
             <span className="badge badge-primary">FAQ</span>
@@ -407,28 +403,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
             <p>Everything you need to know about our quality standards, plant location, and delivery orders.</p>
           </div>
 
-          <div className="faq-accordion-box">
-            {faqs.map((faq, idx) => (
-              <div
-                key={faq.ID}
-                className={`faq-item ${idx === activeFaq ? 'active' : ''}`}
-                onClick={() => toggleFaq(idx)}
-              >
-                <div className="faq-question">
-                  <div className="faq-q-inner">
-                    <span className="faq-num">{String(idx + 1).padStart(2, '0')}</span>
-                    <h3>{faq.Question}</h3>
-                  </div>
-                  <span className="faq-icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m6 9 6 6 6-6"/></svg>
-                  </span>
-                </div>
-                <div className="faq-answer">
-                  <p>{faq.Answer}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <FAQs faqs={faqs} />
         </div>
       </section>
 
@@ -1258,96 +1233,6 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           line-height: 1.5;
         }
 
-        .faq-accordion-box {
-          max-width: 820px;
-          margin: 0 auto;
-          display: flex;
-          flex-direction: column;
-          gap: 0.55rem;
-        }
-
-        .faq-item {
-          border-radius: var(--radius-md);
-          background: var(--bg-primary);
-          border: 1.5px solid var(--border-color);
-          overflow: hidden;
-          cursor: pointer;
-          transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
-        }
-        .faq-item:hover { border-color: var(--primary-color); box-shadow: var(--shadow-md); }
-        .faq-item.active {
-          border-color: var(--primary-color);
-          box-shadow: 0 0 0 3px rgba(0,150,58,0.1);
-        }
-
-        .faq-question {
-          padding: 0.85rem 1.1rem;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 0.75rem;
-          user-select: none;
-        }
-
-        .faq-q-inner {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-        }
-
-        .faq-num {
-          font-size: 0.72rem;
-          font-weight: 800;
-          color: var(--primary-color);
-          background: rgba(0,150,58,0.1);
-          border: 1px solid rgba(0,150,58,0.2);
-          width: 28px;
-          height: 28px;
-          border-radius: 6px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          letter-spacing: 0;
-        }
-
-        .faq-question h3 {
-          font-size: 0.95rem;
-          font-weight: 600;
-          line-height: 1.4;
-        }
-
-        .faq-icon {
-          width: 30px;
-          height: 30px;
-          border-radius: 6px;
-          background: var(--bg-secondary);
-          border: 1px solid var(--border-color);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          transition: transform var(--transition-normal), background var(--transition-fast), border-color var(--transition-fast);
-          color: var(--text-secondary);
-        }
-        .faq-item.active .faq-icon {
-          transform: rotate(180deg);
-          background: var(--primary-color);
-          border-color: var(--primary-color);
-          color: white;
-        }
-
-        .faq-answer {
-          max-height: 0;
-          overflow: hidden;
-          transition: max-height var(--transition-normal) ease-out, padding var(--transition-normal);
-        }
-        .faq-item.active .faq-answer {
-          max-height: 240px;
-          border-top: 1px solid var(--border-color);
-          padding: 0.85rem 1.1rem 0.9rem calc(1.1rem + 28px + 0.75rem);
-        }
-        .faq-answer p { font-size: 0.9rem; line-height: 1.55; color: var(--text-secondary); }
 
         /* ── Responsive ─────────────────────────────────────────────────────── */
         @media (max-width: 1024px) {
@@ -1376,10 +1261,6 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           .trust-divider { display: none; }
           .faq-section { padding-top: 1.75rem; padding-bottom: 1.75rem; }
           .faq-section .section-header { margin-bottom: 1.25rem; }
-          .faq-question { padding: 0.75rem 0.85rem; }
-          .faq-item.active .faq-answer {
-            padding: 0.75rem 0.85rem 0.8rem calc(0.85rem + 28px + 0.75rem);
-          }
         }
       `}</style>
     </div>
