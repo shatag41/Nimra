@@ -194,13 +194,13 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
       <style jsx>{`
         .about-page {
           padding-top: 0;
-          padding-bottom: 2rem;
+          padding-bottom: 1rem;
           font-family: var(--font-body);
         }
 
         /* ── Page Header ── */
         .page-header {
-          margin-bottom: 1.5rem;
+          margin-bottom: 1rem;
           padding-bottom: 0;
           text-align: center;
         }
@@ -245,7 +245,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
           z-index: 100;
           display: flex;
           justify-content: center;
-          margin-bottom: 1.5rem;
+          margin-bottom: 1rem;
           padding: 0 1rem;
         }
         .submenu-container {
@@ -293,7 +293,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
           max-height: 80vh;
           overflow-y: auto;
           overflow-x: hidden;
-          padding: 2.5rem;
+          padding: 1.5rem;
           box-shadow: 0 8px 30px rgba(0,0,0,0.04);
           border: 1px solid var(--border-color);
           position: relative;
@@ -326,7 +326,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         .about-grid {
           display: grid;
           grid-template-columns: 1.1fr 0.9fr;
-          gap: 2.5rem;
+          gap: 1.5rem;
           align-items: center; /* Changed from stretch to center to match content height */
         }
         .about-content {
@@ -336,7 +336,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         }
         .about-content h2 {
           font-size: 2rem;
-          margin-bottom: 1rem;
+          margin-bottom: 0.5rem;
           color: var(--text-primary);
         }
         .about-content p {
@@ -348,8 +348,8 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         /* Stats */
         .stat-row {
           display: flex;
-          gap: 2rem;
-          margin-top: 2rem;
+          gap: 1.5rem;
+          margin-top: 1rem;
         }
         .stat-item {
           display: flex;
@@ -373,7 +373,8 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
 
         /* Responsive Images & Maps */
         .about-img-box, .plant-map-box {
-          width: 100%;
+          width: 85%;
+          margin: 0 auto;
           border-radius: var(--radius-2xl); /* Match large rounded corners */
           overflow: hidden;
           box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -411,7 +412,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         .quality-intro {
           text-align: center;
           max-width: 600px;
-          margin: 0 auto 1.5rem;
+          margin: 0 auto 1rem;
         }
         .quality-intro h2 {
           font-size: 1.8rem;
@@ -428,7 +429,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         .steps-grid {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
-          gap: 0.75rem;
+          gap: 0.5rem;
           align-items: start;
         }
 
@@ -497,7 +498,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         }
 
         .plant-info-card {
-          margin-top: 2rem;
+          margin-top: 1rem;
           padding: 1.25rem;
           border-radius: var(--radius-lg);
           border-left: 4px solid var(--primary-color);

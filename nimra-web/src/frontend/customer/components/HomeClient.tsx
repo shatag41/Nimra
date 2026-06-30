@@ -750,6 +750,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           background: var(--bg-secondary);
           position: relative;
           overflow: hidden;
+          padding: 2rem 0;
         }
 
         .story-bg-shape {
@@ -766,7 +767,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         .story-grid {
           display: grid;
           grid-template-columns: 1fr 1.1fr;
-          gap: 5rem;
+          gap: 3rem;
           align-items: center;
         }
 
@@ -777,7 +778,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           overflow: hidden;
           box-shadow: var(--shadow-xl);
           position: relative;
-          aspect-ratio: 4/3;
+          aspect-ratio: 16/9;
           width: 100%;
         }
 
@@ -823,30 +824,30 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         }
 
         .story-title {
-          font-size: clamp(2rem, 3.5vw, 2.75rem);
+          font-size: clamp(1.75rem, 3vw, 2.25rem);
           font-weight: 800;
-          margin: 1rem 0 1.25rem;
+          margin: 0.5rem 0 0.75rem;
           letter-spacing: -0.025em;
           line-height: 1.15;
         }
 
         .story-description {
-          line-height: 1.75;
+          line-height: 1.5;
           color: var(--text-secondary);
-          margin-bottom: 2rem;
+          margin-bottom: 1.25rem;
           font-size: 1rem;
         }
 
         .values-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 1rem;
+          gap: 0.75rem;
         }
 
         .value-item {
           display: flex;
-          gap: 0.85rem;
-          padding: 1rem 1.1rem;
+          gap: 0.6rem;
+          padding: 0.6rem 0.8rem;
           border-radius: var(--radius-lg);
           background: var(--bg-primary);
           border: 1px solid var(--border-color);
@@ -860,8 +861,8 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         }
 
         .value-icon {
-          width: 42px;
-          height: 42px;
+          width: 32px;
+          height: 32px;
           border-radius: var(--radius-md);
           background: rgba(37,99,235,0.1);
           display: flex;
@@ -872,6 +873,8 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
 
         .value-item h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.2rem; }
         .value-item p  { font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
+        
+        .story-cta { margin-top: 1rem; }
 
         /* ── Products ───────────────────────────────────────────────────────── */
         .product-preview-section {
