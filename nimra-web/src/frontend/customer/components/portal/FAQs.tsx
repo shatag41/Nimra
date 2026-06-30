@@ -36,11 +36,13 @@ export function FAQs({ faqs, variant = 'default', limit }: FAQsProps) {
               <h3>{faq.Question}</h3>
             </div>
             <span className="faq-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m6 9 6 6 6-6"/></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
             </span>
           </button>
           <div id={`faq-answer-${faq.ID}`} className="faq-answer">
-            <p>{faq.Answer}</p>
+            <div className="faq-answer-inner">
+              <p>{faq.Answer}</p>
+            </div>
           </div>
         </div>
       ))}
@@ -50,25 +52,28 @@ export function FAQs({ faqs, variant = 'default', limit }: FAQsProps) {
           margin: 0 auto;
           display: flex;
           flex-direction: column;
-          gap: 0.5rem;
+          gap: 0.35rem;
         }
 
         .faq-item {
           border-radius: var(--radius-lg);
           background: var(--bg-primary);
-          border: 1.5px solid var(--border-color);
+          border: 1px solid var(--border-color);
           overflow: hidden;
-          transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
+          transition: all 0.25s ease;
         }
-        .faq-item:hover { border-color: var(--primary-color); box-shadow: var(--shadow-md); }
+        .faq-item:hover {
+          border-color: rgba(0, 150, 58, 0.4);
+          background: rgba(0, 150, 58, 0.01);
+        }
         .faq-item.active {
           border-color: var(--primary-color);
-          box-shadow: 0 0 0 3px rgba(0,150,58,0.1);
+          background: rgba(0, 150, 58, 0.02);
         }
 
         .faq-question {
           width: 100%;
-          padding: 1rem 1.25rem;
+          padding: 0.85rem 1rem;
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -84,63 +89,70 @@ export function FAQs({ faqs, variant = 'default', limit }: FAQsProps) {
         .faq-q-inner {
           display: flex;
           align-items: center;
-          gap: 1rem;
+          gap: 0.75rem;
         }
 
         .faq-num {
-          font-size: 0.72rem;
-          font-weight: 800;
+          font-size: 0.65rem;
+          font-weight: 700;
           color: var(--primary-color);
-          background: rgba(0,150,58,0.1);
-          border: 1px solid rgba(0,150,58,0.2);
-          width: 32px;
-          height: 32px;
-          border-radius: 8px;
+          background: rgba(0, 150, 58, 0.1);
+          width: 26px;
+          height: 26px;
+          border-radius: 6px;
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
-          letter-spacing: 0;
         }
 
         .faq-question h3 {
-          font-size: 1rem;
+          font-size: 0.9rem;
           font-weight: 600;
           line-height: 1.4;
           margin: 0;
+          text-align: left;
+          transition: color 0.25s ease, font-weight 0.25s ease;
+        }
+        .faq-item.active .faq-question h3 {
+          color: var(--primary-color);
+          font-weight: 700;
         }
 
         .faq-icon {
-          width: 34px;
-          height: 34px;
-          border-radius: 8px;
-          background: var(--bg-secondary);
-          border: 1px solid var(--border-color);
+          width: 26px;
+          height: 26px;
+          border-radius: 6px;
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
-          transition: transform var(--transition-normal), background var(--transition-fast), border-color var(--transition-fast);
-          color: var(--text-secondary);
+          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s;
+          color: var(--text-muted);
         }
         .faq-item.active .faq-icon {
           transform: rotate(180deg);
-          background: var(--primary-color);
-          border-color: var(--primary-color);
-          color: white;
+          color: var(--primary-color);
         }
 
         .faq-answer {
-          max-height: 0;
-          overflow: hidden;
-          transition: max-height var(--transition-normal) ease-out, padding var(--transition-normal);
+          display: grid;
+          grid-template-rows: 0fr;
+          transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .faq-item.active .faq-answer {
-          max-height: 240px;
-          border-top: 1px solid var(--border-color);
-          padding: 1rem 1.25rem 1rem calc(1.25rem + 32px + 1rem);
+          grid-template-rows: 1fr;
         }
-        .faq-answer p { font-size: 0.95rem; line-height: 1.65; color: var(--text-secondary); margin: 0; }
+        .faq-answer-inner {
+          overflow: hidden;
+        }
+        .faq-answer-inner p { 
+          font-size: 0.85rem; 
+          line-height: 1.5; 
+          color: var(--text-secondary); 
+          margin: 0; 
+          padding: 0 1rem 0.85rem calc(1rem + 26px + 0.75rem);
+        }
 
         .faq-accordion-box.compact { gap: 0.35rem; max-width: none; }
         .compact .faq-item { border-width: 1px; border-radius: var(--radius-md); box-shadow: none; }
@@ -153,16 +165,19 @@ export function FAQs({ faqs, variant = 'default', limit }: FAQsProps) {
         .compact .faq-icon { width: 22px; height: 22px; border-radius: 5px; }
         .compact .faq-icon svg { width: 12px; height: 12px; }
         .compact .faq-item.active .faq-answer {
-          max-height: 200px;
-          padding: 0.5rem 0.55rem 0.55rem calc(0.55rem + 21px + 0.5rem);
+          grid-template-rows: 1fr;
         }
-        .compact .faq-answer p { font-size: 0.7rem; line-height: 1.45; }
+        .compact .faq-answer-inner p { 
+          padding: 0 0.55rem 0.55rem calc(0.55rem + 21px + 0.5rem);
+          font-size: 0.7rem; 
+          line-height: 1.45; 
+        }
 
         @media (max-width: 480px) {
-          .faq-question { padding: 0.9rem; }
-          .faq-item.active .faq-answer { padding: 0.9rem; }
+          .faq-question { padding: 0.75rem; }
+          .faq-answer-inner p { padding: 0 0.75rem 0.75rem; }
           .compact .faq-question { padding: 0.5rem; }
-          .compact .faq-item.active .faq-answer { padding: 0.5rem; }
+          .compact .faq-answer-inner p { padding: 0 0.5rem 0.5rem; }
         }
       `}</style>
     </div>

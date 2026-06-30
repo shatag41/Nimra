@@ -419,18 +419,24 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
           border-radius: var(--radius-lg);
           border: 1px solid var(--border-color);
           overflow: hidden;
-          transition: all var(--transition-fast);
+          transition: all 0.25s ease;
           height: fit-content;
         }
         .accordion-item:hover {
+          border-color: rgba(0, 150, 58, 0.4);
+          background: rgba(0, 150, 58, 0.01);
+        }
+        .accordion-item.open {
           border-color: var(--primary-color);
+          background: rgba(0, 150, 58, 0.02);
+          box-shadow: none;
         }
         .accordion-header {
           width: 100%;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 0.65rem 0.85rem;
+          padding: 0.6rem 0.75rem;
           background: transparent;
           border: none;
           cursor: pointer;
@@ -438,13 +444,13 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         }
         .accordion-header h4 {
           font-size: 0.85rem;
-          font-weight: 700;
+          font-weight: 600;
           margin: 0;
           text-align: left;
         }
         .chevron {
           color: var(--text-muted);
-          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s;
           flex-shrink: 0;
           margin-left: 0.5rem;
         }
@@ -454,10 +460,6 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         }
         .accordion-item.open .accordion-header h4 {
           color: var(--primary-color);
-        }
-        .accordion-item.open {
-          box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-          border-color: var(--border-color);
         }
         .accordion-content-wrapper {
           display: grid;
@@ -471,11 +473,11 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
           overflow: hidden;
         }
         .accordion-content p {
-          padding: 0 0.85rem 0.85rem;
+          padding: 0 0.75rem 0.75rem;
           margin: 0;
           color: var(--text-secondary);
-          font-size: 0.85rem;
-          line-height: 1.5;
+          font-size: 0.8rem;
+          line-height: 1.45;
         }
 
         .plant-info-card {
