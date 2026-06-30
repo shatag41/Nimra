@@ -880,7 +880,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         .product-preview-section {
           background: var(--bg-primary);
           position: relative;
-          padding-bottom: 1.25rem;
+          padding: 2rem 0 1rem;
         }
 
         .section-bg-dots {
@@ -894,11 +894,11 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         .section-header {
           text-align: center;
           max-width: 640px;
-          margin: 0 auto 3.5rem;
+          margin: 0 auto 2rem;
         }
         .section-header h2 {
           font-size: clamp(1.8rem, 3vw, 2.5rem);
-          margin: 0.85rem 0;
+          margin: 0.5rem 0;
           font-weight: 800;
           letter-spacing: -0.02em;
         }
@@ -911,7 +911,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         .preview-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 1.75rem;
+          gap: 1.25rem;
         }
 
         .product-preview-card {
@@ -934,7 +934,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         .prod-img-box {
           width: 100%;
           height: auto;
-          aspect-ratio: 4 / 3;
+          aspect-ratio: 16 / 10;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -961,13 +961,13 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           background: radial-gradient(circle at center, rgba(37,99,235,0.06) 0%, transparent 70%);
         }
 
-        .prod-info-box { padding: 1rem; flex: 1; display: flex; flex-direction: column; }
+        .prod-info-box { padding: 0.75rem; flex: 1; display: flex; flex-direction: column; }
 
         .prod-meta {
           display: flex;
           align-items: center;
           gap: 0.35rem;
-          margin-bottom: 0.4rem;
+          margin-bottom: 0.2rem;
         }
 
         .prod-vol {
@@ -993,7 +993,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
         }
 
         .prod-info-box h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.3rem; }
-        .prod-info-box p  { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 0.85rem; flex: 1; }
+        .prod-info-box p  { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 0.5rem; flex: 1; }
 
         .prod-footer {
           width: 100%;
@@ -1002,7 +1002,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           justify-content: space-between;
           margin-top: auto;
           border-top: 1px solid var(--border-color);
-          padding-top: 0.75rem;
+          padding-top: 0.5rem;
         }
 
         .prod-price-label {
@@ -1032,7 +1032,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
 
         .view-all-wrap {
           text-align: center;
-          margin-top: 1.25rem;
+          margin-top: 1rem;
         }
         
         .view-all-wrap .btn-lg {
