@@ -8,10 +8,6 @@ import { getUploadImageUrl, getUploadStoragePath } from '@/utils/uploadImage';
 const EMAIL_PREFERENCE_DEFAULTS = {
   orderConfirmation: true,
   orderStatusUpdates: true,
-  deliveryUpdates: true,
-  promotionsOffers: false,
-  accountSecurity: true,
-  newsletter: false,
 };
 
 const normalizeEmailPreferences = (value: unknown) => {

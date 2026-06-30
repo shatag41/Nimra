@@ -1952,11 +1952,7 @@ function handleUserCRUD(spreadsheet, params) {
 function getDefaultEmailPreferences() {
   return {
     orderConfirmation: true,
-    orderStatusUpdates: true,
-    deliveryUpdates: true,
-    promotionsOffers: false,
-    accountSecurity: true,
-    newsletter: false
+    orderStatusUpdates: true
   };
 }
 
@@ -3367,6 +3363,39 @@ function getCart(spreadsheet, params) {
   return { success: true, items: [] };
 }
 
+function isEmailCategoryEnabled(email, categoryKey) {
+  if (!email) return false;
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  if (!spreadsheet) return true;
+  var sheet = spreadsheet.getSheetByName('Users');
+  if (!sheet) return true;
+
+  var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return true;
+  var headers = data[0];
+  var emailIndex = findHeaderIndex(headers, ['Email', 'Username']);
+  var preferencesIndex = findHeaderIndex(headers, ['Email Preferences']);
+  if (emailIndex < 0 || preferencesIndex < 0) return true;
+
+  var targetEmail = normalizeEmail(email);
+  for (var i = 1; i < data.length; i++) {
+    if (normalizeEmail(data[i][emailIndex]) === targetEmail) {
+      var prefStr = data[i][preferencesIndex];
+      if (!prefStr) return true;
+      try {
+        var prefs = JSON.parse(prefStr);
+        if (prefs[categoryKey] !== undefined) {
+          return Boolean(prefs[categoryKey]);
+        }
+      } catch (error) {
+        Logger.log('Error parsing email preferences for ' + email + ': ' + error);
+      }
+      break;
+    }
+  }
+  return true;
+}
+
 function sendWelcomeEmail(email, name) {
   email = normalizeEmail(email);
   if (!email || !isValidEmail(email)) {
@@ -3392,6 +3421,10 @@ function sendOrderConfirmationEmail(email, name, orderId, products, totalAmount,
   if (!email || !isValidEmail(email)) {
     Logger.log("sendOrderConfirmationEmail skipped: invalid email address provided.");
     return { sent: false };
+  }
+  if (!isEmailCategoryEnabled(email, 'orderConfirmation')) {
+    Logger.log("sendOrderConfirmationEmail skipped: user opted out of order confirmation emails.");
+    return { sent: false, error: 'User opted out of order confirmation emails.' };
   }
   var displayName = String(name || 'Customer').trim();
   var trackingUrl = 'https://nimrawater.com/track?orderId=' + encodeURIComponent(orderId) + '&mobile=' + encodeURIComponent(mobile || '') + '&autoSubmit=true';
@@ -3419,6 +3452,10 @@ function sendOrderStatusUpdateEmail(email, name, orderId, status, mobile) {
   if (!email || !isValidEmail(email)) {
     Logger.log("sendOrderStatusUpdateEmail skipped: invalid email address provided.");
     return { sent: false };
+  }
+  if (!isEmailCategoryEnabled(email, 'orderStatusUpdates')) {
+    Logger.log("sendOrderStatusUpdateEmail skipped: user opted out of order status update emails.");
+    return { sent: false, error: 'User opted out of order status update emails.' };
   }
   var displayName = String(name || 'Customer').trim();
   var trackingUrl = 'https://nimrawater.com/track?orderId=' + encodeURIComponent(orderId) + '&mobile=' + encodeURIComponent(mobile || '') + '&autoSubmit=true';
@@ -3454,6 +3491,10 @@ function sendOrderStatusUpdateEmail(email, name, orderId, status, mobile) {
 function sendCancellationDecisionEmail(email, name, orderId, decision, adminRemarks, refundStatus, mobile) {
   email = normalizeEmail(email);
   if (!email || !isValidEmail(email)) return { sent: false };
+  if (!isEmailCategoryEnabled(email, 'orderStatusUpdates')) {
+    Logger.log("sendCancellationDecisionEmail skipped: user opted out of order status update emails.");
+    return { sent: false, error: 'User opted out of order status update emails.' };
+  }
   var displayName = String(name || 'Customer').trim();
   var approved = decision === 'Approved';
   var trackingUrl = 'https://nimrawater.com/track?orderId=' + encodeURIComponent(orderId) + '&mobile=' + encodeURIComponent(mobile || '') + '&autoSubmit=true';

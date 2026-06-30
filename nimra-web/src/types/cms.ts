@@ -216,10 +216,6 @@ export interface AdminUser {
 export interface EmailPreferences {
   orderConfirmation: boolean;
   orderStatusUpdates: boolean;
-  deliveryUpdates: boolean;
-  promotionsOffers: boolean;
-  accountSecurity: boolean;
-  newsletter: boolean;
 }
 
 export interface Notification {

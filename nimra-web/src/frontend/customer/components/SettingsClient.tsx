@@ -19,11 +19,7 @@ const preferenceOptions: Array<{
   description: string;
 }> = [
   { key: 'orderConfirmation', label: 'Order Confirmation', description: 'Receipt and confirmation after placing an order.' },
-  { key: 'orderStatusUpdates', label: 'Order Status Updates', description: 'Changes to processing and fulfilment status.' },
-  { key: 'deliveryUpdates', label: 'Delivery Updates', description: 'Dispatch and delivery progress notifications.' },
-  { key: 'promotionsOffers', label: 'Promotions & Offers', description: 'Special prices, product offers, and seasonal deals.' },
-  { key: 'accountSecurity', label: 'Account Security', description: 'Important login and account safety alerts.' },
-  { key: 'newsletter', label: 'Newsletter', description: 'Occasional NIMRA news and product updates.' },
+  { key: 'orderStatusUpdates', label: 'Order Status Updates', description: 'Changes to processing, fulfillment, and delivery status.' },
 ];
 
 function SettingsIcon({ type }: { type: 'lock' | 'mail' | 'trash' }) {
@@ -37,7 +33,7 @@ function SettingsIcon({ type }: { type: 'lock' | 'mail' | 'trash' }) {
 }
 
 export default function SettingsClient() {
-  const { user, isAuthenticated, isLoading, clearSession } = useAuth();
+  const { user, isAuthenticated, isLoading, clearSession, updateUserSession } = useAuth();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [preferences, setPreferences] = useState<EmailPreferences | null>(null);
@@ -79,6 +75,7 @@ export default function SettingsClient() {
     setSavingPreferences(false);
     if (result.success && result.preferences) {
       setPreferences(result.preferences);
+      updateUserSession({ ...user, EmailPreferences: JSON.stringify(result.preferences) });
       toast.success(result.message);
     } else {
       toast.error(result.message);
