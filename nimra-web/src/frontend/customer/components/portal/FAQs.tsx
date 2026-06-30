@@ -50,7 +50,7 @@ export function FAQs({ faqs, variant = 'default', limit }: FAQsProps) {
           margin: 0 auto;
           display: flex;
           flex-direction: column;
-          gap: 0.875rem;
+          gap: 0.5rem;
         }
 
         .faq-item {
@@ -68,7 +68,7 @@ export function FAQs({ faqs, variant = 'default', limit }: FAQsProps) {
 
         .faq-question {
           width: 100%;
-          padding: 1.25rem 1.5rem;
+          padding: 1rem 1.25rem;
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -138,7 +138,7 @@ export function FAQs({ faqs, variant = 'default', limit }: FAQsProps) {
         .faq-item.active .faq-answer {
           max-height: 240px;
           border-top: 1px solid var(--border-color);
-          padding: 1.25rem 1.5rem 1.25rem calc(1.5rem + 32px + 1rem);
+          padding: 1rem 1.25rem 1rem calc(1.25rem + 32px + 1rem);
         }
         .faq-answer p { font-size: 0.95rem; line-height: 1.65; color: var(--text-secondary); margin: 0; }
 

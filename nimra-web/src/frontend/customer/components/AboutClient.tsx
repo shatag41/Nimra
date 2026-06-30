@@ -48,16 +48,16 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
   };
 
   const steps = [
-    { title: '1. Source Intake', desc: 'Water is sourced responsibly from clean, underground aquifers.' },
-    { title: '2. Dual Sand Filter', desc: 'Removes visible suspended particles, dust, and silt.' },
-    { title: '3. Activated Carbon', desc: 'Adsorbs chlorine, organic materials, and cancels odor/color.' },
-    { title: '4. Micron Cartridge', desc: 'Pre-RO filtration that blocks particles down to 5 microns.' },
-    { title: '5. Reverse Osmosis', desc: 'High pressure RO membranes eliminate 98%+ dissolved solids & heavy metals.' },
-    { title: '6. Mineralization', desc: 'Balances water by injecting precise health-boosting Potassium & Magnesium.' },
-    { title: '7. Ultra Polish', desc: 'Superfine polishing gives the water a sparkling, crystal-clear appearance.' },
-    { title: '8. UV Treatment', desc: 'Passes through high-intensity ultraviolet chambers to destroy biological microbes.' },
-    { title: '9. Ozonation', desc: 'Enriches water with active oxygen ozone to maintain shelf-life sterile security.' },
-    { title: '10. Hourly Labs Auditing', desc: 'Chemical & microbiological testing performed on batches every single hour.' }
+    { title: '1. Sourcing Water', desc: 'We responsibly source our water from deep, clean underground aquifers.' },
+    { title: '2. Sand Filtration', desc: 'Removes dust, silt, and visible particles to clear the water.' },
+    { title: '3. Carbon Filtering', desc: 'Removes chlorine and organic materials, ensuring no odors or color.' },
+    { title: '4. Micron Filtration', desc: 'Blocks tiny particles down to 5 microns before reverse osmosis.' },
+    { title: '5. Reverse Osmosis', desc: 'High-pressure RO removes over 98% of dissolved solids and impurities.' },
+    { title: '6. Adding Minerals', desc: 'We add essential minerals like Potassium and Magnesium for health.' },
+    { title: '7. Fine Polishing', desc: 'Gives the water a crystal-clear, sparkling finish.' },
+    { title: '8. UV Protection', desc: 'Intense ultraviolet light destroys any remaining microbes.' },
+    { title: '9. Ozone Enrichment', desc: 'Active oxygen keeps the water sterile and safe for a long shelf-life.' },
+    { title: '10. Hourly Quality Checks', desc: 'We test water chemistry and purity every hour for absolute safety.' }
   ];
 
   return (
@@ -65,8 +65,8 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
       {/* Page Header */}
       <div className="page-header">
         <span className="badge badge-primary">About Us</span>
-        <h1>Quality Sourced. Safely Sealed.</h1>
-        <p className="hero-subtitle">Driven by the principles of safety, purity, and customer health under T.S. Enterprises.</p>
+        <h1>Pure Water, Safely Sealed.</h1>
+        <p className="hero-subtitle">Committed to your health and safety with every drop, brought to you by T.S. Enterprises.</p>
       </div>
 
       {/* Navigation Sub-menu (Sticky Pills) */}
@@ -88,10 +88,10 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
             <div className="fade-enter">
               <div className="about-grid">
                 <div className="about-content">
-                  <h2>The NIMRA Philosophy</h2>
+                  <h2>Our Story</h2>
                   <p>{companyInfo.AboutStory}</p>
-                  <p style={{ marginTop: '1rem' }}>
-                    Every case of NIMRA is produced in state-of-the-art packaging lines. We strive to provide premium-grade beverage options to communities across Pune. Our commitment is backed by absolute compliance with BIS (ISI IS 14543) and FSSAI standards.
+                  <p style={{ marginTop: '0.75rem' }}>
+                    Every bottle of NIMRA is crafted using advanced technology. We proudly serve communities in Pune with premium water that meets strict BIS and FSSAI quality standards.
                   </p>
                   <div className="stat-row">
                     <div className="stat-item">
@@ -109,7 +109,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
                   </div>
                 </div>
                 <div className="about-img-box" aria-hidden="true">
-                  <span className="about-water-mark">NIMRA</span>
+                  <img src="/images/nimra_premium_water.png" alt="NIMRA Premium Water Splash" />
                 </div>
               </div>
             </div>
@@ -119,7 +119,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
           {activeSection === 'quality' && (
             <div className="fade-enter">
               <div className="quality-intro">
-                <h2>Purified Through 10 Rigorous Steps</h2>
+                <h2>Our 10-Step Purification Process</h2>
                 <p>{companyInfo.QualityText}</p>
               </div>
               
@@ -151,7 +151,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
             <div className="fade-enter">
               <div className="about-grid plant-grid">
                 <div className="about-content">
-                  <h2>Our Manufacturing Facility</h2>
+                  <h2>Where Purity Begins</h2>
                   <p>{companyInfo.InfrastructureText}</p>
                   <div className="plant-info-card glass">
                     <h4>Factory Address</h4>
@@ -181,8 +181,8 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
           {activeSection === 'faqs' && (
             <div id="faqs" className="fade-enter faq-content">
               <div className="quality-intro">
-                <h2>Frequently Asked Questions</h2>
-                <p>Find answers about NIMRA products, quality, ordering, and delivery.</p>
+                <h2>Common Questions</h2>
+                <p>Everything you need to know about our water, quality, and delivery.</p>
               </div>
               {activeFaqs.length > 0 ? <FAQs faqs={activeFaqs} /> : <p className="faq-empty">No FAQs are available right now.</p>}
             </div>
@@ -194,13 +194,13 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
       <style jsx>{`
         .about-page {
           padding-top: 0;
-          padding-bottom: 1rem;
+          padding-bottom: 0.5rem;
           font-family: var(--font-body);
         }
 
         /* ── Page Header ── */
         .page-header {
-          margin-bottom: 1rem;
+          margin-bottom: 0.5rem;
           padding-bottom: 0;
           text-align: center;
         }
@@ -230,7 +230,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.05em;
-          margin-bottom: 1rem;
+          margin-bottom: 0.5rem;
         }
         .badge-primary {
           background: rgba(37, 99, 235, 0.1);
@@ -245,7 +245,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
           z-index: 100;
           display: flex;
           justify-content: center;
-          margin-bottom: 1rem;
+          margin-bottom: 0.5rem;
           padding: 0 1rem;
         }
         .submenu-container {
@@ -290,10 +290,10 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         .content-card {
           background-color: var(--bg-secondary);
           border-radius: var(--radius-2xl);
-          max-height: 80vh;
+          max-height: 75vh;
           overflow-y: auto;
           overflow-x: hidden;
-          padding: 1.5rem;
+          padding: 1rem;
           box-shadow: 0 8px 30px rgba(0,0,0,0.04);
           border: 1px solid var(--border-color);
           position: relative;
@@ -326,7 +326,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         .about-grid {
           display: grid;
           grid-template-columns: 1.1fr 0.9fr;
-          gap: 1.5rem;
+          gap: 1rem;
           align-items: center; /* Changed from stretch to center to match content height */
         }
         .about-content {
@@ -348,8 +348,8 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         /* Stats */
         .stat-row {
           display: flex;
-          gap: 1.5rem;
-          margin-top: 1rem;
+          gap: 1rem;
+          margin-top: 0.5rem;
         }
         .stat-item {
           display: flex;
@@ -412,7 +412,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         .quality-intro {
           text-align: center;
           max-width: 600px;
-          margin: 0 auto 1rem;
+          margin: 0 auto 0.5rem;
         }
         .quality-intro h2 {
           font-size: 1.8rem;
@@ -429,7 +429,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         .steps-grid {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
-          gap: 0.5rem;
+          gap: 0.25rem;
           align-items: start;
         }
 
@@ -449,7 +449,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 0.85rem 1rem;
+          padding: 0.65rem 0.85rem;
           background: transparent;
           border: none;
           cursor: pointer;
@@ -490,7 +490,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
           overflow: hidden;
         }
         .accordion-content p {
-          padding: 0 1rem 1rem;
+          padding: 0 0.85rem 0.85rem;
           margin: 0;
           color: var(--text-secondary);
           font-size: 0.85rem;
@@ -498,8 +498,8 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         }
 
         .plant-info-card {
-          margin-top: 1rem;
-          padding: 1.25rem;
+          margin-top: 0.5rem;
+          padding: 1rem;
           border-radius: var(--radius-lg);
           border-left: 4px solid var(--primary-color);
           background: var(--bg-primary);
@@ -518,12 +518,12 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
 
         @media (max-width: 1024px) {
           .content-card {
-            padding: 1.5rem;
-            max-height: 85vh;
+            padding: 1.25rem;
+            max-height: 80vh;
           }
           .about-grid {
             grid-template-columns: 1fr;
-            gap: 2rem;
+            gap: 1.5rem;
           }
           .about-img-box, .plant-map-box {
             aspect-ratio: 16/9;
