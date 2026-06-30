@@ -3363,36 +3363,73 @@ function getCart(spreadsheet, params) {
   return { success: true, items: [] };
 }
 
-function isEmailCategoryEnabled(email, categoryKey) {
-  if (!email) return false;
+function isEmailCategoryEnabled(email, categoryKey, orderId) {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   if (!spreadsheet) return true;
-  var sheet = spreadsheet.getSheetByName('Users');
-  if (!sheet) return true;
+  var usersSheet = spreadsheet.getSheetByName('Users');
+  if (!usersSheet) return true;
 
-  var data = sheet.getDataRange().getValues();
-  if (data.length <= 1) return true;
-  var headers = data[0];
-  var emailIndex = findHeaderIndex(headers, ['Email', 'Username']);
-  var preferencesIndex = findHeaderIndex(headers, ['Email Preferences']);
-  if (emailIndex < 0 || preferencesIndex < 0) return true;
+  var usersData = usersSheet.getDataRange().getValues();
+  if (usersData.length <= 1) return true;
+  var userHeaders = usersData[0];
+  var userIdIndex = findHeaderIndex(userHeaders, ['User ID', 'ID']);
+  var emailIndex = findHeaderIndex(userHeaders, ['Email', 'Username']);
+  var preferencesIndex = findHeaderIndex(userHeaders, ['Email Preferences']);
 
-  var targetEmail = normalizeEmail(email);
-  for (var i = 1; i < data.length; i++) {
-    if (normalizeEmail(data[i][emailIndex]) === targetEmail) {
-      var prefStr = data[i][preferencesIndex];
-      if (!prefStr) return true;
-      try {
-        var prefs = JSON.parse(prefStr);
-        if (prefs[categoryKey] !== undefined) {
-          return Boolean(prefs[categoryKey]);
+  var resolvedUserId = '';
+  
+  if (orderId) {
+    var ordersSheet = spreadsheet.getSheetByName('Orders');
+    if (ordersSheet) {
+      var ordersData = ordersSheet.getDataRange().getValues();
+      if (ordersData.length > 1) {
+        var orderHeaders = ordersData[0];
+        var orderIdIndex = findHeaderIndex(orderHeaders, ['Order ID']);
+        var customerUserIdIndex = findHeaderIndex(orderHeaders, ['Customer User ID']);
+        
+        if (orderIdIndex >= 0 && customerUserIdIndex >= 0) {
+          var targetOrderId = String(orderId).trim();
+          for (var j = 1; j < ordersData.length; j++) {
+            if (String(ordersData[j][orderIdIndex]).trim() === targetOrderId) {
+              resolvedUserId = String(ordersData[j][customerUserIdIndex]).trim();
+              break;
+            }
+          }
         }
-      } catch (error) {
-        Logger.log('Error parsing email preferences for ' + email + ': ' + error);
       }
-      break;
     }
   }
+
+  var getPreference = function(prefStr) {
+    if (!prefStr) return true;
+    try {
+      var prefs = JSON.parse(prefStr);
+      if (prefs[categoryKey] !== undefined) {
+        return Boolean(prefs[categoryKey]);
+      }
+    } catch (error) {
+      Logger.log('Error parsing email preferences: ' + error);
+    }
+    return true;
+  };
+
+  if (resolvedUserId && userIdIndex >= 0) {
+    for (var i = 1; i < usersData.length; i++) {
+      if (String(usersData[i][userIdIndex]).trim() === resolvedUserId) {
+        return getPreference(usersData[i][preferencesIndex]);
+      }
+    }
+  }
+
+  if (email && emailIndex >= 0) {
+    var targetEmail = normalizeEmail(email);
+    for (var i = 1; i < usersData.length; i++) {
+      if (normalizeEmail(usersData[i][emailIndex]) === targetEmail) {
+        return getPreference(usersData[i][preferencesIndex]);
+      }
+    }
+  }
+
   return true;
 }
 
@@ -3422,7 +3459,7 @@ function sendOrderConfirmationEmail(email, name, orderId, products, totalAmount,
     Logger.log("sendOrderConfirmationEmail skipped: invalid email address provided.");
     return { sent: false };
   }
-  if (!isEmailCategoryEnabled(email, 'orderConfirmation')) {
+  if (!isEmailCategoryEnabled(email, 'orderConfirmation', orderId)) {
     Logger.log("sendOrderConfirmationEmail skipped: user opted out of order confirmation emails.");
     return { sent: false, error: 'User opted out of order confirmation emails.' };
   }
@@ -3453,7 +3490,7 @@ function sendOrderStatusUpdateEmail(email, name, orderId, status, mobile) {
     Logger.log("sendOrderStatusUpdateEmail skipped: invalid email address provided.");
     return { sent: false };
   }
-  if (!isEmailCategoryEnabled(email, 'orderStatusUpdates')) {
+  if (!isEmailCategoryEnabled(email, 'orderStatusUpdates', orderId)) {
     Logger.log("sendOrderStatusUpdateEmail skipped: user opted out of order status update emails.");
     return { sent: false, error: 'User opted out of order status update emails.' };
   }
@@ -3491,7 +3528,7 @@ function sendOrderStatusUpdateEmail(email, name, orderId, status, mobile) {
 function sendCancellationDecisionEmail(email, name, orderId, decision, adminRemarks, refundStatus, mobile) {
   email = normalizeEmail(email);
   if (!email || !isValidEmail(email)) return { sent: false };
-  if (!isEmailCategoryEnabled(email, 'orderStatusUpdates')) {
+  if (!isEmailCategoryEnabled(email, 'orderStatusUpdates', orderId)) {
     Logger.log("sendCancellationDecisionEmail skipped: user opted out of order status update emails.");
     return { sent: false, error: 'User opted out of order status update emails.' };
   }
