@@ -10,11 +10,7 @@ import { useCMSData } from '@/frontend/customer/hooks/useCMSData';
 import { useCart } from '@/frontend/customer/contexts/CartProvider';
 import { isOrderable } from '../utils/commerce';
 import { PortalHero } from './portal/Hero';
-import { Orders } from './portal/Orders';
-import { Profile } from './portal/Profile';
-import { Addresses } from './portal/Addresses';
 import { RecentlyViewedProducts } from './portal/RecentlyViewed';
-import { FAQs } from './portal/FAQs';
 import { CartToast, PortalNotifications } from './portal/Notifications';
 import { toast } from 'sonner';
 import { saveUser, requestEmailChangeOTP } from '@/utils/api';
@@ -28,6 +24,26 @@ const RecommendationCard = dynamic(
 const RushPortalBanner = dynamic(
   () => import('./portal/Banners').then((mod) => mod.RushSodaPromoTeaser),
   { ssr: false, loading: () => <div className="loading-state">Loading banner...</div> }
+);
+
+const Orders = dynamic(
+  () => import('./portal/Orders').then((mod) => mod.Orders),
+  { ssr: false, loading: () => <div className="loading-state">Loading orders...</div> }
+);
+
+const Profile = dynamic(
+  () => import('./portal/Profile').then((mod) => mod.Profile),
+  { ssr: false, loading: () => <div className="loading-state">Loading profile...</div> }
+);
+
+const Addresses = dynamic(
+  () => import('./portal/Addresses').then((mod) => mod.Addresses),
+  { ssr: false, loading: () => <div className="loading-state">Loading addresses...</div> }
+);
+
+const FAQs = dynamic(
+  () => import('./portal/FAQs').then((mod) => mod.FAQs),
+  { ssr: false, loading: () => <div className="loading-state">Loading FAQs...</div> }
 );
 
 export default function CustomerPortalClient() {

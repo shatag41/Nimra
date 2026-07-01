@@ -137,8 +137,14 @@ async function syncLocalDB(action: 'load' | 'save') {
 
 let cachedCMSData: any = null;
 let lastFetchTime = 0;
-const CACHE_TTL = 60000;
-const LIVE_GET_CACHE_TTL = 15000;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes for main CMS data fallback
+
+function getCacheTTL(action: string | null): number {
+  if (!action || ['getBanners', 'getProducts', 'getFAQs', 'getCompanyInfo'].includes(action)) {
+    return 5 * 60 * 1000; // 5 minutes for relatively static catalog/CMS data
+  }
+  return 30 * 1000; // 30 seconds for highly dynamic orders, users, inquiries, notifications
+}
 const liveGetCache = new Map<string, { data: any; expiresAt: number }>();
 const pendingFetches = new Map<string, Promise<any>>();
 
@@ -161,9 +167,11 @@ function invalidateCMSCache() {
 }
 
 function getLiveCacheKey(action: string | null, userId: string, mobile: string, email: string) {
-  // Order history must reflect newly appended orders immediately. Other live
-  // actions do not currently use this scoped cache.
-  return '';
+  const parts = [action || 'main'];
+  if (userId) parts.push(`u:${userId}`);
+  if (mobile) parts.push(`m:${mobile}`);
+  if (email) parts.push(`e:${email}`);
+  return parts.join('|');
 }
 
 async function saveLocalImageBinding(
@@ -291,7 +299,7 @@ export async function handleGet(req: Request) {
             lastFetchTime = now;
           }
           if (liveCacheKey) {
-            liveGetCache.set(liveCacheKey, { data, expiresAt: Date.now() + LIVE_GET_CACHE_TTL });
+            liveGetCache.set(liveCacheKey, { data, expiresAt: Date.now() + getCacheTTL(action) });
           }
           const productCount = Array.isArray(data) && action === 'getProducts' ? data.length : (data.products?.length || 0);
           const bannerCount = Array.isArray(data) && action === 'getBanners' ? data.length : (data.banners?.length || 0);
