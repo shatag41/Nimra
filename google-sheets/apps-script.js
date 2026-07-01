@@ -27,7 +27,15 @@ function doGet(e) {
   } else if (action === 'getUsers') {
     return jsonResponse(getUsersData(spreadsheet));
   } else if (action === 'getNotifications') {
-    return jsonResponse(getNotificationsData(spreadsheet));
+    return jsonResponse(getCustomerNotifications(spreadsheet, e.parameter.userId, e.parameter.email));
+  } else if (action === 'getAdminUpdates') {
+    return jsonResponse(getEventsByAudience(spreadsheet, 'ADMIN_UPDATE'));
+  } else if (action === 'getCustomerNotifications') {
+    return jsonResponse(getCustomerNotifications(spreadsheet, e.parameter.userId, e.parameter.email));
+  } else if (action === 'getCustomerNotificationLog') {
+    return jsonResponse(getEventsByAudience(spreadsheet, 'CUSTOMER_NOTIFICATION').filter(function(event) {
+      return String(event.EventType || '') === 'ADMIN_BROADCAST';
+    }));
   } else {
     // Return all data in one request to optimize API calls!
     var data = {
@@ -91,6 +99,9 @@ function doPost(e) {
     } else if (params.type === 'notificationCRUD') {
       Logger.log("doPost: Routing to notificationCRUD()");
       return jsonResponse(handleNotificationCRUD(spreadsheet, params));
+    } else if (params.type === 'eventCRUD') {
+      Logger.log("doPost: Routing to eventCRUD()");
+      return jsonResponse(handleEventCRUD(spreadsheet, params));
     } else if (params.type === 'inquiryCRUD') {
       Logger.log("doPost: Routing to inquiryCRUD()");
       return jsonResponse(handleInquiryCRUD(spreadsheet, params));
@@ -167,7 +178,7 @@ function saveInquiry(spreadsheet, params) {
     if (existingInquiry) {
       if (!existingInquiry.notificationSent) {
         try {
-          notificationResult = createInquiryAdminNotification(spreadsheet, existingInquiry.inquiryId, existingInquiry.name, existingInquiry.subject);
+          notificationResult = createInquiryAdminNotification(spreadsheet, existingInquiry.inquiryId, existingInquiry.name, existingInquiry.subject, existingInquiry.customerId);
         } catch (retryNotificationError) {
           notificationResult = { created: false, error: getErrorMessage(retryNotificationError) };
         }
@@ -226,7 +237,7 @@ function saveInquiry(spreadsheet, params) {
     inquirySaved = true;
 
     try {
-      notificationResult = createInquiryAdminNotification(spreadsheet, inquiryId, name, subject);
+      notificationResult = createInquiryAdminNotification(spreadsheet, inquiryId, name, subject, customerId);
       markInquiryNotificationResult(sheet, headers, rowNumber, notificationResult);
     } catch (notificationError) {
       notificationResult = { created: false, error: getErrorMessage(notificationError) };
@@ -386,36 +397,29 @@ function generateInquiryId(sheet, headers, date, reservedIds) {
   return candidate;
 }
 
-function createInquiryAdminNotification(spreadsheet, inquiryId, name, subject) {
-  getNotificationsData(spreadsheet);
-  var sheet = spreadsheet.getSheetByName('Notifications');
-  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  ensureColumn(sheet, headers, 'Type');
-  ensureColumn(sheet, headers, 'InquiryID');
-  var existing = findNotificationByInquiryId(spreadsheet, inquiryId);
-  if (existing) {
-    return { created: false, id: existing.ID, duplicatePrevented: true };
-  }
-
-  var title = 'New inquiry: ' + subject;
-  var message = 'Inquiry ' + inquiryId + ' from ' + name + ' is waiting for review.';
-  var result = handleNotificationCRUD(spreadsheet, {
-    action: 'create',
-    notification: {
-      Timestamp: new Date().toISOString(),
-      Title: title,
-      Message: message,
-      Read: false,
-      Status: 'Published',
-      InquiryID: inquiryId,
-      Type: 'Inquiry'
-    }
+function createInquiryAdminNotification(spreadsheet, inquiryId, name, subject, customerId) {
+  var result = createDomainEvent(spreadsheet, {
+    TargetAudience: 'ADMIN_UPDATE',
+    EventType: 'INQUIRY_CREATED',
+    Title: 'New inquiry: ' + subject,
+    Message: 'Inquiry ' + inquiryId + ' from ' + name + ' is waiting for review.',
+    Category: 'Inquiries',
+    Priority: 'Medium',
+    ActionLink: 'inquiries',
+    InquiryID: inquiryId,
+    UserID: customerId || '',
+    DeduplicationKey: 'INQUIRY_CREATED:' + inquiryId
   });
-  return { created: result.success === true, id: result.ID || '', error: result.success ? '' : result.message };
+  return {
+    created: result.success === true && !result.duplicatePrevented,
+    id: result.ID || '',
+    duplicatePrevented: result.duplicatePrevented === true,
+    error: result.success ? '' : result.message
+  };
 }
 
 function findNotificationByInquiryId(spreadsheet, inquiryId) {
-  var sheet = spreadsheet.getSheetByName('Notifications');
+  var sheet = spreadsheet.getSheetByName('Events');
   if (!sheet) return null;
   var data = sheet.getDataRange().getValues();
   if (data.length <= 1) return null;
@@ -423,8 +427,7 @@ function findNotificationByInquiryId(spreadsheet, inquiryId) {
   var inquiryIdIndex = headers.indexOf('InquiryID');
   if (inquiryIdIndex === -1) inquiryIdIndex = headers.indexOf('Inquiry ID');
   if (inquiryIdIndex === -1) return null;
-  var idIndex = headers.indexOf('ID');
-  if (idIndex === -1) idIndex = headers.indexOf('NotificationID');
+  var idIndex = headers.indexOf('EventID');
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][inquiryIdIndex] || '').trim() === String(inquiryId).trim()) {
       return { ID: idIndex >= 0 ? data[i][idIndex] : '' };
@@ -541,6 +544,19 @@ function handleInquiryCRUD(spreadsheet, params) {
     sheet.getRange(i + 1, statusIndex + 1).setValue('Reviewed');
     if (reviewedAtIndex >= 0) sheet.getRange(i + 1, reviewedAtIndex + 1).setValue(new Date());
     if (reviewedByIndex >= 0) sheet.getRange(i + 1, reviewedByIndex + 1).setValue(reviewedBy);
+    createDomainEvent(spreadsheet, {
+      TargetAudience: 'CUSTOMER_NOTIFICATION',
+      EventType: 'INQUIRY_REVIEWED',
+      Title: 'Inquiry reviewed',
+      Message: 'Your inquiry ' + inquiryId + ' has been reviewed by our team.',
+      Category: 'Account Updates',
+      Priority: 'Low',
+      ActionLink: '/contact',
+      InquiryID: inquiryId,
+      UserID: headers.indexOf('Customer ID') >= 0 ? data[i][headers.indexOf('Customer ID')] : '',
+      Username: headers.indexOf('Email') >= 0 ? data[i][headers.indexOf('Email')] : '',
+      DeduplicationKey: 'INQUIRY_REVIEWED:' + inquiryId
+    });
     return { success: true, message: 'Inquiry marked as reviewed.', inquiryId: inquiryId, status: 'Reviewed' };
   }
 
@@ -747,6 +763,18 @@ function saveOrder(spreadsheet, params) {
 
   Logger.log("Appended Values: Appending row data to " + sheet.getName() + " sheet: " + JSON.stringify(rowData));
   sheet.appendRow(rowData);
+  createDomainEvent(spreadsheet, {
+    TargetAudience: 'ADMIN_UPDATE',
+    EventType: 'ORDER_CREATED',
+    Title: 'New order received',
+    Message: 'Order ' + orderId + ' was placed by ' + name + '.',
+    Category: 'Orders',
+    Priority: 'High',
+    ActionLink: 'orders',
+    OrderID: orderId,
+    UserID: userId,
+    DeduplicationKey: 'ORDER_CREATED:' + orderId
+  });
 
   var emailResult = sendOrderConfirmationEmail(email, name, orderId, products, totalAmount, mobile);
   var response = {
@@ -1008,6 +1036,19 @@ function updateOrderStatus(spreadsheet, params) {
       var mobile = order.customer.mobile || '';
 
       var emailResult = sendOrderStatusUpdateEmail(email, name, orderId, status, mobile);
+      createDomainEvent(spreadsheet, {
+        TargetAudience: 'CUSTOMER_NOTIFICATION',
+        EventType: 'ORDER_STATUS_CHANGED',
+        Title: 'Order ' + orderId + ' updated',
+        Message: 'Your order status is now ' + status + '.',
+        Category: status === 'Delivered' ? 'Delivery Updates' : 'Orders',
+        Priority: status === 'Cancelled' ? 'High' : 'Medium',
+        ActionLink: '/orders?orderId=' + encodeURIComponent(orderId),
+        OrderID: orderId,
+        UserID: order.customer.userId || findOrderUserId(spreadsheet, orderId),
+        Username: email,
+        DeduplicationKey: 'ORDER_STATUS_CHANGED:' + orderId + ':' + status
+      });
       var response = { success: true, message: 'Order status updated successfully', emailSent: emailResult.sent };
       if (!emailResult.sent && emailResult.error) {
         response.emailError = emailResult.error;
@@ -1041,6 +1082,9 @@ function requestOrderCancellation(spreadsheet, params) {
 
     var currentStatus = String(orderData[i][statusIndex] || '').trim();
     if (currentStatus === 'Cancelled') return { success: false, message: 'This order is already cancelled.' };
+    if (['pending', 'confirmed'].indexOf(currentStatus.toLowerCase()) === -1) {
+      return { success: false, message: 'This order is already being prepared and can no longer be cancelled.' };
+    }
     if (String(orderData[i][cancellationStatusIndex] || '').trim() === 'Pending') {
       return { success: false, message: 'A cancellation request is already pending for this order.' };
     }
@@ -1083,6 +1127,19 @@ function requestOrderCancellation(spreadsheet, params) {
       '<p>Cancellation request <strong>' + requestId + '</strong> is pending for order <strong>' + orderId + '</strong>.</p><p><strong>Customer:</strong> ' + escapeHtml(order.customer.name) + '</p><p><strong>Reason:</strong> ' + escapeHtml(reason) + '</p>',
       'NIMRA Admin Alerts'
     );
+    createDomainEvent(spreadsheet, {
+      TargetAudience: 'ADMIN_UPDATE',
+      EventType: 'CANCELLATION_REQUESTED',
+      Title: 'Cancellation approval needed',
+      Message: 'Cancellation request ' + requestId + ' is pending for order ' + orderId + '.',
+      Category: 'Cancellation Requests',
+      Priority: 'High',
+      ActionLink: 'orders:cancellations',
+      OrderID: orderId,
+      UserID: order.customer.userId || findOrderUserId(spreadsheet, orderId),
+      RelatedEntityID: requestId,
+      DeduplicationKey: 'CANCELLATION_REQUESTED:' + requestId
+    });
 
     return { success: true, message: 'Cancellation request submitted for admin approval.', request: cancellationRequestRowToObject(requestSheet.getRange(requestSheet.getLastRow(), 1, 1, requestSheet.getLastColumn()).getValues()[0]) };
   }
@@ -1135,6 +1192,20 @@ function reviewCancellationRequest(spreadsheet, params) {
     requestSheet.getRange(i + 1, historyIndex + 1).setValue(appendStatusHistory(requestData[i][historyIndex], historyItem));
 
     updateOrderCancellationAudit(spreadsheet, orderId, requestId, decision, historyItem);
+    createDomainEvent(spreadsheet, {
+      TargetAudience: 'CUSTOMER_NOTIFICATION',
+      EventType: decision === 'Approved' ? 'CANCELLATION_APPROVED' : 'CANCELLATION_REJECTED',
+      Title: 'Cancellation request ' + decision.toLowerCase(),
+      Message: 'Your cancellation request for order ' + orderId + ' was ' + decision.toLowerCase() + '. ' + adminRemarks,
+      Category: 'Cancellation Requests',
+      Priority: decision === 'Approved' ? 'High' : 'Medium',
+      ActionLink: '/orders?orderId=' + encodeURIComponent(orderId),
+      OrderID: orderId,
+      UserID: findOrderUserId(spreadsheet, orderId),
+      Username: requestData[i][emailIndex],
+      RelatedEntityID: requestId,
+      DeduplicationKey: 'CANCELLATION_' + decision.toUpperCase() + ':' + requestId
+    });
     if (decision === 'Approved') {
       updateOrderStatus(spreadsheet, { orderId: orderId, status: 'Cancelled' });
       sendCancellationDecisionEmail(requestData[i][emailIndex], requestData[i][nameIndex], orderId, decision, adminRemarks, refundStatus, requestData[i][mobileIndex]);
@@ -2215,6 +2286,253 @@ function ensureNotificationIds(sheet) {
   }
 }
 
+function getEventHeaders() {
+  return [
+    'EventID', 'Timestamp', 'TargetAudience', 'EventType', 'Title', 'Message',
+    'Read', 'Status', 'Category', 'Priority', 'ActionLink', 'UserID',
+    'Username', 'InquiryID', 'OrderID', 'RelatedEntityID',
+    'DeduplicationKey', 'CreatedAt', 'ReadByUserIDs'
+  ];
+}
+
+function ensureEventsSheet(spreadsheet) {
+  var sheet = spreadsheet.getSheetByName('Events');
+  var requiredHeaders = getEventHeaders();
+  if (!sheet) sheet = spreadsheet.insertSheet('Events');
+  if (sheet.getLastRow() === 0 || sheet.getLastColumn() === 0) {
+    sheet.getRange(1, 1, 1, requiredHeaders.length).setValues([requiredHeaders]);
+  } else {
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(function(header) {
+      return String(header || '').trim();
+    });
+    for (var i = 0; i < requiredHeaders.length; i++) {
+      if (headers.indexOf(requiredHeaders[i]) === -1) {
+        sheet.getRange(1, headers.length + 1).setValue(requiredHeaders[i]);
+        headers.push(requiredHeaders[i]);
+      }
+    }
+  }
+  migrateLegacyNotifications(spreadsheet, sheet);
+  return sheet;
+}
+
+function migrateLegacyNotifications(spreadsheet, eventsSheet) {
+  var legacy = spreadsheet.getSheetByName('Notifications');
+  if (!legacy || legacy.getLastRow() <= 1) return;
+  var marker = PropertiesService.getScriptProperties().getProperty('NIMRA_EVENTS_MIGRATED_V1');
+  if (marker === 'yes') return;
+
+  var legacyRows = getSheetData(legacy);
+  for (var i = 0; i < legacyRows.length; i++) {
+    var row = legacyRows[i] || {};
+    var role = String(row.Role || row.role || '').toLowerCase();
+    var audience = role === 'admin' || role === 'manager' ? 'ADMIN_UPDATE' : 'CUSTOMER_NOTIFICATION';
+    createDomainEvent(spreadsheet, {
+      TargetAudience: audience,
+      EventType: 'LEGACY_NOTIFICATION',
+      Title: row.Title || row.Message || 'Notification',
+      Message: row.Message || row.Type || '',
+      Read: row.Read === true || String(row.Read).toLowerCase() === 'true',
+      Status: row.Status || 'Published',
+      Category: row.Category || '',
+      Priority: row.Priority || 'Low',
+      ActionLink: row.ActionLink || '',
+      UserID: row.UserId || row.UserID || row['User ID'] || '',
+      Username: row.Username || row.Email || '',
+      InquiryID: row.InquiryID || row['Inquiry ID'] || '',
+      Timestamp: row.Timestamp || row.CreatedAt || new Date().toISOString(),
+      DeduplicationKey: 'LEGACY_NOTIFICATION:' + String(row.ID || i)
+    }, true);
+  }
+  PropertiesService.getScriptProperties().setProperty('NIMRA_EVENTS_MIGRATED_V1', 'yes');
+}
+
+function createDomainEvent(spreadsheet, event, skipEnsure) {
+  var sheet = skipEnsure ? spreadsheet.getSheetByName('Events') : ensureEventsSheet(spreadsheet);
+  if (!sheet) return { success: false, message: 'Events sheet not found.' };
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  var data = sheet.getDataRange().getValues();
+  var dedupeIndex = headers.indexOf('DeduplicationKey');
+  var dedupeKey = String(event.DeduplicationKey || '').trim();
+  if (dedupeKey && dedupeIndex >= 0) {
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][dedupeIndex] || '').trim() === dedupeKey) {
+        return { success: true, ID: data[i][headers.indexOf('EventID')], duplicatePrevented: true };
+      }
+    }
+  }
+
+  var now = new Date();
+  var eventId = event.EventID || ('EVT-' + Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyyMMdd-HHmmss') + '-' + Math.floor(Math.random() * 9000 + 1000));
+  var values = {
+    EventID: eventId,
+    Timestamp: event.Timestamp || now.toISOString(),
+    TargetAudience: event.TargetAudience,
+    EventType: event.EventType || 'GENERAL',
+    Title: event.Title || 'Update',
+    Message: event.Message || '',
+    Read: event.Read === true,
+    Status: event.Status || 'Published',
+    Category: event.Category || '',
+    Priority: event.Priority || 'Low',
+    ActionLink: event.ActionLink || '',
+    UserID: event.UserID || '',
+    Username: normalizeEmail(event.Username),
+    InquiryID: event.InquiryID || '',
+    OrderID: event.OrderID || '',
+    RelatedEntityID: event.RelatedEntityID || '',
+    DeduplicationKey: dedupeKey,
+    CreatedAt: event.CreatedAt || now.toISOString(),
+    ReadByUserIDs: event.ReadByUserIDs || '[]'
+  };
+  if (values.TargetAudience !== 'ADMIN_UPDATE' && values.TargetAudience !== 'CUSTOMER_NOTIFICATION') {
+    return { success: false, message: 'A valid TargetAudience is required.' };
+  }
+  sheet.appendRow(headers.map(function(header) {
+    return values[header] !== undefined ? values[header] : '';
+  }));
+  return { success: true, ID: eventId, message: 'Event created successfully' };
+}
+
+function eventRowToObject(headers, row) {
+  var event = {};
+  for (var i = 0; i < headers.length; i++) {
+    var value = row[i];
+    event[headers[i]] = value instanceof Date ? value.toISOString() : value;
+  }
+  event.ID = event.EventID;
+  event.UserId = event.UserID;
+  event.Read = event.Read === true || String(event.Read).toLowerCase() === 'true';
+  return event;
+}
+
+function getEventsByAudience(spreadsheet, audience) {
+  var sheet = ensureEventsSheet(spreadsheet);
+  var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return [];
+  var headers = data[0];
+  var audienceIndex = headers.indexOf('TargetAudience');
+  var statusIndex = headers.indexOf('Status');
+  var events = [];
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][audienceIndex] || '').trim() !== audience) continue;
+    if (statusIndex >= 0 && String(data[i][statusIndex] || 'Published') !== 'Published') continue;
+    events.push(eventRowToObject(headers, data[i]));
+  }
+  events.sort(function(a, b) {
+    return new Date(b.CreatedAt || b.Timestamp).getTime() - new Date(a.CreatedAt || a.Timestamp).getTime();
+  });
+  return events;
+}
+
+function getCustomerNotifications(spreadsheet, userId, email) {
+  var requestedUserId = String(userId || '').trim();
+  var requestedEmail = normalizeEmail(email);
+  if (!requestedUserId && !requestedEmail) return [];
+  return getEventsByAudience(spreadsheet, 'CUSTOMER_NOTIFICATION').filter(function(event) {
+    var eventUserId = String(event.UserID || '').trim();
+    var eventEmail = normalizeEmail(event.Username);
+    if (eventUserId) return requestedUserId && eventUserId === requestedUserId;
+    if (eventEmail) return requestedEmail && eventEmail === requestedEmail;
+    return true;
+  }).map(function(event) {
+    if (!String(event.UserID || '').trim() && !normalizeEmail(event.Username)) {
+      var readBy = [];
+      try {
+        readBy = JSON.parse(String(event.ReadByUserIDs || '[]'));
+      } catch (ignoreInvalidReadBy) {}
+      event.Read = requestedUserId ? readBy.indexOf(requestedUserId) >= 0 : event.Read;
+    }
+    return event;
+  });
+}
+
+function handleEventCRUD(spreadsheet, params) {
+  var action = String(params.action || '').trim();
+  var event = params.event || params.notification || {};
+  if (action === 'create') {
+    if (String(event.EventType || '') === 'ADMIN_BROADCAST') {
+      var broadcastCategories = ['Offers/Promotions', 'News', 'Updates'];
+      if (String(event.TargetAudience || '') !== 'CUSTOMER_NOTIFICATION') {
+        return { success: false, message: 'Admin broadcasts can only be sent to customers.' };
+      }
+      if (broadcastCategories.indexOf(String(event.Category || '')) === -1) {
+        return { success: false, message: 'Broadcast category must be Offers/Promotions, News, or Updates.' };
+      }
+      event.UserID = '';
+      event.Username = '';
+      event.ActionLink = '';
+    }
+    return createDomainEvent(spreadsheet, event);
+  }
+
+  var eventId = String(event.EventID || event.ID || '').trim();
+  if (!eventId) return { success: false, message: 'Event ID is required.' };
+  var sheet = ensureEventsSheet(spreadsheet);
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0] || [];
+  var idIndex = headers.indexOf('EventID');
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idIndex] || '').trim() !== eventId) continue;
+    if (action === 'delete') {
+      sheet.deleteRow(i + 1);
+      return { success: true, message: 'Event deleted successfully' };
+    }
+    if (action === 'update') {
+      var audience = String(data[i][headers.indexOf('TargetAudience')] || '');
+      if (event.TargetAudience && event.TargetAudience !== audience) {
+        return { success: false, message: 'Event audience cannot be changed.' };
+      }
+      if (event.Read !== undefined) {
+        var storedUserId = String(data[i][headers.indexOf('UserID')] || '').trim();
+        var storedUsername = normalizeEmail(data[i][headers.indexOf('Username')]);
+        var readerUserId = String(event.UserID || event.UserId || '').trim();
+        if (!storedUserId && !storedUsername && readerUserId) {
+          var readByIndex = headers.indexOf('ReadByUserIDs');
+          var readBy = [];
+          try {
+            readBy = JSON.parse(String(data[i][readByIndex] || '[]'));
+          } catch (ignoreInvalidReadBy) {}
+          if (readBy.indexOf(readerUserId) === -1) readBy.push(readerUserId);
+          sheet.getRange(i + 1, readByIndex + 1).setValue(JSON.stringify(readBy));
+        } else {
+          sheet.getRange(i + 1, headers.indexOf('Read') + 1).setValue(event.Read === true || String(event.Read).toLowerCase() === 'true');
+        }
+      }
+      if (event.Status !== undefined) sheet.getRange(i + 1, headers.indexOf('Status') + 1).setValue(event.Status);
+      return { success: true, message: 'Event updated successfully' };
+    }
+  }
+  return { success: false, message: 'Event ID not found.' };
+}
+
+function getNotificationsData(spreadsheet) {
+  return getEventsByAudience(spreadsheet, 'CUSTOMER_NOTIFICATION');
+}
+
+function handleNotificationCRUD(spreadsheet, params) {
+  var notification = params.notification || {};
+  notification.TargetAudience = 'CUSTOMER_NOTIFICATION';
+  notification.EventType = notification.EventType || 'ADMIN_BROADCAST';
+  notification.UserID = notification.UserID || notification.UserId || '';
+  return handleEventCRUD(spreadsheet, { action: params.action, event: notification });
+}
+
+function findOrderUserId(spreadsheet, orderId) {
+  var sheet = spreadsheet.getSheetByName('Orders');
+  if (!sheet) return '';
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0] || [];
+  var orderIdIndex = headers.indexOf('Order ID');
+  var userIdIndex = headers.indexOf('Customer User ID');
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][orderIdIndex] || '').trim() === String(orderId || '').trim()) {
+      return userIdIndex >= 0 ? String(data[i][userIdIndex] || '').trim() : '';
+    }
+  }
+  return '';
+}
+
 function jsonResponse(data) {
   return ContentService.createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
@@ -2320,6 +2638,18 @@ function handleAuthRegister(spreadsheet, params) {
   if (result.success) {
     newUser.ID = result.ID;
     delete newUser.Password;
+    createDomainEvent(spreadsheet, {
+      TargetAudience: 'ADMIN_UPDATE',
+      EventType: 'CUSTOMER_REGISTERED',
+      Title: 'New customer registered',
+      Message: name + ' created a customer account.',
+      Category: 'Users',
+      Priority: 'Low',
+      ActionLink: 'users',
+      UserID: newUser.ID,
+      Username: email,
+      DeduplicationKey: 'CUSTOMER_REGISTERED:' + newUser.ID
+    });
     var emailResult = sendWelcomeEmail(email, name);
     var response = { success: true, message: 'Registration successful', user: newUser, emailSent: emailResult.sent };
     if (!emailResult.sent && emailResult.error) {
@@ -2905,6 +3235,18 @@ function handleAuthGoogleSignIn(spreadsheet, params) {
   if (result.success) {
     newUser.ID = result.ID;
     delete newUser.Password;
+    createDomainEvent(spreadsheet, {
+      TargetAudience: 'ADMIN_UPDATE',
+      EventType: 'CUSTOMER_REGISTERED',
+      Title: 'New customer registered',
+      Message: (name || email) + ' created a customer account with Google.',
+      Category: 'Users',
+      Priority: 'Low',
+      ActionLink: 'users',
+      UserID: newUser.ID,
+      Username: email,
+      DeduplicationKey: 'CUSTOMER_REGISTERED:' + newUser.ID
+    });
     var emailResult = sendWelcomeEmail(email, name);
     var response = { success: true, message: 'Registration successful', user: newUser, emailSent: emailResult.sent };
     if (!emailResult.sent && emailResult.error) {

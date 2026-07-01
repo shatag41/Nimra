@@ -42,7 +42,7 @@ export function PortalNotifications() {
 
   const loadNotifications = React.useCallback(() => {
     import('@/utils/api').then((api) => {
-      api.fetchNotifications()
+      api.fetchNotifications(user?.ID, user?.Username)
         .then((data) => {
           const key = user ? `nimra_read_notifs_${user.ID || user.Username}` : 'nimra_read_notifs_guest';
           let readIds: string[] = [];
@@ -50,48 +50,7 @@ export function PortalNotifications() {
             readIds = JSON.parse(localStorage.getItem(key) || '[]');
           } catch {}
           
-          const allowedCustomerCategories = [
-            'orders',
-            'delivery updates',
-            'payments',
-            'offers',
-            'promotions',
-            'offers/promotions',
-            'account updates',
-            'cancellation requests'
-          ];
-
-          const filteredData = data.filter(n => {
-             const notif = n as any;
-             
-             // Role filtering
-             const role = String(notif.Role || notif.role || '').toLowerCase();
-             const type = String(notif.Type || notif.type || '').toLowerCase();
-             if (role === 'admin' || role === 'manager' || type === 'admin') {
-               return false;
-             }
-
-             // Category filtering
-             const category = String(notif.Category || notif.category || '').toLowerCase();
-             if (category && !allowedCustomerCategories.includes(category)) {
-               return false;
-             }
-
-             if (!user) return false;
-             
-             const nUserId = notif.UserId ?? notif.userId ?? notif['User ID'] ?? notif['UserId'] ?? notif.CustomerID ?? notif.customerId ?? notif['Customer ID'];
-             const nUsername = notif.Username ?? notif.username ?? notif.Email ?? notif.email;
-             
-             if (nUserId !== undefined && nUserId !== null && String(nUserId).trim() !== '') {
-               return String(nUserId) === String(user.ID);
-             }
-             if (nUsername !== undefined && nUsername !== null && String(nUsername).trim() !== '') {
-               return String(nUsername).toLowerCase() === String(user.Username).toLowerCase();
-             }
-             
-             // Broadcast to all customers
-             return role === 'customer' || role === 'all' || !role;
-          });
+          const filteredData = data.filter(n => n.TargetAudience === 'CUSTOMER_NOTIFICATION');
 
           // Sort by CreatedAt / Timestamp descending
           const sorted = filteredData.sort((a, b) => {
@@ -135,7 +94,7 @@ export function PortalNotifications() {
       }
       
       const api = await import('@/utils/api');
-      await api.saveNotification({ ID: id, Read: true }, 'update');
+      await api.saveNotification({ ID: id, Read: true, UserId: user?.ID }, 'update');
     } catch (err) {
       console.error('Failed to mark notification as read:', err);
     }
@@ -160,7 +119,7 @@ export function PortalNotifications() {
       localStorage.setItem(key, JSON.stringify(readIds));
       
       const api = await import('@/utils/api');
-      await Promise.all(unread.map(n => api.saveNotification({ ID: n.ID, Read: true }, 'update')));
+      await Promise.all(unread.map(n => api.saveNotification({ ID: n.ID, Read: true, UserId: user?.ID }, 'update')));
     } catch (err) {
       console.error('Failed to mark all as read:', err);
     }

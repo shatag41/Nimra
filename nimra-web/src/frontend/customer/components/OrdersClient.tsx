@@ -423,6 +423,7 @@ export default function OrdersClient() {
                 const hasPendingCancellation = order.cancellationStatus === 'Pending';
                 const isCancelable = ['pending', 'confirmed'].includes(order.status.toLowerCase()) && !hasPendingCancellation;
                 const statusLower = order.status.toLowerCase();
+                const cancellationClosed = ['processing', 'dispatched', 'out for delivery', 'delivered'].includes(statusLower);
 
                 return (
                   <div key={order.orderId} className="amazon-order-card card" onClick={() => setSelectedOrder(order)}>
@@ -501,6 +502,12 @@ export default function OrdersClient() {
                             <button onClick={(e) => { e.stopPropagation(); setOrderToCancel(order); }} className="amazon-action-btn danger-action">
                               Cancel Order
                             </button>
+                          )}
+                          {cancellationClosed && (
+                            <>
+                              <button className="amazon-action-btn danger-action" disabled>Cancel Order</button>
+                              <span className="status-desc-text">This order is already being prepared and can no longer be cancelled.</span>
+                            </>
                           )}
                           {hasPendingCancellation && (
                             <span className="status-desc-text">Cancellation pending admin approval</span>

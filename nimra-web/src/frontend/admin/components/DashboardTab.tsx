@@ -33,6 +33,7 @@ const DashboardTab = React.memo(function DashboardTab({
   onNavigateToOrdersWithFilter,
 }: DashboardTabProps) {
   const [remarksByRequest, setRemarksByRequest] = useState<Record<string, string>>({});
+  const [liveUpdateIndex, setLiveUpdateIndex] = useState(0);
   const [timeFilter, setTimeFilter] = useState<'today' | 'week' | 'month'>('week');
   const [hoveredTrendPoint, setHoveredTrendPoint] = useState<any | null>(null);
   const [hoveredBar, setHoveredBar] = useState<any | null>(null);
@@ -43,6 +44,28 @@ const DashboardTab = React.memo(function DashboardTab({
     }
     return true;
   });
+  const adminUpdates = notifications.filter((event) => event.TargetAudience === 'ADMIN_UPDATE');
+  const currentLiveUpdate = adminUpdates.length ? adminUpdates[liveUpdateIndex % adminUpdates.length] : null;
+
+  React.useEffect(() => {
+    if (adminUpdates.length <= 1) return;
+    const interval = window.setInterval(() => {
+      setLiveUpdateIndex((index) => (index + 1) % adminUpdates.length);
+    }, 5000);
+    return () => window.clearInterval(interval);
+  }, [adminUpdates.length]);
+
+  const openLiveUpdate = (actionLink?: string) => {
+    if (!actionLink || !setActiveTab) return;
+    if (actionLink === 'orders:cancellations') {
+      onOpenCancellationRequests();
+      return;
+    }
+    const tab = actionLink.split(':')[0];
+    if (['dashboard', 'orders', 'products', 'banners', 'faqs', 'inquiries', 'users', 'settings'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  };
   
   // Confirmation Modal State
   const [confirmAction, setConfirmAction] = useState<{request: CancellationRequest, decision: 'Approved' | 'Rejected'} | null>(null);
@@ -249,11 +272,6 @@ const DashboardTab = React.memo(function DashboardTab({
   const failedDeliveriesAlertCount = filteredOrdersInWindow.filter(o => o.status === 'Cancelled' || o.cancellationStatus === 'Approved').length;
   const newInquiriesAlertCount = filteredInquiriesInWindow.filter(i => !i.Status || i.Status === 'New').length;
   const newRegistrationsAlertCount = newCustomersInWindow.length;
-  const unreadNotificationsAlertCount = notifications.filter(n => {
-    const d = new Date(n.Timestamp || now);
-    return d >= filterStartDate && (!n.Read || n.Read === 'false');
-  }).length;
-
   const pendingCancellationRequests = cancellationRequests.filter((request) => {
     const d = new Date(request.requestDate || now);
     return d >= filterStartDate && request.status === 'Pending';
@@ -262,10 +280,9 @@ const DashboardTab = React.memo(function DashboardTab({
   const pendingActionsCount = 
     inTransitOrdersAlertCount + 
     unconfirmedOrdersAlertCount + 
-    failedDeliveriesAlertCount + 
+    failedDeliveriesAlertCount +
     newInquiriesAlertCount + 
-    pendingCancellationRequests.length + 
-    unreadNotificationsAlertCount;
+    pendingCancellationRequests.length;
 
   const initiateReview = (request: CancellationRequest, decision: 'Approved' | 'Rejected') => {
     setConfirmAction({ request, decision });
@@ -346,6 +363,33 @@ const DashboardTab = React.memo(function DashboardTab({
       ` }} />
 
       {/* 1. Main Dashboard Header with Period Filters */}
+      <button
+        type="button"
+        onClick={() => openLiveUpdate(currentLiveUpdate?.ActionLink)}
+        disabled={!currentLiveUpdate}
+        style={{
+          width: '100%',
+          minHeight: '48px',
+          display: 'grid',
+          gridTemplateColumns: 'auto minmax(0, 1fr) auto',
+          alignItems: 'center',
+          gap: '0.75rem',
+          padding: '0.75rem 1rem',
+          border: '1px solid var(--border-color)',
+          borderRadius: '8px',
+          background: 'var(--bg-secondary)',
+          color: 'var(--text-primary)',
+          cursor: currentLiveUpdate ? 'pointer' : 'default',
+          textAlign: 'left'
+        }}
+      >
+        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--primary-color)', whiteSpace: 'nowrap' }}>LIVE UPDATES</span>
+        <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.86rem' }}>
+          {currentLiveUpdate ? `${currentLiveUpdate.Title}: ${currentLiveUpdate.Message}` : 'No recent customer activity'}
+        </span>
+        {currentLiveUpdate && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Open</span>}
+      </button>
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1.25rem', width: '100%' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.65rem', color: 'var(--text-primary)' }}>
@@ -502,8 +546,7 @@ const DashboardTab = React.memo(function DashboardTab({
               { label: 'Unconfirmed Orders', count: unconfirmedOrdersAlertCount, severity: 'Critical', tab: 'orders', filter: 'Pending', view: 'active' },
               { label: 'Unapproved Cancel Orders', count: pendingCancellationRequests.length, severity: 'Critical', tab: 'orders', filter: 'Pending', view: 'cancellations', onClickAction: onOpenCancellationRequests },
               { label: 'In Transit Orders', count: inTransitOrdersAlertCount, severity: 'High', tab: 'orders', filter: 'InTransit', view: 'active' },
-              { label: 'New Inquiries', count: newInquiriesAlertCount, severity: 'Medium', tab: 'inquiries' },
-              { label: 'Unread Notifications', count: unreadNotificationsAlertCount, severity: 'Medium', tab: 'notifications' }
+              { label: 'New Inquiries', count: newInquiriesAlertCount, severity: 'Medium', tab: 'inquiries' }
             ].map((alert, idx) => {
               const isCritical = alert.severity === 'Critical';
               const isHigh = alert.severity === 'High';

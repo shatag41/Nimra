@@ -85,61 +85,20 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
   }, []);
 
   useEffect(() => {
-    if (!activeUser) {
+    if (!activeUser || activeUser.Role !== 'Customer') {
       setNotifications([]);
       return;
     }
 
     const loadNotifications = () => {
-      fetchNotifications().then(data => {
+      fetchNotifications(activeUser.ID, activeUser.Username).then(data => {
         const key = `nimra_read_notifs_${activeUser.ID || activeUser.Username}`;
         let readIds: string[] = [];
         try {
           readIds = JSON.parse(localStorage.getItem(key) || '[]');
         } catch {}
         
-        const allowedCustomerCategories = [
-          'orders',
-          'delivery updates',
-          'payments',
-          'offers',
-          'promotions',
-          'offers/promotions',
-          'account updates',
-          'cancellation requests'
-        ];
-
-        const filteredData = data.filter(n => {
-           const notif = n as any;
-           
-           // Role filtering: hide admin-only notifications from customers
-           const role = String(notif.Role || notif.role || '').toLowerCase();
-           const type = String(notif.Type || notif.type || '').toLowerCase();
-           if (role === 'admin' || role === 'manager' || type === 'admin') {
-             return false;
-           }
-
-           // Category filtering
-           const category = String(notif.Category || notif.category || '').toLowerCase();
-           if (category && !allowedCustomerCategories.includes(category)) {
-             return false;
-           }
-
-           if (!activeUser) return false;
-           
-           const nUserId = notif.UserId ?? notif.userId ?? notif['User ID'] ?? notif['UserId'] ?? notif.CustomerID ?? notif.customerId ?? notif['Customer ID'];
-           const nUsername = notif.Username ?? notif.username ?? notif.Email ?? notif.email;
-           
-           if (nUserId !== undefined && nUserId !== null && String(nUserId).trim() !== '') {
-             return String(nUserId) === String(activeUser.ID);
-           }
-           if (nUsername !== undefined && nUsername !== null && String(nUsername).trim() !== '') {
-             return String(nUsername).toLowerCase() === String(activeUser.Username).toLowerCase();
-           }
-           
-           // Broadcast to all customers
-           return role === 'customer' || role === 'all' || !role;
-        });
+        const filteredData = data.filter(n => n.TargetAudience === 'CUSTOMER_NOTIFICATION');
 
         const sorted = filteredData.sort((a, b) => {
           const timeA = new Date(a.CreatedAt || a.Timestamp || 0).getTime();
@@ -176,7 +135,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
         }
       }
       
-      await saveNotification({ ID: id, Read: true }, 'update');
+      await saveNotification({ ID: id, Read: true, UserId: activeUser?.ID }, 'update');
     } catch (err) {
       console.error('Failed to mark notification as read:', err);
     }
@@ -202,7 +161,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
         localStorage.setItem(key, JSON.stringify(readIds));
       }
       
-      await Promise.all(unread.map(n => saveNotification({ ID: n.ID, Read: true }, 'update')));
+      await Promise.all(unread.map(n => saveNotification({ ID: n.ID, Read: true, UserId: activeUser?.ID }, 'update')));
     } catch (err) {
       console.error('Failed to mark all as read:', err);
     }
@@ -313,7 +272,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
             )}
 
             {/* Admin Notifications Bell */}
-            {activeUser && (
+            {activeUser?.Role === 'Customer' && (
               <div className="notification-container">
                 <button 
                   className="icon-btn" 

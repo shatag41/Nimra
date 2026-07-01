@@ -145,7 +145,10 @@ export interface AdminUser {
 
 export interface Notification {
   ID: string | number;
+  EventID?: string | number;
   Timestamp: string;
+  TargetAudience?: 'ADMIN_UPDATE' | 'CUSTOMER_NOTIFICATION';
+  EventType?: string;
   Title: string;
   Message: string;
   Read?: boolean | string;

@@ -343,8 +343,20 @@ export async function handleGet(req: Request) {
     return NextResponse.json(fallbackData.cancellationRequests || [], { headers: cacheHeaders });
   } else if (action === 'getUsers') {
     return NextResponse.json(fallbackData.users, { headers: cacheHeaders });
-  } else if (action === 'getNotifications') {
-    return NextResponse.json(fallbackData.notifications, { headers: cacheHeaders });
+  } else if (action === 'getNotifications' || action === 'getCustomerNotifications') {
+    return NextResponse.json(fallbackData.notifications.filter((notification: any) =>
+      (!notification.TargetAudience || notification.TargetAudience === 'CUSTOMER_NOTIFICATION') &&
+      (!notification.UserID || String(notification.UserID) === userId) &&
+      (!notification.Username || String(notification.Username).toLowerCase() === email.toLowerCase())
+    ), { headers: cacheHeaders });
+  } else if (action === 'getCustomerNotificationLog') {
+    return NextResponse.json(fallbackData.notifications.filter((notification: any) =>
+      notification.TargetAudience === 'CUSTOMER_NOTIFICATION' && notification.EventType === 'ADMIN_BROADCAST'
+    ), { headers: cacheHeaders });
+  } else if (action === 'getAdminUpdates') {
+    return NextResponse.json(fallbackData.notifications.filter((notification: any) =>
+      notification.TargetAudience === 'ADMIN_UPDATE'
+    ), { headers: cacheHeaders });
   } else {
     // Return all customer CMS collections
     return NextResponse.json({
@@ -557,11 +569,17 @@ export async function handlePost(req: Request) {
       const orderIndex = fallbackData.orders.findIndex((o: any) => String(o.orderId) === String(orderId));
       const now = new Date().toISOString();
       const requestId = `CR-${Date.now()}`;
-      if (orderIndex >= 0) {
-        fallbackData.orders[orderIndex].cancellationStatus = 'Pending';
-        fallbackData.orders[orderIndex].cancellationRequestId = requestId;
-        fallbackData.orders[orderIndex].updatedAt = now;
+      if (orderIndex < 0) return NextResponse.json({ success: false, message: 'Order not found.' }, { status: 404 });
+      const currentStatus = String(fallbackData.orders[orderIndex].status || '').toLowerCase();
+      if (!['pending', 'confirmed'].includes(currentStatus)) {
+        return NextResponse.json({ success: false, message: 'This order is already being prepared and can no longer be cancelled.' }, { status: 400 });
       }
+      if (fallbackData.orders[orderIndex].cancellationStatus === 'Pending') {
+        return NextResponse.json({ success: false, message: 'A cancellation request is already pending for this order.' }, { status: 400 });
+      }
+      fallbackData.orders[orderIndex].cancellationStatus = 'Pending';
+      fallbackData.orders[orderIndex].cancellationRequestId = requestId;
+      fallbackData.orders[orderIndex].updatedAt = now;
       
       const newRequest = {
         requestId,
@@ -832,6 +850,44 @@ export async function handlePost(req: Request) {
       }
 
       return NextResponse.json({ success: false, message: 'Unsupported user action.' }, { status: 400 });
+    } else if (payload.type === 'eventCRUD') {
+      const action = payload.action || 'create';
+      const incomingEvent = payload.event || {};
+      const eventId = incomingEvent.EventID || incomingEvent.ID;
+      if (action === 'delete') {
+        fallbackData.notifications = fallbackData.notifications.filter((event: any) => String(event.EventID || event.ID) !== String(eventId));
+        await syncLocalDB('save');
+        return NextResponse.json({ success: true, message: 'Event deleted successfully' });
+      }
+      if (action === 'update') {
+        const eventIndex = fallbackData.notifications.findIndex((event: any) => String(event.EventID || event.ID) === String(eventId));
+        if (eventIndex < 0) return NextResponse.json({ success: false, message: 'Event not found.' }, { status: 404 });
+        fallbackData.notifications[eventIndex] = { ...fallbackData.notifications[eventIndex], ...incomingEvent };
+        await syncLocalDB('save');
+        return NextResponse.json({ success: true, message: 'Event updated successfully', ID: eventId });
+      }
+      if (action === 'create') {
+        const allowedCategories = ['Offers/Promotions', 'News', 'Updates'];
+        if (incomingEvent.EventType === 'ADMIN_BROADCAST' && (
+          incomingEvent.TargetAudience !== 'CUSTOMER_NOTIFICATION' || !allowedCategories.includes(incomingEvent.Category)
+        )) {
+          return NextResponse.json({ success: false, message: 'Customer broadcasts must use Offers/Promotions, News, or Updates.' }, { status: 400 });
+        }
+        const newEvent = {
+          ...incomingEvent,
+          ID: eventId || Date.now(),
+          EventID: eventId || Date.now(),
+          Timestamp: new Date().toISOString(),
+          CreatedAt: new Date().toISOString(),
+          Status: incomingEvent.Status || 'Published',
+          Read: false,
+          ActionLink: incomingEvent.EventType === 'ADMIN_BROADCAST' ? '' : incomingEvent.ActionLink,
+        };
+        fallbackData.notifications.push(newEvent);
+        await syncLocalDB('save');
+        return NextResponse.json({ success: true, message: 'Event created successfully', ID: newEvent.EventID });
+      }
+      return NextResponse.json({ success: false, message: 'Unsupported event action.' }, { status: 400 });
     } else if (payload.type === 'notificationCRUD') {
       const action = payload.action || 'create';
       const incomingNotif = payload.notification || {};

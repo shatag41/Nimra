@@ -569,7 +569,7 @@ export const fetchNotifications = async (): Promise<Notification[]> => {
   const url = getAPIUrl();
   if (!url) return [];
   try {
-    const res = await fetch(`${url}?action=getNotifications`);
+    const res = await fetch(`${url}?action=getCustomerNotificationLog`);
     return await res.json();
   } catch (err) {
     console.error(err);
@@ -584,7 +584,16 @@ export const saveNotification = async (notification: Partial<Notification>, acti
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'notificationCRUD', action, notification }),
+      body: JSON.stringify({
+        type: 'eventCRUD',
+        action,
+        event: {
+          ...notification,
+          EventID: notification.EventID || notification.ID,
+          TargetAudience: 'CUSTOMER_NOTIFICATION',
+          EventType: notification.EventType || 'ADMIN_BROADCAST',
+        },
+      }),
     });
     return await res.json();
   } catch (err) {

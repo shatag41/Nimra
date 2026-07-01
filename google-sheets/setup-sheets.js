@@ -139,6 +139,16 @@ function setupNIMRASheets() {
     cancellationSheet.getRange(1, 1, 1, cancellationHeaders.length).setValues([cancellationHeaders]);
   }
 
+  var eventsSheet = getOrCreateSheet(ss, 'Events');
+  if (eventsSheet.getLastRow() === 0) {
+    eventsSheet.getRange(1, 1, 1, 19).setValues([[
+      'EventID', 'Timestamp', 'TargetAudience', 'EventType', 'Title', 'Message',
+      'Read', 'Status', 'Category', 'Priority', 'ActionLink', 'UserID',
+      'Username', 'InquiryID', 'OrderID', 'RelatedEntityID',
+      'DeduplicationKey', 'CreatedAt', 'ReadByUserIDs'
+    ]]);
+  }
+
   // Set up Users sheet
   var usersSheet = getOrCreateSheet(ss, 'Users');
   var userAddressesSheet = getOrCreateSheet(ss, 'UserAddresses');

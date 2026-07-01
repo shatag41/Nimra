@@ -143,6 +143,11 @@ export default function OrderDetailsModal({
             <button type="button" onClick={() => { setOrderToCancel(selectedOrder); }} className="btn btn-outline-danger">
               Cancel Order
             </button>
+          ) : ['processing', 'dispatched', 'out for delivery', 'delivered'].includes(status.toLowerCase()) ? (
+            <div>
+              <button type="button" className="btn btn-outline-danger" disabled>Cancel Order</button>
+              <div className="pending-cancel-notice">This order is already being prepared and can no longer be cancelled.</div>
+            </div>
           ) : null}
           <div className="footer-right-actions">
             <button type="button" onClick={() => setSelectedOrder(null)} className="btn btn-secondary">

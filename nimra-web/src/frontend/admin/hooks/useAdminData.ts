@@ -18,7 +18,8 @@ import {
   fetchInquiries,
   fetchUsers,
   saveUser,
-  fetchNotifications,
+  fetchAdminUpdates,
+  fetchCustomerNotificationLog,
   saveNotification,
   fetchProducts,
   saveProduct,
@@ -70,6 +71,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [adminUpdates, setAdminUpdates] = useState<Notification[]>([]);
   const [cancellationRequests, setCancellationRequests] = useState<CancellationRequest[]>([]);
   const [products, setProducts] = useState<Product[]>(initialCMSData.products || []);
   const [banners, setBanners] = useState<Banner[]>(initialCMSData.banners || []);
@@ -121,6 +123,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
         fetchedInquiries,
         fetchedUsers,
         fetchedNotifs,
+        fetchedAdminUpdates,
         fetchedCancellationRequests,
         fetchedProducts,
         fetchedBanners,
@@ -129,7 +132,8 @@ export const useAdminData = (initialCMSData: CMSData) => {
         fetchOrders(),
         fetchInquiries(),
         fetchUsers(),
-        fetchNotifications(),
+        fetchCustomerNotificationLog(),
+        fetchAdminUpdates(),
         fetchCancellationRequests(),
         fetchProducts(),
         fetchBanners(),
@@ -140,6 +144,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
       setInquiries(fetchedInquiries);
       setUsers(fetchedUsers);
       setNotifications(fetchedNotifs);
+      setAdminUpdates(fetchedAdminUpdates);
       setCancellationRequests(fetchedCancellationRequests);
       setProducts(fetchedProducts);
       setBanners(fetchedBanners);
@@ -161,7 +166,8 @@ export const useAdminData = (initialCMSData: CMSData) => {
         fetchOrders(),
         fetchInquiries(),
         fetchUsers(),
-        fetchNotifications(),
+        fetchCustomerNotificationLog(),
+        fetchAdminUpdates(),
         fetchCancellationRequests(),
         fetchProducts(),
         fetchBanners(),
@@ -171,6 +177,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
         fetchedInquiries,
         fetchedUsers,
         fetchedNotifs,
+        fetchedAdminUpdates,
         fetchedCancellationRequests,
         fetchedProducts,
         fetchedBanners,
@@ -180,6 +187,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
         setInquiries(fetchedInquiries);
         setUsers(fetchedUsers);
         setNotifications(fetchedNotifs);
+        setAdminUpdates(fetchedAdminUpdates);
         setCancellationRequests(fetchedCancellationRequests);
         setProducts(fetchedProducts);
         setBanners(fetchedBanners);
@@ -487,7 +495,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
       const res = await saveNotification({ Title: title, Message: message, ...extra }, 'create');
       if (res.success) {
         showAlert('Notification logged and broadcasted successfully!');
-        const fetchedNotifs = await fetchNotifications();
+        const fetchedNotifs = await fetchCustomerNotificationLog();
         setNotifications(fetchedNotifs);
         return true;
       } else {
@@ -567,6 +575,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
     inquiries,
     users,
     notifications,
+    adminUpdates,
     cancellationRequests,
     products,
     banners,

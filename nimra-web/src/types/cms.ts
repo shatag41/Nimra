@@ -230,11 +230,16 @@ export type NotificationCategory =
   | 'Settings'
   | 'Delivery Updates'
   | 'Payments'
-  | 'Account Updates';
+  | 'Account Updates'
+  | 'News'
+  | 'Updates';
 
 export interface Notification {
   ID: string | number;
+  EventID?: string | number;
   Timestamp: string;
+  TargetAudience?: 'ADMIN_UPDATE' | 'CUSTOMER_NOTIFICATION';
+  EventType?: string;
   Title: string;
   Message: string;
   Read?: boolean | string;
@@ -247,6 +252,10 @@ export interface Notification {
   ActionLink?: string;
   UserId?: string | number;
   Username?: string;
+  InquiryID?: string | number;
+  OrderID?: string | number;
+  RelatedEntityID?: string | number;
+  ReadByUserIDs?: string;
 }
 
 

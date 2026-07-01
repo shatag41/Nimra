@@ -677,8 +677,39 @@ export const requestEmailChangeOTP = async (
   }
 };
 
-export const fetchNotifications = async (): Promise<Notification[]> => { 
-  const res = await fetch(`/api/cms?action=getNotifications&_t=${Date.now()}`, { 
+const normalizeNotifications = (notifications: Notification[]) => notifications.map((notification, index) => ({
+  ...notification,
+  ID: notification.ID === undefined || notification.ID === null || String(notification.ID).trim() === ''
+    ? notification.EventID || `missing-${index}-${notification.Timestamp || notification.CreatedAt || ''}`
+    : notification.ID,
+}));
+
+export const fetchAdminUpdates = async (): Promise<Notification[]> => {
+  const res = await fetch(`/api/cms?action=getAdminUpdates&_t=${Date.now()}`, {
+    method: 'GET',
+    cache: 'no-store',
+    headers: { Accept: 'application/json' },
+  });
+  const data = await readJsonResponse<{ events?: Notification[] } | Notification[]>(res, []);
+  return normalizeNotifications(Array.isArray(data) ? data : (data.events || []));
+};
+
+export const fetchCustomerNotificationLog = async (): Promise<Notification[]> => {
+  const res = await fetch(`/api/cms?action=getCustomerNotificationLog&_t=${Date.now()}`, {
+    method: 'GET',
+    cache: 'no-store',
+    headers: { Accept: 'application/json' },
+  });
+  const data = await readJsonResponse<{ events?: Notification[] } | Notification[]>(res, []);
+  return normalizeNotifications(Array.isArray(data) ? data : (data.events || []))
+    .filter((notification) => notification.EventType === 'ADMIN_BROADCAST');
+};
+
+export const fetchNotifications = async (userId?: string | number, email?: string): Promise<Notification[]> => {
+  const params = new URLSearchParams({ action: 'getCustomerNotifications', _t: String(Date.now()) });
+  if (userId !== undefined && userId !== null) params.set('userId', String(userId));
+  if (email) params.set('email', email);
+  const res = await fetch(`/api/cms?${params.toString()}`, {
     method: 'GET', 
     cache: 'no-store',
     headers: {
@@ -687,12 +718,7 @@ export const fetchNotifications = async (): Promise<Notification[]> => {
   });
   const data = await readJsonResponse<{ notifications?: Notification[] } | Notification[]>(res, []);
   const notifications = Array.isArray(data) ? data : (data.notifications || []);
-  return notifications.map((notification, index) => ({
-    ...notification,
-    ID: notification.ID === undefined || notification.ID === null || String(notification.ID).trim() === ''
-      ? `missing-${index}-${notification.Timestamp || notification.CreatedAt || ''}`
-      : notification.ID,
-  }));
+  return normalizeNotifications(notifications);
 };
 
 export const saveUserAddresses = async <T>(customerId: string | number, addresses: T[]): Promise<{ success: boolean; message: string; addresses?: T[] }> => {
@@ -755,7 +781,18 @@ export const saveNotification = async (notification: Partial<Notification>, acti
     const res = await fetch('/api/cms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'notificationCRUD', action, notification }),
+      body: JSON.stringify({
+        type: 'eventCRUD',
+        action,
+        event: {
+          ...notification,
+          EventID: notification.EventID || notification.ID,
+          TargetAudience: 'CUSTOMER_NOTIFICATION',
+          EventType: notification.EventType || 'ADMIN_BROADCAST',
+          Role: 'Customer',
+          ActionLink: '',
+        },
+      }),
     });
     const data = await res.json();
     return { success: data.success, message: data.message || 'Notification saved successfully', ID: data.ID };

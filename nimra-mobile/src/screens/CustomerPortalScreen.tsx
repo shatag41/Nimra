@@ -122,6 +122,13 @@ export default function CustomerPortalScreen({ isDark, onNavigate }: CustomerPor
               <TouchableOpacity style={styles.cancelBtn} onPress={() => handleRequestCancellation(order)}>
                 <Text style={styles.cancelBtnText}>Request Cancellation</Text>
               </TouchableOpacity>
+            ) : ['Processing', 'Dispatched', 'Out for Delivery', 'Delivered'].includes(order.status) ? (
+              <View>
+                <TouchableOpacity style={[styles.cancelBtn, { opacity: 0.45 }]} disabled>
+                  <Text style={styles.cancelBtnText}>Request Cancellation</Text>
+                </TouchableOpacity>
+                <Text style={[styles.pendingCancellationText, { color: theme.textMuted }]}>This order is already being prepared and can no longer be cancelled.</Text>
+              </View>
             ) : null}
           </View>
         ))

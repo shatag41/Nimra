@@ -82,6 +82,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
     inquiries,
     users,
     notifications,
+    adminUpdates,
     cancellationRequests,
     products,
     banners,
@@ -300,7 +301,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                   }}
                   onNavigateToOrdersWithFilter={handleNavigateToOrdersWithFilter}
                   setActiveTab={setActiveTab}
-                  notifications={notifications}
+                  notifications={adminUpdates}
                 />
               )}
 
@@ -403,7 +404,6 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                   handleSendNotif={handleSendNotif}
                   handleNotifDelete={handleNotifDelete}
                   saveLoading={saveLoading}
-                  setActiveTab={setActiveTab}
                 />
               )}
 

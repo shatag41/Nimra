@@ -196,6 +196,13 @@ export default function TrackOrderScreen({ isDark, initialOrderId, onNavigate }:
             <TouchableOpacity style={[styles.secondaryBtn, { borderColor: '#ef4444' }]} onPress={submitCancellationRequest}>
               <Text style={[styles.secondaryBtnText, { color: '#ef4444' }]}>Request Cancellation</Text>
             </TouchableOpacity>
+          ) : ['Processing', 'Dispatched', 'Out for Delivery', 'Delivered'].includes(order.status) ? (
+            <View>
+              <TouchableOpacity style={[styles.secondaryBtn, { borderColor: '#ef4444', opacity: 0.45 }]} disabled>
+                <Text style={[styles.secondaryBtnText, { color: '#ef4444' }]}>Request Cancellation</Text>
+              </TouchableOpacity>
+              <Text style={[styles.auditNote, { color: theme.textMuted }]}>This order is already being prepared and can no longer be cancelled.</Text>
+            </View>
           ) : null}
         </View>
       )}
