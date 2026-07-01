@@ -665,6 +665,39 @@ body > section[aria-label^="Notifications"] {
   line-height: 1.35 !important;
 }
 
+.modal-header {
+    padding: 0.85rem 1.25rem !important;
+    background: var(--bg-secondary) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    border-top-left-radius: 12px !important;
+    border-top-right-radius: 12px !important;
+}
+
+.modal-header h2 {
+    font-size: 1.15rem !important;
+    font-weight: 700 !important;
+    color: var(--text-primary) !important;
+}
+
+.modal-body {
+    padding: 1.25rem !important;
+    gap: 0.85rem !important;
+}
+
+.modal-body .form-row {
+    gap: 0.85rem !important;
+    margin-bottom: 0 !important;
+}
+
+.modal-footer {
+    padding: 0.75rem 1.25rem !important;
+    background: var(--bg-primary) !important;
+    border-top: 1px solid var(--border-color) !important;
+    gap: 0.6rem !important;
+    border-bottom-left-radius: 12px !important;
+    border-bottom-right-radius: 12px !important;
+}
+
 .cart-added-toast__icon {
   display: grid !important;
   width: 34px !important;
@@ -6928,6 +6961,7 @@ select {
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;
+    overflow: visible !important;
     animation: modalScaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
 }
 
@@ -7620,7 +7654,7 @@ select {
 
 /* Form Helper Classes */
 .form-row-relative {
-  z-index: 12 !important;
+  z-index: 60 !important;
   position: relative !important;
 }
 .form-group-error {
