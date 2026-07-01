@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { CompanyInfo, Notification } from '@/types/cms';
 import { useCart } from '../contexts/CartProvider';
 import { useAuth } from '../contexts/AuthContext';
@@ -26,6 +26,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const currentTab = searchParams ? searchParams.get('tab') : null;
   const { totalItems } = useCart();
   const { user, logout, isLoading: isAuthLoading } = useAuth();
@@ -84,7 +85,12 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
   }, []);
 
   useEffect(() => {
-    if (activeUser) {
+    if (!activeUser) {
+      setNotifications([]);
+      return;
+    }
+
+    const loadNotifications = () => {
       fetchNotifications().then(data => {
         const key = `nimra_read_notifs_${activeUser.ID || activeUser.Username}`;
         let readIds: string[] = [];
@@ -92,12 +98,33 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           readIds = JSON.parse(localStorage.getItem(key) || '[]');
         } catch {}
         
+        const allowedCustomerCategories = [
+          'orders',
+          'delivery updates',
+          'payments',
+          'offers',
+          'promotions',
+          'offers/promotions',
+          'account updates',
+          'cancellation requests'
+        ];
+
         const filteredData = data.filter(n => {
            const notif = n as any;
+           
+           // Role filtering: hide admin-only notifications from customers
+           const role = String(notif.Role || notif.role || '').toLowerCase();
            const type = String(notif.Type || notif.type || '').toLowerCase();
-           if (type === 'admin' || type === 'system') {
+           if (role === 'admin' || role === 'manager' || type === 'admin') {
              return false;
            }
+
+           // Category filtering
+           const category = String(notif.Category || notif.category || '').toLowerCase();
+           if (category && !allowedCustomerCategories.includes(category)) {
+             return false;
+           }
+
            if (!activeUser) return false;
            
            const nUserId = notif.UserId ?? notif.userId ?? notif['User ID'] ?? notif['UserId'] ?? notif.CustomerID ?? notif.customerId ?? notif['Customer ID'];
@@ -109,7 +136,9 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
            if (nUsername !== undefined && nUsername !== null && String(nUsername).trim() !== '') {
              return String(nUsername).toLowerCase() === String(activeUser.Username).toLowerCase();
            }
-           return false;
+           
+           // Broadcast to all customers
+           return role === 'customer' || role === 'all' || !role;
         });
 
         const sorted = filteredData.sort((a, b) => {
@@ -124,9 +153,11 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
         });
         setNotifications(updated);
       }).catch(console.error);
-    } else {
-      setNotifications([]);
-    }
+    };
+
+    loadNotifications();
+    const interval = setInterval(loadNotifications, 10000); // 10s polling for real-time
+    return () => clearInterval(interval);
   }, [activeUser]);
 
   const handleMarkAsRead = async (id: string | number) => {
@@ -318,12 +349,26 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                         <div className="notification-list" style={{ maxHeight: '320px', overflowY: 'auto' }}>
                           {notifications.slice(0, 10).map((n) => {
                             const isUnread = n.Read !== true && n.Read !== 'true';
+                            
+                            // Determine Priority Badges
+                            const priority = String(n.Priority || 'Low').toLowerCase();
+                            const priorityBadgeColor = 
+                              priority === 'high' ? '#ef4444' : 
+                              priority === 'medium' ? '#f59e0b' : '#3b82f6';
+                            const priorityBg =
+                              priority === 'high' ? 'rgba(239, 68, 68, 0.1)' : 
+                              priority === 'medium' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(59, 130, 246, 0.1)';
+
                             return (
                               <div 
                                 key={n.ID} 
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   if (isUnread) handleMarkAsRead(n.ID);
+                                  if (n.ActionLink) {
+                                    setNotificationDropdownOpen(false);
+                                    router.push(n.ActionLink);
+                                  }
                                 }}
                                 className={`notification-dropdown-item ${isUnread ? 'notification-dropdown-item-unread' : ''}`}
                                 style={{
@@ -334,12 +379,24 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                                   transition: 'background 0.2s ease',
                                   display: 'flex',
                                   flexDirection: 'column',
-                                  gap: '0.2rem',
+                                  gap: '0.35rem',
                                   position: 'relative'
                                 }}
                               >
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
-                                  <strong className={`notification-title ${isUnread ? 'notification-title-unread' : ''}`} style={{ fontSize: '0.85rem', fontWeight: isUnread ? 700 : 600, color: 'var(--text-primary)', paddingRight: isUnread ? '12px' : '0' }}>{n.Title}</strong>
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                      {n.Category && (
+                                        <span style={{ fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', background: 'var(--border-color)', color: 'var(--text-secondary)' }}>
+                                          {n.Category}
+                                        </span>
+                                      )}
+                                      <span style={{ fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', background: priorityBg, color: priorityBadgeColor }}>
+                                        {n.Priority || 'Low'}
+                                      </span>
+                                    </div>
+                                    <strong className={`notification-title ${isUnread ? 'notification-title-unread' : ''}`} style={{ fontSize: '0.85rem', fontWeight: isUnread ? 700 : 600, color: 'var(--text-primary)', paddingRight: isUnread ? '12px' : '0', marginTop: '0.1rem' }}>{n.Title}</strong>
+                                  </div>
                                   <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                                     {new Date(n.CreatedAt || n.Timestamp).toLocaleDateString()}
                                   </span>

@@ -69,6 +69,29 @@ export default React.memo(function OrdersTab({
   const visibleOrders = orderStatusFilter === 'All'
     ? filteredOrders.filter((order) => order.status !== 'Delivered' && order.status !== 'Cancelled')
     : filteredOrders;
+  let visibleCancellationRequests = orderStatusFilter === 'Pending'
+    ? cancellationRequests.filter((r) => r.status === 'Pending')
+    : orderStatusFilter === 'Confirmed' || orderStatusFilter === 'Approved'
+      ? cancellationRequests.filter((r) => r.status === 'Approved')
+      : orderStatusFilter === 'Cancelled' || orderStatusFilter === 'Rejected'
+        ? cancellationRequests.filter((r) => r.status === 'Rejected')
+        : cancellationRequests;
+
+  if (orderStartDate) {
+    const start = new Date(orderStartDate).getTime();
+    visibleCancellationRequests = visibleCancellationRequests.filter((r) => {
+      const created = new Date(r.requestDate).getTime();
+      return created >= start;
+    });
+  }
+  if (orderEndDate) {
+    const end = new Date(orderEndDate);
+    end.setHours(23, 59, 59, 999);
+    visibleCancellationRequests = visibleCancellationRequests.filter((r) => {
+      const created = new Date(r.requestDate).getTime();
+      return created <= end.getTime();
+    });
+  }
   const pendingCancellationCount = cancellationRequests.filter((request) => request.status === 'Pending').length;
 
   const reviewCancellation = async (request: CancellationRequest, decision: 'Approved' | 'Rejected') => {
@@ -117,7 +140,7 @@ export default React.memo(function OrdersTab({
               </tr>
             </thead>
             <tbody>
-              {cancellationRequests.map((request) => {
+              {visibleCancellationRequests.map((request) => {
                 const isPending = request.status === 'Pending';
                 return (
                   <tr key={request.requestId}>
@@ -174,7 +197,7 @@ export default React.memo(function OrdersTab({
                   </tr>
                 );
               })}
-              {cancellationRequests.length === 0 && (
+              {visibleCancellationRequests.length === 0 && (
                 <tr>
                   <td colSpan={8} className="empty-td">No cancellation requests found.</td>
                 </tr>
@@ -196,6 +219,7 @@ export default React.memo(function OrdersTab({
               options={[
                 { value: 'All', label: 'All Statuses' },
                 { value: 'Pending', label: 'Pending' },
+                { value: 'InTransit', label: 'In Transit Orders' },
                 { value: 'Confirmed', label: 'Confirmed' },
                 { value: 'Processing', label: 'Processing' },
                 { value: 'Dispatched', label: 'Dispatched' },

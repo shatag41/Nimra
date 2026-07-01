@@ -340,7 +340,7 @@ export async function handleGet(req: Request) {
   } else if (action === 'getInquiries') {
     return NextResponse.json(fallbackData.inquiries, { headers: cacheHeaders });
   } else if (action === 'getCancellationRequests') {
-    return NextResponse.json([], { headers: cacheHeaders });
+    return NextResponse.json(fallbackData.cancellationRequests || [], { headers: cacheHeaders });
   } else if (action === 'getUsers') {
     return NextResponse.json(fallbackData.users, { headers: cacheHeaders });
   } else if (action === 'getNotifications') {
@@ -514,6 +514,24 @@ export async function handlePost(req: Request) {
         updatedAt: now,
       };
       fallbackData.orders.unshift(savedOrder);
+
+      // Create Admin Notification
+      const adminNotif = {
+        ID: `notif-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        Timestamp: now,
+        CreatedAt: now,
+        Title: 'New Order Placed',
+        Message: `Order ${orderId} has been placed by ${payload.customer?.name || 'Customer'} for a total of ₹${payload.total || 0}.`,
+        Read: false,
+        Status: 'Published',
+        Role: 'Admin',
+        Category: 'Orders',
+        Priority: 'High',
+        ActionLink: 'orders',
+      };
+      if (!fallbackData.notifications) fallbackData.notifications = [];
+      fallbackData.notifications.unshift(adminNotif);
+
       await syncLocalDB('save');
       const customerUserId = String(payload.userId || payload.customer?.userId || '').trim();
       const customerEmail = String(payload.customer?.email || '').trim().toLowerCase();
@@ -535,16 +553,173 @@ export async function handlePost(req: Request) {
         orders: customerOrders,
       });
     } else if (payload.type === 'requestOrderCancellation') {
+      const { orderId, reason } = payload;
+      const orderIndex = fallbackData.orders.findIndex((o: any) => String(o.orderId) === String(orderId));
+      const now = new Date().toISOString();
+      const requestId = `CR-${Date.now()}`;
+      if (orderIndex >= 0) {
+        fallbackData.orders[orderIndex].cancellationStatus = 'Pending';
+        fallbackData.orders[orderIndex].cancellationRequestId = requestId;
+        fallbackData.orders[orderIndex].updatedAt = now;
+      }
+      
+      const newRequest = {
+        requestId,
+        orderId,
+        customerName: fallbackData.orders[orderIndex]?.customer?.name || 'Customer',
+        customerMobile: fallbackData.orders[orderIndex]?.customer?.mobile || '',
+        customerEmail: fallbackData.orders[orderIndex]?.customer?.email || '',
+        orderTotal: fallbackData.orders[orderIndex]?.total || 0,
+        paymentMethod: fallbackData.orders[orderIndex]?.paymentMethod || 'Cash on Delivery',
+        reason: reason || 'Customer requested cancellation',
+        requestDate: now,
+        status: 'Pending',
+        statusHistory: [{ status: 'Requested', at: now, remarks: reason }]
+      };
+      if (!fallbackData.cancellationRequests) {
+        fallbackData.cancellationRequests = [];
+      }
+      fallbackData.cancellationRequests.unshift(newRequest);
+
+      // Create Admin Notification
+      const adminNotif = {
+        ID: `notif-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        Timestamp: now,
+        CreatedAt: now,
+        Title: 'Cancellation Requested',
+        Message: `Cancellation request for order ${orderId} has been submitted. Reason: ${reason || 'None'}`,
+        Read: false,
+        Status: 'Published',
+        Role: 'Admin',
+        Category: 'Cancellation Requests',
+        Priority: 'High',
+        ActionLink: 'orders',
+      };
+      if (!fallbackData.notifications) fallbackData.notifications = [];
+      fallbackData.notifications.unshift(adminNotif);
+
+      await syncLocalDB('save');
       return NextResponse.json({
         success: true,
         message: 'Cancellation request submitted for admin approval (local fallback mode)'
       });
     } else if (payload.type === 'reviewCancellationRequest') {
+      const { requestId, decision, adminName, adminRemarks } = payload;
+      const reqIndex = (fallbackData.cancellationRequests || []).findIndex((r: any) => String(r.requestId) === String(requestId));
+      const now = new Date().toISOString();
+      let orderId = '';
+      if (reqIndex >= 0) {
+        fallbackData.cancellationRequests[reqIndex].status = decision;
+        fallbackData.cancellationRequests[reqIndex].approvalDate = now;
+        fallbackData.cancellationRequests[reqIndex].adminName = adminName;
+        fallbackData.cancellationRequests[reqIndex].adminRemarks = adminRemarks;
+        fallbackData.cancellationRequests[reqIndex].statusHistory.push({
+          status: decision === 'Approved' ? 'Approved' : 'Rejected',
+          at: now,
+          by: adminName,
+          remarks: adminRemarks
+        });
+        orderId = fallbackData.cancellationRequests[reqIndex].orderId;
+        
+        const orderIndex = fallbackData.orders.findIndex((o: any) => String(o.orderId) === String(orderId));
+        if (orderIndex >= 0) {
+          fallbackData.orders[orderIndex].cancellationStatus = decision;
+          if (decision === 'Approved') {
+            fallbackData.orders[orderIndex].status = 'Cancelled';
+          }
+          fallbackData.orders[orderIndex].updatedAt = now;
+
+          // Create Customer Notification
+          const customerNotif = {
+            ID: `notif-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            Timestamp: now,
+            CreatedAt: now,
+            Title: `Cancellation Request ${decision}`,
+            Message: `Your cancellation request for order ${orderId} has been ${decision.toLowerCase()}. Remarks: ${adminRemarks || 'None'}`,
+            Read: false,
+            Status: 'Published',
+            Role: 'Customer',
+            Category: 'Cancellation Requests',
+            Priority: 'High',
+            ActionLink: '/customer-portal?tab=orders',
+            UserId: fallbackData.orders[orderIndex].userId || fallbackData.orders[orderIndex].customer?.userId,
+            Username: fallbackData.orders[orderIndex].customer?.email
+          };
+          if (!fallbackData.notifications) fallbackData.notifications = [];
+          fallbackData.notifications.unshift(customerNotif);
+        }
+      }
+      await syncLocalDB('save');
       return NextResponse.json({
         success: true,
-        message: `Cancellation request ${String(payload.decision || '').toLowerCase()} (local fallback mode)`
+        message: `Cancellation request ${String(decision || '').toLowerCase()} (local fallback mode)`
+      });
+    } else if (payload.type === 'updateOrderStatus') {
+      const { orderId, status } = payload;
+      const orderIndex = fallbackData.orders.findIndex((o: any) => String(o.orderId) === String(orderId));
+      const now = new Date().toISOString();
+      if (orderIndex >= 0) {
+        fallbackData.orders[orderIndex].status = status;
+        fallbackData.orders[orderIndex].updatedAt = now;
+
+        // Create Customer Notification
+        const customerNotif = {
+          ID: `notif-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          Timestamp: now,
+          CreatedAt: now,
+          Title: `Order Status Updated`,
+          Message: `Your order ${orderId} status has been updated to ${status}.`,
+          Read: false,
+          Status: 'Published',
+          Role: 'Customer',
+          Category: 'Delivery Updates',
+          Priority: 'Medium',
+          ActionLink: '/customer-portal?tab=orders',
+          UserId: fallbackData.orders[orderIndex].userId || fallbackData.orders[orderIndex].customer?.userId,
+          Username: fallbackData.orders[orderIndex].customer?.email
+        };
+        if (!fallbackData.notifications) fallbackData.notifications = [];
+        fallbackData.notifications.unshift(customerNotif);
+      }
+      await syncLocalDB('save');
+      return NextResponse.json({
+        success: true,
+        message: `Updated status to ${status} successfully`
       });
     } else if (payload.type === 'inquiry') {
+      const now = new Date().toISOString();
+      const newInquiry = {
+        Timestamp: now,
+        Name: payload.name,
+        Email: payload.email,
+        Phone: payload.phone,
+        Subject: payload.subject,
+        Message: payload.message,
+        Status: 'New'
+      };
+      if (!fallbackData.inquiries) {
+        fallbackData.inquiries = [];
+      }
+      fallbackData.inquiries.unshift(newInquiry);
+
+      // Create Admin Notification
+      const adminNotif = {
+        ID: `notif-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        Timestamp: now,
+        CreatedAt: now,
+        Title: 'New Inquiry Received',
+        Message: `Inquiry from ${payload.name}: "${payload.subject}"`,
+        Read: false,
+        Status: 'Published',
+        Role: 'Admin',
+        Category: 'Inquiries',
+        Priority: 'Medium',
+        ActionLink: 'inquiries',
+      };
+      if (!fallbackData.notifications) fallbackData.notifications = [];
+      fallbackData.notifications.unshift(adminNotif);
+
+      await syncLocalDB('save');
       return NextResponse.json({
         success: true,
         message: 'Inquiry submitted successfully (local fallback mode)'

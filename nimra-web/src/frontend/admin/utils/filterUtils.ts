@@ -27,7 +27,14 @@ export const filterOrders = (
       String(o.customer?.mobile || '').toLowerCase().includes(searchLower) ||
       String(o.status || '').toLowerCase().includes(searchLower);
     
-    const matchesStatus = statusFilter === 'All' || o.status === statusFilter;
+    let matchesStatus = false;
+    if (statusFilter === 'All') {
+      matchesStatus = true;
+    } else if (statusFilter === 'InTransit') {
+      matchesStatus = o.status !== 'Pending' && o.status !== 'Cancelled';
+    } else {
+      matchesStatus = o.status === statusFilter;
+    }
     const matchesPayment = paymentFilter === 'All' || o.paymentMethod === paymentFilter;
     
     let matchesDateRange = true;

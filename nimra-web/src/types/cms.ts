@@ -218,6 +218,20 @@ export interface EmailPreferences {
   orderStatusUpdates: boolean;
 }
 
+export type NotificationCategory =
+  | 'Orders'
+  | 'Cancellation Requests'
+  | 'Inquiries'
+  | 'Users'
+  | 'Products'
+  | 'Offers/Promotions'
+  | 'Inventory'
+  | 'System Alerts'
+  | 'Settings'
+  | 'Delivery Updates'
+  | 'Payments'
+  | 'Account Updates';
+
 export interface Notification {
   ID: string | number;
   Timestamp: string;
@@ -226,8 +240,15 @@ export interface Notification {
   Read?: boolean | string;
   Status?: string;
   CreatedAt?: string;
-  Type?: string;
+  Type?: string; // Left for compatibility
+  Role?: 'Admin' | 'Customer' | 'All';
+  Category?: NotificationCategory;
+  Priority?: 'High' | 'Medium' | 'Low';
+  ActionLink?: string;
+  UserId?: string | number;
+  Username?: string;
 }
+
 
 export interface Inquiry {
   ID?: string | number;

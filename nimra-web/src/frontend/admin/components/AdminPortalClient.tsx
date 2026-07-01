@@ -122,6 +122,36 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [ordersView, setOrdersView] = useState<'active' | 'cancellations'>('active');
 
+  const handleNavigateToOrdersWithFilter = (statusFilter: string, view: 'active' | 'cancellations', startDate?: string) => {
+    filters.setOrderStatusFilter(statusFilter);
+    setOrdersView(view);
+    if (startDate) {
+      filters.setOrderStartDate(startDate);
+      filters.setOrderEndDate('');
+    }
+    setActiveTab('orders');
+  };
+
+  const handleSidebarTabChange = (tab: any) => {
+    if (tab === 'orders') {
+      filters.setOrderStatusFilter('All');
+      filters.setOrderStartDate('');
+      filters.setOrderEndDate('');
+      setOrdersView('active');
+    }
+    setActiveTab(tab);
+  };
+
+  // Clear contextual filter when leaving the orders page or opening Orders directly
+  React.useEffect(() => {
+    if (activeTab !== 'orders') {
+      filters.setOrderStatusFilter('All');
+      filters.setOrderStartDate('');
+      filters.setOrderEndDate('');
+      setOrdersView('active');
+    }
+  }, [activeTab]);
+
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
   const [productFormOpen, setProductFormOpen] = useState(false);
 
@@ -232,7 +262,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         <Sidebar
           currentUser={currentUser}
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          setActiveTab={handleSidebarTabChange}
           isProfilePanelOpen={profile.isProfilePanelOpen}
         />
 
@@ -266,9 +296,11 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                   cancellationRequests={cancellationRequests}
                   onReviewCancellation={handleCancellationReview}
                   onOpenCancellationRequests={() => {
-                    setOrdersView('cancellations');
-                    setActiveTab('orders');
+                    handleNavigateToOrdersWithFilter('All', 'cancellations');
                   }}
+                  onNavigateToOrdersWithFilter={handleNavigateToOrdersWithFilter}
+                  setActiveTab={setActiveTab}
+                  notifications={notifications}
                 />
               )}
 
@@ -371,6 +403,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                   handleSendNotif={handleSendNotif}
                   handleNotifDelete={handleNotifDelete}
                   saveLoading={saveLoading}
+                  setActiveTab={setActiveTab}
                 />
               )}
 

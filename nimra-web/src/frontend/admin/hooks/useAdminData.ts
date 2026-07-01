@@ -153,9 +153,43 @@ export const useAdminData = (initialCMSData: CMSData) => {
   };
 
   useEffect(() => {
-    if (authChecked) {
-      refreshData();
-    }
+    if (!authChecked) return;
+
+    refreshData();
+    const interval = setInterval(() => {
+      Promise.all([
+        fetchOrders(),
+        fetchInquiries(),
+        fetchUsers(),
+        fetchNotifications(),
+        fetchCancellationRequests(),
+        fetchProducts(),
+        fetchBanners(),
+        fetchFAQs(),
+      ]).then(([
+        fetchedOrders,
+        fetchedInquiries,
+        fetchedUsers,
+        fetchedNotifs,
+        fetchedCancellationRequests,
+        fetchedProducts,
+        fetchedBanners,
+        fetchedFaqs,
+      ]) => {
+        setOrders(fetchedOrders);
+        setInquiries(fetchedInquiries);
+        setUsers(fetchedUsers);
+        setNotifications(fetchedNotifs);
+        setCancellationRequests(fetchedCancellationRequests);
+        setProducts(fetchedProducts);
+        setBanners(fetchedBanners);
+        setFaqs(fetchedFaqs);
+      }).catch(err => {
+        console.error('Failed to auto-refresh admin data', err);
+      });
+    }, 10000);
+
+    return () => clearInterval(interval);
   }, [authChecked]);
 
   const performLogout = () => {
@@ -447,10 +481,10 @@ export const useAdminData = (initialCMSData: CMSData) => {
   };
 
   // Notification Broadcast Submit
-  const handleSendNotif = async (title: string, message: string) => {
+  const handleSendNotif = async (title: string, message: string, extra?: Partial<Notification>) => {
     setSaveLoading(true);
     try {
-      const res = await saveNotification({ Title: title, Message: message }, 'create');
+      const res = await saveNotification({ Title: title, Message: message, ...extra }, 'create');
       if (res.success) {
         showAlert('Notification logged and broadcasted successfully!');
         const fetchedNotifs = await fetchNotifications();
