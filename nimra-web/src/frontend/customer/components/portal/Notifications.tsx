@@ -109,8 +109,6 @@ export function PortalNotifications() {
 
   useEffect(() => {
     loadNotifications();
-    const interval = setInterval(loadNotifications, 15000);
-    return () => clearInterval(interval);
   }, [loadNotifications]);
 
   const handleMarkAsRead = useCallback(async (id: string | number) => {

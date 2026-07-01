@@ -4,18 +4,60 @@
  * Set Access to "Anyone" and Execute as "Me".
  */
 
+
+var SpreadsheetService = (function() {
+  var instance;
+  var spreadsheet;
+  var sheets = {};
+  var cache = CacheService.getScriptCache();
+  
+  function init() {
+    spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    return {
+      getSpreadsheet: function() {
+        return spreadsheet;
+      },
+      getSheet: function(name) {
+        if (!sheets[name]) {
+          sheets[name] = spreadsheet.getSheetByName(name);
+        }
+        return sheets[name];
+      },
+      getCachedData: function(key) {
+        var cached = cache.get(key);
+        return cached ? JSON.parse(cached) : null;
+      },
+      setCachedData: function(key, data, expirationInSeconds) {
+        cache.put(key, JSON.stringify(data), expirationInSeconds || 300);
+      },
+      invalidateCache: function(key) {
+        cache.remove(key);
+      }
+    };
+  }
+  
+  return {
+    getInstance: function() {
+      if (!instance) {
+        instance = init();
+      }
+      return instance;
+    }
+  };
+})();
+
 function doGet(e) {
   var action = e.parameter.action;
-  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var spreadsheet = SpreadsheetService.getInstance().getSpreadsheet();
   
   if (action === 'getBanners') {
-    return jsonResponse(getSheetData(spreadsheet.getSheetByName('Banners')));
+    return jsonResponse(getSheetData(SpreadsheetService.getInstance().getSheet('Banners')));
   } else if (action === 'getProducts') {
-    return jsonResponse(getSheetData(spreadsheet.getSheetByName('Products')));
+    return jsonResponse(getSheetData(SpreadsheetService.getInstance().getSheet('Products')));
   } else if (action === 'getFAQs') {
-    return jsonResponse(getSheetData(spreadsheet.getSheetByName('FAQs')));
+    return jsonResponse(getSheetData(SpreadsheetService.getInstance().getSheet('FAQs')));
   } else if (action === 'getCompanyInfo') {
-    return jsonResponse(getCompanyInfoData(spreadsheet.getSheetByName('CompanyInfo')));
+    return jsonResponse(getCompanyInfoData(SpreadsheetService.getInstance().getSheet('CompanyInfo')));
   } else if (action === 'trackOrder') {
     return jsonResponse(trackOrder(spreadsheet, e.parameter.orderId, e.parameter.mobile, e.parameter.userId, e.parameter.email));
   } else if (action === 'getOrders') {
@@ -39,112 +81,91 @@ function doGet(e) {
   } else {
     // Return all data in one request to optimize API calls!
     var data = {
-      banners: getSheetData(spreadsheet.getSheetByName('Banners')),
-      products: getSheetData(spreadsheet.getSheetByName('Products')),
-      faqs: getSheetData(spreadsheet.getSheetByName('FAQs')),
-      companyInfo: getCompanyInfoData(spreadsheet.getSheetByName('CompanyInfo'))
+      banners: getSheetData(SpreadsheetService.getInstance().getSheet('Banners')),
+      products: getSheetData(SpreadsheetService.getInstance().getSheet('Products')),
+      faqs: getSheetData(SpreadsheetService.getInstance().getSheet('FAQs')),
+      companyInfo: getCompanyInfoData(SpreadsheetService.getInstance().getSheet('CompanyInfo'))
     };
     return jsonResponse(data);
   }
 }
 
 function doPost(e) {
+  var lock = LockService.getScriptLock();
   try {
-    Logger.log("doPost: Received POST request.");
-    if (!e || !e.postData || !e.postData.contents) {
-      Logger.log("doPost Error: Empty request body.");
-      return jsonResponse({ success: false, message: 'Empty request body.' });
+    lock.waitLock(30000);
+  } catch (err) {
+    return jsonResponse({ error: 'Could not obtain lock after 30 seconds.' });
+  }
+
+  try {
+    var data;
+    try {
+      data = JSON.parse(e.postData.contents);
+    } catch (parseError) {
+      return jsonResponse({ error: 'Invalid JSON payload' });
     }
     
-    var params = JSON.parse(e.postData.contents);
-    var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-    Logger.log("doPost: Parsed payload type = " + params.type);
-    
-    if (params.type === 'order') {
-      Logger.log("doPost: Routing to saveOrder()");
-      return jsonResponse(saveOrder(spreadsheet, params));
-    } else if (params.type === 'inquiry') {
-      Logger.log("doPost: Routing to saveInquiry()");
-      return jsonResponse(saveInquiry(spreadsheet, params));
-    } else if (params.type === 'updateOrderStatus') {
-      Logger.log("doPost: Routing to updateOrderStatus()");
-      return jsonResponse(updateOrderStatus(spreadsheet, params));
-    } else if (params.type === 'requestOrderCancellation') {
-      Logger.log("doPost: Routing to requestOrderCancellation()");
-      return jsonResponse(requestOrderCancellation(spreadsheet, params));
-    } else if (params.type === 'reviewCancellationRequest') {
-      Logger.log("doPost: Routing to reviewCancellationRequest()");
-      return jsonResponse(reviewCancellationRequest(spreadsheet, params));
-    } else if (params.type === 'productCRUD') {
-      Logger.log("doPost: Routing to productCRUD()");
-      return jsonResponse(handleProductCRUD(spreadsheet, params));
-    } else if (params.type === 'bannerCRUD') {
-      Logger.log("doPost: Routing to bannerCRUD()");
-      return jsonResponse(handleBannerCRUD(spreadsheet, params));
-    } else if (params.type === 'faqCRUD') {
-      Logger.log("doPost: Routing to faqCRUD()");
-      return jsonResponse(handleFaqCRUD(spreadsheet, params));
-    } else if (params.type === 'companyInfoUpdate') {
-      Logger.log("doPost: Routing to companyInfoUpdate()");
-      return jsonResponse(handleCompanyInfoUpdate(spreadsheet, params));
-    } else if (params.type === 'userCRUD') {
-      Logger.log("doPost: Routing to userCRUD()");
-      return jsonResponse(handleUserCRUD(spreadsheet, params));
-    } else if (params.type === 'accountSettings') {
-      Logger.log("doPost: Routing to accountSettings()");
-      return jsonResponse(handleAccountSettings(spreadsheet, params));
-    } else if (params.type === 'userAddresses') {
-      Logger.log("doPost: Routing to handleUserAddresses()");
-      return jsonResponse(handleUserAddresses(spreadsheet, params));
-    } else if (params.type === 'notificationCRUD') {
-      Logger.log("doPost: Routing to notificationCRUD()");
-      return jsonResponse(handleNotificationCRUD(spreadsheet, params));
-    } else if (params.type === 'eventCRUD') {
-      Logger.log("doPost: Routing to eventCRUD()");
-      return jsonResponse(handleEventCRUD(spreadsheet, params));
-    } else if (params.type === 'inquiryCRUD') {
-      Logger.log("doPost: Routing to inquiryCRUD()");
-      return jsonResponse(handleInquiryCRUD(spreadsheet, params));
-    } else if (params.type === 'login') {
-      Logger.log("doPost: Routing to handleAuthLogin()");
-      return jsonResponse(handleAuthLogin(spreadsheet, params));
-    } else if (params.type === 'register') {
-      Logger.log("doPost: Routing to handleAuthRegister()");
-      return jsonResponse(handleAuthRegister(spreadsheet, params));
-    } else if (params.type === 'googleSignIn') {
-      Logger.log("doPost: Routing to handleAuthGoogleSignIn()");
-      return jsonResponse(handleAuthGoogleSignIn(spreadsheet, params));
-    } else if (params.type === 'requestOTP') {
-      Logger.log("doPost: Routing to handleAuthRequestOTP()");
-      return jsonResponse(handleAuthRequestOTP(spreadsheet, params));
-    } else if (params.type === 'requestEmailChangeOTP') {
-      Logger.log("doPost: Routing to handleRequestEmailChangeOTP()");
-      return jsonResponse(handleRequestEmailChangeOTP(spreadsheet, params));
-    } else if (params.type === 'resetPassword') {
-      Logger.log("doPost: Routing to handleAuthResetPassword()");
-      return jsonResponse(handleAuthResetPassword(spreadsheet, params));
-    } else if (params.type === 'getCart') {
-      Logger.log("doPost: Routing to getCart()");
-      return jsonResponse(getCart(spreadsheet, params));
-    } else if (params.type === 'cartSync') {
-      Logger.log("doPost: Routing to handleCartSync()");
-      return jsonResponse(handleCartSync(spreadsheet, params));
-    } else {
-      // Fallback structural check to identify request type
-      if (params.customer && params.items) {
-        Logger.log("doPost Fallback: Identified order payload structure. Routing to saveOrder()");
-        return jsonResponse(saveOrder(spreadsheet, params));
-      } else if (params.phone && params.message) {
-        Logger.log("doPost Fallback: Identified inquiry payload structure. Routing to saveInquiry()");
-        return jsonResponse(saveInquiry(spreadsheet, params));
-      } else {
-        Logger.log("doPost Error: Invalid payload structure.");
-        return jsonResponse({ success: false, message: 'Invalid payload type. Must be a valid admin action or contain required customer/inquiry fields.' });
-      }
+    var type = data.type;
+    var service = SpreadsheetService.getInstance();
+    var spreadsheet = service.getSpreadsheet();
+    var result;
+
+    var routes = {
+      'createOrder': function() { return saveOrder(spreadsheet, data.payload || data); },
+      'order': function() { return saveOrder(spreadsheet, data.payload || data); },
+      'updateOrder': function() { return updateOrder(spreadsheet, data.payload || data); },
+      'registerUser': function() { return registerUser(spreadsheet, data.payload || data); },
+      'userAction': function() { return handleUserAction(spreadsheet, data.payload || data); },
+      'saveAddress': function() { return saveAddress(spreadsheet, data.payload || data); },
+      'inquiry': function() { return saveInquiry(spreadsheet, data.payload || data); },
+      'cancelRequest': function() { return handleCancelRequest(spreadsheet, data.payload || data); },
+      'requestOrderCancellation': function() { return handleCancelRequest(spreadsheet, data.payload || data); },
+      'updateCancellation': function() { return updateCancellation(spreadsheet, data.payload || data); },
+      'reviewCancellationRequest': function() { return updateCancellation(spreadsheet, data.payload || data); },
+      'productCRUD': function() { return handleProductCRUD(spreadsheet, data.payload || data); },
+      'bannerCRUD': function() { return handleBannerCRUD(spreadsheet, data.payload || data); },
+      'faqCRUD': function() { return handleFAQCRUD(spreadsheet, data.payload || data); },
+      'inquiryCRUD': function() { return handleInquiryCRUD(spreadsheet, data.payload || data); },
+      'userCRUD': function() { return handleUserCRUD(spreadsheet, data.payload || data); },
+      'eventCRUD': function() { return handleEventCRUD(spreadsheet, data.payload || data); },
+      'companyInfoUpdate': function() { return handleCompanyInfoUpdate(spreadsheet, data.payload || data); },
+      'notificationCRUD': function() { return handleNotificationCRUD(spreadsheet, data.payload || data); },
+      'adminUpdateCRUD': function() { return handleAdminUpdateCRUD(spreadsheet, data.payload || data); },
+      'inquiryReview': function() { return updateInquiryReview(spreadsheet, data.payload || data); },
+      'login': function() { return handleAuthLogin(spreadsheet, data.payload || data); },
+      'register': function() { return handleAuthRegister(spreadsheet, data.payload || data); },
+      'cartSync': function() { return handleCartSync(spreadsheet, data.payload || data); },
+      'getCart': function() { return getCart(spreadsheet, data.payload || data); },
+      'requestOTP': function() { return handleAuthRequestOTP(spreadsheet, data.payload || data); },
+      'resetPassword': function() { return handleAuthResetPassword(spreadsheet, data.payload || data); },
+      'googleSignIn': function() { return handleAuthGoogleSignIn(spreadsheet, data.payload || data); },
+      'requestEmailChangeOTP': function() { return handleRequestEmailChangeOTP(spreadsheet, data.payload || data); },
+      'accountSettings': function() { return handleAccountSettings(spreadsheet, data.payload || data); },
+      'userAddresses': function() { return handleUserAddresses(spreadsheet, data.payload || data); },
+      'updateOrderStatus': function() { return updateOrderStatus(spreadsheet, data.payload || data); }
+    };
+
+    if (routes[type]) {
+      result = routes[type]();
+      
+      // Invalidate cache based on type
+      if (['productCRUD'].indexOf(type) > -1) service.invalidateCache('getProducts');
+      if (['bannerCRUD'].indexOf(type) > -1) service.invalidateCache('getBanners');
+      if (['faqCRUD'].indexOf(type) > -1) service.invalidateCache('getFAQs');
+      if (['companyInfoUpdate'].indexOf(type) > -1) service.invalidateCache('getCompanyInfo');
+      if (['adminUpdateCRUD'].indexOf(type) > -1) service.invalidateCache('getAdminUpdates');
+      service.invalidateCache('main_cms_data');
+      
+      return jsonResponse(result);
     }
+
+    return jsonResponse({ error: 'Invalid type parameter in POST.' });
+
   } catch (error) {
-    Logger.log("doPost Exception: " + error.toString());
-    return jsonResponse({ success: false, error: error.toString() });
+    return jsonResponse({ error: error.toString() });
+  } finally {
+    lock.releaseLock();
   }
 }
 
@@ -284,7 +305,7 @@ function saveInquiry(spreadsheet, params) {
 }
 
 function ensureInquiriesSheet(spreadsheet) {
-  var sheet = spreadsheet.getSheetByName('Inquiries');
+  var sheet = SpreadsheetService.getInstance().getSheet('Inquiries');
   if (!sheet) {
     Logger.log("ensureInquiriesSheet: Inquiries sheet not found. Creating it...");
     sheet = spreadsheet.insertSheet('Inquiries');
@@ -419,7 +440,7 @@ function createInquiryAdminNotification(spreadsheet, inquiryId, name, subject, c
 }
 
 function findNotificationByInquiryId(spreadsheet, inquiryId) {
-  var sheet = spreadsheet.getSheetByName('Events');
+  var sheet = SpreadsheetService.getInstance().getSheet('Events');
   if (!sheet) return null;
   var data = sheet.getDataRange().getValues();
   if (data.length <= 1) return null;
@@ -491,7 +512,7 @@ function inquiryEmailRow(label, value) {
 }
 
 function getConfiguredAdminEmail(spreadsheet) {
-  var info = getCompanyInfoData(spreadsheet.getSheetByName('CompanyInfo')) || {};
+  var info = getCompanyInfoData(SpreadsheetService.getInstance().getSheet('CompanyInfo')) || {};
   var email = normalizeEmail(
     Session.getEffectiveUser().getEmail() ||
     NIMRA_OVERRIDE_TEST_EMAIL ||
@@ -505,7 +526,7 @@ function getConfiguredAdminEmail(spreadsheet) {
 }
 
 function testInquiryAdminEmail() {
-  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var spreadsheet = SpreadsheetService.getInstance().getSpreadsheet();
   var result = sendInquiryAdminEmail(spreadsheet, {
     inquiryId: 'INQ-EMAIL-TEST',
     customerId: 'Guest',
@@ -792,7 +813,7 @@ function saveOrder(spreadsheet, params) {
 }
 
 function getAllOrders(spreadsheet, userId, mobile, email) {
-  var sheet = spreadsheet.getSheetByName('Orders');
+  var sheet = SpreadsheetService.getInstance().getSheet('Orders');
   if (!sheet) return [];
   var data = sheet.getDataRange().getValues();
   if (data.length <= 1) return [];
@@ -835,7 +856,7 @@ function orderRowValue(headers, row, name) {
 
 function buildAddressOwnerLookupFast(spreadsheet) {
   var lookup = {};
-  var sheet = spreadsheet.getSheetByName('UserAddresses');
+  var sheet = SpreadsheetService.getInstance().getSheet('UserAddresses');
   if (!sheet || sheet.getLastRow() <= 1) return lookup;
 
   var data = sheet.getDataRange().getValues();
@@ -971,7 +992,7 @@ function rowToOrderFast(headers, row) {
 }
 
 function trackOrder(spreadsheet, orderId, mobile, userId, email) {
-  var sheet = spreadsheet.getSheetByName('Orders');
+  var sheet = SpreadsheetService.getInstance().getSheet('Orders');
   if (!sheet || (!orderId && !mobile && !userId && !email)) {
     return { success: false, message: 'Order not found.' };
   }
@@ -1013,7 +1034,7 @@ function trackOrder(spreadsheet, orderId, mobile, userId, email) {
 function updateOrderStatus(spreadsheet, params) {
   var orderId = params.orderId;
   var status  = params.status;
-  var sheet = spreadsheet.getSheetByName('Orders');
+  var sheet = SpreadsheetService.getInstance().getSheet('Orders');
   if (!sheet) return { success: false, message: 'Orders sheet not found.' };
 
   var data    = sheet.getDataRange().getValues();
@@ -1064,7 +1085,7 @@ function requestOrderCancellation(spreadsheet, params) {
   var reason = String(params.reason || 'Customer requested cancellation').trim();
   if (!orderId) return { success: false, message: 'Order ID is required.' };
 
-  var orderSheet = spreadsheet.getSheetByName('Orders');
+  var orderSheet = SpreadsheetService.getInstance().getSheet('Orders');
   if (!orderSheet) return { success: false, message: 'Orders sheet not found.' };
 
   var orderData = orderSheet.getDataRange().getValues();
@@ -1245,7 +1266,7 @@ function rowToOrder(headers, row, spreadsheet, users, customerLookup) {
   // Legacy rows did not retain prices. Recover them from the current catalog so
   // old orders can still be reordered without silently creating zero-value carts.
   if (!items.length) {
-    var catalog = getSheetData(spreadsheet.getSheetByName('Products')) || [];
+    var catalog = getSheetData(SpreadsheetService.getInstance().getSheet('Products')) || [];
     items = products.filter(Boolean).map(function(displayName, index) {
       var parsed = String(displayName).match(/^(.*?)\s*\(([^()]*)\)\s*$/);
       var name = parsed ? parsed[1].trim() : String(displayName).trim();
@@ -1335,7 +1356,7 @@ function buildOrderCustomerLookup(spreadsheet, users) {
     ordersById: {}
   };
 
-  var addressSheet = spreadsheet.getSheetByName('UserAddresses');
+  var addressSheet = SpreadsheetService.getInstance().getSheet('UserAddresses');
   if (addressSheet && addressSheet.getLastRow() > 1) {
     var addressData = addressSheet.getDataRange().getValues();
     var addressHeaders = addressData[0] || [];
@@ -1348,7 +1369,7 @@ function buildOrderCustomerLookup(spreadsheet, users) {
     }
   }
 
-  var requestSheet = spreadsheet.getSheetByName('CancellationRequests');
+  var requestSheet = SpreadsheetService.getInstance().getSheet('CancellationRequests');
   if (requestSheet && requestSheet.getLastRow() > 1) {
     var requestData = requestSheet.getDataRange().getValues();
     var requestHeaders = requestData[0] || [];
@@ -1421,7 +1442,7 @@ function ensureCancellationRequestsSheet(spreadsheet) {
     'Status',
     'Status History'
   ];
-  var sheet = spreadsheet.getSheetByName('CancellationRequests');
+  var sheet = SpreadsheetService.getInstance().getSheet('CancellationRequests');
   if (!sheet) sheet = spreadsheet.insertSheet('CancellationRequests');
   var existingHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn() || requiredHeaders.length).getValues()[0] || [];
   if (existingHeaders.slice(0, requiredHeaders.length).join('|') !== requiredHeaders.join('|')) {
@@ -1467,7 +1488,7 @@ function getRefundStatus(paymentMethod, approvedState) {
 }
 
 function updateOrderCancellationAudit(spreadsheet, orderId, requestId, decision, historyItem) {
-  var sheet = spreadsheet.getSheetByName('Orders');
+  var sheet = SpreadsheetService.getInstance().getSheet('Orders');
   if (!sheet) return;
   var data = sheet.getDataRange().getValues();
   var headers = data[0] || [];
@@ -1507,7 +1528,7 @@ function ensureOrdersSheet(spreadsheet) {
     'Cancellation Request ID', 'Status History'
   ];
 
-  var sheet = spreadsheet.getSheetByName('Orders');
+  var sheet = SpreadsheetService.getInstance().getSheet('Orders');
   if (!sheet) {
     Logger.log("ensureOrdersSheet: Orders sheet not found, creating it.");
     sheet = spreadsheet.insertSheet('Orders');
@@ -1641,7 +1662,7 @@ function getCompanyInfoData(sheet) {
 }
 
 function getUsersData(spreadsheet) {
-  var sheet = spreadsheet.getSheetByName('Users');
+  var sheet = SpreadsheetService.getInstance().getSheet('Users');
   if (!sheet) {
     sheet = spreadsheet.insertSheet('Users');
     var headers = getRequiredUserHeaders();
@@ -1698,7 +1719,7 @@ function getUsersData(spreadsheet) {
 }
 
 function getNotificationsData(spreadsheet) {
-  var sheet = spreadsheet.getSheetByName('Notifications');
+  var sheet = SpreadsheetService.getInstance().getSheet('Notifications');
   if (!sheet) {
     sheet = spreadsheet.insertSheet('Notifications');
     var headers = ['ID', 'Timestamp', 'Title', 'Message', 'Read'];
@@ -1711,7 +1732,7 @@ function getNotificationsData(spreadsheet) {
 function handleProductCRUD(spreadsheet, params) {
   var action = params.action; // 'create' | 'update' | 'delete'
   var product = params.product;
-  var sheet = spreadsheet.getSheetByName('Products');
+  var sheet = SpreadsheetService.getInstance().getSheet('Products');
   if (!sheet) return { success: false, message: 'Products sheet not found.' };
 
   var data = sheet.getDataRange().getValues();
@@ -1765,7 +1786,7 @@ function handleProductCRUD(spreadsheet, params) {
 function handleBannerCRUD(spreadsheet, params) {
   var action = params.action;
   var banner = params.banner;
-  var sheet = spreadsheet.getSheetByName('Banners');
+  var sheet = SpreadsheetService.getInstance().getSheet('Banners');
   if (!sheet) return { success: false, message: 'Banners sheet not found.' };
 
   var data = sheet.getDataRange().getValues();
@@ -1813,7 +1834,7 @@ function handleBannerCRUD(spreadsheet, params) {
 function handleFaqCRUD(spreadsheet, params) {
   var action = params.action;
   var faq = params.faq;
-  var sheet = spreadsheet.getSheetByName('FAQs');
+  var sheet = SpreadsheetService.getInstance().getSheet('FAQs');
   if (!sheet) return { success: false, message: 'FAQs sheet not found.' };
 
   var data = sheet.getDataRange().getValues();
@@ -1857,7 +1878,7 @@ function handleFaqCRUD(spreadsheet, params) {
 
 function handleCompanyInfoUpdate(spreadsheet, params) {
   var info = params.companyInfo;
-  var sheet = spreadsheet.getSheetByName('CompanyInfo');
+  var sheet = SpreadsheetService.getInstance().getSheet('CompanyInfo');
   if (!sheet) return { success: false, message: 'CompanyInfo sheet not found.' };
 
   // Clear sheet content except header
@@ -1880,7 +1901,7 @@ function handleUserCRUD(spreadsheet, params) {
   Logger.log('handleUserCRUD called with params: ' + JSON.stringify(params));
   var action = params.action;
   var user = params.user;
-  var sheet = spreadsheet.getSheetByName('Users');
+  var sheet = SpreadsheetService.getInstance().getSheet('Users');
   if (!sheet) return { success: false, message: 'Users sheet not found.' };
   ensureUsersSheetColumns(sheet);
 
@@ -2045,7 +2066,7 @@ function normalizeEmailPreferences(value) {
 }
 
 function handleAccountSettings(spreadsheet, params) {
-  var sheet = spreadsheet.getSheetByName('Users');
+  var sheet = SpreadsheetService.getInstance().getSheet('Users');
   if (!sheet) return { success: false, message: 'Users sheet not found.' };
   ensureUsersSheetColumns(sheet);
 
@@ -2102,7 +2123,7 @@ function handleAccountSettings(spreadsheet, params) {
 }
 
 function getNotificationsData(spreadsheet) {
-  var sheet = spreadsheet.getSheetByName('Notifications');
+  var sheet = SpreadsheetService.getInstance().getSheet('Notifications');
   if (!sheet) {
     sheet = spreadsheet.insertSheet('Notifications');
     var headers = ['ID', 'Timestamp', 'Title', 'Message', 'Read', 'Status'];
@@ -2176,7 +2197,7 @@ function getNotificationsData(spreadsheet) {
 function handleNotificationCRUD(spreadsheet, params) {
   var action = params.action;
   var notification = params.notification;
-  var sheet = spreadsheet.getSheetByName('Notifications');
+  var sheet = SpreadsheetService.getInstance().getSheet('Notifications');
   if (!sheet) return { success: false, message: 'Notifications sheet not found.' };
   if ((action === 'delete' || action === 'update') && (!notification || notification.ID === undefined || notification.ID === null || String(notification.ID).trim() === '')) {
     return { success: false, message: 'Notification ID is required.' };
@@ -2296,7 +2317,7 @@ function getEventHeaders() {
 }
 
 function ensureEventsSheet(spreadsheet) {
-  var sheet = spreadsheet.getSheetByName('Events');
+  var sheet = SpreadsheetService.getInstance().getSheet('Events');
   var requiredHeaders = getEventHeaders();
   if (!sheet) sheet = spreadsheet.insertSheet('Events');
   if (sheet.getLastRow() === 0 || sheet.getLastColumn() === 0) {
@@ -2317,7 +2338,7 @@ function ensureEventsSheet(spreadsheet) {
 }
 
 function migrateLegacyNotifications(spreadsheet, eventsSheet) {
-  var legacy = spreadsheet.getSheetByName('Notifications');
+  var legacy = SpreadsheetService.getInstance().getSheet('Notifications');
   if (!legacy || legacy.getLastRow() <= 1) return;
   var marker = PropertiesService.getScriptProperties().getProperty('NIMRA_EVENTS_MIGRATED_V1');
   if (marker === 'yes') return;
@@ -2348,7 +2369,7 @@ function migrateLegacyNotifications(spreadsheet, eventsSheet) {
 }
 
 function createDomainEvent(spreadsheet, event, skipEnsure) {
-  var sheet = skipEnsure ? spreadsheet.getSheetByName('Events') : ensureEventsSheet(spreadsheet);
+  var sheet = skipEnsure ? SpreadsheetService.getInstance().getSheet('Events') : ensureEventsSheet(spreadsheet);
   if (!sheet) return { success: false, message: 'Events sheet not found.' };
   var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   var data = sheet.getDataRange().getValues();
@@ -2519,7 +2540,7 @@ function handleNotificationCRUD(spreadsheet, params) {
 }
 
 function findOrderUserId(spreadsheet, orderId) {
-  var sheet = spreadsheet.getSheetByName('Orders');
+  var sheet = SpreadsheetService.getInstance().getSheet('Orders');
   if (!sheet) return '';
   var data = sheet.getDataRange().getValues();
   var headers = data[0] || [];
@@ -2731,7 +2752,7 @@ function ensureUsersSheetColumns(sheet) {
 }
 
 function ensureUserAddressesSheet(spreadsheet, usersSheet) {
-  var sheet = spreadsheet.getSheetByName('UserAddresses');
+  var sheet = SpreadsheetService.getInstance().getSheet('UserAddresses');
   if (!sheet) sheet = spreadsheet.insertSheet('UserAddresses');
   var required = getRequiredUserAddressHeaders();
   if (sheet.getLastRow() === 0) {
@@ -2777,7 +2798,7 @@ function getUserAddresses(spreadsheet, customerId) {
 }
 
 function getAllUserAddresses(spreadsheet) {
-  var sheet = spreadsheet.getSheetByName('UserAddresses');
+  var sheet = SpreadsheetService.getInstance().getSheet('UserAddresses');
   if (!sheet || sheet.getLastRow() <= 1) return {};
   var data = sheet.getDataRange().getValues();
   var headers = data[0] || [];
@@ -2807,8 +2828,8 @@ function getAllUserAddresses(spreadsheet) {
 }
 
 function replaceUserAddresses(spreadsheet, customerId, addresses) {
-  var usersSheet = spreadsheet.getSheetByName('Users');
-  var sheet = spreadsheet.getSheetByName('UserAddresses') || ensureUserAddressesSheet(spreadsheet, usersSheet);
+  var usersSheet = SpreadsheetService.getInstance().getSheet('Users');
+  var sheet = SpreadsheetService.getInstance().getSheet('UserAddresses') || ensureUserAddressesSheet(spreadsheet, usersSheet);
   var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] || [];
   var data = sheet.getDataRange().getValues();
   var existingCreated = {};
@@ -3429,7 +3450,7 @@ function ensureUserColumn(sheet, headers, name) {
 
 function findUserRowByEmail(spreadsheet, email) {
   getUsersData(spreadsheet); // Ensure the Users sheet and headers exist.
-  var sheet = spreadsheet.getSheetByName('Users');
+  var sheet = SpreadsheetService.getInstance().getSheet('Users');
   if (!sheet) return null;
 
   var data = sheet.getDataRange().getValues();
@@ -3618,7 +3639,7 @@ function authorizeNimraEmailSending() {
 }
 
 function updateUserLastLogin(spreadsheet, userId) {
-  var sheet = spreadsheet.getSheetByName('Users');
+  var sheet = SpreadsheetService.getInstance().getSheet('Users');
   if (!sheet) return;
   var data = sheet.getDataRange().getValues();
   var headers = data[0];
@@ -3645,7 +3666,7 @@ function handleCartSync(spreadsheet, params) {
     return { success: false, message: 'userId is required for cart sync' };
   }
   
-  var sheet = spreadsheet.getSheetByName('Carts');
+  var sheet = SpreadsheetService.getInstance().getSheet('Carts');
   if (!sheet) {
     sheet = spreadsheet.insertSheet('Carts');
     sheet.getRange(1, 1, 1, 3).setValues([['User ID', 'Cart Data', 'Updated At']]);
@@ -3684,7 +3705,7 @@ function getCart(spreadsheet, params) {
     return { success: false, message: 'userId is required to get cart' };
   }
   
-  var sheet = spreadsheet.getSheetByName('Carts');
+  var sheet = SpreadsheetService.getInstance().getSheet('Carts');
   if (!sheet) {
     return { success: true, items: [] };
   }
@@ -3706,9 +3727,9 @@ function getCart(spreadsheet, params) {
 }
 
 function isEmailCategoryEnabled(email, categoryKey, orderId) {
-  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var spreadsheet = SpreadsheetService.getInstance().getSpreadsheet();
   if (!spreadsheet) return true;
-  var usersSheet = spreadsheet.getSheetByName('Users');
+  var usersSheet = SpreadsheetService.getInstance().getSheet('Users');
   if (!usersSheet) return true;
 
   var usersData = usersSheet.getDataRange().getValues();
@@ -3721,7 +3742,7 @@ function isEmailCategoryEnabled(email, categoryKey, orderId) {
   var resolvedUserId = '';
   
   if (orderId) {
-    var ordersSheet = spreadsheet.getSheetByName('Orders');
+    var ordersSheet = SpreadsheetService.getInstance().getSheet('Orders');
     if (ordersSheet) {
       var ordersData = ordersSheet.getDataRange().getValues();
       if (ordersData.length > 1) {

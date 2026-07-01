@@ -115,8 +115,6 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
     };
 
     loadNotifications();
-    const interval = setInterval(loadNotifications, 10000); // 10s polling for real-time
-    return () => clearInterval(interval);
   }, [activeUser]);
 
   const handleMarkAsRead = async (id: string | number) => {

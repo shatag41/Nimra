@@ -51,6 +51,7 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
     if (stored) {
       try {
         const data = JSON.parse(stored);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLocationState((prev) => ({ ...prev, ...data, loading: false }));
       } catch (err) {
         // Bad data, request location
@@ -63,6 +64,7 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
       if (!denied) {
         requestLocation();
       } else {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLocationState((prev) => ({ ...prev, permissionDenied: true }));
       }
     }

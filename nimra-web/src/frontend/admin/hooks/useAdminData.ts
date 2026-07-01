@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import useSWR from 'swr';
 import { useRouter } from 'next/navigation';
 import {
   CMSData,
@@ -115,10 +116,10 @@ export const useAdminData = (initialCMSData: CMSData) => {
   }, [authLoading, isAuthenticated, router, user]);
 
   // Load all dashboard databases
-  const refreshData = async () => {
-    setLoading(true);
-    try {
-      const [
+  
+  // SWR fetching
+  const fetcher = async () => {
+    const [
         fetchedOrders,
         fetchedInquiries,
         fetchedUsers,
@@ -128,7 +129,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
         fetchedProducts,
         fetchedBanners,
         fetchedFaqs,
-      ] = await Promise.all([
+    ] = await Promise.all([
         fetchOrders(),
         fetchInquiries(),
         fetchUsers(),
@@ -138,67 +139,49 @@ export const useAdminData = (initialCMSData: CMSData) => {
         fetchProducts(),
         fetchBanners(),
         fetchFAQs(),
-      ]);
-
-      setOrders(fetchedOrders);
-      setInquiries(fetchedInquiries);
-      setUsers(fetchedUsers);
-      setNotifications(fetchedNotifs);
-      setAdminUpdates(fetchedAdminUpdates);
-      setCancellationRequests(fetchedCancellationRequests);
-      setProducts(fetchedProducts);
-      setBanners(fetchedBanners);
-      setFaqs(fetchedFaqs);
-    } catch (err) {
-      console.error('Failed to load admin databases', err);
-      showAlert('Error updating real-time databases. Local fallback remains active.', 'error');
-    } finally {
-      setLoading(false);
-    }
+    ]);
+    return {
+        fetchedOrders,
+        fetchedInquiries,
+        fetchedUsers,
+        fetchedNotifs,
+        fetchedAdminUpdates,
+        fetchedCancellationRequests,
+        fetchedProducts,
+        fetchedBanners,
+        fetchedFaqs,
+    };
   };
 
+  const { data: swrData, error: swrError, mutate: refreshDataSWR } = useSWR(authChecked ? 'adminData' : null, fetcher, { refreshInterval: 30000, revalidateOnFocus: true });
+
   useEffect(() => {
-    if (!authChecked) return;
+    if (swrData) {
+      setOrders(swrData.fetchedOrders);
+      setInquiries(swrData.fetchedInquiries);
+      setUsers(swrData.fetchedUsers);
+      setNotifications(swrData.fetchedNotifs);
+      setAdminUpdates(swrData.fetchedAdminUpdates);
+      setCancellationRequests(swrData.fetchedCancellationRequests);
+      setProducts(swrData.fetchedProducts);
+      setBanners(swrData.fetchedBanners);
+      setFaqs(swrData.fetchedFaqs);
+      setLoading(false);
+    }
+    if (swrError) {
+      console.error('Failed to load admin databases', swrError);
+      showAlert('Error updating real-time databases. Local fallback remains active.', 'error');
+      setLoading(false);
+    }
+  }, [swrData, swrError]);
 
-    refreshData();
-    const interval = setInterval(() => {
-      Promise.all([
-        fetchOrders(),
-        fetchInquiries(),
-        fetchUsers(),
-        fetchCustomerNotificationLog(),
-        fetchAdminUpdates(),
-        fetchCancellationRequests(),
-        fetchProducts(),
-        fetchBanners(),
-        fetchFAQs(),
-      ]).then(([
-        fetchedOrders,
-        fetchedInquiries,
-        fetchedUsers,
-        fetchedNotifs,
-        fetchedAdminUpdates,
-        fetchedCancellationRequests,
-        fetchedProducts,
-        fetchedBanners,
-        fetchedFaqs,
-      ]) => {
-        setOrders(fetchedOrders);
-        setInquiries(fetchedInquiries);
-        setUsers(fetchedUsers);
-        setNotifications(fetchedNotifs);
-        setAdminUpdates(fetchedAdminUpdates);
-        setCancellationRequests(fetchedCancellationRequests);
-        setProducts(fetchedProducts);
-        setBanners(fetchedBanners);
-        setFaqs(fetchedFaqs);
-      }).catch(err => {
-        console.error('Failed to auto-refresh admin data', err);
-      });
-    }, 10000);
+  const refreshData = async () => {
+    setLoading(true);
+    await refreshDataSWR();
+  };
 
-    return () => clearInterval(interval);
-  }, [authChecked]);
+
+  // Refresh logic is now handled by SWR
 
   const performLogout = () => {
     logout();

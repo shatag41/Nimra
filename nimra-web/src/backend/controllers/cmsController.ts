@@ -137,9 +137,10 @@ async function syncLocalDB(action: 'load' | 'save') {
 
 let cachedCMSData: any = null;
 let lastFetchTime = 0;
-const CACHE_TTL = 0;
+const CACHE_TTL = 60000;
 const LIVE_GET_CACHE_TTL = 15000;
 const liveGetCache = new Map<string, { data: any; expiresAt: number }>();
+const pendingFetches = new Map<string, Promise<any>>();
 
 type CustomerOrderIdentity = {
   userId?: unknown;
@@ -238,18 +239,29 @@ export async function handleGet(req: Request) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), APPS_SCRIPT_TIMEOUT_MS);
 
-      const res = await fetch(targetUrl.toString(), {
-        method: 'GET',
-        redirect: 'follow',
-        headers: {
-          'Accept': 'application/json',
-        },
-        signal: controller.signal,
-        cache: 'no-store',
-      });
-      clearTimeout(timeoutId);
+      const fetchKey = targetUrl.toString();
+      let fetchPromise = pendingFetches.get(fetchKey);
+      if (!fetchPromise) {
+        fetchPromise = fetch(targetUrl.toString(), {
+          method: 'GET',
+          redirect: 'follow',
+          headers: {
+            'Accept': 'application/json',
+          },
+          signal: controller.signal,
+          cache: 'no-store',
+        }).then(res => {
+          clearTimeout(timeoutId);
+          return res.text();
+        }).catch(err => {
+          clearTimeout(timeoutId);
+          throw err;
+        });
+        pendingFetches.set(fetchKey, fetchPromise);
+        fetchPromise.finally(() => pendingFetches.delete(fetchKey));
+      }
 
-      const text = await res.text();
+      const text = await fetchPromise;
       if (!text.trim().startsWith('<')) {
         const data = JSON.parse(text);
 
