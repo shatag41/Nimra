@@ -1,6 +1,4 @@
-'use client';
-
-import React from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
@@ -29,18 +27,53 @@ export function CartToast({ visible, name, onClose }: CartToastProps) {
   );
 }
 
+// Timeline grouping helper
+const getRelativeGroup = (dateString: string | number) => {
+  if (!dateString) return 'Earlier';
+  const date = new Date(dateString);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (date.toDateString() === today.toDateString()) return 'Today';
+  if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
+  return 'Earlier';
+};
+
+const getTimeAgo = (dateString: string | number) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  if (diffInSeconds < 60) return 'Just now';
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  return date.toLocaleDateString();
+};
+
+const getCategoryIcon = (category: string) => {
+  const cat = String(category || '').toLowerCase();
+  if (cat.includes('order')) return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0"/></svg>;
+  if (cat.includes('delivery')) return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>;
+  if (cat.includes('payment')) return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>;
+  if (cat.includes('offer') || cat.includes('promo')) return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>;
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>;
+};
+
 export function PortalNotifications() {
-  const [notifications, setNotifications] = React.useState<any[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const [categoryFilter, setCategoryFilter] = React.useState<string>('All');
-  const [priorityFilter, setPriorityFilter] = React.useState<string>('All');
-  const [searchQuery, setSearchQuery] = React.useState<string>('');
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [categoryFilter, setCategoryFilter] = useState<string>('All');
+  const [statusFilter, setStatusFilter] = useState<'All' | 'Unread'>('All');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+  
   const { user } = useAuth();
   const router = useRouter();
-  const pageSize = 5;
 
-  const loadNotifications = React.useCallback(() => {
+  const loadNotifications = useCallback(() => {
     import('@/utils/api').then((api) => {
       api.fetchNotifications(user?.ID, user?.Username)
         .then((data) => {
@@ -63,6 +96,7 @@ export function PortalNotifications() {
             const isRead = readIds.includes(String(n.ID)) || n.Read === true || n.Read === 'true';
             return { ...n, Read: isRead };
           });
+          
           setNotifications(updated);
           setLoading(false);
         })
@@ -73,13 +107,13 @@ export function PortalNotifications() {
     });
   }, [user]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     loadNotifications();
-    const interval = setInterval(loadNotifications, 10000); // 10s Polling
+    const interval = setInterval(loadNotifications, 15000);
     return () => clearInterval(interval);
   }, [loadNotifications]);
 
-  const handleMarkAsRead = React.useCallback(async (id: string | number) => {
+  const handleMarkAsRead = useCallback(async (id: string | number) => {
     try {
       setNotifications(prev => prev.map(n => String(n.ID) === String(id) ? { ...n, Read: true } : n));
       
@@ -100,7 +134,17 @@ export function PortalNotifications() {
     }
   }, [user]);
 
-  const handleMarkAllAsRead = React.useCallback(async () => {
+  const handleDelete = useCallback(async (id: string | number) => {
+    try {
+      setNotifications(prev => prev.filter(n => String(n.ID) !== String(id)));
+      const api = await import('@/utils/api');
+      await api.saveNotification({ ID: id, UserId: user?.ID }, 'delete');
+    } catch (err) {
+      console.error('Failed to delete notification:', err);
+    }
+  }, [user]);
+
+  const handleMarkAllAsRead = useCallback(async () => {
     try {
       const unread = notifications.filter(n => n.Read !== true && n.Read !== 'true');
       if (!unread.length) return;
@@ -125,238 +169,353 @@ export function PortalNotifications() {
     }
   }, [notifications, user]);
 
-  if (loading) {
-    return <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Loading notifications...</div>;
-  }
+  const handleClearRead = useCallback(async () => {
+    try {
+      const readNotifs = notifications.filter(n => n.Read === true || n.Read === 'true');
+      if (!readNotifs.length) return;
+      
+      setNotifications(prev => prev.filter(n => n.Read !== true && n.Read !== 'true'));
+      const api = await import('@/utils/api');
+      await Promise.all(readNotifs.map(n => api.saveNotification({ ID: n.ID, UserId: user?.ID }, 'delete')));
+    } catch (err) {
+      console.error('Failed to clear read notifications:', err);
+    }
+  }, [notifications, user]);
 
-  // Filter local list based on filter states
-  const filteredNotificationsList = notifications.filter(n => {
-    // 1. Category Filter
-    if (categoryFilter !== 'All') {
-      const cat = String(n.Category || '').toLowerCase();
-      if (cat !== categoryFilter.toLowerCase()) return false;
-    }
-    // 2. Priority Filter
-    if (priorityFilter !== 'All') {
-      const prio = String(n.Priority || 'Low').toLowerCase();
-      if (prio !== priorityFilter.toLowerCase()) return false;
-    }
-    // 3. Search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      const title = String(n.Title || '').toLowerCase();
-      const message = String(n.Message || '').toLowerCase();
-      if (!title.includes(query) && !message.includes(query)) return false;
-    }
-    return true;
-  });
+  const toggleGroup = (groupName: string) => {
+    setCollapsedGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }));
+  };
 
-  const unreadCount = filteredNotificationsList.filter(n => n.Read !== true && n.Read !== 'true').length;
-  const totalPages = Math.ceil(filteredNotificationsList.length / pageSize);
-  const paginatedNotifications = filteredNotificationsList.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  // Derived state
+  const filteredNotifications = useMemo(() => {
+    return notifications.filter(n => {
+      if (statusFilter === 'Unread' && (n.Read === true || n.Read === 'true')) return false;
+      if (categoryFilter !== 'All') {
+        const cat = String(n.Category || '').toLowerCase();
+        if (cat !== categoryFilter.toLowerCase()) return false;
+      }
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        const title = String(n.Title || '').toLowerCase();
+        const message = String(n.Message || '').toLowerCase();
+        if (!title.includes(query) && !message.includes(query)) return false;
+      }
+      return true;
+    });
+  }, [notifications, statusFilter, categoryFilter, searchQuery]);
+
+  const unreadCount = notifications.filter(n => n.Read !== true && n.Read !== 'true').length;
+  
+  const groupedNotifications = useMemo(() => {
+    const groups: Record<string, any[]> = { 'Today': [], 'Yesterday': [], 'Earlier': [] };
+    filteredNotifications.forEach(n => {
+      const group = getRelativeGroup(n.CreatedAt || n.Timestamp);
+      groups[group].push(n);
+    });
+    return groups;
+  }, [filteredNotifications]);
 
   const categories = ['All', 'Orders', 'Delivery Updates', 'Payments', 'Offers/Promotions', 'Account Updates', 'Cancellation Requests'];
-  const priorities = ['All', 'High', 'Medium', 'Low'];
+
+  // Skeletons
+  if (loading) {
+    return (
+      <div className="panel notifications-panel" style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
+        <style dangerouslySetInnerHTML={{__html: `
+          @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+          }
+          .skeleton {
+            animation: shimmer 2s infinite linear;
+            background: linear-gradient(to right, var(--bg-secondary) 4%, var(--border-color) 25%, var(--bg-secondary) 36%);
+            background-size: 1000px 100%;
+            border-radius: var(--radius-sm);
+          }
+        `}} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem' }}>
+          <div className="skeleton" style={{ width: '150px', height: '28px' }}></div>
+          <div className="skeleton" style={{ width: '100px', height: '28px' }}></div>
+        </div>
+        <div className="skeleton" style={{ width: '100%', height: '60px', marginBottom: '2rem', borderRadius: 'var(--radius-lg)' }}></div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {[1,2,3,4].map(i => (
+            <div key={i} className="skeleton" style={{ width: '100%', height: '80px', borderRadius: 'var(--radius-md)' }}></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="panel notifications-panel" style={{ padding: '2rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+    <div className="panel notifications-panel" style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
+      <style dangerouslySetInnerHTML={{__html: `
+        .notif-row {
+          display: flex;
+          gap: 1rem;
+          padding: 1rem 1.25rem;
+          background: var(--bg-primary);
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-md);
+          position: relative;
+          transition: all 0.2s ease;
+          overflow: hidden;
+        }
+        .notif-row:hover {
+          border-color: var(--primary-color);
+          box-shadow: var(--shadow-sm);
+          background: var(--bg-secondary);
+        }
+        .notif-row.unread {
+          background: var(--bg-secondary);
+        }
+        .notif-row.unread::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 0;
+          bottom: 0;
+          width: 4px;
+          background: var(--primary-color);
+        }
+        .notif-actions {
+          display: flex;
+          gap: 0.5rem;
+          opacity: 0;
+          transition: opacity 0.2s ease;
+          align-items: center;
+        }
+        .notif-row:hover .notif-actions {
+          opacity: 1;
+        }
+        .notif-btn {
+          background: none;
+          border: none;
+          cursor: pointer;
+          color: var(--text-muted);
+          padding: 0.35rem;
+          border-radius: var(--radius-sm);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.15s ease;
+        }
+        .notif-btn:hover {
+          color: var(--text-primary);
+          background: var(--border-color);
+        }
+        .notif-btn.delete:hover {
+          color: #ef4444;
+          background: rgba(239, 68, 68, 0.1);
+        }
+        .filter-chip {
+          padding: 0.35rem 0.85rem;
+          border-radius: 50px;
+          font-size: 0.8rem;
+          font-weight: 600;
+          border: 1px solid var(--border-color);
+          background: var(--bg-primary);
+          color: var(--text-secondary);
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+        .filter-chip:hover {
+          background: var(--border-color);
+          color: var(--text-primary);
+        }
+        .filter-chip.active {
+          border-color: var(--primary-color);
+          background: var(--primary-color);
+          color: #ffffff;
+        }
+        .group-header {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          cursor: pointer;
+          user-select: none;
+          margin-bottom: 1rem;
+        }
+        .group-header h4 {
+          font-size: 0.85rem;
+          font-weight: 700;
+          color: var(--text-secondary);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          margin: 0;
+        }
+        .group-header:hover h4 {
+          color: var(--text-primary);
+        }
+        .group-content {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+      `}} />
+
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 700, margin: '0' }}>Notifications</h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '0', fontSize: '0.9rem', marginTop: '0.25rem' }}>Stay updated with NIMRA's latest updates and news.</p>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            Notifications
+            {unreadCount > 0 && (
+              <span style={{ fontSize: '0.8rem', background: 'var(--primary-color)', color: '#fff', padding: '2px 8px', borderRadius: '50px', fontWeight: 700 }}>
+                {unreadCount} new
+              </span>
+            )}
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '0', fontSize: '0.9rem', marginTop: '0.25rem' }}>View and manage your account updates.</p>
         </div>
-        {unreadCount > 0 && (
-          <button 
-            onClick={handleMarkAllAsRead}
-            className="btn btn-secondary btn-sm"
-          >
-            Mark all as read
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button onClick={handleMarkAllAsRead} className="btn btn-secondary btn-sm" disabled={unreadCount === 0} style={{ opacity: unreadCount === 0 ? 0.5 : 1 }}>
+            Mark all read
           </button>
-        )}
+          <button onClick={handleClearRead} className="btn btn-secondary btn-sm">
+            Clear read
+          </button>
+        </div>
       </div>
 
-      {/* Redesigned Filters Panel */}
-      <div style={{ background: 'var(--bg-secondary)', padding: '1.25rem', borderRadius: 'var(--radius-lg)', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border-color)' }}>
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+      {/* Filters Toolbar */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+          
+          {/* Status Toggles */}
+          <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-primary)', padding: '4px', borderRadius: '50px', border: '1px solid var(--border-color)' }}>
+            <button className={`filter-chip ${statusFilter === 'All' ? 'active' : ''}`} style={{ border: 'none' }} onClick={() => setStatusFilter('All')}>All</button>
+            <button className={`filter-chip ${statusFilter === 'Unread' ? 'active' : ''}`} style={{ border: 'none' }} onClick={() => setStatusFilter('Unread')}>Unread</button>
+          </div>
+
           {/* Search */}
-          <div style={{ flex: '1 1 250px', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Search Notifications</label>
+          <div style={{ flex: '1', minWidth: '200px', position: 'relative' }}>
             <input 
               type="text" 
-              placeholder="Search by title or text..." 
+              placeholder="Search notifications..." 
               value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-              style={{ padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: '0.9rem' }}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ width: '100%', padding: '0.45rem 1rem 0.45rem 2.2rem', borderRadius: '50px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }}
             />
-          </div>
-
-          {/* Priority Filter */}
-          <div style={{ flex: '0 1 180px', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Priority</label>
-            <select 
-              value={priorityFilter}
-              onChange={(e) => { setPriorityFilter(e.target.value); setCurrentPage(1); }}
-              style={{ padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: '0.9rem' }}
-            >
-              {priorities.map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
+            <svg style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           </div>
         </div>
 
-        {/* Category Filter Tabs */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-          <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Filter by Category</label>
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            {categories.map((cat) => {
-              const isActive = categoryFilter === cat;
-              return (
-                <button
-                  key={cat}
-                  onClick={() => { setCategoryFilter(cat); setCurrentPage(1); }}
-                  style={{
-                    padding: '0.4rem 0.85rem',
-                    borderRadius: '50px',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    border: isActive ? '1px solid var(--primary-color)' : '1px solid var(--border-color)',
-                    background: isActive ? 'var(--primary-color)' : 'var(--bg-primary)',
-                    color: isActive ? '#ffffff' : 'var(--text-secondary)',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  {cat}
-                </button>
-              );
-            })}
-          </div>
+        {/* Category Chips */}
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {categories.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setCategoryFilter(cat)}
+              className={`filter-chip ${categoryFilter === cat ? 'active' : ''}`}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
       </div>
-      
-      {filteredNotificationsList.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '4rem 1rem', color: 'var(--text-muted)', fontSize: '0.95rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-lg)', border: '1px dashed var(--border-color)' }}>
-          No notifications match your search and filter criteria.
+
+      {/* Notification List / Timeline */}
+      {filteredNotifications.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '4rem 1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-lg)', border: '1px dashed var(--border-color)' }}>
+          <svg style={{ margin: '0 auto 1rem', color: 'var(--text-muted)' }} width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.2rem', color: 'var(--text-primary)' }}>All caught up!</h3>
+          <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9rem' }}>You have no new notifications right now.</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <div className="notifications-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {paginatedNotifications.map((n) => {
-              const isUnread = n.Read !== true && n.Read !== 'true';
-              
-              // Priority Styling
-              const priority = String(n.Priority || 'Low').toLowerCase();
-              const priorityColor = 
-                priority === 'high' ? '#ef4444' : 
-                priority === 'medium' ? '#f59e0b' : '#3b82f6';
-              const priorityBg = 
-                priority === 'high' ? 'rgba(239, 68, 68, 0.08)' : 
-                priority === 'medium' ? 'rgba(245, 158, 11, 0.08)' : 'rgba(59, 130, 246, 0.08)';
-
-              return (
-                <div 
-                  key={n.ID} 
-                  onClick={() => isUnread && handleMarkAsRead(n.ID)}
-                  style={{ 
-                    padding: '1.5rem', 
-                    borderRadius: 'var(--radius-lg)', 
-                    border: isUnread ? '1px solid var(--primary-color)' : '1px solid var(--border-color)', 
-                    background: isUnread ? 'rgba(37, 99, 235, 0.03)' : 'var(--bg-secondary)',
-                    transition: 'all 0.2s ease',
-                    position: 'relative',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.75rem'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                        {n.Category && (
-                          <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '3px 8px', borderRadius: '4px', background: 'var(--border-color)', color: 'var(--text-primary)' }}>
-                            {n.Category}
-                          </span>
-                        )}
-                        <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '3px 8px', borderRadius: '4px', background: priorityBg, color: priorityColor }}>
-                          {n.Priority || 'Low'}
-                        </span>
-                      </div>
-                      <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: isUnread ? 700 : 600, color: 'var(--text-primary)', paddingRight: '2rem' }}>
-                        {n.Title}
-                      </h4>
-                    </div>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                      {new Date(n.CreatedAt || n.Timestamp).toLocaleString()}
-                    </span>
-                  </div>
-
-                  <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
-                    {n.Message}
-                  </p>
-
-                  {/* Action Link button */}
-                  {n.ActionLink && (
-                    <div style={{ display: 'flex', marginTop: '0.25rem' }}>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (isUnread) handleMarkAsRead(n.ID);
-                          router.push(n.ActionLink);
-                        }}
-                        className="btn btn-primary btn-sm"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
-                      >
-                        <span>View Details</span>
-                        <span style={{ fontSize: '1.05rem', lineHeight: 1 }}>→</span>
-                      </button>
-                    </div>
-                  )}
-
-                  {isUnread && (
-                    <span style={{
-                      position: 'absolute',
-                      top: '24px',
-                      right: '1.5rem',
-                      width: '8px',
-                      height: '8px',
-                      borderRadius: '50%',
-                      background: 'var(--primary-color)'
-                    }} />
-                  )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxHeight: '65vh', overflowY: 'auto', paddingRight: '0.5rem' }}>
+          {Object.entries(groupedNotifications).map(([group, notifs]) => {
+            if (notifs.length === 0) return null;
+            const isCollapsed = collapsedGroups[group];
+            
+            return (
+              <div key={group}>
+                <div className="group-header" onClick={() => toggleGroup(group)}>
+                  <svg 
+                    width="14" 
+                    height="14" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2.5" 
+                    style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease', color: 'var(--text-muted)' }}
+                  >
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                  <h4>{group}</h4>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', background: 'var(--bg-primary)', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
+                    {notifs.length}
+                  </span>
                 </div>
-              );
-            })}
-          </div>
+                
+                {!isCollapsed && (
+                  <div className="group-content">
+                    {notifs.map((n) => {
+                      const isUnread = n.Read !== true && n.Read !== 'true';
+                      const priority = String(n.Priority || 'Low').toLowerCase();
+                      const priorityColor = priority === 'high' ? '#ef4444' : priority === 'medium' ? '#f59e0b' : 'var(--text-muted)';
 
-          {totalPages > 1 && (
-            <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginTop: '1.5rem' }}>
-              <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                className="btn btn-secondary btn-sm"
-                style={{ opacity: currentPage === 1 ? 0.5 : 1, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
-              >
-                Previous
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
-                <button
-                  key={pageNum}
-                  onClick={() => setCurrentPage(pageNum)}
-                  className={`btn btn-sm ${currentPage === pageNum ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ minWidth: '2rem' }}
-                >
-                  {pageNum}
-                </button>
-              ))}
-              <button
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                className="btn btn-secondary btn-sm"
-                style={{ opacity: currentPage === totalPages ? 0.5 : 1, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
-              >
-                Next
-              </button>
-            </div>
-          )}
+                      return (
+                        <div key={n.ID} className={`notif-row ${isUnread ? 'unread' : ''}`}>
+                          
+                          {/* Icon */}
+                          <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'var(--text-primary)' }}>
+                            {getCategoryIcon(n.Category)}
+                          </div>
+
+                          {/* Content */}
+                          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                <h5 style={{ margin: 0, fontSize: '0.95rem', fontWeight: isUnread ? 700 : 600, color: 'var(--text-primary)' }}>{n.Title}</h5>
+                                {priority !== 'low' && (
+                                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: priorityColor }} title={`${priority} priority`} />
+                                )}
+                              </div>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                                {getTimeAgo(n.CreatedAt || n.Timestamp)}
+                              </span>
+                            </div>
+                            
+                            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                              {n.Message}
+                              {n.Title?.toLowerCase().includes('inquiry reviewed') && ' Our team will contact you shortly.'}
+                            </p>
+
+                            {n.ActionLink && !n.Title?.toLowerCase().includes('inquiry reviewed') && (
+                              <div style={{ marginTop: '0.5rem' }}>
+                                <button
+                                  onClick={(e) => {
+                                    if (isUnread) handleMarkAsRead(n.ID);
+                                    router.push(n.ActionLink);
+                                  }}
+                                  style={{ background: 'none', border: 'none', padding: 0, color: 'var(--primary-color)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                                >
+                                  View Details <span style={{ fontSize: '1rem', lineHeight: 1 }}>→</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Quick Actions (Hover) */}
+                          <div className="notif-actions">
+                            {isUnread && (
+                              <button className="notif-btn" onClick={() => handleMarkAsRead(n.ID)} title="Mark as read">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                              </button>
+                            )}
+                            <button className="notif-btn delete" onClick={() => handleDelete(n.ID)} title="Delete">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                            </button>
+                          </div>
+
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -364,4 +523,3 @@ export function PortalNotifications() {
 }
 
 export default CartToast;
-
