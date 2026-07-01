@@ -10,13 +10,14 @@
       "Active": true
     },
     {
-      "ID": 2,
-      "Title": "Mineral Balanced Purity",
-      "Subtitle": "Sourced responsibly and purified through a rigorous 10-step process for absolute safety.",
-      "ImageUrl": "banners/1782328739678-fb7faa1e-0f54-474a-8662-1fc42ea8b09d.jpg",
-      "ButtonText": "Our Quality Standards",
-      "ButtonLink": "/quality",
-      "Active": true
+      "Title": " NEW ARRIVAL",
+      "Subtitle": "HydroBoost Electrolyte Drink",
+      "ImageUrl": "banners/1782926974186-2e6235b2-2712-4dc7-a606-8dabea4dd6f5.png",
+      "ButtonText": "Order Now",
+      "ButtonLink": "/products",
+      "Active": true,
+      "oldImagePath": "",
+      "ID": 2
     }
   ],
   "products": [
