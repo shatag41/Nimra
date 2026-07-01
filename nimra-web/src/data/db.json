@@ -4,10 +4,11 @@
       "ID": 1,
       "Title": "Pure Hydration. Healthy Living.",
       "Subtitle": "NIMRA Packaged Drinking Water keeps you fresh and energized through every moment of the day.",
-      "ImageUrl": "banners/1782553827955-1906cdcb-a0b4-44c9-976e-39c1ab4e58a7.jpg",
+      "ImageUrl": "banners/1782927488376-1eb81f7c-9c53-46c8-8913-4f5044efbf04.png",
       "ButtonText": "Explore Products",
-      "ButtonLink": "#products",
-      "Active": true
+      "ButtonLink": "/products",
+      "Active": true,
+      "oldImagePath": "/uploads/banners/1782553827955-1906cdcb-a0b4-44c9-976e-39c1ab4e58a7.jpg"
     },
     {
       "Title": " NEW ARRIVAL",
