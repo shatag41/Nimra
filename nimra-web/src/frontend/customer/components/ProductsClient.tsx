@@ -6,6 +6,7 @@ import { useCart } from '@/frontend/customer/hooks/useCart';
 import { CatalogCard } from './portal/Products';
 import { normalizeCategory } from '../utils/commerce';
 import RushSodaPromo from './RushSodaPromo';
+import ProductDetailModal from './portal/ProductDetailModal';
 
 interface ProductsClientProps {
   products: Product[];
@@ -31,6 +32,7 @@ export default function ProductsClient({ products }: ProductsClientProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'upcoming'>('all');
   const [sizeFilter, setSizeFilter] = useState<'all' | 'jar' | 'bottle'>('all');
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const { addProduct } = useCart();
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const processedAddIdRef = useRef<string | null>(null);
@@ -179,7 +181,11 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           ) : filteredProducts.length > 0 ? (
             <div className="catalog-grid animate-fade-in">
               {filteredProducts.map((product) => (
-                <CatalogCard key={String(product.ID || product.Name)} product={product} />
+                <CatalogCard 
+                  key={String(product.ID || product.Name)} 
+                  product={product} 
+                  onViewMore={setSelectedProduct}
+                />
               ))}
             </div>
           ) : (
@@ -191,6 +197,13 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           )}
         </main>
       </div>
+
+      {selectedProduct && (
+        <ProductDetailModal 
+          product={selectedProduct} 
+          onClose={() => setSelectedProduct(null)} 
+        />
+      )}
 
       <style jsx global>{`
         /* ── Cart Toast Banner ── */
@@ -531,7 +544,7 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           position: relative;
           z-index: 1;
           isolation: isolate;
-          pointer-events: none;
+          pointer-events: auto;
           height: 100%;
         }
         .catalog-card button,
@@ -610,11 +623,28 @@ export default function ProductsClient({ products }: ProductsClientProps) {
           font-size: 1.05rem;
           margin-bottom: 0.35rem;
         }
-        .cat-info-box p {
+        .cat-info-box p,
+        .card-desc {
           font-size: 0.8rem;
           color: var(--text-secondary);
           line-height: 1.4;
           margin-bottom: 0.5rem;
+        }
+        .view-more-text-btn {
+          background: none !important;
+          border: none !important;
+          color: var(--primary-color) !important;
+          font-weight: 700 !important;
+          padding: 0 !important;
+          margin-left: 0.35rem !important;
+          cursor: pointer !important;
+          font-size: 0.8rem !important;
+          display: inline-block !important;
+          text-decoration: none !important;
+          pointer-events: auto !important;
+        }
+        .view-more-text-btn:hover {
+          text-decoration: underline !important;
         }
         .specs {
           padding: 0.75rem;

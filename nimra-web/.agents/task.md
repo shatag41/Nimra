@@ -1,0 +1,5 @@
+- [x] Create `ProductDetailModal.tsx` component with responsiveness, accessibility, backdrop blur, fade/scale animations, and keyboard accessibility.
+- [x] Update `portal/Products.tsx` to truncate descriptions and specifications to keep cards compact, and trigger `onViewMore`.
+- [x] Update `ProductsClient.tsx` to handle `ProductDetailModal` rendering and styles.
+- [x] Update `HomeClient.tsx` to handle `ProductDetailModal` rendering for spotlight cards.
+- [x] Verify functionality (uniform card height, modal animations, add to cart inside modal, Esc to close, focus trap).

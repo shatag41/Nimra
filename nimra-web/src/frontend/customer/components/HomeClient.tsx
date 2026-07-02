@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Banner, Product, FAQ, CompanyInfo } from '@/types/cms';
 import { FAQs } from './portal/FAQs';
+import ProductDetailModal from './portal/ProductDetailModal';
 
 interface HomeClientProps {
   banners: Banner[];
@@ -15,6 +16,7 @@ interface HomeClientProps {
 
 export default function HomeClient({ banners, products, faqs, companyInfo }: HomeClientProps) {
   const [carouselEnabled, setCarouselEnabled] = useState(true);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [{ activeBanner, loadedBannerIndexes }, setCarouselState] = useState(() => ({
     activeBanner: 0,
     loadedBannerIndexes: new Set([0, 1]),
@@ -291,7 +293,17 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
 
           <div className="preview-grid">
             {spotlightProducts.map((product, i) => (
-              <div key={product.ID} className="product-preview-card" style={{ animationDelay: `${i * 0.1}s` }}>
+              <div 
+                key={product.ID} 
+                className="product-preview-card" 
+                style={{ animationDelay: `${i * 0.1}s`, cursor: 'pointer' }}
+                onClick={(e) => {
+                  const target = e.target as HTMLElement;
+                  if (!target.closest('.btn') && !target.closest('.prod-footer')) {
+                    setSelectedProduct(product);
+                  }
+                }}
+              >
                 <div className="prod-img-box">
                   {product.ImageUrl ? (
                     <Image
@@ -311,7 +323,30 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
                     {i === 0 && <span className="prod-badge-best">Best Seller</span>}
                   </div>
                   <h3>{product.Name}</h3>
-                  <p>{product.Description.substring(0, 90)}...</p>
+                  <p>
+                    {product.Description.substring(0, 90)}...
+                    <button
+                      type="button"
+                      className="view-more-text-btn"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setSelectedProduct(product);
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--primary-color)',
+                        fontWeight: 700,
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                        padding: 0,
+                        marginLeft: '0.25rem'
+                      }}
+                    >
+                      View More
+                    </button>
+                  </p>
                   <div className="prod-footer">
                     <div>
                       <span className="prod-price-label">From</span>
@@ -320,6 +355,7 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
                     <Link
                       href={`/products?add=${encodeURIComponent(String(product.ID))}`}
                       className="btn btn-primary btn-sm"
+                      onClick={(e) => e.stopPropagation()}
                     >
                       Order Now
                     </Link>
@@ -406,6 +442,13 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           <FAQs faqs={faqs} />
         </div>
       </section>
+
+      {selectedProduct && (
+        <ProductDetailModal 
+          product={selectedProduct} 
+          onClose={() => setSelectedProduct(null)} 
+        />
+      )}
 
       <style jsx>{`
         /* ── Hero ───────────────────────────────────────────────────────────── */
