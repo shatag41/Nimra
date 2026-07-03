@@ -2,6 +2,7 @@
 
 import React, { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { Product } from '@/types/cms';
+import { useCMSData } from '@/frontend/customer/hooks/useCMSData';
 import { useCart } from '@/frontend/customer/hooks/useCart';
 import { CatalogCard } from './portal/Products';
 import { normalizeCategory } from '../utils/commerce';
@@ -25,9 +26,26 @@ const isUpcomingProduct = (product: Product) => {
   return normalizeCategory(product.Category) === 'Upcoming RUSH Soda' || /coming|soon|upcoming|pre.?launch/i.test(stockStatus);
 };
 
-const isActiveProduct = (product: Product) => product.Active !== false && String(product.Active).toLowerCase() !== 'false';
+const isActiveProduct = (product: Product) => {
+  if (product.Active === false || String(product.Active).toLowerCase() === 'false' || String(product.Active) === '0') {
+    return false;
+  }
+  return true;
+};
 
-export default function ProductsClient({ products }: ProductsClientProps) {
+export default function ProductsClient({ products: initialProducts }: ProductsClientProps) {
+  const { products: dynamicProducts, error: fetchError, loading: isFetching } = useCMSData();
+  const products = dynamicProducts && dynamicProducts.length > 0 ? dynamicProducts : initialProducts;
+
+  useEffect(() => {
+    if (fetchError) {
+      console.error('[ProductsClient] Error fetching live products from backend:', fetchError);
+    }
+    if (dynamicProducts && dynamicProducts.length > 0) {
+      console.log('[ProductsClient] Loaded live products from backend:', dynamicProducts.length, 'items');
+    }
+  }, [dynamicProducts, fetchError]);
+
   const [activeTab, setActiveTab] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'upcoming'>('all');
@@ -38,6 +56,9 @@ export default function ProductsClient({ products }: ProductsClientProps) {
   const processedAddIdRef = useRef<string | null>(null);
 
   const filteredProducts = useMemo(() => products.filter((product) => {
+    // Hide inactive products from customer view
+    if (!isActiveProduct(product)) return false;
+
     const matchesCategory = activeTab === 'All' ? true : normalizeCategory(product.Category) === activeTab;
     if (!matchesCategory) return false;
 
@@ -50,7 +71,7 @@ export default function ProductsClient({ products }: ProductsClientProps) {
     if (!matchesSearch) return false;
 
     const isUpcoming = isUpcomingProduct(product);
-    if (statusFilter === 'available' && (!isActiveProduct(product) || isUpcoming)) return false;
+    if (statusFilter === 'available' && isUpcoming) return false;
     if (statusFilter === 'upcoming' && !isUpcoming) return false;
 
     const volumeLower = (product.Volume || '').toLowerCase();

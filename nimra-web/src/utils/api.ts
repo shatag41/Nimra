@@ -331,10 +331,7 @@ const getLocalFallbackCMSData = async (): Promise<CMSData> => {
 
 // Fetch CMS Data via internal proxy
 export const fetchCMSData = async (): Promise<CMSData> => {
-  if (typeof window !== 'undefined' && clientCMSCache) {
-    return clientCMSCache;
-  }
-
+  // Let SWR handle client-side caching. Do not block fetching with clientCMSCache.
   if (typeof window === 'undefined') {
     const now = Date.now();
     if (serverCMSCache && serverCMSCache.expiresAt > now) {
@@ -349,7 +346,7 @@ export const fetchCMSData = async (): Promise<CMSData> => {
   try {
     const fetchOptions: RequestInit = typeof window === 'undefined'
       ? { next: { revalidate: 300, tags: ['cms-data'] } }
-      : { cache: 'force-cache' };
+      : { cache: 'no-store' };
 
     const url = typeof window === 'undefined'
       ? getProxyUrl()

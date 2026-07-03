@@ -163,6 +163,18 @@ function invalidateCMSCache() {
   cachedCMSData = null;
   lastFetchTime = 0;
   liveGetCache.clear();
+  try {
+    const { clearCMSDataCache } = require('@/utils/api');
+    clearCMSDataCache();
+  } catch (err) {
+    console.error('[invalidateCMSCache] Failed to clear CMS API cache:', err);
+  }
+  try {
+    const { revalidateTag } = require('next/cache');
+    revalidateTag('cms-data');
+  } catch (err) {
+    // Ignore context errors
+  }
 }
 
 function getLiveCacheKey(action: string | null, userId: string, mobile: string, email: string) {

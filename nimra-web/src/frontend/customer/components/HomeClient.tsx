@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Link from 'next/link';
 import Image from 'next/image';
 import { Banner, Product, FAQ, CompanyInfo } from '@/types/cms';
+import { useCMSData } from '@/frontend/customer/hooks/useCMSData';
 import { FAQs } from './portal/FAQs';
 import ProductDetailModal from './portal/ProductDetailModal';
 
@@ -14,7 +15,14 @@ interface HomeClientProps {
   companyInfo: CompanyInfo;
 }
 
-export default function HomeClient({ banners, products, faqs, companyInfo }: HomeClientProps) {
+export default function HomeClient({ banners: initialBanners, products: initialProducts, faqs: initialFaqs, companyInfo: initialCompanyInfo }: HomeClientProps) {
+  const { banners: dynamicBanners, products: dynamicProducts, faqs: dynamicFaqs, companyInfo: dynamicCompanyInfo } = useCMSData();
+  
+  const banners = dynamicBanners && dynamicBanners.length > 0 ? dynamicBanners : initialBanners;
+  const products = dynamicProducts && dynamicProducts.length > 0 ? dynamicProducts : initialProducts;
+  const faqs = dynamicFaqs && dynamicFaqs.length > 0 ? dynamicFaqs : initialFaqs;
+  const companyInfo = dynamicCompanyInfo && Object.keys(dynamicCompanyInfo).length > 2 ? dynamicCompanyInfo : initialCompanyInfo;
+
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [{ activeBanner, loadedBannerIndexes }, setCarouselState] = useState(() => ({
     activeBanner: 0,
