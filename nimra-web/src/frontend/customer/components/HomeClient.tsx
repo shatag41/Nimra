@@ -7,6 +7,11 @@ import { Banner, Product, FAQ, CompanyInfo } from '@/types/cms';
 import { useCMSData } from '@/frontend/customer/hooks/useCMSData';
 import { FAQs } from './portal/FAQs';
 import ProductDetailModal from './portal/ProductDetailModal';
+import dynamic from 'next/dynamic';
+
+const DynamicProductDetailModal = dynamic(() => import('./portal/ProductDetailModal'), {
+  ssr: false,
+});
 
 interface HomeClientProps {
   banners: Banner[];
@@ -55,7 +60,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
     const deferredSections = Array.from(document.querySelectorAll<HTMLElement>('.home-deferred-section'));
     const sectionObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => entry.target.classList.toggle('is-visible', entry.isIntersecting));
-    }, { rootMargin: '240px 0px', threshold: 0.01 });
+    }, { rootMargin: '100px 0px', threshold: 0.01 });
 
     heroObserver.observe(hero);
     deferredSections.forEach((section) => sectionObserver.observe(section));
@@ -478,7 +483,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
       </section>
 
       {selectedProduct && (
-        <ProductDetailModal 
+        <DynamicProductDetailModal 
           product={selectedProduct} 
           onClose={() => setSelectedProduct(null)} 
         />
@@ -555,6 +560,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
         .home-deferred-section {
           content-visibility: auto;
           contain-intrinsic-size: auto 700px;
+          will-change: opacity, transform;
         }
 
         .home-deferred-section:not(.is-visible) * {
@@ -570,9 +576,9 @@ export default function HomeClient({ banners: initialBanners, products: initialP
           z-index: 10;
           display: grid;
           grid-template-columns: 1.15fr 0.85fr;
-          gap: clamp(4rem, 8vw, 8rem);
+          gap: clamp(2rem, 5vw, 4rem);
           align-items: center;
-          padding-top: clamp(5rem, 9vh, 6.25rem);
+          padding-top: clamp(4rem, 7vh, 5rem);
           min-height: 100%;
         }
 

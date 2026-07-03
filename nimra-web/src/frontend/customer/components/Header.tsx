@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
@@ -181,7 +181,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
     applyTheme(newTheme, true);
   };
 
-  const getNavLinks = () => {
+  const navLinks = useMemo(() => {
     if (activeUser?.Role === 'Admin') {
       return [
         { name: 'Dashboard', href: '/admin' },
@@ -199,18 +199,15 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
         { name: 'About', href: '/about' },
         { name: 'Contact', href: '/contact' },
       ];
-    } else {
-      return [
-        { name: 'Home', href: '/' },
-        { name: 'Products', href: '/products' },
-        { name: 'Track', href: '/track' },
-        { name: 'About', href: '/about' },
-        { name: 'Contact', href: '/contact' },
-      ];
     }
-  };
-
-  const navLinks = getNavLinks();
+    return [
+      { name: 'Home', href: '/' },
+      { name: 'Products', href: '/products' },
+      { name: 'Track', href: '/track' },
+      { name: 'About', href: '/about' },
+      { name: 'Contact', href: '/contact' },
+    ];
+  }, [activeUser?.Role]);
 
   return (
     <>
@@ -240,7 +237,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="desktop-nav" aria-label="Main navigation" onMouseLeave={() => setHoveredNav(null)}>
+          <nav className="desktop-nav" aria-label="Main navigation" onMouseLeave={useCallback(() => setHoveredNav(null), [])}>
             {navLinks.map((link) => (
               <Link
                 key={link.name}
@@ -622,7 +619,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
 
             {/* Mobile Hamburger */}
             <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              onClick={useCallback(() => setMobileMenuOpen(prev => !prev), [])}
               className="mobile-menu-btn"
               aria-label="Toggle Menu"
               aria-expanded={mobileMenuOpen}
