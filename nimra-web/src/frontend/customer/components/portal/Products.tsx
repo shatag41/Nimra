@@ -227,6 +227,9 @@ export const RecommendationCard = React.memo(function RecommendationCard({ produ
     }
   };
 
+  const description = product.Description || '';
+  const shortDescription = description.length > 80 ? description.substring(0, 80).trim() + '...' : description;
+
   return (
     <div 
       className="rec-card"
@@ -242,8 +245,8 @@ export const RecommendationCard = React.memo(function RecommendationCard({ produ
         <span className="rec-vol">{product.Volume}</span>
         <h3>{product.Name}</h3>
         <p className="rec-desc">
-          {product.Description.substring(0, 80)}...
-          {onViewMore && (
+          {shortDescription}
+          {onViewMore && description.length > 80 && (
             <button
               type="button"
               className="view-more-text-btn"

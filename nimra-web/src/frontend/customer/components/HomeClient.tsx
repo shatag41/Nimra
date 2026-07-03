@@ -324,28 +324,33 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
                   </div>
                   <h3>{product.Name}</h3>
                   <p>
-                    {product.Description.substring(0, 90)}...
-                    <button
-                      type="button"
-                      className="view-more-text-btn"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setSelectedProduct(product);
-                      }}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--primary-color)',
-                        fontWeight: 700,
-                        fontSize: '0.8rem',
-                        cursor: 'pointer',
-                        padding: 0,
-                        marginLeft: '0.25rem'
-                      }}
-                    >
-                      View More
-                    </button>
+                    {(() => {
+                      const desc = product.Description || '';
+                      return desc.length > 90 ? desc.substring(0, 90).trim() + '...' : desc;
+                    })()}
+                    {(product.Description || '').length > 90 && (
+                      <button
+                        type="button"
+                        className="view-more-text-btn"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setSelectedProduct(product);
+                        }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--primary-color)',
+                          fontWeight: 700,
+                          fontSize: '0.8rem',
+                          cursor: 'pointer',
+                          padding: 0,
+                          marginLeft: '0.25rem'
+                        }}
+                      >
+                        View More
+                      </button>
+                    )}
                   </p>
                   <div className="prod-footer">
                     <div>
