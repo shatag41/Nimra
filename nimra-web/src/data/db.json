@@ -130,6 +130,18 @@
       "ComboPack": "",
       "Active": true,
       "oldImagePath": "/uploads/products/1783067428528-8a1147ec-e8b7-422c-b6b9-c3a242b0123c.png"
+    },
+    {
+      "Name": "Plastic drupm",
+      "Category": "Upcoming RUSH Soda",
+      "Volume": "100L",
+      "Price": "500",
+      "Description": "hh",
+      "ImageUrl": "products/1783106715502-d19d54f6-9167-449d-a6f2-5d9aa6775c49.png",
+      "Active": true,
+      "Specifications": "533",
+      "oldImagePath": "",
+      "ID": 8
     }
   ],
   "faqs": [
