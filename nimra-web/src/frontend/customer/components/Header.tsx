@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { motion, useReducedMotion } from 'framer-motion';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { CompanyInfo, Notification } from '@/types/cms';
 import { useCart } from '../contexts/CartProvider';
@@ -23,8 +24,10 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
+  const [hoveredNav, setHoveredNav] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const pathname = usePathname();
+  const reduceMotion = useReducedMotion();
   const searchParams = useSearchParams();
   const router = useRouter();
   const currentTab = searchParams ? searchParams.get('tab') : null;
@@ -51,11 +54,13 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
     }, 150);
 
     let scrollFrame = 0;
-    let lastScrolled = window.scrollY > 20;
+    const getScrollThreshold = () => window.location.pathname === '/' ? 70 : 20;
+    let lastScrolled = window.scrollY > getScrollThreshold();
+    setIsScrolled(lastScrolled);
     const handleScroll = () => {
       if (scrollFrame) return;
       scrollFrame = window.requestAnimationFrame(() => {
-        const nextScrolled = window.scrollY > 20;
+        const nextScrolled = window.scrollY > getScrollThreshold();
         if (nextScrolled !== lastScrolled) {
           lastScrolled = nextScrolled;
           setIsScrolled(nextScrolled);
@@ -204,7 +209,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
 
   return (
     <>
-      <header className={`header ${isScrolled ? 'scrolled' : ''}`}>
+      <header className={`header ${pathname === '/' ? 'home-overlay' : ''} ${isScrolled ? 'scrolled' : ''}`}>
         {/* Top accent bar */}
         <div className="header-accent-bar" />
 
@@ -230,16 +235,23 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="desktop-nav" aria-label="Main navigation">
+          <nav className="desktop-nav" aria-label="Main navigation" onMouseLeave={() => setHoveredNav(null)}>
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
                 prefetch={true}
                 className={`nav-link ${pathname === link.href ? 'active' : ''}`}
+                onMouseEnter={() => setHoveredNav(link.href)}
               >
-                {link.name}
-                {pathname === link.href && <span className="nav-indicator" />}
+                {(hoveredNav === link.href || (hoveredNav === null && pathname === link.href)) && (
+                  <motion.span
+                    layoutId="homepage-nav-active"
+                    className="nav-active-pill"
+                    transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 430, damping: 34, mass: 0.55 }}
+                  />
+                )}
+                <span className="nav-link-label">{link.name}</span>
               </Link>
             ))}
           </nav>

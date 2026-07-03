@@ -15,7 +15,6 @@ interface HomeClientProps {
 }
 
 export default function HomeClient({ banners, products, faqs, companyInfo }: HomeClientProps) {
-  const [carouselEnabled, setCarouselEnabled] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [{ activeBanner, loadedBannerIndexes }, setCarouselState] = useState(() => ({
     activeBanner: 0,
@@ -24,29 +23,25 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
   const heroRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    if (banners.length <= 1 || !carouselEnabled) return;
-    const interval = setInterval(() => {
+    if (banners.length < 2) return;
+    const interval = window.setInterval(() => {
       setCarouselState((current) => {
         const next = (current.activeBanner + 1) % banners.length;
-        const nextLoaded = new Set(current.loadedBannerIndexes);
-        nextLoaded.add(next);
-        nextLoaded.add((next + 1) % banners.length);
-        return { activeBanner: next, loadedBannerIndexes: nextLoaded };
+        const loaded = new Set(current.loadedBannerIndexes);
+        loaded.add(next);
+        loaded.add((next + 1) % banners.length);
+        loaded.add((next - 1 + banners.length) % banners.length);
+        return { activeBanner: next, loadedBannerIndexes: loaded };
       });
-    }, 6000);
-    return () => clearInterval(interval);
-  }, [banners.length, carouselEnabled]);
+    }, 5500);
+    return () => window.clearInterval(interval);
+  }, [banners.length]);
 
   useEffect(() => {
     const hero = heroRef.current;
     if (!hero) return;
-    let heroVisible = true;
-
-    const updateCarousel = () => setCarouselEnabled(heroVisible && document.visibilityState === 'visible');
     const heroObserver = new IntersectionObserver(([entry]) => {
-      heroVisible = entry.isIntersecting;
-      hero.classList.toggle('is-visible', heroVisible);
-      updateCarousel();
+      hero.classList.toggle('is-visible', entry.isIntersecting);
     }, { threshold: 0.05 });
 
     const deferredSections = Array.from(document.querySelectorAll<HTMLElement>('.home-deferred-section'));
@@ -56,46 +51,82 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
 
     heroObserver.observe(hero);
     deferredSections.forEach((section) => sectionObserver.observe(section));
-    document.addEventListener('visibilitychange', updateCarousel);
     return () => {
       heroObserver.disconnect();
       sectionObserver.disconnect();
-      document.removeEventListener('visibilitychange', updateCarousel);
     };
   }, []);
 
-  const selectBanner = useCallback((index: number) => {
-    setCarouselState((current) => {
-      const nextLoaded = new Set(current.loadedBannerIndexes);
-      nextLoaded.add(index);
-      if (banners.length > 1) nextLoaded.add((index + 1) % banners.length);
-      return { activeBanner: index, loadedBannerIndexes: nextLoaded };
-    });
-  }, [banners.length]);
+  const handleHeroPointer = useCallback((event: React.PointerEvent<HTMLElement>) => {
+    if (event.pointerType === 'touch' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    event.currentTarget.style.setProperty('--pointer-x', ((((event.clientX - rect.left) / rect.width) - 0.5) * 2).toFixed(3));
+    event.currentTarget.style.setProperty('--pointer-y', ((((event.clientY - rect.top) / rect.height) - 0.5) * 2).toFixed(3));
+  }, []);
+
+  const resetHeroPointer = useCallback((event: React.PointerEvent<HTMLElement>) => {
+    event.currentTarget.style.setProperty('--pointer-x', '0');
+    event.currentTarget.style.setProperty('--pointer-y', '0');
+  }, []);
+
+  const handleCardPointer = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === 'touch' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    event.currentTarget.style.setProperty('--card-x', ((((event.clientX - rect.left) / rect.width) - 0.5) * 2).toFixed(3));
+    event.currentTarget.style.setProperty('--card-y', ((((event.clientY - rect.top) / rect.height) - 0.5) * 2).toFixed(3));
+  }, []);
+
+  const resetCardPointer = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    event.currentTarget.style.setProperty('--card-x', '0');
+    event.currentTarget.style.setProperty('--card-y', '0');
+  }, []);
+
+  const handleMagneticPointer = useCallback((event: React.PointerEvent<HTMLAnchorElement>) => {
+    if (event.pointerType === 'touch' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    event.currentTarget.style.setProperty('--mag-x', `${((event.clientX - rect.left) / rect.width - 0.5) * 7}px`);
+    event.currentTarget.style.setProperty('--mag-y', `${((event.clientY - rect.top) / rect.height - 0.5) * 7}px`);
+  }, []);
+
+  const resetMagneticPointer = useCallback((event: React.PointerEvent<HTMLAnchorElement>) => {
+    event.currentTarget.style.setProperty('--mag-x', '0px');
+    event.currentTarget.style.setProperty('--mag-y', '0px');
+  }, []);
 
   const spotlightProducts = useMemo(() => products.slice(0, 3), [products]);
 
   return (
     <div className="home-page">
       {/* ─── 1. HERO CAROUSEL ───────────────────────────────────────────────── */}
-      <section className="hero-section" ref={heroRef}>
-        {banners.map((banner, idx) => (
+      <section className="hero-section" ref={heroRef} onPointerMove={handleHeroPointer} onPointerLeave={resetHeroPointer}>
+        {banners.map((banner, index) => (
           <div
             key={banner.ID}
-            className={`hero-slide ${idx === activeBanner ? 'active' : ''}`}
+            className={`hero-slide ${index === activeBanner ? 'active' : ''}`}
+            aria-hidden={index !== activeBanner}
           >
-            {loadedBannerIndexes.has(idx) && banner.ImageUrl && (
+            {loadedBannerIndexes.has(index) && banner.ImageUrl && (
               <Image
                 src={banner.ImageUrl}
                 alt=""
                 fill
-                priority={idx === 0}
+                priority={index === 0}
                 unoptimized
                 quality={75}
                 sizes="100vw"
                 className="hero-slide-image"
               />
             )}
+            <div className="hero-depth hero-mountains" aria-hidden="true" />
+            <div className="hero-depth hero-cave" aria-hidden="true" />
+            <div className="hero-depth hero-crystals" aria-hidden="true" />
+            <div className="hero-light-rays" aria-hidden="true" />
+            <div className="hero-fog hero-fog-one" aria-hidden="true" />
+            <div className="hero-fog hero-fog-two" aria-hidden="true" />
+            <div className="hero-particles" aria-hidden="true">
+              {Array.from({ length: 14 }, (_, index) => <i key={index} />)}
+            </div>
+            <div className="hero-ripples" aria-hidden="true"><i /><i /><i /></div>
             <div className="hero-slide-shade" />
             <div className="container hero-content">
               <div className="hero-copy">
@@ -135,7 +166,9 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
                 </div>
               </div>
 
-              <div className="hero-card glass">
+              <div className="hero-visual-column">
+              <div className="hero-card-shell">
+              <div className="hero-card glass" onPointerMove={handleCardPointer} onPointerLeave={resetCardPointer}>
                 <div className="hero-card-tag">NIMRA Promise</div>
                 <h3>Pure water crafted for everyday wellness.</h3>
                 <ul className="hero-card-list">
@@ -152,27 +185,15 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
                     Fast, dependable service across the city
                   </li>
                 </ul>
-                <Link href="/products" className="btn btn-primary ds-btn-full hero-card-cta">
+                <Link href="/products" className="btn btn-primary ds-btn-full hero-card-cta" onPointerMove={handleMagneticPointer} onPointerLeave={resetMagneticPointer}>
                   Explore Products
                 </Link>
+              </div>
+              </div>
               </div>
             </div>
           </div>
         ))}
-
-        {/* Carousel Dots */}
-        {banners.length > 1 && (
-          <div className="carousel-dots">
-            {banners.map((_, idx) => (
-              <button
-                key={idx}
-                className={`dot ${idx === activeBanner ? 'active' : ''}`}
-                onClick={() => selectBanner(idx)}
-                aria-label={`Go to slide ${idx + 1}`}
-              />
-            ))}
-          </div>
-        )}
 
         {/* Scroll indicator */}
         <div className="scroll-indicator">
@@ -458,12 +479,18 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
       <style jsx>{`
         /* ── Hero ───────────────────────────────────────────────────────────── */
         .hero-section {
-          height: calc(100vh - 75px);
+          height: 100vh;
+          height: 100svh;
           min-height: 640px;
-          max-height: 900px;
+          max-height: none;
           position: relative;
           overflow: hidden;
-          background: #001a0c;
+          background: #020b1b;
+          --pointer-x: 0;
+          --pointer-y: 0;
+          isolation: isolate;
+          padding-block: 0;
+          margin-top: 0;
         }
 
         .hero-slide {
@@ -473,21 +500,47 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           z-index: 1;
           display: flex;
           align-items: center;
-          transition: opacity 700ms ease-in-out;
+          transition: opacity 1100ms cubic-bezier(.4,0,.2,1);
+          will-change: opacity;
+          transform: translateZ(0);
         }
         .hero-slide.active { opacity: 1; z-index: 2; }
 
         .hero-slide-image {
           object-fit: cover;
-          object-position: center;
+          object-position: center top;
           z-index: 0;
+          transform: translate3d(calc(var(--pointer-x) * -8px), calc(var(--pointer-y) * -6px), 0) scale(1.07);
+          animation: cinematicZoom 20s ease-in-out infinite alternate;
+          will-change: transform;
+          filter: saturate(1.12) contrast(1.07) brightness(1.06);
         }
+
+        .hero-depth { position: absolute; inset: -5%; pointer-events: none; will-change: transform; }
+        .hero-mountains { z-index: 0; opacity: .28; background: linear-gradient(155deg, transparent 45%, rgba(5,21,45,.85) 46% 61%, transparent 62%), linear-gradient(205deg, transparent 49%, rgba(13,46,77,.7) 50% 65%, transparent 66%); transform: translate3d(calc(var(--pointer-x) * -13px), calc(var(--pointer-y) * -8px),0); }
+        .hero-cave { z-index: 1; background: radial-gradient(ellipse at 64% 52%, transparent 0 29%, rgba(2,8,20,.26) 53%, rgba(1,5,14,.78) 78%); transform: translate3d(calc(var(--pointer-x) * 8px), calc(var(--pointer-y) * 5px),0) scale(1.03); }
+        .hero-crystals { z-index: 2; opacity: .4; background: conic-gradient(from 190deg at 88% 82%, transparent 0 8%, rgba(96,165,250,.35) 9% 10%, transparent 11% 100%), conic-gradient(from 170deg at 75% 92%, transparent 0 10%, rgba(147,197,253,.28) 11% 12%, transparent 13% 100%); transform: translate3d(calc(var(--pointer-x) * 18px), calc(var(--pointer-y) * 12px),0); }
+        .hero-light-rays { position:absolute; inset:-30% -10%; z-index:2; opacity:.24; background: repeating-linear-gradient(112deg, transparent 0 11%, rgba(147,197,253,.2) 13%, transparent 17% 27%); filter: blur(10px); animation: raysDrift 14s ease-in-out infinite alternate; will-change: transform,opacity; }
+        .hero-fog { position:absolute; z-index:3; width:65%; height:28%; border-radius:50%; background:rgba(174,220,255,.12); filter:blur(55px); will-change:transform; pointer-events:none; }
+        .hero-fog-one { left:-20%; bottom:4%; animation:fogDrift 18s ease-in-out infinite alternate; }
+        .hero-fog-two { right:-18%; top:15%; opacity:.55; animation:fogDrift 22s ease-in-out -7s infinite alternate-reverse; }
+        .hero-particles { position:absolute; inset:0; z-index:4; pointer-events:none; }
+        .hero-particles i { position:absolute; bottom:-5%; width:5px; height:5px; border-radius:50%; background:rgba(210,238,255,.7); box-shadow:0 0 12px rgba(96,165,250,.55); animation:bubbleRise 11s linear infinite; will-change:transform,opacity; }
+        .hero-particles i:nth-child(1){left:8%;animation-delay:-2s}.hero-particles i:nth-child(2){left:17%;animation-delay:-7s;width:3px;height:3px}.hero-particles i:nth-child(3){left:29%;animation-delay:-4s}.hero-particles i:nth-child(4){left:38%;animation-delay:-9s;width:2px;height:2px}.hero-particles i:nth-child(5){left:48%;animation-delay:-1s}.hero-particles i:nth-child(6){left:56%;animation-delay:-6s;width:3px;height:3px}.hero-particles i:nth-child(7){left:63%;animation-delay:-3s}.hero-particles i:nth-child(8){left:71%;animation-delay:-8s;width:2px;height:2px}.hero-particles i:nth-child(9){left:79%;animation-delay:-5s}.hero-particles i:nth-child(10){left:88%;animation-delay:-10s;width:3px;height:3px}.hero-particles i:nth-child(11){left:93%;animation-delay:-4s}.hero-particles i:nth-child(12){left:34%;animation-delay:-11s;width:2px;height:2px}.hero-particles i:nth-child(13){left:68%;animation-delay:-1s}.hero-particles i:nth-child(14){left:22%;animation-delay:-6s;width:3px;height:3px}
+        .hero-ripples { position:absolute; z-index:3; left:52%; bottom:-7%; width:48%; aspect-ratio:2/1; pointer-events:none; }
+        .hero-ripples i { position:absolute; inset:30%; border:1px solid rgba(147,197,253,.28); border-radius:50%; animation:ripple 6s ease-out infinite; }
+        .hero-ripples i:nth-child(2){animation-delay:2s}.hero-ripples i:nth-child(3){animation-delay:4s}
+        @keyframes cinematicZoom { to { transform:translate3d(calc(var(--pointer-x) * -8px),calc(var(--pointer-y) * -6px),0) scale(1.13); } }
+        @keyframes raysDrift { to { transform:translate3d(4%,2%,0) rotate(2deg); opacity:.38; } }
+        @keyframes fogDrift { to { transform:translate3d(28%, -12%,0) scale(1.18); } }
+        @keyframes bubbleRise { 0%{transform:translate3d(0,0,0) scale(.5);opacity:0} 15%{opacity:.75} 100%{transform:translate3d(18px,-105vh,0) scale(1.2);opacity:0} }
+        @keyframes ripple { 0%{transform:scale(.35);opacity:0} 20%{opacity:.6} 100%{transform:scale(3.2);opacity:0} }
 
         .hero-slide-shade {
           position: absolute;
           inset: 0;
           z-index: 1;
-          background: linear-gradient(105deg, rgba(15,23,42,0.68) 0%, rgba(15,23,42,0.44) 40%, rgba(30,64,175,0.16) 70%, rgba(37,99,235,0.03) 100%);
+          background: linear-gradient(105deg, rgba(15,23,42,0.42) 0%, rgba(15,23,42,0.27) 42%, rgba(30,64,175,0.1) 72%, rgba(37,99,235,0.02) 100%);
           pointer-events: none;
         }
 
@@ -509,12 +562,16 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           z-index: 10;
           display: grid;
           grid-template-columns: 1.15fr 0.85fr;
-          gap: 3rem;
+          gap: clamp(4rem, 8vw, 8rem);
           align-items: center;
-          padding-top: 2rem;
+          padding-top: clamp(5rem, 9vh, 6.25rem);
+          min-height: 100%;
         }
 
         .hero-copy { max-width: 680px; }
+        .hero-copy > * { opacity:0; animation:heroReveal .9s cubic-bezier(.16,1,.3,1) forwards; }
+        .hero-copy > :nth-child(2){animation-delay:.12s}.hero-copy > :nth-child(3){animation-delay:.22s}.hero-copy > :nth-child(4){animation-delay:.34s}.hero-copy > :nth-child(5){animation-delay:.48s}
+        @keyframes heroReveal { from{opacity:0;transform:translate3d(0,24px,0) scale(.985)} to{opacity:1;transform:translate3d(0,0,0) scale(1)} }
 
         .hero-eyebrow {
           display: inline-flex;
@@ -584,9 +641,16 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           z-index: 10;
         }
         .btn-hero-primary:hover {
+          background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+          color: #fff !important;
+          border-color: rgba(147,197,253,.55) !important;
           transform: translateY(-3px) scale(1.02);
-          box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+          box-shadow: 0 10px 28px rgba(37,99,235,.42), 0 0 22px rgba(59,130,246,.2) !important;
         }
+        .btn-hero-primary::after, .btn-ghost::after { content:''; position:absolute; inset:0; background:radial-gradient(circle,rgba(255,255,255,.5) 0,transparent 55%); transform:scale(0); opacity:0; transition:transform .55s ease,opacity .55s ease; }
+        .btn-hero-primary:hover::after, .btn-ghost:hover::after { transform:scale(2); opacity:.22; }
+        .btn-ghost { position:relative; overflow:hidden; transition:transform .25s ease,box-shadow .25s ease; }
+        .btn-ghost:hover { background:linear-gradient(135deg,rgba(255,255,255,.24),rgba(96,165,250,.2)) !important; color:#fff !important; border-color:rgba(191,219,254,.72) !important; transform:translateY(-3px); box-shadow:0 10px 28px rgba(37,99,235,.24),inset 0 1px 0 rgba(255,255,255,.2) !important; }
 
         .hero-trust-bar {
           display: flex;
@@ -608,14 +672,29 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
 
         .hero-card {
           border-radius: var(--radius-xl);
-          padding: 1.75rem;
-          box-shadow: 0 6px 18px rgba(0,0,0,0.14);
+          padding: 2rem;
+          box-shadow: 0 18px 55px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.13);
           max-width: 360px;
-          margin-left: auto;
-          border: 1px solid rgba(255,255,255,0.2);
-          background: rgba(15,23,42,0.4) !important;
-          backdrop-filter: none !important;
+          border: 0;
+          background: rgba(8,18,39,.58) !important;
+          backdrop-filter: blur(24px) saturate(145%) !important;
+          transform: perspective(900px) rotateX(calc(var(--card-y, 0) * -3deg)) rotateY(calc(var(--card-x, 0) * 3deg)) translateZ(0);
+          transition: transform .18s ease-out, box-shadow .35s ease;
+          will-change: transform;
+          overflow:hidden;
+          position:relative;
+          isolation:isolate;
         }
+
+        .hero-card::after { content:''; position:absolute; z-index:-1; inset:-45%; background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.12) 48%,rgba(147,197,253,.2) 52%,transparent 62%); transform:translate3d(-55%,0,0) rotate(8deg); animation:cardSweep 7s ease-in-out infinite; pointer-events:none; }
+        .hero-card:hover { transform:perspective(900px) rotateX(calc(var(--card-y, 0) * -3deg)) rotateY(calc(var(--card-x, 0) * 3deg)) translate3d(0,-5px,16px); box-shadow:0 28px 75px rgba(0,0,0,.3),0 0 38px rgba(59,130,246,.15),inset 0 1px 0 rgba(255,255,255,.2); }
+        .hero-card-shell { max-width:362px; margin-left:auto; padding:1px; border-radius:calc(var(--radius-xl) + 1px); background:conic-gradient(from var(--border-angle, 0deg),rgba(255,255,255,.1),rgba(96,165,250,.7),rgba(255,255,255,.12),rgba(37,99,235,.5),rgba(255,255,255,.1)); animation:cardFloat 6s ease-in-out infinite, borderSpin 9s linear infinite, cardShellReveal 1s .46s ease both; filter:drop-shadow(0 15px 34px rgba(37,99,235,.14)); will-change:transform; }
+        .hero-visual-column { position:relative; display:flex; align-items:center; justify-content:flex-end; min-height:470px; transform:translate3d(calc(var(--pointer-x) * 7px),calc(var(--pointer-y) * 5px),0); transition:transform .15s linear; will-change:transform; }
+        @property --border-angle { syntax:'<angle>'; initial-value:0deg; inherits:false; }
+        @keyframes borderSpin { to{--border-angle:360deg} }
+        @keyframes cardFloat { 0%,100%{transform:translate3d(0,-2px,0)} 50%{transform:translate3d(0,4px,0)} }
+        @keyframes cardShellReveal { from{opacity:0} to{opacity:1} }
+        @keyframes cardSweep { 0%,15%{transform:translate3d(-55%,0,0) rotate(8deg);opacity:0} 35%{opacity:1} 60%,100%{transform:translate3d(55%,0,0) rotate(8deg);opacity:0} }
 
         .hero-card-tag {
           display: inline-flex;
@@ -668,6 +747,16 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           font-weight: 800;
           flex-shrink: 0;
         }
+        .hero-card-list li { opacity:0; animation:cardItemIn .55s cubic-bezier(.16,1,.3,1) forwards; }
+        .hero-card-list li:nth-child(1){animation-delay:.8s}.hero-card-list li:nth-child(2){animation-delay:.95s}.hero-card-list li:nth-child(3){animation-delay:1.1s}
+        .hero-card-list li .list-check { animation:checkPulse 2.8s ease-in-out infinite; }
+        .hero-card-list li:nth-child(2) .list-check{animation-delay:.2s}.hero-card-list li:nth-child(3) .list-check{animation-delay:.4s}
+        @keyframes cardItemIn { from{opacity:0;transform:translate3d(10px,0,0)} to{opacity:1;transform:translate3d(0,0,0)} }
+        @keyframes checkPulse { 50%{transform:scale(1.12);box-shadow:0 0 14px rgba(59,130,246,.32)} }
+        .hero-card-cta { --mag-x:0px; --mag-y:0px; position:relative; overflow:hidden; transform:translate3d(var(--mag-x),var(--mag-y),0); transition:transform .18s ease-out,box-shadow .25s ease,filter .25s ease; }
+        .hero-card-cta::after { content:''; position:absolute; inset:0; background:radial-gradient(circle at 50%,rgba(255,255,255,.55),transparent 55%); transform:scale(0);opacity:0;transition:transform .55s ease,opacity .55s ease; }
+        .hero-card-cta:hover { box-shadow:0 10px 28px rgba(37,99,235,.42);filter:brightness(1.08); }
+        .hero-card-cta:hover::after { transform:scale(2.2);opacity:.2; }
 
         .carousel-dots {
           position: absolute;
@@ -1288,7 +1377,10 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
             grid-template-columns: 1fr;
             gap: 2.5rem;
           }
-          .hero-card { margin: 0 auto; max-width: 100%; }
+          .hero-content { display:flex; flex-direction:column; justify-content:center; align-items:stretch; padding-top:5rem; }
+          .hero-visual-column { min-height:0; }
+          .hero-card-shell { margin:0; max-width:100%; }
+          .hero-card { max-width:100%; }
           .story-image-container { max-width: 500px; margin: 0 auto; }
           .stats-grid { grid-template-columns: repeat(2, 1fr); }
           .stat-card { border-right: none; border-bottom: 1px solid var(--border-color); }
@@ -1298,6 +1390,13 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
 
         @media (max-width: 768px) {
           .hero-section { min-height: 700px; height: 100svh; }
+          .hero-content { gap:1.25rem; padding-top:5.25rem; padding-bottom:2.5rem; }
+          .hero-title { font-size:clamp(2.15rem,10vw,3.2rem); }
+          .hero-subtitle { font-size:.96rem; line-height:1.6; margin-bottom:1.25rem; }
+          .hero-actions { margin-bottom:1.25rem; }
+          .hero-card { padding:1.15rem; }
+          .hero-card-list { display:none; }
+          .hero-card h3 { margin-bottom:.75rem; }
           .preview-grid { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
           .values-grid { grid-template-columns: 1fr; }
           .scroll-indicator { display: none; }
@@ -1309,6 +1408,12 @@ export default function HomeClient({ banners, products, faqs, companyInfo }: Hom
           .trust-divider { display: none; }
           .faq-section { padding-top: 1.75rem; padding-bottom: 1.75rem; }
           .faq-section .section-header { margin-bottom: 1.25rem; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .hero-section *, .hero-section *::before, .hero-section *::after { animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
+          .hero-slide-image, .hero-depth, .hero-visual-column, .hero-card, .hero-card-shell, .hero-card-cta { transform:none !important; }
+          .hero-particles, .hero-ripples, .hero-fog, .hero-light-rays { display:none; }
         }
       `}</style>
     </div>
