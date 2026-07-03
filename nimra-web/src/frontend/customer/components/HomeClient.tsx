@@ -8,6 +8,7 @@ import { useCMSData } from '@/frontend/customer/hooks/useCMSData';
 import { FAQs } from './portal/FAQs';
 import ProductDetailModal from './portal/ProductDetailModal';
 import dynamic from 'next/dynamic';
+import { UpcomingProducts } from './UpcomingProducts';
 
 const DynamicProductDetailModal = dynamic(() => import('./portal/ProductDetailModal'), {
   ssr: false,
@@ -108,8 +109,6 @@ export default function HomeClient({ banners: initialBanners, products: initialP
 
   const spotlightProducts = useMemo(() => products.slice(0, 3), [products]);
 
-  const [currentUpcomingIndex, setCurrentUpcomingIndex] = useState(0);
-
   const upcomingProducts = useMemo(() => {
     return products.filter((p) => {
       const stock = String(p.StockStatus || '').toLowerCase();
@@ -117,15 +116,6 @@ export default function HomeClient({ banners: initialBanners, products: initialP
       return stock.includes('coming') || stock.includes('upcoming') || cat.includes('upcoming');
     });
   }, [products]);
-
-  useEffect(() => {
-    if (upcomingProducts.length < 2) return;
-    const interval = window.setInterval(() => {
-      setCurrentUpcomingIndex((current) => (current + 1) % upcomingProducts.length);
-    }, 5500);
-    return () => window.clearInterval(interval);
-  }, [upcomingProducts.length]);
-
   return (
     <div className="home-page">
       {/* ─── 1. HERO CAROUSEL ───────────────────────────────────────────────── */}
@@ -432,114 +422,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
       </section>
 
       {/* ─── 5. DYNAMIC UPCOMING TEASER ──────────────────────────────────────── */}
-      {upcomingProducts.length > 0 && (
-        <section className="rush-section home-deferred-section">
-          <div className="bubble-bg">
-            {[
-              { left: '8%', w: '14px', delay: '0s', dur: '8s' },
-              { left: '22%', w: '22px', delay: '1.2s', dur: '11s' },
-              { left: '46%', w: '9px', delay: '0.4s', dur: '7s' },
-              { left: '68%', w: '28px', delay: '2s', dur: '10s' },
-              { left: '85%', w: '18px', delay: '1.6s', dur: '9s' },
-            ].map((b, i) => (
-              <div key={i} className="bubble" style={{ left: b.left, width: b.w, height: b.w, animationDelay: b.delay, animationDuration: b.dur }} />
-            ))}
-          </div>
-
-          <div className="container">
-            <div style={{ position: 'relative' }}>
-              {upcomingProducts.map((product, idx) => {
-                const words = product.Name.split(' ');
-                const brandWord = words.pop() || '';
-                const titlePrefix = words.join(' ');
-                
-                let features = ['Premium Quality', 'Pure Taste', 'Event Ready'];
-                if (product.Specifications && typeof product.Specifications === 'string') {
-                  features = product.Specifications.split(/[\n;,|]/).map(s => s.trim()).filter(Boolean).slice(0, 4);
-                } else if (product.Specifications && typeof product.Specifications !== 'string') {
-                  features = String(product.Specifications).split(/[\n;,|]/).map(s => s.trim()).filter(Boolean).slice(0, 4);
-                }
-
-                return (
-                  <div 
-                    key={product.ID}
-                    style={{
-                      display: upcomingProducts.length > 1 ? (idx === currentUpcomingIndex ? 'block' : 'none') : 'block',
-                      animation: 'customFadeIn 0.5s ease-out forwards'
-                    }}
-                  >
-                    <div className="rush-grid">
-                      <div className="rush-content">
-                        <span className="badge badge-orange">{product.StockStatus || 'Coming Soon'}</span>
-                        <h2 className="rush-title">
-                          {titlePrefix ? titlePrefix + ' ' : ''}
-                          <span className="rush-brand">{brandWord}</span>
-                        </h2>
-                        <p className="rush-text">
-                          {product.Description || `Prepare your taste buds for the ultimate experience with ${product.Name}. Crafted to elevate your mocktails, parties, or enjoyed chilled.`}
-                        </p>
-                        <div className="rush-features">
-                          {features.map((f, fIdx) => (
-                            <span key={`${f}-${fIdx}`} className="rush-pill">{f}</span>
-                          ))}
-                        </div>
-                        <Link href={`/contact?subject=Notify%20me%20about%20${encodeURIComponent(product.Name)}`} className="btn btn-rush">
-                          Get Notified on Launch
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                        </Link>
-                      </div>
-
-                      <div className="rush-visual">
-                        <div className="can-outer-glow" />
-                        {product.ImageUrl ? (
-                          <div className="animate-float" style={{ position: 'relative', width: '100%', height: '350px', zIndex: 10, display: 'flex', justifyContent: 'center' }}>
-                            <img src={product.ImageUrl} alt={product.Name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
-                          </div>
-                        ) : (
-                          <div className="can-mockup animate-float">
-                            <div className="can-reflection" />
-                            <div className="can-label">
-                              <span className="label-brand">NIMRA</span>
-                              <span className="label-title">NEW</span>
-                              <span className="label-sub">COMING SOON</span>
-                            </div>
-                            <div className="can-bubbles">
-                              {[...Array(6)].map((_, i) => (
-                                <div key={i} className="can-bubble" style={{ left: `${15 + i * 12}%`, animationDelay: `${i * 0.3}s` }} />
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {upcomingProducts.length > 1 && (
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '0.6rem', marginTop: '2.5rem', position: 'relative', zIndex: 10 }}>
-                {upcomingProducts.map((_, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setCurrentUpcomingIndex(idx)}
-                    aria-label={`Go to slide ${idx + 1}`}
-                    style={{
-                      width: idx === currentUpcomingIndex ? '30px' : '10px',
-                      height: '10px',
-                      borderRadius: '5px',
-                      background: idx === currentUpcomingIndex ? '#f97316' : 'rgba(255,255,255,0.3)',
-                      border: 'none',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s ease'
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-      )}
+      <UpcomingProducts upcomingProducts={upcomingProducts} />
 
       {/* ─── 6. FAQ ─────────────────────────────────────────────────────────── */}
       <section className="faq-section">
@@ -1244,196 +1127,6 @@ export default function HomeClient({ banners: initialBanners, products: initialP
         .view-all-wrap .btn-lg svg {
           width: 15px;
           height: 15px;
-        }
-
-        .rush-section {
-          background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
-          color: white;
-          position: relative;
-          overflow: hidden;
-        }
-
-        .bubble-bg {
-          position: absolute;
-          inset: 0;
-          overflow: hidden;
-          pointer-events: none;
-        }
-
-        .bubble {
-          position: absolute;
-          bottom: -50px;
-          background: rgba(249, 115, 22, 0.12);
-          border: 1px solid rgba(249, 115, 22, 0.25);
-          border-radius: 50%;
-          animation: bubbleUp 8s ease-in infinite;
-        }
-
-        .rush-grid {
-          display: grid;
-          grid-template-columns: 1.2fr 0.8fr;
-          gap: 4rem;
-          align-items: center;
-        }
-
-        .rush-title {
-          font-size: clamp(2rem, 4vw, 3.2rem);
-          font-weight: 900;
-          color: white;
-          margin: 1rem 0 1.5rem;
-          letter-spacing: -0.025em;
-          line-height: 1.1;
-        }
-
-        .rush-brand {
-          background: linear-gradient(135deg, #f97316, #fbbf24);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
-
-        .rush-text {
-          color: rgba(255,255,255,0.65);
-          line-height: 1.8;
-          margin-bottom: 2rem;
-          font-size: 1rem;
-        }
-
-        .rush-features {
-          display: flex;
-          gap: 0.75rem;
-          flex-wrap: wrap;
-          margin-bottom: 2.5rem;
-        }
-
-        .rush-pill {
-          padding: 0.45rem 1.1rem;
-          border-radius: 999px;
-          background: rgba(255,255,255,0.07);
-          border: 1px solid rgba(255,255,255,0.12);
-          font-size: 0.83rem;
-          font-weight: 600;
-          color: rgba(255,255,255,0.75);
-        }
-
-        .btn-rush {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.6rem;
-          padding: 0.95rem 2rem;
-          font-family: var(--font-heading);
-          font-weight: 700;
-          font-size: 0.95rem;
-          border-radius: var(--radius-xl);
-          border: none;
-          cursor: pointer;
-          background: linear-gradient(135deg, #f97316, #ea580c);
-          color: white;
-          box-shadow: 0 8px 28px rgba(249,115,22,0.35);
-          transition: all 200ms ease;
-          position: relative;
-          overflow: hidden;
-          z-index: 10;
-        }
-        .btn-rush:hover {
-          transform: translateY(-3px) scale(1.02);
-          box-shadow: 0 16px 40px rgba(249,115,22,0.5);
-        }
-
-        .rush-visual {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          position: relative;
-        }
-
-        .can-outer-glow {
-          position: absolute;
-          width: 280px;
-          height: 280px;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(249,115,22,0.12) 0%, transparent 70%);
-          pointer-events: none;
-        }
-
-        .can-mockup {
-          width: 148px;
-          height: 290px;
-          background: linear-gradient(160deg, #1A2A20 0%, #0D1810 100%);
-          border: 1.5px solid rgba(249,115,22,0.25);
-          border-radius: 32px;
-          position: relative;
-          box-shadow: var(--shadow-xl), 0 0 40px rgba(249,115,22,0.12);
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .can-reflection {
-          position: absolute;
-          top: 0; left: 0;
-          width: 40%;
-          height: 100%;
-          background: linear-gradient(to right, rgba(255,255,255,0.12) 0%, transparent 100%);
-          pointer-events: none;
-          border-radius: 32px 0 0 32px;
-        }
-
-        .can-label {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          position: relative;
-          z-index: 1;
-        }
-
-        .label-brand {
-          font-size: 0.7rem;
-          font-weight: 800;
-          letter-spacing: 0.22em;
-          color: rgba(255,255,255,0.45);
-          margin-bottom: 0.2rem;
-        }
-
-        .label-title {
-          font-size: 2.4rem;
-          font-weight: 900;
-          font-family: var(--font-heading);
-          background: linear-gradient(135deg, #f97316, #fbbf24);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          letter-spacing: 0.05em;
-          line-height: 1;
-          text-shadow: none;
-        }
-
-        .label-sub {
-          font-size: 0.6rem;
-          font-weight: 700;
-          letter-spacing: 0.35em;
-          color: rgba(255,255,255,0.55);
-          margin-top: 0.25rem;
-        }
-
-        .can-bubbles {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          height: 60px;
-          pointer-events: none;
-        }
-
-        .can-bubble {
-          position: absolute;
-          bottom: 0;
-          width: 5px;
-          height: 5px;
-          border-radius: 50%;
-          background: rgba(249,115,22,0.3);
-          animation: bubbleUp 2s ease-in infinite;
         }
 
         /* ── FAQ ────────────────────────────────────────────────────────────── */

@@ -6,7 +6,7 @@ import { useCMSData } from '@/frontend/customer/hooks/useCMSData';
 import { useCart } from '@/frontend/customer/hooks/useCart';
 import { CatalogCard } from './portal/Products';
 import { normalizeCategory } from '../utils/commerce';
-import RushSodaPromo from './RushSodaPromo';
+import { UpcomingProducts } from './UpcomingProducts';
 import ProductDetailModal from './portal/ProductDetailModal';
 
 interface ProductsClientProps {
@@ -48,6 +48,14 @@ export default function ProductsClient({ products: initialProducts }: ProductsCl
 
   const [activeTab, setActiveTab] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+
+  const upcomingProductsList = useMemo(() => {
+    return products.filter((p) => {
+      const stock = String(p.StockStatus || '').toLowerCase();
+      const cat = String(p.Category || '').toLowerCase();
+      return stock.includes('coming') || stock.includes('upcoming') || cat.includes('upcoming');
+    });
+  }, [products]);
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'upcoming'>('all');
   const [sizeFilter, setSizeFilter] = useState<'all' | 'jar' | 'bottle'>('all');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -198,7 +206,7 @@ export default function ProductsClient({ products: initialProducts }: ProductsCl
           </div>
 
           {activeTab === 'Upcoming RUSH Soda' ? (
-            <RushSodaPromo />
+            <UpcomingProducts upcomingProducts={upcomingProductsList} />
           ) : filteredProducts.length > 0 ? (
             <div className="catalog-grid animate-fade-in">
               {filteredProducts.map((product) => (

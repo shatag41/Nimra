@@ -21,9 +21,9 @@ const RecommendationCard = dynamic(
   { ssr: false, loading: () => <div className="loading-state">Loading recommendation...</div> }
 );
 
-const RushPortalBanner = dynamic(
-  () => import('./portal/Banners').then((mod) => mod.RushSodaPromoTeaser),
-  { ssr: false, loading: () => <div className="loading-state">Loading banner...</div> }
+const UpcomingProducts = dynamic(
+  () => import('./UpcomingProducts').then((mod) => mod.UpcomingProducts),
+  { ssr: false, loading: () => <div className="loading-state">Loading products...</div> }
 );
 
 const Orders = dynamic(
@@ -62,6 +62,14 @@ export default function CustomerPortalClient() {
   const recommendedProducts = React.useMemo(() => {
     const orderable = (products || []).filter(isOrderable);
     return orderable.slice(0, 4);
+  }, [products]);
+
+  const upcomingProductsList = React.useMemo(() => {
+    return (products || []).filter((p) => {
+      const stock = String(p.StockStatus || '').toLowerCase();
+      const cat = String(p.Category || '').toLowerCase();
+      return stock.includes('coming') || stock.includes('upcoming') || cat.includes('upcoming');
+    });
   }, [products]);
 
   const activeFaqs = React.useMemo(
@@ -163,7 +171,8 @@ export default function CustomerPortalClient() {
   }
 
   return (
-    <div className="portal-page">
+    <>
+      <div className="portal-page">
       <PortalHero isAuthenticated={true} name={user?.Name} />
 
       {tab === 'addresses' ? (
@@ -261,11 +270,14 @@ export default function CustomerPortalClient() {
 
         </>
       )}
+      </div>
 
-      <RushPortalBanner />
+      <div style={{ marginTop: '0rem', position: 'relative', width: '100vw', left: '50%', transform: 'translateX(-50%)' }}>
+        <UpcomingProducts upcomingProducts={upcomingProductsList} />
+      </div>
 
       <style jsx global>{portalStyles}</style>
-    </div>
+    </>
   );
 }
 
