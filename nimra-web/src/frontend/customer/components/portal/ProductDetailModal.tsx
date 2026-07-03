@@ -329,7 +329,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 20px 32px;
+          padding: 12px 24px;
           border-bottom: 1px solid rgba(0, 0, 0, 0.06);
           background: var(--bg-primary, #ffffff);
           position: sticky;
@@ -341,8 +341,8 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           align-items: center;
         }
         .modal-header-title h2 {
-          font-size: 1.1rem;
-          font-weight: 700;
+          font-size: 0.95rem;
+          font-weight: 600;
           color: var(--text-primary);
           margin: 0;
           font-family: var(--font-heading);
@@ -383,37 +383,37 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
         /* Left Column - Scrollable Details */
         .modal-left-scrollable {
           flex: 1.2;
-          padding: 32px;
+          padding: 20px 24px;
           overflow-y: auto;
           display: flex;
           flex-direction: column;
-          gap: 24px;
+          gap: 16px;
           scroll-behavior: smooth;
         }
         
         .info-content-block {
           display: flex;
           flex-direction: column;
-          gap: 0.25rem;
+          gap: 0.15rem;
         }
         .info-section-title {
-          font-size: 0.7rem;
+          font-size: 0.65rem;
           font-weight: 700;
           text-transform: uppercase;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.05em;
           color: var(--text-muted);
         }
         .info-main-title {
-          font-size: 1.4rem;
-          font-weight: 800;
+          font-size: 1.15rem;
+          font-weight: 700;
           color: var(--text-primary);
           margin: 0;
           line-height: 1.2;
-          letter-spacing: -0.02em;
+          letter-spacing: -0.01em;
         }
         .info-description {
-          font-size: 0.9rem;
-          line-height: 1.5;
+          font-size: 0.85rem;
+          line-height: 1.4;
           color: var(--text-secondary);
           margin: 0;
           white-space: pre-line;
@@ -423,14 +423,14 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
         .info-specs-grid {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
-          gap: 0.35rem;
+          gap: 0.25rem;
           margin-top: 0.25rem;
         }
         .info-spec-item {
           display: flex;
           align-items: flex-start;
-          gap: 0.5rem;
-          padding: 0.5rem 0.75rem;
+          gap: 0.4rem;
+          padding: 0.35rem 0.6rem;
           background: #fdfdfd;
           border: 1px solid rgba(0, 0, 0, 0.06);
           border-radius: 6px;
@@ -469,10 +469,10 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
         }
 
         .elegant-action-card {
-          padding: 32px;
+          padding: 20px 24px;
           display: flex;
           flex-direction: column;
-          gap: 24px;
+          gap: 16px;
           position: sticky;
           top: 0;
         }
@@ -480,8 +480,9 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
         /* Product Media Box - Compact Aspect Ratio */
         .card-media-box {
           width: 100%;
-          aspect-ratio: 4 / 3;
-          border-radius: 12px;
+          aspect-ratio: 16 / 9;
+          max-height: 180px;
+          border-radius: 8px;
           overflow: hidden;
           background: #ffffff;
           display: flex;
@@ -489,7 +490,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           justify-content: center;
           border: 1px solid rgba(0, 0, 0, 0.04);
           box-shadow: 0 2px 10px rgba(0,0,0,0.02);
-          padding: 0.75rem;
+          padding: 0.5rem;
         }
         .card-media-img {
           width: 100%;
@@ -509,7 +510,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
         .card-content-box {
           display: flex;
           flex-direction: column;
-          gap: 1rem;
+          gap: 0.75rem;
         }
 
         .card-badges-row {
@@ -518,11 +519,11 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           flex-wrap: wrap;
         }
         .badge-item {
-          font-size: 0.65rem;
+          font-size: 0.6rem;
           font-weight: 700;
-          padding: 0.2rem 0.5rem;
+          padding: 0.15rem 0.4rem;
           border-radius: 999px;
-          letter-spacing: 0.03em;
+          letter-spacing: 0.02em;
           text-transform: uppercase;
         }
         .badge-vol {
@@ -555,7 +556,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           letter-spacing: 0.05em;
         }
         .pricing-val {
-          font-size: 1.8rem;
+          font-size: 1.4rem;
           font-weight: 800;
           color: var(--text-primary);
           font-family: var(--font-heading);
@@ -566,7 +567,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
         .card-actions-wrapper {
           display: flex;
           flex-direction: column;
-          gap: 0.6rem;
+          gap: 0.5rem;
         }
         .card-add-btn {
           width: 100%;
@@ -575,9 +576,9 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           justify-content: center;
           gap: 0.4rem;
           font-weight: 700;
-          padding: 0.75rem 1rem;
-          font-size: 0.85rem;
-          border-radius: 8px;
+          padding: 0.5rem 1rem;
+          font-size: 0.8rem;
+          border-radius: 6px;
           border: none;
           cursor: pointer;
           transition: all 0.2s ease;
@@ -606,18 +607,18 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           align-items: center;
           justify-content: space-between;
           border: 2px solid var(--primary-color);
-          border-radius: 8px;
+          border-radius: 6px;
           background: #ffffff;
           overflow: hidden;
-          height: 2.4rem;
+          height: 2rem;
         }
         .qty-btn {
           background: transparent;
           border: none;
           color: var(--primary-color);
-          width: 2.5rem;
+          width: 2rem;
           height: 100%;
-          font-size: 1.1rem;
+          font-size: 1rem;
           font-weight: 700;
           cursor: pointer;
           transition: background 0.2s;
@@ -661,15 +662,15 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
         /* Responsive - Stacks Vertically on Mobile/Tablet */
         @media (max-width: 1024px) {
           .product-modal-overlay {
-            padding: 16px;
+            padding: 12px;
           }
           .product-modal-container {
             width: 95vw;
             max-height: 90vh;
-            border-radius: 14px;
+            border-radius: 12px;
           }
           .modal-header {
-            padding: 16px 20px;
+            padding: 12px 16px;
           }
           .modal-body-wrapper {
             flex-direction: column;
@@ -677,7 +678,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           }
           .modal-left-scrollable {
             flex: none;
-            padding: 20px;
+            padding: 16px;
             overflow-y: visible;
           }
           .modal-right-sticky {
@@ -687,7 +688,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
             overflow-y: visible;
           }
           .elegant-action-card {
-            padding: 20px;
+            padding: 16px;
             position: static;
           }
           .info-main-title {
