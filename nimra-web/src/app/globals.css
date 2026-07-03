@@ -642,6 +642,11 @@ body > section[aria-label^="Notifications"] {
   transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1), opacity 240ms ease, filter 240ms ease !important;
 }
 
+[data-sonner-toast].cart-added-toast::after {
+  display: none !important;
+  content: none !important;
+}
+
 .cart-added-toast__content {
   min-width: 0;
   padding-right: 0.25rem;

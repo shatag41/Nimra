@@ -11,7 +11,7 @@ import { useCart } from '@/frontend/customer/contexts/CartProvider';
 import { isOrderable } from '../utils/commerce';
 import { PortalHero } from './portal/Hero';
 import { RecentlyViewedProducts } from './portal/RecentlyViewed';
-import { CartToast, PortalNotifications } from './portal/Notifications';
+import { PortalNotifications } from './portal/Notifications';
 import { toast } from 'sonner';
 import { saveUser, requestEmailChangeOTP } from '@/utils/api';
 
@@ -53,20 +53,11 @@ export default function CustomerPortalClient() {
   const cart = useCart();
   const searchParams = useSearchParams();
   const tab = searchParams.get('tab');
-  const [cartToast, setCartToast] = React.useState<{ name: string; visible: boolean }>({ name: '', visible: false });
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
     setMounted(true);
   }, []);
-
-  const handleProductAdded = (product: any) => {
-    setCartToast({ name: product.Name, visible: true });
-    clearTimeout((window as any).__portalCartToastTimer);
-    (window as any).__portalCartToastTimer = window.setTimeout(() => {
-      setCartToast((t) => ({ ...t, visible: false }));
-    }, 3000);
-  };
 
   const recommendedProducts = React.useMemo(() => {
     const orderable = (products || []).filter(isOrderable);
@@ -230,7 +221,7 @@ export default function CustomerPortalClient() {
                 loadingOrders={loadingOrders} 
                 onRefresh={refreshOrders} 
               />
-              <RecentlyViewedProducts products={products} onAdd={handleProductAdded} />
+              <RecentlyViewedProducts products={products} />
             </div>
 
             <aside className="side-stack">
@@ -272,12 +263,6 @@ export default function CustomerPortalClient() {
       )}
 
       <RushPortalBanner />
-
-      <CartToast
-        visible={cartToast.visible}
-        name={cartToast.name}
-        onClose={() => setCartToast((t) => ({ ...t, visible: false }))}
-      />
 
       <style jsx global>{portalStyles}</style>
     </div>
