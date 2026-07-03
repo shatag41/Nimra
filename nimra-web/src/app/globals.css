@@ -8003,8 +8003,8 @@ select {
   inset:0;
   z-index:1;
   border-radius:10px;
-  background:linear-gradient(135deg,#3b82f6,#2563eb);
-  box-shadow:0 5px 18px rgba(37,99,235,.36),inset 0 1px 0 rgba(255,255,255,.2);
+  background:linear-gradient(135deg,#003366,#104489);
+  box-shadow:0 5px 18px rgba(6, 21, 40, 0.4),inset 0 1px 0 rgba(255,255,255,0.1);
   pointer-events:none;
 }
 .nav-link-label { position:relative; z-index:2; }
