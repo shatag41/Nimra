@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { Product } from '@/types/cms';
 import { useCart } from '@/frontend/customer/hooks/useCart';
@@ -144,7 +145,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
     return specs;
   }, [product.Specifications]);
 
-  return (
+  const modal = (
     <div className="product-modal-overlay" onClick={onClose} role="dialog" aria-modal="true">
       <div 
         className="product-modal-container" 
@@ -296,10 +297,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
       <style jsx global>{`
         .product-modal-overlay {
           position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
+          inset: 0;
           background-color: rgba(0, 0, 0, 0.65);
           backdrop-filter: blur(8px);
           -webkit-backdrop-filter: blur(8px);
@@ -307,21 +305,22 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 1rem;
+          padding: 24px;
           animation: modal-fade-in 0.3s ease-out forwards;
         }
 
         .product-modal-container {
           background: var(--bg-primary, #ffffff);
           border-radius: 16px;
-          width: 100%;
-          max-width: 900px;
-          max-height: 85vh;
+          width: min(1100px, 92vw);
+          max-width: 100%;
+          max-height: 90vh;
           display: flex;
           flex-direction: column;
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
           overflow: hidden;
           position: relative;
+          margin: 0;
           animation: modal-scale-in 0.3s ease-out forwards;
         }
 
@@ -330,27 +329,32 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 0.75rem 1.5rem;
+          padding: 20px 32px;
           border-bottom: 1px solid rgba(0, 0, 0, 0.06);
           background: var(--bg-primary, #ffffff);
           position: sticky;
           top: 0;
           z-index: 10;
         }
+        .modal-header-title {
+          display: flex;
+          align-items: center;
+        }
         .modal-header-title h2 {
-          font-size: 1rem;
+          font-size: 1.1rem;
           font-weight: 700;
           color: var(--text-primary);
           margin: 0;
           font-family: var(--font-heading);
           letter-spacing: -0.01em;
+          line-height: 1.2;
         }
         .modal-close-btn {
           background: rgba(0, 0, 0, 0.04);
           border: none;
           color: var(--text-primary);
-          width: 28px;
-          height: 28px;
+          width: 32px;
+          height: 32px;
           border-radius: 50%;
           font-size: 0.85rem;
           font-weight: bold;
@@ -359,6 +363,8 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           justify-content: center;
           cursor: pointer;
           transition: all 0.2s ease;
+          margin: 0;
+          align-self: center;
         }
         .modal-close-btn:hover {
           background: rgba(220, 50, 50, 0.1);
@@ -377,11 +383,11 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
         /* Left Column - Scrollable Details */
         .modal-left-scrollable {
           flex: 1.2;
-          padding: 1.25rem 1.5rem;
+          padding: 32px;
           overflow-y: auto;
           display: flex;
           flex-direction: column;
-          gap: 1.25rem;
+          gap: 24px;
           scroll-behavior: smooth;
         }
         
@@ -463,10 +469,10 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
         }
 
         .elegant-action-card {
-          padding: 1.25rem 1.5rem;
+          padding: 32px;
           display: flex;
           flex-direction: column;
-          gap: 1rem;
+          gap: 24px;
           position: sticky;
           top: 0;
         }
@@ -653,10 +659,17 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
         }
 
         /* Responsive - Stacks Vertically on Mobile/Tablet */
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
+          .product-modal-overlay {
+            padding: 16px;
+          }
           .product-modal-container {
-            max-height: 92vh;
+            width: 95vw;
+            max-height: 90vh;
             border-radius: 14px;
+          }
+          .modal-header {
+            padding: 16px 20px;
           }
           .modal-body-wrapper {
             flex-direction: column;
@@ -664,7 +677,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           }
           .modal-left-scrollable {
             flex: none;
-            padding: 1.25rem;
+            padding: 20px;
             overflow-y: visible;
           }
           .modal-right-sticky {
@@ -674,7 +687,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
             overflow-y: visible;
           }
           .elegant-action-card {
-            padding: 1.25rem;
+            padding: 20px;
             position: static;
           }
           .info-main-title {
@@ -690,5 +703,8 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
       `}</style>
     </div>
   );
+
+  if (typeof document === 'undefined') return modal;
+  return createPortal(modal, document.body);
 }
 
