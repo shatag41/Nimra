@@ -108,6 +108,24 @@ export default function HomeClient({ banners: initialBanners, products: initialP
 
   const spotlightProducts = useMemo(() => products.slice(0, 3), [products]);
 
+  const [currentUpcomingIndex, setCurrentUpcomingIndex] = useState(0);
+
+  const upcomingProducts = useMemo(() => {
+    return products.filter((p) => {
+      const stock = String(p.StockStatus || '').toLowerCase();
+      const cat = String(p.Category || '').toLowerCase();
+      return stock.includes('coming') || stock.includes('upcoming') || cat.includes('upcoming');
+    });
+  }, [products]);
+
+  useEffect(() => {
+    if (upcomingProducts.length < 2) return;
+    const interval = window.setInterval(() => {
+      setCurrentUpcomingIndex((current) => (current + 1) % upcomingProducts.length);
+    }, 5500);
+    return () => window.clearInterval(interval);
+  }, [upcomingProducts.length]);
+
   return (
     <div className="home-page">
       {/* ─── 1. HERO CAROUSEL ───────────────────────────────────────────────── */}
@@ -413,61 +431,115 @@ export default function HomeClient({ banners: initialBanners, products: initialP
         </div>
       </section>
 
-      {/* ─── 5. RUSH SODA TEASER ────────────────────────────────────────────── */}
-      <section className="rush-section home-deferred-section">
-        <div className="bubble-bg">
-          {[
-            { left: '8%', w: '14px', delay: '0s', dur: '8s' },
-            { left: '22%', w: '22px', delay: '1.2s', dur: '11s' },
-            { left: '46%', w: '9px', delay: '0.4s', dur: '7s' },
-            { left: '68%', w: '28px', delay: '2s', dur: '10s' },
-            { left: '85%', w: '18px', delay: '1.6s', dur: '9s' },
-          ].map((b, i) => (
-            <div key={i} className="bubble" style={{ left: b.left, width: b.w, height: b.w, animationDelay: b.delay, animationDuration: b.dur }} />
-          ))}
-        </div>
+      {/* ─── 5. DYNAMIC UPCOMING TEASER ──────────────────────────────────────── */}
+      {upcomingProducts.length > 0 && (
+        <section className="rush-section home-deferred-section">
+          <div className="bubble-bg">
+            {[
+              { left: '8%', w: '14px', delay: '0s', dur: '8s' },
+              { left: '22%', w: '22px', delay: '1.2s', dur: '11s' },
+              { left: '46%', w: '9px', delay: '0.4s', dur: '7s' },
+              { left: '68%', w: '28px', delay: '2s', dur: '10s' },
+              { left: '85%', w: '18px', delay: '1.6s', dur: '9s' },
+            ].map((b, i) => (
+              <div key={i} className="bubble" style={{ left: b.left, width: b.w, height: b.w, animationDelay: b.delay, animationDuration: b.dur }} />
+            ))}
+          </div>
 
-        <div className="container">
-          <div className="rush-grid">
-            <div className="rush-content">
-              <span className="badge badge-orange">Coming Soon</span>
-              <h2 className="rush-title">
-                Feel the Fizz of{' '}
-                <span className="rush-brand">RUSH Soda</span>
-              </h2>
-              <p className="rush-text">
-                Prepare your taste buds for the ultimate bubbly experience. RUSH Soda — NIMRA&apos;s upcoming range of premium sparkling club sodas and carbonated refreshments. Crafted to elevate your mocktails, parties, or enjoyed chilled.
-              </p>
-              <div className="rush-features">
-                {['Extra Sparkling', 'Zero Impurities', 'Pure Crisp Taste', 'Event Ready'].map((f) => (
-                  <span key={f} className="rush-pill">{f}</span>
+          <div className="container">
+            <div style={{ position: 'relative' }}>
+              {upcomingProducts.map((product, idx) => {
+                const words = product.Name.split(' ');
+                const brandWord = words.pop() || '';
+                const titlePrefix = words.join(' ');
+                
+                let features = ['Premium Quality', 'Pure Taste', 'Event Ready'];
+                if (product.Specifications && typeof product.Specifications === 'string') {
+                  features = product.Specifications.split(/[\n;,|]/).map(s => s.trim()).filter(Boolean).slice(0, 4);
+                } else if (product.Specifications && typeof product.Specifications !== 'string') {
+                  features = String(product.Specifications).split(/[\n;,|]/).map(s => s.trim()).filter(Boolean).slice(0, 4);
+                }
+
+                return (
+                  <div 
+                    key={product.ID}
+                    style={{
+                      display: upcomingProducts.length > 1 ? (idx === currentUpcomingIndex ? 'block' : 'none') : 'block',
+                      animation: 'customFadeIn 0.5s ease-out forwards'
+                    }}
+                  >
+                    <div className="rush-grid">
+                      <div className="rush-content">
+                        <span className="badge badge-orange">{product.StockStatus || 'Coming Soon'}</span>
+                        <h2 className="rush-title">
+                          {titlePrefix ? titlePrefix + ' ' : ''}
+                          <span className="rush-brand">{brandWord}</span>
+                        </h2>
+                        <p className="rush-text">
+                          {product.Description || `Prepare your taste buds for the ultimate experience with ${product.Name}. Crafted to elevate your mocktails, parties, or enjoyed chilled.`}
+                        </p>
+                        <div className="rush-features">
+                          {features.map((f, fIdx) => (
+                            <span key={`${f}-${fIdx}`} className="rush-pill">{f}</span>
+                          ))}
+                        </div>
+                        <Link href={`/contact?subject=Notify%20me%20about%20${encodeURIComponent(product.Name)}`} className="btn btn-rush">
+                          Get Notified on Launch
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        </Link>
+                      </div>
+
+                      <div className="rush-visual">
+                        <div className="can-outer-glow" />
+                        {product.ImageUrl ? (
+                          <div className="animate-float" style={{ position: 'relative', width: '100%', height: '350px', zIndex: 10, display: 'flex', justifyContent: 'center' }}>
+                            <img src={product.ImageUrl} alt={product.Name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                          </div>
+                        ) : (
+                          <div className="can-mockup animate-float">
+                            <div className="can-reflection" />
+                            <div className="can-label">
+                              <span className="label-brand">NIMRA</span>
+                              <span className="label-title">NEW</span>
+                              <span className="label-sub">COMING SOON</span>
+                            </div>
+                            <div className="can-bubbles">
+                              {[...Array(6)].map((_, i) => (
+                                <div key={i} className="can-bubble" style={{ left: `${15 + i * 12}%`, animationDelay: `${i * 0.3}s` }} />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {upcomingProducts.length > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '0.6rem', marginTop: '2.5rem', position: 'relative', zIndex: 10 }}>
+                {upcomingProducts.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentUpcomingIndex(idx)}
+                    aria-label={`Go to slide ${idx + 1}`}
+                    style={{
+                      width: idx === currentUpcomingIndex ? '30px' : '10px',
+                      height: '10px',
+                      borderRadius: '5px',
+                      background: idx === currentUpcomingIndex ? '#f97316' : 'rgba(255,255,255,0.3)',
+                      border: 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease'
+                    }}
+                  />
                 ))}
               </div>
-              <Link href="/contact" className="btn btn-rush">
-                Get Notified on Launch
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-              </Link>
-            </div>
-
-            <div className="rush-visual">
-              <div className="can-outer-glow" />
-              <div className="can-mockup animate-float">
-                <div className="can-reflection" />
-                <div className="can-label">
-                  <span className="label-brand">NIMRA</span>
-                  <span className="label-title">RUSH</span>
-                  <span className="label-sub">CLUB SODA</span>
-                </div>
-                <div className="can-bubbles">
-                  {[...Array(6)].map((_, i) => (
-                    <div key={i} className="can-bubble" style={{ left: `${15 + i * 12}%`, animationDelay: `${i * 0.3}s` }} />
-                  ))}
-                </div>
-              </div>
-            </div>
+            )}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ─── 6. FAQ ─────────────────────────────────────────────────────────── */}
       <section className="faq-section">
@@ -1414,6 +1486,11 @@ export default function HomeClient({ banners: initialBanners, products: initialP
           .preview-grid { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
           .values-grid { grid-template-columns: 1fr; }
           .scroll-indicator { display: none; }
+        }
+
+        @keyframes customFadeIn {
+          from { opacity: 0; transform: translateY(15px); }
+          to { opacity: 1; transform: translateY(0); }
         }
 
         @media (max-width: 640px) {
