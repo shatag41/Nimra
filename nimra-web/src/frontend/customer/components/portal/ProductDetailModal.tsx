@@ -312,7 +312,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
         .product-modal-container {
           background: var(--bg-primary, #ffffff);
           border-radius: 16px;
-          width: min(1100px, 92vw);
+          width: min(850px, 92vw);
           max-width: 100%;
           max-height: 90vh;
           display: flex;
