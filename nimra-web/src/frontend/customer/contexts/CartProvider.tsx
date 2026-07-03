@@ -110,20 +110,30 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const hasLocalItems = storedItems.length > 0;
       setHydrated(hasLocalItems || !(user && user.ID));
       setItems(storedItems);
+
+      if (!hasLocalItems && !(user && user.ID)) {
+        return;
+      }
+
       try {
-        const [catalog, fetchedCloudItems] = await Promise.all([
-          fetchProducts(),
-          user && user.ID ? fetchCart(user.ID) : Promise.resolve([] as CartItem[]),
-        ]);
+        const fetchedCloudItems = user && user.ID ? await fetchCart(user.ID) : [];
+        const guestItemsSnapshot = user && user.ID
+          ? [
+              ...readStoredCartItems('nimra-cart'),
+              ...readStoredCartItems('nimra-cart-v2:guest'),
+            ]
+          : [];
+        const needsCatalogHydration =
+          hasLocalItems ||
+          fetchedCloudItems.length > 0 ||
+          guestItemsSnapshot.length > 0;
+        const catalog = needsCatalogHydration ? await fetchProducts() : [];
         let localItems = hydrateCartItemsFromCatalog(readStoredCartItems(storageKey), catalog);
         
         if (user && user.ID) {
           // 1. Read guest cart from localStorage
           const guestKey = 'nimra-cart';
-          const guestItems = hydrateCartItemsFromCatalog([
-            ...readStoredCartItems(guestKey),
-            ...readStoredCartItems('nimra-cart-v2:guest'),
-          ], catalog);
+          const guestItems = hydrateCartItemsFromCatalog(guestItemsSnapshot, catalog);
           
           // 2. Fetch user's server cart (if exists)
           const cloudItems = hydrateCartItemsFromCatalog(fetchedCloudItems.map(normalizeCartItem), catalog);

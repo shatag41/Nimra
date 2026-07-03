@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import Header from './Header';
 import Footer from './Footer';
 import { CompanyInfo } from '@/types/cms';
@@ -15,7 +14,6 @@ interface LayoutWrapperProps {
 
 export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperProps) {
   const pathname = usePathname();
-  const reduceMotion = useReducedMotion();
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -87,18 +85,9 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
     <div className="ds-app-shell">
       <Header companyInfo={companyInfo} />
       <main className={`ds-main with-site-header ${pathname === '/' ? 'home-main' : ''}`}>
-        <AnimatePresence mode="sync" initial={false}>
-          <motion.div
-            key={pathname}
-            className="route-transition"
-            initial={reduceMotion ? false : { opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduceMotion ? { opacity: 1 } : { opacity: 0, y: -4 }}
-            transition={{ duration: reduceMotion ? 0 : 0.2, ease: [0.22, 1, 0.36, 1] }}
-          >
-            {children}
-          </motion.div>
-        </AnimatePresence>
+        <div className="route-transition">
+          {children}
+        </div>
       </main>
       <Footer companyInfo={companyInfo} />
     </div>

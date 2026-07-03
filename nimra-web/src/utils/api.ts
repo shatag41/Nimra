@@ -245,6 +245,8 @@ export const sendRequest = async (payload: AuthRequest): Promise<AuthResponse> =
 
 export const clearCMSDataCache = () => {
   clientCMSCache = null;
+  serverCMSCache = null;
+  serverCMSRequest = null;
 };
 
 /**
@@ -266,6 +268,9 @@ export const deleteUploadedImage = async (storagePath: string): Promise<void> =>
 };
 
 let clientCMSCache: CMSData | null = null;
+let serverCMSCache: { data: CMSData; expiresAt: number } | null = null;
+let serverCMSRequest: Promise<CMSData> | null = null;
+const SERVER_CMS_CACHE_TTL_MS = 5 * 60 * 1000;
 
 const normalizeImageUrl = (url: unknown): string => {
   const value = String(url || '').trim();
@@ -313,21 +318,39 @@ const isNextDynamicSignal = (err: unknown) => {
   );
 };
 
+const getLocalFallbackCMSData = async (): Promise<CMSData> => {
+  if (typeof window !== 'undefined') {
+    return { banners: [], products: [], faqs: [], companyInfo: {} };
+  }
+  const { fallbackData } = await import('@/backend/models/fallbackData');
+  return normalizeCMSData(fallbackData);
+};
+
 // Fetch CMS Data via internal proxy
 export const fetchCMSData = async (): Promise<CMSData> => {
   if (typeof window !== 'undefined' && clientCMSCache) {
     return clientCMSCache;
   }
+
+  if (typeof window === 'undefined') {
+    const now = Date.now();
+    if (serverCMSCache && serverCMSCache.expiresAt > now) {
+      return serverCMSCache.data;
+    }
+    if (serverCMSRequest) {
+      return serverCMSRequest;
+    }
+  }
+
+  const requestCMSData = async (): Promise<CMSData> => {
   try {
-    // Use no-store on both server and client so Next.js's own fetch cache
-    // doesn't serve stale images/products after admin writes. The
-    // controller's in-memory cache (invalidated on every POST) handles
-    // server-side caching instead.
-    const fetchOptions: RequestInit = { cache: 'no-store' };
+    const fetchOptions: RequestInit = typeof window === 'undefined'
+      ? { next: { revalidate: 300, tags: ['cms-data'] } }
+      : { cache: 'force-cache' };
 
     const url = typeof window === 'undefined'
       ? getProxyUrl()
-      : `${getProxyUrl()}?_t=${Date.now()}`;
+      : getProxyUrl();
 
     const res = await fetch(url, {
       method: 'GET',
@@ -352,20 +375,43 @@ export const fetchCMSData = async (): Promise<CMSData> => {
 
     if (typeof window !== 'undefined') {
       clientCMSCache = cmsData;
+    } else {
+      serverCMSCache = {
+        data: cmsData,
+        expiresAt: Date.now() + SERVER_CMS_CACHE_TTL_MS,
+      };
     }
     return cmsData;
   } catch (err) {
     if (isNextDynamicSignal(err)) {
       throw err;
     }
+    if (typeof window === 'undefined') {
+      const fallbackCMSData = await getLocalFallbackCMSData();
+      serverCMSCache = {
+        data: fallbackCMSData,
+        expiresAt: Date.now() + SERVER_CMS_CACHE_TTL_MS,
+      };
+      return fallbackCMSData;
+    }
     console.error('Error loading CMS data.', err);
-    return {
+    return clientCMSCache || {
       banners: [],
       products: [],
       faqs: [],
       companyInfo: {},
     };
   }
+  };
+
+  if (typeof window === 'undefined') {
+    serverCMSRequest = requestCMSData().finally(() => {
+      serverCMSRequest = null;
+    });
+    return serverCMSRequest;
+  }
+
+  return requestCMSData();
 };
 
 // Submit Inquiry via internal proxy to Google Sheets

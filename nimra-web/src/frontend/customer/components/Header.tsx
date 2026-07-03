@@ -26,6 +26,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
   const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
   const [hoveredNav, setHoveredNav] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notificationsOwnerKey, setNotificationsOwnerKey] = useState('');
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
   const searchParams = useSearchParams();
@@ -92,8 +93,11 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
   useEffect(() => {
     if (!activeUser || activeUser.Role !== 'Customer') {
       setNotifications([]);
+      setNotificationsOwnerKey('');
       return;
     }
+    const ownerKey = String(activeUser.ID || activeUser.Username || '');
+    if (!notificationDropdownOpen || (notifications.length > 0 && notificationsOwnerKey === ownerKey)) return;
 
     const loadNotifications = () => {
       fetchNotifications(activeUser.ID, activeUser.Username).then(data => {
@@ -115,12 +119,13 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           const isRead = readIds.includes(String(n.ID)) || n.Read === true || n.Read === 'true';
           return { ...n, Read: isRead };
         });
+        setNotificationsOwnerKey(ownerKey);
         setNotifications(updated);
       }).catch(console.error);
     };
 
     loadNotifications();
-  }, [activeUser]);
+  }, [activeUser, notificationDropdownOpen, notifications.length, notificationsOwnerKey]);
 
   const handleMarkAsRead = async (id: string | number) => {
     try {

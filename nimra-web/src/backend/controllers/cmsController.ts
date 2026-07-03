@@ -219,7 +219,12 @@ export async function handleGet(req: Request) {
   const userId = requestUrl.searchParams.get('userId') || '';
   const mobile = requestUrl.searchParams.get('mobile') || '';
   const email = requestUrl.searchParams.get('email') || '';
-  const cacheHeaders = { 'Cache-Control': 'no-store' };
+  const isPublicCMSRead = !action || ['getBanners', 'getProducts', 'getFAQs', 'getCompanyInfo'].includes(action);
+  const cacheHeaders = {
+    'Cache-Control': isPublicCMSRead
+      ? 'private, max-age=60, stale-while-revalidate=300'
+      : 'no-store',
+  };
 
   // If fetching main CMS data (action is null), serve from in-memory cache if fresh
   const now = Date.now();
