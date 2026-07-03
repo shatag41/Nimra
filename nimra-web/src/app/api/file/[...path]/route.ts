@@ -18,10 +18,8 @@ export async function GET(
 ) {
   try {
     const { path: pathSegments } = await params;
-    console.log(`[Uploads API] Requested path segments:`, pathSegments);
     const uploadRoot = path.resolve(process.cwd(), '.storage', 'uploads');
     const requestedPath = path.resolve(uploadRoot, ...pathSegments);
-    console.log(`[Uploads API] Resolving to:`, requestedPath);
 
     if (!requestedPath.startsWith(uploadRoot + path.sep)) {
       return NextResponse.json({ success: false, message: 'Invalid file path.' }, { status: 400 });

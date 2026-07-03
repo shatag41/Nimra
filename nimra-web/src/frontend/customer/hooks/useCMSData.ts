@@ -2,7 +2,6 @@
 
 import useSWR from 'swr';
 import { fetchCMSData, clearCMSDataCache } from '@/utils/api';
-import { Banner, Product, FAQ, CompanyInfo } from '@/types/cms';
 
 export function useCMSData() {
   const { data, error, isLoading, mutate } = useSWR('cmsData', fetchCMSData, {

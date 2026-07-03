@@ -68,7 +68,6 @@ const deleteUploadedFile = async (storagePath: string): Promise<void> => {
 
   try {
     await fs.unlink(filePath);
-    console.log(`[CMS Controller] Deleted uploaded image: ${normalized}`);
   } catch (err: unknown) {
     if (!(err instanceof Error && 'code' in err && (err as NodeJS.ErrnoException).code === 'ENOENT')) {
       console.error(`[CMS Controller] Failed to delete uploaded image (${normalized}):`, err);
@@ -239,7 +238,6 @@ export async function handleGet(req: Request) {
   const urlVal = getAppsScriptUrl();
   if (urlVal) {
     try {
-      console.log(`[CMS API Proxy] GET Request: action="${action || 'main'}" -> Fetching from Google Sheets URL...`);
       const targetUrl = new URL(urlVal);
       requestUrl.searchParams.forEach((value, key) => targetUrl.searchParams.set(key, value));
 
@@ -301,9 +299,6 @@ export async function handleGet(req: Request) {
           if (liveCacheKey) {
             liveGetCache.set(liveCacheKey, { data, expiresAt: Date.now() + getCacheTTL(action) });
           }
-          const productCount = Array.isArray(data) && action === 'getProducts' ? data.length : (data.products?.length || 0);
-          const bannerCount = Array.isArray(data) && action === 'getBanners' ? data.length : (data.banners?.length || 0);
-          console.log(`[CMS API Proxy] GET Request: action="${action || 'main'}" -> Successfully fetched from Google Sheets. Count of products: ${productCount}, banners: ${bannerCount}`);
           return NextResponse.json(data, { headers: cacheHeaders });
         }
       } else {
@@ -316,8 +311,6 @@ export async function handleGet(req: Request) {
         console.error(`[CMS API Proxy] GET Request: action="${action || 'main'}" -> Google Sheets GET fetch failed:`, err);
       }
     }
-  } else {
-    console.log(`[CMS API Proxy] GET Request: action="${action || 'main'}" -> NEXT_PUBLIC_APPS_SCRIPT_URL is not set. Serving from local fallback (db.json).`);
   }
 
   // Fallback: If live fetch failed/timed out and we have stale CMS cache for main action, return it
@@ -404,17 +397,36 @@ export async function handlePost(req: Request) {
       ? getUploadStoragePath(payload.banner.ImageUrl)
       : '';
 
+    if (
+      payload.type === 'productCRUD' &&
+      cmsCrudAction !== 'delete' &&
+      (!localProductImagePath || !(await uploadFileExists(localProductImagePath, 'products')))
+    ) {
+      return NextResponse.json(
+        { success: false, message: 'Upload a valid product image before saving.' },
+        { status: 400 }
+      );
+    }
+    if (
+      payload.type === 'bannerCRUD' &&
+      cmsCrudAction !== 'delete' &&
+      (!localBannerImagePath || !(await uploadFileExists(localBannerImagePath, 'banners')))
+    ) {
+      return NextResponse.json(
+        { success: false, message: 'Upload a valid banner image before saving.' },
+        { status: 400 }
+      );
+    }
+
     // Store the storage path in Sheets (e.g. "products/filename.jpg") so that
     // mapUploadedImagesFromStorage can resolve it to a served URL on read.
     // oldImagePath is a frontend-only coordination field; strip it before sending.
     if (payload.type === 'productCRUD' && payload.product) {
       const { oldImagePath: _op, ...productFields } = payload.product;
       payload.product = { ...productFields, ImageUrl: localProductImagePath || '' };
-      console.log('[CMS Controller] Forwarding product payload to Sheets:', JSON.stringify(payload.product));
     } else if (payload.type === 'bannerCRUD' && payload.banner) {
       const { oldImagePath: _ob, ...bannerFields } = payload.banner;
       payload.banner = { ...bannerFields, ImageUrl: localBannerImagePath || '' };
-      console.log('[CMS Controller] Forwarding banner payload to Sheets:', JSON.stringify(payload.banner));
     }
 
     invalidateCMSCache();
@@ -439,8 +451,6 @@ export async function handlePost(req: Request) {
     const urlValPost = getAppsScriptUrl();
     if (urlValPost) {
       try {
-        console.log(`[CMS API Proxy] POST Request: type="${payload.type}" -> Fetching from Google Sheets URL...`);
-        console.log(`[CMS API Proxy] Sending body to Sheets:`, JSON.stringify(payload));
         const res = await fetch(urlValPost, {
           method: 'POST',
           redirect: 'follow',
@@ -454,7 +464,6 @@ export async function handlePost(req: Request) {
         const text = await res.text();
         if (!text.trim().startsWith('<')) {
           const data = JSON.parse(text);
-          console.log(`[CMS API Proxy] POST Request: type="${payload.type}" -> Successfully processed by Google Sheets.`);
           if (cmsCrudType) {
             const entityBody = cmsCrudType === 'productCRUD' ? body.product || {} : body.banner || {};
             const newImagePath = cmsCrudType === 'productCRUD' ? localProductImagePath : localBannerImagePath;
@@ -1079,12 +1088,6 @@ export async function handlePost(req: Request) {
       const expiresAt = Date.now() + 10 * 60 * 1000;
       localOTPCache.set(String(userId), { otp, expiresAt });
 
-      console.log(`\n==================================================`);
-      console.log(`[LOCAL DEV] Email Change OTP for User ID: ${userId}`);
-      console.log(`[LOCAL DEV] New Email: ${newEmail}`);
-      console.log(`[LOCAL DEV] OTP Code: ${otp}`);
-      console.log(`[LOCAL DEV] Expiry: ${new Date(expiresAt).toISOString()}`);
-      console.log(`==================================================\n`);
 
       return NextResponse.json({
         success: true,

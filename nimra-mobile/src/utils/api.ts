@@ -236,7 +236,6 @@ export const fetchCMSData = async (): Promise<CMSData> => {
   const backendUrl = getBackendUrl();
   const url = backendUrl ? `${backendUrl}/api/cms` : getAPIUrl();
   if (!url) {
-    console.log("No EXPO_PUBLIC_APPS_SCRIPT_URL configured.");
     return {
       banners: [],
       products: [],
@@ -276,7 +275,6 @@ export const submitInquiry = async (inquiry: InquirySubmission): Promise<{ succe
   const idempotencyKey = inquiry.idempotencyKey || pendingInquiryKeys.get(payloadKey) || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   pendingInquiryKeys.set(payloadKey, idempotencyKey);
   if (!url) {
-    console.log("No Apps Script URL configured. Mock submitting inquiry:", inquiry);
     await new Promise((resolve) => setTimeout(resolve, 800));
     return { success: true, message: "Inquiry mock-submitted successfully! (Connect Apps Script URL to write to Google Sheets)" };
   }
@@ -307,7 +305,6 @@ export const submitOrder = async (order: OrderSubmission): Promise<{ success: bo
     source: order.source || 'Mobile App',
   };
 
-  console.log('NIMRA mobile checkout payload:', payload);
 
   if (!url) {
     await new Promise((resolve) => setTimeout(resolve, 800));

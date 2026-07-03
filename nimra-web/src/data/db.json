@@ -4,20 +4,20 @@
       "ID": 1,
       "Title": "Pure Hydration. Healthy Living.",
       "Subtitle": "NIMRA Packaged Drinking Water keeps you fresh and energized through every moment of the day.",
-      "ImageUrl": "banners/1783051231381-ef3b982b-4605-4d1b-b5eb-b76395c3f8e1.png",
+      "ImageUrl": "banners/1783057147826-077c2bd0-ada7-4de8-9057-f8070a3ca0ae.png",
       "ButtonText": "Explore Products",
       "ButtonLink": "/products",
       "Active": true,
-      "oldImagePath": "/uploads/banners/1782927488376-1eb81f7c-9c53-46c8-8913-4f5044efbf04.png"
+      "oldImagePath": "/uploads/banners/1783051231381-ef3b982b-4605-4d1b-b5eb-b76395c3f8e1.png"
     },
     {
-      "Title": " NEW ARRIVAL",
-      "Subtitle": "HydroBoost Electrolyte Drink",
-      "ImageUrl": "banners/1783052012575-8328869c-3796-4245-9259-00484f745303.png",
+      "Title": "Mineral Balanced Purity",
+      "Subtitle": "Sourced responsibly and purified through a rigorous 10-step process for absolute safety.",
+      "ImageUrl": "banners/1783057188640-304562a1-19c5-40e6-b774-8705702d0b7e.png",
       "ButtonText": "Order Now",
       "ButtonLink": "/products",
       "Active": true,
-      "oldImagePath": "/uploads/banners/1782926974186-2e6235b2-2712-4dc7-a606-8dabea4dd6f5.png",
+      "oldImagePath": "/uploads/banners/1783052012575-8328869c-3796-4245-9259-00484f745303.png",
       "ID": 2
     }
   ],
@@ -97,15 +97,15 @@
       "Active": true
     },
     {
-      "Name": "NIMRA Packaged Drinking Water – 1 Litre",
+      "Name": "testt",
       "Category": "Packaged Water",
       "Volume": "1L",
-      "Price": "100",
-      "Description": "Stay refreshed with NIMRA Packaged Drinking Water, carefully purified through a multi-stage filtration and purification process to deliver clean, safe, and great-tasting drinking water. Every bottle is hygienically packed to preserve its purity, making it the perfect choice for home, office, travel, fitness, events, and everyday hydration.",
-      "ImageUrl": "products/1783011887438-ea3eb9a4-1307-42bd-bd4c-3da226c38d1c.jpg",
+      "Price": "333",
+      "Description": "nnn",
+      "ImageUrl": "products/1783056449291-3a5658e0-b99c-4fd5-be17-6aeac149ce47.jpg",
       "Active": true,
       "ID": 8,
-      "Specifications": "| Specification        | Details                                                                      | | -------------------- | ---------------------------------------------------------------------------- | | Product Name         | NIMRA Packaged Drinking Water                                                | | Category             | Packaged Water                                                               | | Volume               | 1 Litre                                                                      | | Bottle Type          | Food-Grade PET Bottle                                                        | | Cap Type             | Tamper-Evident Screw Cap                                                     | | Water Type           | Purified Packaged Drinking Water                                             | | Purification Process | Multi-Stage Filtration, Reverse Osmosis (RO), UV Sterilization & Ozonization | | Appearance           | Crystal Clear                                                                | | Taste                | Fresh & Neutral                                                              | | Storage              | Store in a cool, dry place away from direct sunlight                         | | Shelf Life           | 12 Months (Unopened)                                                         | | Best For             | Daily Hydration, Home, Office, Travel, Sports & Events                       | | Packaging            | Individually Sealed Bottle                                                   | | Brand                | NIMRA                                                                        |",
+      "Specifications": "jjj",
       "oldImagePath": ""
     },
     {
@@ -119,6 +119,21 @@
       "Specifications": "hhh",
       "oldImagePath": "",
       "ID": 9
+    },
+    {
+      "ID": 3,
+      "Name": "NIMRA 1 Litre Bottle",
+      "Category": "Mineral Water",
+      "Volume": "1L",
+      "Price": 20,
+      "Description": "Standard 1 Litre bottle for pure mineral-balanced hydration at home, dining, or travel.",
+      "ImageUrl": "products/1783056574590-be58efdd-6f07-4149-b655-86c40f9854b3.png",
+      "Specifications": "Balanced minerals, UV and ozone treated, travel pack",
+      "StockStatus": "In Stock",
+      "DiscountPercent": "",
+      "ComboPack": "",
+      "Active": true,
+      "oldImagePath": "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
     }
   ],
   "faqs": [

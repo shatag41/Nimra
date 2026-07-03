@@ -183,6 +183,7 @@ function getRequiredOrderHeaders() {
     'Delivery Instructions',
     'Products',
     'Quantities',
+    'Items JSON',
     'Subtotal',
     'Delivery Charge',
     'Total Amount',
@@ -248,7 +249,7 @@ function ensureOrdersSetupSheet(sheet) {
   }
 
   removeDeprecatedOrderColumns(sheet);
-  existingHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] || [];
+  existingHeaders = normalizeOrderSetupHeaders(sheet);
 
   for (var i = 0; i < requiredHeaders.length; i++) {
     if (existingHeaders.indexOf(requiredHeaders[i]) < 0) {
@@ -258,7 +259,51 @@ function ensureOrdersSetupSheet(sheet) {
   }
 }
 
+function normalizeOrderSetupHeaderName(name) {
+  var normalized = String(name || '').trim();
+  var aliases = {
+    'OrderID': 'Order ID',
+    'OrderDate': 'Order Date',
+    'CustomerUserID': 'Customer User ID',
+    'Customer UserID': 'Customer User ID',
+    'AddressType': 'Address Type',
+    'SavedAddressId': 'Saved Address ID',
+    'Saved AddressId': 'Saved Address ID',
+    'DeliveryInstructions': 'Delivery Instructions',
+    'ItemsJSON': 'Items JSON',
+    'PaymentMethod': 'Payment Method',
+    'OrderStatus': 'Order Status',
+    'CreatedAt': 'Created At',
+    'UpdatedAt': 'Updated At',
+    'CancellationStatus': 'Cancellation Status',
+    'CancellationRequestID': 'Cancellation Request ID',
+    'StatusHistory': 'Status History'
+  };
+  return aliases[normalized] || normalized;
+}
+
+function normalizeOrderSetupHeaders(sheet) {
+  if (!sheet || sheet.getLastColumn() === 0) return [];
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] || [];
+  var normalizedHeaders = headers.map(normalizeOrderSetupHeaderName);
+  var changed = false;
+  for (var i = 0; i < headers.length; i++) {
+    if (String(headers[i] || '') !== normalizedHeaders[i]) {
+      changed = true;
+      break;
+    }
+  }
+  if (changed) {
+    sheet.getRange(1, 1, 1, normalizedHeaders.length).setValues([normalizedHeaders]);
+  }
+  return normalizedHeaders;
+}
+
 function removeDeprecatedOrderColumns(sheet) {
+  sheet = sheet || SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Orders');
+  if (!sheet) {
+    throw new Error('Orders sheet was not found. Run setupNIMRASheets first.');
+  }
   var deprecated = [
     'Customer Name',
     'Mobile Number',

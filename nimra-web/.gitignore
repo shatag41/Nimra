@@ -20,6 +20,9 @@
 # production
 /build
 
+# runtime image storage (paths are persisted in Google Sheets)
+/.storage/uploads/
+
 # misc
 .DS_Store
 *.pem
