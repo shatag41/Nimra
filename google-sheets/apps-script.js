@@ -1797,36 +1797,39 @@ function getNotificationsData(spreadsheet) {
 
 function handleProductCRUD(spreadsheet, params) {
   var action = params.action; // 'create' | 'update' | 'delete'
-  var product = params.product;
+  var product = params.product || {};
   var sheet = SpreadsheetService.getInstance().getSheet('Products');
   if (!sheet) return { success: false, message: 'Products sheet not found.' };
 
   var data = sheet.getDataRange().getValues();
   var headers = data[0];
   var idIndex = headers.indexOf('ID');
+  var hasProductField = function(field) {
+    return Object.prototype.hasOwnProperty.call(product, field) && product[field] !== undefined;
+  };
 
   // ImageUrl is a portable path relative to the web app's upload storage,
   // for example "products/1234-image.jpg". Never store a browser-only blob
   // URL or a server-specific absolute URL in Sheets.
   var imagePath = normalizeUploadedImagePath(product.ImageUrl, 'products');
-  if (action !== 'delete' && !imagePath) {
+  if (action === 'create' && !imagePath) {
     return { success: false, message: 'Upload a valid product image before saving.' };
   }
 
-  var productValues = {
-    ID: product.ID,
-    Name: product.Name,
-    Category: product.Category,
-    Volume: product.Volume,
-    Price: product.Price,
-    Description: product.Description,
-    ImageUrl: imagePath,
-    Specifications: product.Specifications || '',
-    StockStatus: product.StockStatus || 'In Stock',
-    DiscountPercent: product.DiscountPercent || '',
-    ComboPack: product.ComboPack || '',
-    Active: product.Active !== undefined ? product.Active : true
-  };
+  var productValues = {};
+  if (hasProductField('ID')) productValues.ID = product.ID;
+  if (hasProductField('Name')) productValues.Name = product.Name;
+  if (hasProductField('Category')) productValues.Category = product.Category;
+  if (hasProductField('Volume')) productValues.Volume = product.Volume;
+  if (hasProductField('Price')) productValues.Price = product.Price;
+  if (hasProductField('Description')) productValues.Description = product.Description;
+  if (imagePath) productValues.ImageUrl = imagePath;
+  if (hasProductField('Specifications')) productValues.Specifications = product.Specifications || '';
+  if (hasProductField('StockStatus')) productValues.StockStatus = product.StockStatus || 'In Stock';
+  if (hasProductField('DiscountPercent')) productValues.DiscountPercent = product.DiscountPercent || '';
+  if (hasProductField('ComboPack')) productValues.ComboPack = product.ComboPack || '';
+  if (hasProductField('Active')) productValues.Active = product.Active;
+  if (action === 'create' && !hasProductField('Active')) productValues.Active = true;
   // Build the row from the actual sheet headers. This keeps ImageUrl in the
   // correct column even when the Products sheet has extra/reordered columns.
   var rowValues = headers.map(function(header) {

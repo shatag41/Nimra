@@ -35,6 +35,7 @@ import {
 } from '@/utils/api';
 import { clearBrowserSession, useAuth } from '@/frontend/customer/contexts/AuthContext';
 import { toast } from 'sonner';
+import { getUploadImageUrl } from '@/utils/uploadImage';
 
 export interface CurrentUser {
   id?: string | number;
@@ -276,13 +277,50 @@ export const useAdminData = (initialCMSData: CMSData) => {
       ? products.find((p) => String(p.ID) === String(editingProduct.ID))
       : undefined;
     const oldImagePath = oldProduct?.ImageUrl || '';
+    const productForSave: Partial<Product> = action === 'update' && oldProduct
+      ? ([
+          'Name',
+          'Category',
+          'Volume',
+          'Price',
+          'Description',
+          'ImageUrl',
+          'Specifications',
+          'StockStatus',
+          'DiscountPercent',
+          'ComboPack',
+          'Active',
+        ] as (keyof Product)[]).reduce<Partial<Product>>((changes, field) => {
+          if (!Object.prototype.hasOwnProperty.call(editingProduct, field)) return changes;
+          const nextValue = editingProduct[field];
+          if (field === 'ImageUrl' && !nextValue && oldProduct.ImageUrl) return changes;
+          if (String(nextValue ?? '') !== String(oldProduct[field] ?? '')) {
+            return { ...changes, [field]: nextValue };
+          }
+          return changes;
+        }, { ID: editingProduct.ID })
+      : editingProduct;
     try {
-      const res = await saveProduct(editingProduct, action, oldImagePath);
+      const res = await saveProduct(productForSave, action, oldImagePath);
       if (res.success) {
         showAlert(res.message);
-        const updatedProducts = await fetchProducts();
-        setProducts(updatedProducts);
-        router.refresh();
+        const savedProduct: Product = {
+          ...(oldProduct || {}),
+          ...editingProduct,
+          ID: res.ID || editingProduct.ID || oldProduct?.ID || Date.now(),
+          ImageUrl: getUploadImageUrl(editingProduct.ImageUrl) || editingProduct.ImageUrl || oldProduct?.ImageUrl || '',
+          Active: editingProduct.Active !== undefined ? editingProduct.Active : oldProduct?.Active ?? true,
+        } as Product;
+        setProducts(prev => {
+          if (action === 'update') {
+            return prev.map(product =>
+              String(product.ID) === String(savedProduct.ID)
+                ? { ...product, ...savedProduct }
+                : product
+            );
+          }
+          return [savedProduct, ...prev];
+        });
         return true;
       } else {
         showAlert(res.message, 'error');

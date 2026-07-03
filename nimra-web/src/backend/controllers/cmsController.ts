@@ -191,14 +191,15 @@ async function saveLocalImageBinding(
     return;
   }
 
-  if (!imagePath && !Object.prototype.hasOwnProperty.call(entity, 'ImageUrl')) return;
+  if (action !== 'update' && !imagePath && !entity.ImageUrl && !Object.prototype.hasOwnProperty.call(entity, 'ImageUrl')) return;
 
   const index = collection.findIndex((item: any) => String(item.ID) === String(id));
+  const existingItem = index >= 0 ? collection[index] : {};
   const nextItem = {
-    ...(index >= 0 ? collection[index] : {}),
+    ...existingItem,
     ...entity,
     ID: id,
-    ImageUrl: imagePath || '',
+    ImageUrl: imagePath || getUploadStoragePath(entity.ImageUrl) || getUploadStoragePath(existingItem.ImageUrl) || '',
   };
 
   if (index >= 0) {
@@ -220,23 +221,23 @@ export async function handleGet(req: Request) {
   const mobile = requestUrl.searchParams.get('mobile') || '';
   const email = requestUrl.searchParams.get('email') || '';
   const isPublicCMSRead = !action || ['getBanners', 'getProducts', 'getFAQs', 'getCompanyInfo'].includes(action);
+  // Disable caching to allow admin updates to take effect immediately
   const cacheHeaders = {
-    'Cache-Control': isPublicCMSRead
-      ? 'private, max-age=60, stale-while-revalidate=300'
-      : 'no-store',
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
   };
 
-  // If fetching main CMS data (action is null), serve from in-memory cache if fresh
   const now = Date.now();
   const liveCacheKey = getLiveCacheKey(action, userId, mobile, email);
-  const liveCached = liveCacheKey ? liveGetCache.get(liveCacheKey) : null;
+  // Bypass liveGetCache for CMS items to display updates instantly
+  const liveCached = !isPublicCMSRead && liveCacheKey ? liveGetCache.get(liveCacheKey) : null;
   if (liveCached && liveCached.expiresAt > now) {
     return NextResponse.json(liveCached.data, {
-      headers: { 'Cache-Control': 'private, max-age=10, stale-while-revalidate=30' },
+      headers: { 'Cache-Control': 'no-store' },
     });
   }
 
-  if (!action && cachedCMSData && (now - lastFetchTime < CACHE_TTL)) {
+  // Bypass cachedCMSData to fetch updates directly
+  if (false && !action && cachedCMSData && (now - lastFetchTime < CACHE_TTL)) {
     return NextResponse.json(cachedCMSData, { headers: cacheHeaders });
   }
   
@@ -264,12 +265,22 @@ export async function handleGet(req: Request) {
         }).then(res => {
           clearTimeout(timeoutId);
           return res.text();
-        }).catch(err => {
+        }).catch(fetchErr => {
           clearTimeout(timeoutId);
-          throw err;
+          // DOMException (AbortError) has a read-only .message — wrap it in a
+          // plain Error so Next.js internals can safely handle it.
+          if (fetchErr instanceof DOMException || (fetchErr && fetchErr.code === 20)) {
+            const wrapped = new Error(fetchErr.message || 'Fetch aborted');
+            wrapped.name = fetchErr.name || 'AbortError';
+            throw wrapped;
+          }
+          throw fetchErr;
         });
         pendingFetches.set(fetchKey, fetchPromise);
-        fetchPromise.finally(() => pendingFetches.delete(fetchKey));
+        fetchPromise.then(
+          () => pendingFetches.delete(fetchKey),
+          () => pendingFetches.delete(fetchKey)
+        );
       }
 
       const text = await fetchPromise;
@@ -404,23 +415,43 @@ export async function handlePost(req: Request) {
 
     if (
       payload.type === 'productCRUD' &&
-      cmsCrudAction !== 'delete' &&
-      (!localProductImagePath || !(await uploadFileExists(localProductImagePath, 'products')))
+      cmsCrudAction !== 'delete'
     ) {
-      return NextResponse.json(
-        { success: false, message: 'Upload a valid product image before saving.' },
-        { status: 400 }
-      );
+      // For updates, allow the existing stored image path even if the file isn't on disk
+      // (admin only changed text fields). Only enforce disk-existence for new uploads.
+      const existingProductInDB = cmsCrudAction === 'update' && payload.product?.ID
+        ? (fallbackData.products || []).find((p: any) => String(p.ID) === String(payload.product.ID))
+        : null;
+      const existingProductPath = existingProductInDB ? getUploadStoragePath(existingProductInDB.ImageUrl) : '';
+      const productImageOmittedForUpdate = cmsCrudAction === 'update' &&
+        !Object.prototype.hasOwnProperty.call(payload.product || {}, 'ImageUrl');
+      const productImageUnchanged = Boolean(existingProductPath && existingProductPath === localProductImagePath);
+      const productImageOk = productImageOmittedForUpdate ||
+        productImageUnchanged ||
+        (localProductImagePath && await uploadFileExists(localProductImagePath, 'products'));
+      if (!productImageOk) {
+        return NextResponse.json(
+          { success: false, message: 'Upload a valid product image before saving.' },
+          { status: 400 }
+        );
+      }
     }
     if (
       payload.type === 'bannerCRUD' &&
-      cmsCrudAction !== 'delete' &&
-      (!localBannerImagePath || !(await uploadFileExists(localBannerImagePath, 'banners')))
+      cmsCrudAction !== 'delete'
     ) {
-      return NextResponse.json(
-        { success: false, message: 'Upload a valid banner image before saving.' },
-        { status: 400 }
-      );
+      const existingBannerInDB = cmsCrudAction === 'update' && payload.banner?.ID
+        ? (fallbackData.banners || []).find((b: any) => String(b.ID) === String(payload.banner.ID))
+        : null;
+      const existingBannerPath = existingBannerInDB ? getUploadStoragePath(existingBannerInDB.ImageUrl) : '';
+      const bannerImageUnchanged = Boolean(existingBannerPath && existingBannerPath === localBannerImagePath);
+      const bannerImageOk = bannerImageUnchanged || (localBannerImagePath && await uploadFileExists(localBannerImagePath, 'banners'));
+      if (!bannerImageOk) {
+        return NextResponse.json(
+          { success: false, message: 'Upload a valid banner image before saving.' },
+          { status: 400 }
+        );
+      }
     }
 
     // Store the storage path in Sheets (e.g. "products/filename.jpg") so that
@@ -428,10 +459,25 @@ export async function handlePost(req: Request) {
     // oldImagePath is a frontend-only coordination field; strip it before sending.
     if (payload.type === 'productCRUD' && payload.product) {
       const { oldImagePath: _op, ...productFields } = payload.product;
-      payload.product = { ...productFields, ImageUrl: localProductImagePath || '' };
+      // For updates, preserve the existing image path when no new image was uploaded
+      const existingProductForPath = cmsCrudAction === 'update' && payload.product.ID
+        ? (fallbackData.products || []).find((p: any) => String(p.ID) === String(payload.product.ID))
+        : null;
+      const productImageOmittedForUpdate = cmsCrudAction === 'update' &&
+        !Object.prototype.hasOwnProperty.call(payload.product || {}, 'ImageUrl');
+      const resolvedProductPath = localProductImagePath ||
+        (existingProductForPath ? getUploadStoragePath(existingProductForPath.ImageUrl) : '');
+      payload.product = productImageOmittedForUpdate
+        ? productFields
+        : { ...productFields, ImageUrl: resolvedProductPath };
     } else if (payload.type === 'bannerCRUD' && payload.banner) {
       const { oldImagePath: _ob, ...bannerFields } = payload.banner;
-      payload.banner = { ...bannerFields, ImageUrl: localBannerImagePath || '' };
+      const existingBannerForPath = cmsCrudAction === 'update' && payload.banner.ID
+        ? (fallbackData.banners || []).find((b: any) => String(b.ID) === String(payload.banner.ID))
+        : null;
+      const resolvedBannerPath = localBannerImagePath ||
+        (existingBannerForPath ? getUploadStoragePath(existingBannerForPath.ImageUrl) : '');
+      payload.banner = { ...bannerFields, ImageUrl: resolvedBannerPath };
     }
 
     invalidateCMSCache();
@@ -471,7 +517,10 @@ export async function handlePost(req: Request) {
           const data = JSON.parse(text);
           if (cmsCrudType) {
             const entityBody = cmsCrudType === 'productCRUD' ? body.product || {} : body.banner || {};
-            const newImagePath = cmsCrudType === 'productCRUD' ? localProductImagePath : localBannerImagePath;
+            // Use the resolved path (may fall back to existing stored path when image wasn't changed)
+            const newImagePath = cmsCrudType === 'productCRUD'
+              ? (localProductImagePath || (payload.product ? getUploadStoragePath(payload.product.ImageUrl) : ''))
+              : (localBannerImagePath || (payload.banner ? getUploadStoragePath(payload.banner.ImageUrl) : ''));
             const oldImagePath = String(entityBody.oldImagePath || '').trim();
 
             // Delete old image from disk when replacing on update

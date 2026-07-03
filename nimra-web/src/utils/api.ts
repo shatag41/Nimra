@@ -1,5 +1,6 @@
 import { CMSData, InquirySubmission, OrderRecord, OrderSubmission, AdminUser, Notification, Inquiry, Product, Banner, FAQ, CompanyInfo, CartItem, EmailPreferences } from '@/types/cms';
 import type { User } from '@/frontend/customer/contexts/AuthContext';
+import { getUploadStoragePath } from '@/utils/uploadImage';
 
 export type AuthRequest =
   | { type: 'login'; username: string; password: string }
@@ -256,11 +257,13 @@ export const clearCMSDataCache = () => {
  */
 export const deleteUploadedImage = async (storagePath: string): Promise<void> => {
   if (!storagePath || typeof window === 'undefined') return;
+  const normalizedPath = getUploadStoragePath(storagePath);
+  if (!normalizedPath) return;
   try {
     await fetch('/api/upload', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path: storagePath }),
+      body: JSON.stringify({ path: normalizedPath }),
     });
   } catch (err) {
     console.warn('[deleteUploadedImage] Failed to delete image from storage:', err);

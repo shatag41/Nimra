@@ -25,27 +25,32 @@
     {
       "ID": 1,
       "Name": "NIMRA 250ml Bottle",
-      "Category": "Packaged Water",
-      "Volume": "250ml",
-      "Price": "6.00",
-      "Description": "Perfect pocket-sized pure drinking water for short trips, conferences, and quick refreshments.",
-      "ImageUrl": "products/1782329242490-268de049-2e73-4714-a10f-58aa02c0f04b.jpg",
-      "Active": true
-    },
-    {
-      "ID": 2,
-      "Name": "NIMRA 500ml Bottle",
       "Category": "Packaged Drinking Water",
-      "Volume": "500ml",
-      "Price": 10,
-      "Description": "Your convenient hydration companion for daily commutes, gyms, and office desks.",
-      "ImageUrl": "products/1782715737288-205a382e-3c22-4586-b51f-00585419b5ba.jpg",
+      "Volume": "250ml",
+      "Price": 25,
+      "Description": "Perfect pocket-sized pure drinking water for short trips, conferences, and quick refreshments.",
+      "ImageUrl": "products/1783069984793-87414356-e8dc-4a3e-9090-bbc29a9a3f62.png",
       "Active": true,
       "Specifications": "RO purified, mineral balanced, food-grade PET bottle",
       "StockStatus": "In Stock",
       "DiscountPercent": "",
       "ComboPack": "",
-      "oldImagePath": "/uploads/products/1782715119441-e2a7c925-f4d5-4cae-9db6-9a09b32b46ff.jpg"
+      "oldImagePath": "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+    },
+    {
+      "ID": 2,
+      "Name": "NIMRA 500ml Bottle hhh",
+      "Category": "Packaged Drinking Water",
+      "Volume": "500ml",
+      "Price": "55",
+      "Description": "Your convenient hydration companion for daily commutes, gyms, and office desks.",
+      "ImageUrl": "products/1783074744680-75a59ff6-726c-4792-92db-c9c1c4f94313.png",
+      "Active": true,
+      "Specifications": "RO purified, mineral balanced, food-grade PET bottle",
+      "StockStatus": "In Stock",
+      "DiscountPercent": "",
+      "ComboPack": "",
+      "oldImagePath": "/uploads/products/1783074744680-75a59ff6-726c-4792-92db-c9c1c4f94313.png"
     },
     {
       "ID": 4,

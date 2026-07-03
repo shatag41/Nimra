@@ -73,7 +73,6 @@ export default function ImageUploadField({
       onChange(data.path);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed.');
-      onChange('');
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = '';

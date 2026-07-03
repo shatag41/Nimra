@@ -3,6 +3,7 @@ import { Product } from '@/types/cms';
 import { formatCurrency } from '@/frontend/customer/utils/commerce';
 import CustomSelect from './CustomSelect';
 import Image from 'next/image';
+import { getUploadImageUrl } from '@/utils/uploadImage';
 
 interface ProductsTabProps {
   products: Product[];
@@ -97,7 +98,7 @@ export default React.memo(function ProductsTab({
               <tr key={p.ID}>
                 <td>
                   {p.ImageUrl ? (
-                    <Image src={p.ImageUrl} alt={p.Name} className="table-thumbnail" width={64} height={64} />
+                    <Image src={getUploadImageUrl(p.ImageUrl) || p.ImageUrl} alt={p.Name} className="table-thumbnail" width={64} height={64} />
                   ) : (
                     <span className="table-thumbnail thumbnail-placeholder">No image</span>
                   )}
