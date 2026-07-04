@@ -347,7 +347,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
                   }
                 }}
               >
-                <div className="prod-img-box">
+                <div className="product-img-wrap">
                   <ProductImage src={product.ImageUrl} alt={product.Name} />
                   <div className="prod-img-overlay" />
                 </div>
@@ -983,8 +983,8 @@ export default function HomeClient({ banners: initialBanners, products: initialP
 
         .preview-grid {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 1rem;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 0.75rem;
         }
 
         .product-preview-card {
@@ -1004,10 +1004,9 @@ export default function HomeClient({ banners: initialBanners, products: initialP
           border-color: var(--primary-color);
         }
 
-        .prod-img-box {
-          position: relative;
-          overflow: hidden;
-          background: transparent;
+        /* .prod-img-box replaced by global .product-img-wrap in globals.css */
+        .product-preview-card .product-img-wrap {
+          border-bottom: 1px solid var(--border-color);
         }
 
         .prod-img-overlay {

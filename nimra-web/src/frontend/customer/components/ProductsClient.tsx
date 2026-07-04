@@ -553,8 +553,9 @@ export default function ProductsClient({ products: initialProducts }: ProductsCl
         /* ── Catalog ── */
         .catalog-grid {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 1.25rem;
+          grid-template-columns: repeat(auto-fill, minmax(190px, 220px));
+          gap: 0.9rem;
+          justify-content: start;
           position: relative;
           z-index: 20;
           align-items: stretch;
@@ -563,7 +564,7 @@ export default function ProductsClient({ products: initialProducts }: ProductsCl
         /* ── Card ── */
         .catalog-card {
           border-radius: var(--radius-lg);
-          padding: 0.85rem;
+          padding: 0.6rem;
           display: flex;
           flex-direction: column;
           box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
@@ -597,13 +598,11 @@ export default function ProductsClient({ products: initialProducts }: ProductsCl
           border-color: var(--primary-color);
           box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1), 0 4px 12px rgba(0,0,0,0.04);
         }
-        .cat-img-box {
-          margin: -0.85rem -0.85rem 0.75rem -0.85rem;
-          overflow: hidden;
+        /* .cat-img-box removed — replaced by global .product-img-wrap in globals.css */
+        .catalog-card .product-img-wrap {
+          margin: -0.6rem -0.6rem 0.6rem -0.6rem;
+          width: calc(100% + 1.2rem);
           border-bottom: 1px solid rgba(150, 150, 150, 0.15);
-          border-top-left-radius: var(--radius-lg);
-          border-top-right-radius: var(--radius-lg);
-          position: relative;
         }
         .cart-count-badge {
           position: absolute;
@@ -633,15 +632,15 @@ export default function ProductsClient({ products: initialProducts }: ProductsCl
           flex-direction: column;
         }
         .cat-info-box h3 {
-          font-size: 1.05rem;
-          margin-bottom: 0.35rem;
+          font-size: 0.9rem;
+          margin-bottom: 0.25rem;
         }
         .cat-info-box p,
         .card-desc {
-          font-size: 0.8rem;
+          font-size: 0.75rem;
           color: var(--text-secondary);
-          line-height: 1.4;
-          margin-bottom: 0.5rem;
+          line-height: 1.35;
+          margin-bottom: 0.4rem;
         }
         .view-more-text-btn {
           background: none !important;
@@ -802,10 +801,15 @@ export default function ProductsClient({ products: initialProducts }: ProductsCl
           }
         }
         @media (max-width: 1024px) {
-          .catalog-grid { grid-template-columns: repeat(2, 1fr); }
+          .catalog-grid {
+            grid-template-columns: repeat(auto-fill, minmax(160px, 190px));
+          }
         }
         @media (max-width: 640px) {
-          .catalog-grid { grid-template-columns: 1fr; }
+          .catalog-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.65rem;
+          }
           .cat-price-row { align-items: flex-start; flex-direction: column; }
           .cart-toast-banner { min-width: unset; width: calc(100vw - 2rem); }
         }

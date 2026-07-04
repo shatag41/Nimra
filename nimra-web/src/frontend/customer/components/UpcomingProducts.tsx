@@ -82,7 +82,7 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
                   <div className="rush-visual">
                     <div className="can-outer-glow" />
                     {product.ImageUrl ? (
-                      <div className="animate-float" style={{ position: 'relative', width: '100%', zIndex: 10 }}>
+                      <div className="product-img-wrap animate-float" style={{ zIndex: 10 }}>
                         <ProductImage src={product.ImageUrl} alt={product.Name} />
                       </div>
                     ) : (

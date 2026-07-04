@@ -11,6 +11,11 @@ interface ProductImageProps {
   imgStyle?: React.CSSProperties;
 }
 
+/**
+ * Global product image component.
+ * Always renders a 3:4 portrait container with object-fit:contain
+ * so every product image looks identical across all sections.
+ */
 export default function ProductImage({
   src,
   alt,
@@ -19,47 +24,35 @@ export default function ProductImage({
   style,
   imgStyle,
 }: ProductImageProps) {
-  // Check if image is transparent format
-  const isTransparent = src
-    ? src.toLowerCase().endsWith('.png') ||
-      src.toLowerCase().endsWith('.webp') ||
-      src.toLowerCase().includes('transparent') ||
-      src.toLowerCase().endsWith('.svg')
-    : false;
-
   const defaultContainerStyle: React.CSSProperties = {
     position: 'relative',
     width: '100%',
-    aspectRatio: '4 / 5',
+    aspectRatio: '3 / 4',
     overflow: 'hidden',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'transparent', // Transparent background to use matching card background
-    padding: 0,
-    borderRadius: 'inherit',
+    background: 'var(--product-img-bg, #f4f6f8)',
     ...style,
   };
 
   const defaultImgStyle: React.CSSProperties = {
     width: '100%',
     height: '100%',
-    objectFit: isTransparent ? 'contain' : 'cover', // Use contain for PNGs to prevent clipping, cover for standard photos
+    objectFit: 'contain',
     objectPosition: 'center',
     display: 'block',
     transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-    background: 'transparent',
-    padding: isTransparent ? '0.5rem' : '0', // Elegant padding if transparent to fit nicely
     ...imgStyle,
   };
 
   if (!src) {
     return (
       <div
-        className={`product-image-container fallback-bg ${containerClassName}`}
+        className={`product-image-container ${containerClassName}`}
         style={defaultContainerStyle}
       >
-        <span style={{ fontSize: '1.5rem', opacity: 0.3 }}>💧</span>
+        <span style={{ fontSize: '2rem', opacity: 0.2 }}>💧</span>
       </div>
     );
   }
@@ -73,6 +66,18 @@ export default function ProductImage({
         style={defaultImgStyle}
         loading="lazy"
         decoding="async"
+        onError={(e) => {
+          const target = e.currentTarget;
+          target.style.display = 'none';
+          const parent = target.parentElement;
+          if (parent && !parent.querySelector('.product-img-fallback')) {
+            const fallback = document.createElement('span');
+            fallback.className = 'product-img-fallback';
+            fallback.style.cssText = 'font-size:2rem;opacity:0.2;';
+            fallback.textContent = '💧';
+            parent.appendChild(fallback);
+          }
+        }}
       />
     </div>
   );

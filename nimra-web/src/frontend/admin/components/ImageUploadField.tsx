@@ -13,8 +13,61 @@ interface ImageUploadFieldProps {
   onChange: (url: string) => void;
 }
 
-const MAX_FILE_SIZE = 15 * 1024 * 1024; // Limit to 15MB for raw uploads
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+// Minimum dimensions before rejecting
+const PRODUCT_MIN_W = 600;
+const PRODUCT_MIN_H = 800;
+
+// Output canvas size for product images (3:4 portrait)
+const PRODUCT_OUT_W = 900;
+const PRODUCT_OUT_H = 1200;
+
+// Wide output (16:9 banner)
+const WIDE_OUT_W = 1600;
+const WIDE_OUT_H = 900;
+
+/**
+ * Center-crop `img` to the given target aspect ratio, then draw it
+ * onto a canvas at the target output size.
+ */
+function drawCroppedToCanvas(
+  img: HTMLImageElement,
+  canvas: HTMLCanvasElement,
+  targetW: number,
+  targetH: number,
+): void {
+  canvas.width = targetW;
+  canvas.height = targetH;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const targetAspect = targetW / targetH;
+  const srcAspect = img.width / img.height;
+
+  let sx = 0, sy = 0, sw = img.width, sh = img.height;
+
+  if (srcAspect > targetAspect) {
+    // Source is wider than target — crop the sides
+    sw = Math.round(img.height * targetAspect);
+    sx = Math.round((img.width - sw) / 2);
+  } else if (srcAspect < targetAspect) {
+    // Source is taller than target — crop top/bottom
+    sh = Math.round(img.width / targetAspect);
+    sy = Math.round((img.height - sh) / 2);
+  }
+
+  // White background for JPEG (transparent for PNG)
+  const isPNG = img.src.startsWith('data:image/png') || img.src.startsWith('data:image/gif');
+  if (!isPNG) {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, targetW, targetH);
+  } else {
+    ctx.clearRect(0, 0, targetW, targetH);
+  }
+
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, targetW, targetH);
+}
 
 export default function ImageUploadField({
   label,
@@ -29,7 +82,6 @@ export default function ImageUploadField({
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
-  const [warning, setWarning] = useState('');
   const [localPreview, setLocalPreview] = useState('');
 
   useEffect(() => {
@@ -40,7 +92,6 @@ export default function ImageUploadField({
 
   const processAndUploadFile = (file: File) => {
     setError('');
-    setWarning('');
 
     if (!ALLOWED_TYPES.includes(file.type)) {
       setError('Use a JPG, PNG, WebP, or GIF image.');
@@ -54,101 +105,71 @@ export default function ImageUploadField({
       const dataUrl = e.target?.result as string;
       const img = new Image();
       img.onload = () => {
-        const fileAspect = img.width / img.height;
-        const targetAspect = aspect === 'product' ? 0.8 : 16 / 9; // 4:5 portrait is 0.8
-
-        // Warning if aspect ratio differs significantly (more than 10% difference)
-        const aspectDiff = Math.abs(fileAspect - targetAspect);
-        if (aspect === 'product' && aspectDiff > 0.08) {
-          setWarning(
-            `Warning: The uploaded image aspect ratio (${fileAspect.toFixed(2)}) differs significantly from the recommended 4:5 portrait aspect ratio. It may look stretched or cropped.`
-          );
+        // ── Minimum resolution guard ─────────────────────────
+        if (aspect === 'product') {
+          if (img.width < PRODUCT_MIN_W || img.height < PRODUCT_MIN_H) {
+            setError(
+              `Image too small (${img.width}x${img.height}px). Minimum required: ${PRODUCT_MIN_W}x${PRODUCT_MIN_H}px. Recommended: 900x1200px or any 3:4 size such as 1200x1600px.`
+            );
+            setUploading(false);
+            return;
+          }
         }
 
-        // Automatic compression and optimization using canvas
+        // ── Auto center-crop + resize to standard output size ─
         const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
+        const targetW = aspect === 'product' ? PRODUCT_OUT_W : WIDE_OUT_W;
+        const targetH = aspect === 'product' ? PRODUCT_OUT_H : WIDE_OUT_H;
 
-        // Set maximum boundary sizes while keeping original aspect ratio
-        const maxW = aspect === 'product' ? 1200 : 1600;
-        const maxH = aspect === 'product' ? 1500 : 900;
-        
-        let width = img.width;
-        let height = img.height;
+        drawCroppedToCanvas(img, canvas, targetW, targetH);
 
-        if (width > maxW || height > maxH) {
-          if (width / height > maxW / maxH) {
-            width = maxW;
-            height = Math.round(maxW / fileAspect);
-          } else {
-            height = maxH;
-            width = Math.round(maxH * fileAspect);
-          }
-        }
+        const isPNG = file.type === 'image/png' || file.type === 'image/gif';
+        const mimeType = isPNG ? 'image/png' : 'image/jpeg';
+        const extension = isPNG ? 'png' : 'jpg';
 
-        canvas.width = width;
-        canvas.height = height;
+        canvas.toBlob(
+          async (blob) => {
+            if (!blob) {
+              setError('Failed to optimize image.');
+              setUploading(false);
+              return;
+            }
 
-        if (ctx) {
-          // Fill background with white for JPEG format
-          const isPNG = file.type === 'image/png' || file.type === 'image/gif';
-          if (!isPNG) {
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, width, height);
-          } else {
-            ctx.clearRect(0, 0, width, height);
-          }
+            const optimizedFile = new File(
+              [blob],
+              file.name.replace(/\.[^/.]+$/, `_optimized.${extension}`),
+              { type: mimeType }
+            );
 
-          ctx.drawImage(img, 0, 0, width, height);
+            try {
+              const formData = new FormData();
+              formData.append('file', optimizedFile);
+              formData.append('scope', scope);
 
-          const mimeType = isPNG ? 'image/png' : 'image/jpeg';
-          const extension = isPNG ? 'png' : 'jpg';
-
-          canvas.toBlob(
-            async (blob) => {
-              if (!blob) {
-                setError('Failed to optimize image.');
-                setUploading(false);
-                return;
-              }
-
-              const optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, `_optimized.${extension}`), {
-                type: mimeType,
+              const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData,
               });
+              const data = await res.json();
 
-              try {
-                const formData = new FormData();
-                formData.append('file', optimizedFile);
-                formData.append('scope', scope);
-
-                const res = await fetch('/api/upload', {
-                  method: 'POST',
-                  body: formData,
-                });
-                const data = await res.json();
-
-                if (!res.ok || !data.success || !data.path) {
-                  throw new Error(data.message || 'Upload failed.');
-                }
-
-                const previewUrl = URL.createObjectURL(optimizedFile);
-                if (localPreview) URL.revokeObjectURL(localPreview);
-                setLocalPreview(previewUrl);
-
-                onChange(data.path);
-              } catch (err) {
-                setError(err instanceof Error ? err.message : 'Upload failed.');
-              } finally {
-                setUploading(false);
-                if (inputRef.current) inputRef.current.value = '';
+              if (!res.ok || !data.success || !data.path) {
+                throw new Error(data.message || 'Upload failed.');
               }
-            },
-            mimeType,
-            0.85 // Compress at 85% quality to save space
-          );
-        } else {
-          setUploading(false);
-        }
+
+              const previewUrl = URL.createObjectURL(optimizedFile);
+              if (localPreview) URL.revokeObjectURL(localPreview);
+              setLocalPreview(previewUrl);
+              onChange(data.path);
+            } catch (err) {
+              setError(err instanceof Error ? err.message : 'Upload failed.');
+            } finally {
+              setUploading(false);
+              if (inputRef.current) inputRef.current.value = '';
+            }
+          },
+          mimeType,
+          0.88 // 88% quality — great balance of file size vs. visual quality
+        );
       };
       img.onerror = () => {
         setError('Failed to load image file.');
@@ -166,7 +187,6 @@ export default function ImageUploadField({
 
   const handleRemove = () => {
     setError('');
-    setWarning('');
     if (localPreview) {
       URL.revokeObjectURL(localPreview);
       setLocalPreview('');
@@ -183,24 +203,17 @@ export default function ImageUploadField({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
         <label>{label}</label>
         <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-          {aspect === 'product' ? 'Recommended: 1200 × 1500 px (4:5 Ratio)' : 'Recommended: 1600 × 900 px (16:9 Ratio)'}
+          {aspect === 'product'
+            ? 'Recommended: 900 x 1200 px (3:4), also 1200 x 1600 px'
+            : 'Recommended: 1600 x 900 px (16:9 Ratio)'}
         </span>
       </div>
 
       <div
         className={`image-upload ${isDragging ? 'is-dragging' : ''} ${hasImage ? 'has-image' : ''}`}
-        onDragEnter={(e) => {
-          e.preventDefault();
-          if (!disabled) setIsDragging(true);
-        }}
-        onDragOver={(e) => {
-          e.preventDefault();
-          if (!disabled) setIsDragging(true);
-        }}
-        onDragLeave={(e) => {
-          e.preventDefault();
-          setIsDragging(false);
-        }}
+        onDragEnter={(e) => { e.preventDefault(); if (!disabled) setIsDragging(true); }}
+        onDragOver={(e) => { e.preventDefault(); if (!disabled) setIsDragging(true); }}
+        onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
         onDrop={(e) => {
           e.preventDefault();
           setIsDragging(false);
@@ -218,16 +231,30 @@ export default function ImageUploadField({
         />
 
         {hasImage ? (
-          <div className={`image-upload-preview ${aspect}`} style={{ position: 'relative', width: '100%', height: '220px', borderRadius: '8px', overflow: 'hidden' }}>
+          <div
+            className={`image-upload-preview ${aspect}`}
+            style={{
+              position: 'relative',
+              width: '100%',
+              aspectRatio: aspect === 'product' ? '3 / 4' : '16 / 9',
+              maxHeight: aspect === 'product' ? '360px' : '160px',
+              borderRadius: '8px',
+              overflow: 'hidden',
+            }}
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={previewSrc} alt={`${label} preview`} style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'rgba(0,0,0,0.03)' }} />
-            {uploading && <div className="image-upload-progress">Optimizing & Uploading...</div>}
+            <img
+              src={previewSrc}
+              alt={`${label} preview`}
+              style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'var(--product-img-bg, #f4f6f8)' }}
+            />
+            {uploading && <div className="image-upload-progress">Optimizing &amp; Uploading...</div>}
           </div>
         ) : (
           <div className={`image-upload-empty ${aspect}`}>
             <span className="image-upload-icon">Upload</span>
             <strong>Drag and drop an image here</strong>
-            <small>JPG, PNG, WebP, or GIF format</small>
+            <small>JPG, PNG, WebP, or GIF - min {aspect === 'product' ? '600x800px' : '800x450px'}</small>
           </div>
         )}
 
@@ -253,23 +280,8 @@ export default function ImageUploadField({
         </div>
       </div>
 
-      {warning && (
-        <div style={{
-          marginTop: '0.5rem',
-          background: 'rgba(234, 179, 8, 0.1)',
-          border: '1px solid rgba(234, 179, 8, 0.25)',
-          borderRadius: '6px',
-          padding: '0.5rem 0.75rem',
-          fontSize: '0.78rem',
-          color: 'rgba(202, 138, 4, 1)',
-          lineHeight: '1.4'
-        }}>
-          ⚠️ {warning}
-        </div>
-      )}
-
       {error && <p className="image-upload-error" style={{ marginTop: '0.5rem' }}>{error}</p>}
-      {uploading && <p className="image-upload-note">Compressing and optimizing secure storage path...</p>}
+      {uploading && <p className="image-upload-note">Auto-cropping to {aspect === 'product' ? '3:4' : '16:9'}, compressing, and uploading...</p>}
       {!error && !uploading && value && <p className="image-upload-note">Saved image will display automatically on the site.</p>}
     </div>
   );

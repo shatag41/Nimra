@@ -141,13 +141,17 @@ const styles = `
     border-color: var(--primary-color); 
     box-shadow: var(--shadow-md); 
   }
-  .cart-row img { 
-    width: 60px; 
-    height: 60px; 
-    object-fit: contain; 
-    background: var(--bg-secondary); 
-    border-radius: var(--radius-sm); 
-    border: 1px solid var(--border-light); 
+  .cart-row .cart-thumb {
+    width: 60px;
+    height: 90px;
+    flex-shrink: 0;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    border: 1px solid var(--border-light);
+    background: var(--product-img-bg, #f4f6f8);
+  }
+  .cart-row .cart-thumb .product-image-container {
+    border-radius: 0 !important;
   }
   
   .row-main { display: flex; flex-direction: column; justify-content: center; }

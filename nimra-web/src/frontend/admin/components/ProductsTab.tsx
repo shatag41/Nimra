@@ -94,11 +94,11 @@ export default React.memo(function ProductsTab({
             </tr>
           </thead>
           <tbody>
-            {filteredProducts.map((p) => (
-              <tr key={p.ID}>
+            {filteredProducts.map((p, idx) => (
+              <tr key={`${p.ID}-${p.Name}-${idx}`}>
                 <td>
                   {p.ImageUrl ? (
-                    <Image src={getUploadImageUrl(p.ImageUrl) || p.ImageUrl} alt={p.Name} className="table-thumbnail" width={64} height={64} />
+                    <Image src={getUploadImageUrl(p.ImageUrl) || p.ImageUrl} alt={p.Name} className="table-thumbnail" width={56} height={84} />
                   ) : (
                     <span className="table-thumbnail thumbnail-placeholder">No image</span>
                   )}

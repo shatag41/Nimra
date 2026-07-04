@@ -85,7 +85,7 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
 
             return (
               <div key={productId(product)} className="rv-card glass">
-                <div className="rv-img-box">
+                <div className="product-img-wrap">
                   <ProductImage src={product.ImageUrl} alt={product.Name} />
                 </div>
                 <div className="rv-info">
@@ -156,15 +156,15 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
         }
         .recently-viewed-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-          gap: 1rem;
+          grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+          gap: 0.75rem;
           margin-top: 0.5rem;
         }
         .rv-card {
           background: var(--bg-secondary);
           border: 1px solid var(--border-color);
           border-radius: var(--radius-lg);
-          padding: 0.75rem;
+          padding: 0.55rem;
           display: flex;
           flex-direction: column;
           transition: all var(--transition-normal);
@@ -175,13 +175,11 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
           border-color: var(--primary-color);
           box-shadow: var(--shadow-md);
         }
-        .rv-img-box {
-          margin: -0.75rem -0.75rem 0.5rem -0.75rem;
-          overflow: hidden;
+        /* .rv-img-box replaced by global .product-img-wrap */
+        .rv-card .product-img-wrap {
+          margin: -0.55rem -0.55rem 0.45rem -0.55rem;
+          width: calc(100% + 1.1rem);
           border-bottom: 1px solid var(--border-color);
-          border-top-left-radius: var(--radius-lg);
-          border-top-right-radius: var(--radius-lg);
-          position: relative;
         }
         .rv-info {
           display: flex;

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Product } from '@/types/cms';
 import { useCart } from '@/frontend/customer/hooks/useCart';
 import { formatCurrency, isOrderable, normalizeCategory, productId } from '../../utils/commerce';
+import ProductImage from '../ProductImage';
 
 interface ProductDetailModalProps {
   product: Product;
@@ -209,13 +210,9 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           <div className="modal-right-sticky">
             <div className="elegant-action-card">
               
-              {/* Product Media Box */}
+              {/* Product Media Box — 4:5 portrait, matches all product cards */}
               <div className="card-media-box">
-                {product.ImageUrl ? (
-                  <img src={product.ImageUrl} alt={product.Name} className="card-media-img" />
-                ) : (
-                  <div className="card-media-placeholder">No Image Available</div>
-                )}
+                <ProductImage src={product.ImageUrl || ''} alt={product.Name} />
               </div>
 
               <div className="card-content-box">
@@ -477,34 +474,22 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           top: 0;
         }
 
-        /* Product Media Box - Compact Aspect Ratio */
+        /* Product Media Box — strict 4:5 portrait, matching every product card */
         .card-media-box {
           width: 100%;
-          aspect-ratio: 16 / 9;
-          max-height: 180px;
+          aspect-ratio: 2 / 3;
           border-radius: 8px;
           overflow: hidden;
-          background: #ffffff;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          background: var(--product-img-bg, #f4f6f8);
           border: 1px solid rgba(0, 0, 0, 0.04);
           box-shadow: 0 2px 10px rgba(0,0,0,0.02);
-          padding: 0.5rem;
         }
-        .card-media-img {
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-          transition: transform 0.25s ease;
+        .card-media-box .product-image-container {
+          border-radius: 0 !important;
+          background: transparent !important;
         }
-        .card-media-box:hover .card-media-img {
+        .card-media-box:hover .product-img {
           transform: scale(1.04);
-        }
-        .card-media-placeholder {
-          color: var(--text-muted);
-          font-size: 0.8rem;
-          font-weight: 500;
         }
 
         .card-content-box {

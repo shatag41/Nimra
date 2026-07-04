@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useCart } from '@/frontend/customer/hooks/useCart';
 import { formatCurrency, FREE_DELIVERY_MINIMUM } from '../../utils/commerce';
+import ProductImage from '../ProductImage';
 
 export function CartItemsList() {
   const { items, updateQuantity, removeItem } = useCart();
@@ -12,7 +13,9 @@ export function CartItemsList() {
     <div className="cart-list">
       {items.map((item) => (
         <article key={item.productId} className="cart-row">
-          {item.imageUrl ? <img src={item.imageUrl} alt={item.name} /> : null}
+          <div className="cart-thumb">
+            <ProductImage src={item.imageUrl} alt={item.name} />
+          </div>
           <div className="row-main">
             <span>{item.category} / {item.volume}</span>
             <h3>{item.name}</h3>

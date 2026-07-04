@@ -29,13 +29,13 @@
       "Volume": "250ml",
       "Price": 25,
       "Description": "Perfect pocket-sized pure drinking water for short trips, conferences, and quick refreshments.",
-      "ImageUrl": "products/1783097594465-4decbb7c-caee-44d3-8482-3c5d346f8b87.png",
+      "ImageUrl": "products/1783193669901-40aca5de-6bf7-4345-aa5e-079a26aa561c.png",
       "Active": true,
       "Specifications": "RO purified, mineral balanced, food-grade PET bottle",
       "StockStatus": "In Stock",
       "DiscountPercent": "",
       "ComboPack": "",
-      "oldImagePath": "/uploads/products/1783069984793-87414356-e8dc-4a3e-9090-bbc29a9a3f62.png"
+      "oldImagePath": "/uploads/products/1783097594465-4decbb7c-caee-44d3-8482-3c5d346f8b87.png"
     },
     {
       "ID": 2,
@@ -44,13 +44,13 @@
       "Volume": "500ml",
       "Price": "55",
       "Description": "Your convenient hydration companion for daily commutes, gyms, and office desks.",
-      "ImageUrl": "products/1783097834525-eda59114-6dd3-4858-bdbb-a94b35d7caf8.png",
+      "ImageUrl": "products/1783193691296-69cbec63-fc2d-412b-9b50-b6f6a91c48d9.png",
       "Active": true,
       "Specifications": "RO purified, mineral balanced, food-grade PET bottle",
       "StockStatus": "In Stock",
       "DiscountPercent": "",
       "ComboPack": "",
-      "oldImagePath": "/uploads/products/1783074744680-75a59ff6-726c-4792-92db-c9c1c4f94313.png"
+      "oldImagePath": "/uploads/products/1783097834525-eda59114-6dd3-4858-bdbb-a94b35d7caf8.png"
     },
     {
       "ID": 4,
@@ -59,13 +59,13 @@
       "Volume": "2L",
       "Price": 30,
       "Description": "Bigger size for family picnics and long journeys. Keep clean water accessible for all.",
-      "ImageUrl": "products/1783097885361-fa23592a-c496-48c6-828b-02d40c0f51f7.png",
+      "ImageUrl": "products/1783193743243-8365ebab-b314-40aa-a236-a1df8c90ff43.png",
       "Active": true,
       "Specifications": "Family bottle, tamper-evident cap, recyclable pack",
       "StockStatus": "In Stock",
       "DiscountPercent": "",
       "ComboPack": "",
-      "oldImagePath": "/uploads/products/1783066807830-465deece-2d41-4958-87bf-f32b015d294c.jpg"
+      "oldImagePath": "/uploads/products/1783097885361-fa23592a-c496-48c6-828b-02d40c0f51f7.png"
     },
     {
       "ID": 5,
@@ -74,10 +74,10 @@
       "Volume": "5L",
       "Price": "55.00",
       "Description": "Family-sized purified water can for home kitchens, travel groups, and small gatherings.",
-      "ImageUrl": "products/1783097908135-5f263483-426b-4b31-8cb0-54b1cd045c16.png",
+      "ImageUrl": "products/1783193768153-4dde0f3a-d799-4f2e-b765-b76770af6318.png",
       "Specifications": "RO purified, mineral balanced, recyclable food-grade pack",
       "Active": true,
-      "oldImagePath": "/uploads/products/1783066903109-58ccdbf9-b2be-45b1-9baf-fb5dea8ebf8e.jpg"
+      "oldImagePath": "/uploads/products/1783097908135-5f263483-426b-4b31-8cb0-54b1cd045c16.png"
     },
     {
       "ID": 6,
@@ -86,7 +86,7 @@
       "Volume": "20L Jar",
       "Price": "80.00",
       "Description": "Eco-friendly bulk jar for continuous hydration at office spaces and household kitchen units.",
-      "ImageUrl": "products/1783097929802-44884030-9d4a-4391-a98c-a767e8a298eb.png",
+      "ImageUrl": "products/1783193794653-449c19c5-f965-48fb-bd4f-2f80b3f96095.png",
       "Specifications": "Returnable jar, dispenser compatible, scheduled your delivery available",
       "Active": true,
       "oldImagePath": "/uploads/products/1783097929802-44884030-9d4a-4391-a98c-a767e8a298eb.png"
@@ -98,11 +98,11 @@
       "Volume": "500ml",
       "Price": "25.00",
       "Description": "Upcoming extra-fizzy RUSH soda made on NIMRA's purified water base.",
-      "ImageUrl": "products/1783097953212-f327a721-4e88-4842-9657-8578c68a817a.png",
+      "ImageUrl": "products/1783193811321-e1a32cc5-a45c-44f5-971a-d0f397e2eec3.png",
       "Specifications": "Coming soon, carbonated beverage, launch stock managed from Sheets",
       "StockStatus": "Coming Soon",
       "Active": true,
-      "oldImagePath": "/uploads/products/1783067384419-05512311-7373-4d2a-8214-797a39b3c591.jpg"
+      "oldImagePath": "/uploads/products/1783097953212-f327a721-4e88-4842-9657-8578c68a817a.png"
     },
     {
       "ID": 3,
@@ -111,13 +111,13 @@
       "Volume": "1L",
       "Price": 20,
       "Description": "Standard 1 Litre bottle for pure mineral-balanced hydration at home, dining, or travel.",
-      "ImageUrl": "products/1783097860193-07a9cf95-1ac0-4a8e-88ee-15a34d0e0e11.png",
+      "ImageUrl": "products/1783193726112-59d5082b-a5d9-4ba5-93b5-2045c2875a1f.png",
       "Specifications": "Balanced minerals, UV and ozone treated, travel pack",
       "StockStatus": "In Stock",
       "DiscountPercent": "",
       "ComboPack": "",
       "Active": true,
-      "oldImagePath": "/uploads/products/1783067428528-8a1147ec-e8b7-422c-b6b9-c3a242b0123c.png"
+      "oldImagePath": "/uploads/products/1783097860193-07a9cf95-1ac0-4a8e-88ee-15a34d0e0e11.png"
     },
     {
       "Name": "Plastic drupm",
@@ -130,30 +130,6 @@
       "Specifications": "533",
       "oldImagePath": "",
       "ID": 8
-    },
-    {
-      "Name": "ssss",
-      "Category": "Packaged Water",
-      "Volume": "1L",
-      "Price": "22",
-      "Description": "ssss",
-      "ImageUrl": "products/1783178907100-03613258-95aa-4497-9780-98601c4669a1.png",
-      "Active": true,
-      "Specifications": "ssss",
-      "oldImagePath": "",
-      "ID": 9
-    },
-    {
-      "Name": "mmm",
-      "Category": "Packaged Water",
-      "Volume": "1L",
-      "Price": "66",
-      "Description": "kk",
-      "ImageUrl": "products/1783179357900-e546cf59-91c8-4ff3-ad20-d11bccc0fbf8.png",
-      "Active": true,
-      "Specifications": "nn",
-      "oldImagePath": "",
-      "ID": 10
     }
   ],
   "faqs": [

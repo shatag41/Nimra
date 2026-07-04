@@ -93,7 +93,7 @@ export const CatalogCard = React.memo(function CatalogCard({ product, onAdd, onV
       onClick={handleClick}
       style={{ cursor: onViewMore ? 'pointer' : 'default' }}
     >
-      <div className="cat-img-box">
+      <div className="product-img-wrap">
         <ProductImage src={product.ImageUrl} alt={product.Name} />
         {inCart && (
           <div className="cart-count-badge">{cartItem.quantity}</div>
@@ -239,7 +239,7 @@ export const RecommendationCard = React.memo(function RecommendationCard({ produ
       onClick={handleClick}
       style={{ cursor: onViewMore ? 'pointer' : 'default' }}
     >
-      <div className="rec-img-box">
+      <div className="product-img-wrap">
         <ProductImage src={product.ImageUrl} alt={product.Name} />
       </div>
       <div className="rec-info">
@@ -334,7 +334,7 @@ export const PreviewCard = React.memo(function PreviewCard({ product, index, onV
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
     >
-      <div className="prod-img-box">
+      <div className="product-img-wrap">
         <ProductImage src={product.ImageUrl} alt={product.Name} />
         <div className="prod-img-overlay" />
       </div>
