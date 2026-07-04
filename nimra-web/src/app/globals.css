@@ -9491,3 +9491,104 @@ select {
   box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 10px 26px var(--action-glow) !important;
 }
 .orders-checkout-link:active { transform:translate3d(0,0,0) scale(.98) !important; }
+
+/* ==========================================================================
+   UNIFIED PREMIUM RESPONSIVE PRODUCT IMAGES SYSTEM
+   ========================================================================== */
+
+/* 1. Main Product Card Containers (Catalog, Previews, Recently Viewed) */
+.cat-img-box,
+.prod-img-box,
+.rec-img-box,
+.item-img-wrapper,
+.ccp-item-img-wrap,
+.card-media-box {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 1 / 1 !important; /* Premium consistent square aspect ratio */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background-color: #ffffff !important; /* Premium clean background */
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  border-radius: var(--radius-lg, 12px) !important;
+  overflow: hidden !important;
+  position: relative !important;
+  padding: 0.75rem !important; /* Gentle padding to prevent edge clipping & balance whitespace */
+  box-sizing: border-box !important;
+  margin-bottom: 0.75rem !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02) !important;
+}
+
+/* Specific overrides to keep layouts intact but make images uniform */
+.card-media-box {
+  aspect-ratio: 4 / 3 !important; /* Maintain slightly wider view for modals */
+  max-height: 220px !important;
+}
+
+/* 2. Cart & Row Item Image Wrappers (Cart rows, Order details, Wishlist) */
+.cart-row img,
+.item-row-img,
+.ccp-item-img,
+.table-thumbnail {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 4.5rem !important;
+  max-height: 4.5rem !important;
+  aspect-ratio: 1 / 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background-color: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.04) !important;
+  border-radius: var(--radius-md, 8px) !important;
+  padding: 0.35rem !important;
+  box-sizing: border-box !important;
+  object-fit: contain !important;
+  overflow: hidden !important;
+}
+
+/* 3. Base Image Scaling & Centering Rules (All product images) */
+.cat-img-box img,
+.prod-img-box img,
+.rec-img-box img,
+.item-img-wrapper img,
+.ccp-item-img-wrap img,
+.card-media-box img,
+.card-media-img,
+.item-img,
+.item-row-img,
+.table-thumbnail img {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important; /* Never crop or stretch products, keep them fully visible */
+  object-position: center !important;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transform-origin: center center !important;
+  display: block !important;
+}
+
+/* 4. Banner / Hero Cards Only (Use cover as requested) */
+.hero-slide-image,
+.home-hero-section img,
+.hero-slide img {
+  object-fit: cover !important;
+  width: 100% !important;
+  height: 100% !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  background: none !important;
+}
+
+/* 5. Subtle Premium Zoom (1.03x) on Hover without shifting card layouts */
+.catalog-card:hover .cat-img-box img,
+.product-preview-card:hover .prod-img-box img,
+.rec-card:hover .rec-img-box img,
+.quick-card:hover img,
+.cart-row:hover img,
+.card-media-box:hover .card-media-img {
+  transform: scale(1.03) !important;
+}
