@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Product } from '@/types/cms';
 import { useCart } from '@/frontend/customer/hooks/useCart';
+import ProductImage from '../ProductImage';
 import { formatCurrency, isOrderable, normalizeCategory, productId, trackProductView } from '../../utils/commerce';
 
 interface ProductCardProps {
@@ -93,7 +94,7 @@ export const CatalogCard = React.memo(function CatalogCard({ product, onAdd, onV
       style={{ cursor: onViewMore ? 'pointer' : 'default' }}
     >
       <div className="cat-img-box">
-        {product.ImageUrl ? <img src={product.ImageUrl} alt={product.Name} loading="lazy" decoding="async" /> : null}
+        <ProductImage src={product.ImageUrl} alt={product.Name} />
         {inCart && (
           <div className="cart-count-badge">{cartItem.quantity}</div>
         )}
@@ -239,7 +240,7 @@ export const RecommendationCard = React.memo(function RecommendationCard({ produ
       style={{ cursor: onViewMore ? 'pointer' : 'default' }}
     >
       <div className="rec-img-box">
-        {product.ImageUrl ? <img src={product.ImageUrl} alt={product.Name} loading="lazy" decoding="async" /> : null}
+        <ProductImage src={product.ImageUrl} alt={product.Name} />
       </div>
       <div className="rec-info">
         <span className="rec-vol">{product.Volume}</span>
@@ -334,7 +335,7 @@ export const PreviewCard = React.memo(function PreviewCard({ product, index, onV
       onClick={handleClick}
     >
       <div className="prod-img-box">
-        {product.ImageUrl ? <img src={product.ImageUrl} alt={product.Name} loading="lazy" decoding="async" /> : null}
+        <ProductImage src={product.ImageUrl} alt={product.Name} />
         <div className="prod-img-overlay" />
       </div>
       <div className="prod-info-box">

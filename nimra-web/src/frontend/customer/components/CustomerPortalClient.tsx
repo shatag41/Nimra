@@ -514,9 +514,7 @@ const portalStyles = `
   .recommendations-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.25rem; }
   .rec-card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-xl); padding: 1.25rem; display: flex; flex-direction: column; transition: all var(--transition-normal); box-shadow: var(--shadow-sm); }
   .rec-card:hover { transform: translateY(-5px); border-color: var(--primary-color); box-shadow: var(--shadow-xl); }
-  .rec-img-box { height: 150px; display: flex; align-items: center; justify-content: center; background: linear-gradient(180deg, #f1f5f9, #f8fafc); border-radius: var(--radius-lg); margin-bottom: 1rem; overflow: hidden; }
-  .rec-img-box img { max-height: 90%; max-width: 90%; object-fit: contain; transition: transform var(--transition-normal); }
-  .rec-card:hover .rec-img-box img { transform: scale(1.06); }
+  .rec-img-box { margin: -1.25rem -1.25rem 1rem -1.25rem; overflow: hidden; border-bottom: 1px solid var(--border-color); border-top-left-radius: var(--radius-xl); border-top-right-radius: var(--radius-xl); position: relative; }
   .rec-info { display: flex; flex-direction: column; flex: 1; }
   .rec-vol { display: inline-block; font-size: 0.7rem; font-weight: 800; color: var(--primary-color); background: rgba(0,150,58,0.1); padding: 0.2rem 0.65rem; border-radius: 999px; align-self: flex-start; margin-bottom: 0.5rem; border: 1px solid rgba(0,150,58,0.2); }
   .rec-info h3 { font-size: 0.95rem; font-weight: 700; margin: 0 0 0.35rem; }

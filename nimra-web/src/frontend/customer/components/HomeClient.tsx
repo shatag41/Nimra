@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Link from 'next/link';
 import Image from 'next/image';
 import { Banner, Product, FAQ, CompanyInfo } from '@/types/cms';
+import ProductImage from './ProductImage';
 import { useCMSData } from '@/frontend/customer/hooks/useCMSData';
 import { FAQs } from './portal/FAQs';
 import ProductDetailModal from './portal/ProductDetailModal';
@@ -347,16 +348,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
                 }}
               >
                 <div className="prod-img-box">
-                  {product.ImageUrl ? (
-                    <Image
-                      src={product.ImageUrl}
-                      alt={product.Name}
-                      fill
-                      style={{ objectFit: 'contain' }}
-                      sizes="(max-width: 640px) calc(100vw - 2rem), (max-width: 1024px) 45vw, 360px"
-                      quality={75}
-                    />
-                  ) : null}
+                  <ProductImage src={product.ImageUrl} alt={product.Name} />
                   <div className="prod-img-overlay" />
                 </div>
                 <div className="prod-info-box">
@@ -1013,28 +1005,10 @@ export default function HomeClient({ banners: initialBanners, products: initialP
         }
 
         .prod-img-box {
-          width: 100%;
-          height: auto;
-          aspect-ratio: 2 / 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: var(--product-image-bg);
           position: relative;
           overflow: hidden;
-          padding: 0;
+          background: transparent;
         }
-
-        .prod-img-box img {
-          display: block;
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          transition: transform var(--transition-normal);
-          position: relative;
-          z-index: 1;
-        }
-        .product-preview-card:hover .prod-img-box img { transform: scale(1.06); }
 
         .prod-img-overlay {
           position: absolute;

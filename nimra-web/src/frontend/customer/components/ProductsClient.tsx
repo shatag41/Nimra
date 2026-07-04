@@ -598,28 +598,12 @@ export default function ProductsClient({ products: initialProducts }: ProductsCl
           box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1), 0 4px 12px rgba(0,0,0,0.04);
         }
         .cat-img-box {
-          width: 100%;
-          height: auto;
-          aspect-ratio: 4 / 3;
-          position: relative;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-bottom: 0.75rem;
-          border-radius: var(--radius-md);
-          background: var(--bg-primary);
+          margin: -0.85rem -0.85rem 0.75rem -0.85rem;
           overflow: hidden;
-        }
-        .cat-img-box img {
-          display: block;
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          border-radius: var(--radius-md);
-          transition: transform var(--transition-normal);
-        }
-        .catalog-card:hover .cat-img-box img {
-          transform: scale(1.05);
+          border-bottom: 1px solid rgba(150, 150, 150, 0.15);
+          border-top-left-radius: var(--radius-lg);
+          border-top-right-radius: var(--radius-lg);
+          position: relative;
         }
         .cart-count-badge {
           position: absolute;

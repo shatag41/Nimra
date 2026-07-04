@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Product } from '@/types/cms';
+import ProductImage from './ProductImage';
 
 interface UpcomingProductsProps {
   upcomingProducts: Product[];
@@ -81,8 +82,8 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
                   <div className="rush-visual">
                     <div className="can-outer-glow" />
                     {product.ImageUrl ? (
-                      <div className="animate-float" style={{ position: 'relative', width: '100%', height: '180px', zIndex: 10, display: 'flex', justifyContent: 'center' }}>
-                        <img src={product.ImageUrl} alt={product.Name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                      <div className="animate-float" style={{ position: 'relative', width: '100%', zIndex: 10 }}>
+                        <ProductImage src={product.ImageUrl} alt={product.Name} />
                       </div>
                     ) : (
                       <div className="can-mockup animate-float">

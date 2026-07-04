@@ -9505,16 +9505,16 @@ select {
 .card-media-box {
   width: 100% !important;
   height: auto !important;
-  aspect-ratio: 1 / 1 !important; /* Premium consistent square aspect ratio */
+  aspect-ratio: 4 / 5 !important; /* Premium consistent 4:5 portrait aspect ratio */
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  background-color: #ffffff !important; /* Premium clean background */
+  background-color: transparent !important; /* Transparent background to blend with cards */
   border: 1px solid rgba(0, 0, 0, 0.05) !important;
   border-radius: var(--radius-lg, 12px) !important;
   overflow: hidden !important;
   position: relative !important;
-  padding: 0.75rem !important; /* Gentle padding to prevent edge clipping & balance whitespace */
+  padding: 0 !important; /* Remove inner padding to let images span edge-to-edge */
   box-sizing: border-box !important;
   margin-bottom: 0.75rem !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02) !important;
@@ -9524,6 +9524,7 @@ select {
 .card-media-box {
   aspect-ratio: 4 / 3 !important; /* Maintain slightly wider view for modals */
   max-height: 220px !important;
+  padding: 0 !important;
 }
 
 /* 2. Cart & Row Item Image Wrappers (Cart rows, Order details, Wishlist) */
@@ -9535,16 +9536,16 @@ select {
   height: 100% !important;
   max-width: 4.5rem !important;
   max-height: 4.5rem !important;
-  aspect-ratio: 1 / 1 !important;
+  aspect-ratio: 4 / 5 !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  background-color: #ffffff !important;
+  background-color: transparent !important;
   border: 1px solid rgba(0, 0, 0, 0.04) !important;
   border-radius: var(--radius-md, 8px) !important;
-  padding: 0.35rem !important;
+  padding: 0 !important; /* Remove padding to maximize image area */
   box-sizing: border-box !important;
-  object-fit: contain !important;
+  object-fit: cover !important;
   overflow: hidden !important;
 }
 
@@ -9563,11 +9564,39 @@ select {
   height: 100% !important;
   max-width: 100% !important;
   max-height: 100% !important;
-  object-fit: contain !important; /* Never crop or stretch products, keep them fully visible */
+  object-fit: cover !important; /* Edge to edge cover by default */
   object-position: center !important;
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
   transform-origin: center center !important;
   display: block !important;
+}
+
+/* Handle transparent product images (PNG / WebP / transparent keywords) with contain + matching background to avoid gaps */
+.cat-img-box img[src$=".png"],
+.prod-img-box img[src$=".png"],
+.rec-img-box img[src$=".png"],
+.item-img-wrapper img[src$=".png"],
+.ccp-item-img-wrap img[src$=".png"],
+.card-media-box img[src$=".png"],
+.card-media-img[src$=".png"],
+.item-img[src$=".png"],
+.item-row-img[src$=".png"],
+.table-thumbnail img[src$=".png"],
+.cat-img-box img[src$=".webp"],
+.prod-img-box img[src$=".webp"],
+.rec-img-box img[src$=".webp"],
+.item-img-wrapper img[src$=".webp"],
+.ccp-item-img-wrap img[src$=".webp"],
+.card-media-box img[src$=".webp"],
+.card-media-img[src$=".webp"],
+.item-img[src$=".webp"],
+.item-row-img[src$=".webp"],
+.table-thumbnail img[src$=".webp"],
+img[src*="transparent"],
+img[class*="transparent"] {
+  object-fit: contain !important;
+  background-color: transparent !important; /* Transparent background to seamlessly match container */
+  padding: 0 !important; /* Remove gaps */
 }
 
 /* 4. Banner / Hero Cards Only (Use cover as requested) */

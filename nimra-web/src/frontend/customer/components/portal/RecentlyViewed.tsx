@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Product } from '@/types/cms';
 import { useCart } from '@/frontend/customer/hooks/useCart';
+import ProductImage from '../ProductImage';
 import { formatCurrency, isOrderable, productId } from '../../utils/commerce';
 
 interface RecentlyViewedProductsProps {
@@ -85,7 +86,7 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
             return (
               <div key={productId(product)} className="rv-card glass">
                 <div className="rv-img-box">
-                  {product.ImageUrl ? <img src={product.ImageUrl} alt={product.Name} loading="lazy" decoding="async" /> : null}
+                  <ProductImage src={product.ImageUrl} alt={product.Name} />
                 </div>
                 <div className="rv-info">
                   <span className="rv-vol">{product.Volume}</span>
@@ -175,24 +176,12 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
           box-shadow: var(--shadow-md);
         }
         .rv-img-box {
-          height: 100px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: var(--bg-primary);
-          border-radius: var(--radius-md);
-          margin-bottom: 0.5rem;
+          margin: -0.75rem -0.75rem 0.5rem -0.75rem;
           overflow: hidden;
-          border: 1px solid rgba(150, 150, 150, 0.08);
-        }
-        .rv-img-box img {
-          max-height: 90%;
-          max-width: 90%;
-          object-fit: contain;
-          transition: transform var(--transition-normal);
-        }
-        .rv-card:hover .rv-img-box img {
-          transform: scale(1.05);
+          border-bottom: 1px solid var(--border-color);
+          border-top-left-radius: var(--radius-lg);
+          border-top-right-radius: var(--radius-lg);
+          position: relative;
         }
         .rv-info {
           display: flex;
