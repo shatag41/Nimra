@@ -961,7 +961,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
         .product-preview-section {
           background: var(--bg-primary);
           position: relative;
-          padding: 2rem 0 1rem;
+          padding: 1.25rem 0 0.5rem;
         }
 
         .section-bg-dots {
@@ -975,29 +975,29 @@ export default function HomeClient({ banners: initialBanners, products: initialP
         .section-header {
           text-align: center;
           max-width: 640px;
-          margin: 0 auto 2rem;
+          margin: 0 auto 1.25rem;
         }
         .section-header h2 {
-          font-size: clamp(1.8rem, 3vw, 2.5rem);
-          margin: 0.5rem 0;
+          font-size: clamp(1.4rem, 2.5vw, 1.8rem);
+          margin: 0.25rem 0;
           font-weight: 800;
           letter-spacing: -0.02em;
         }
         .section-header p {
           color: var(--text-secondary);
-          line-height: 1.7;
-          font-size: 1rem;
+          line-height: 1.4;
+          font-size: 0.85rem;
         }
 
         .preview-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 1.25rem;
+          gap: 1rem;
         }
 
         .product-preview-card {
           background: var(--bg-secondary);
-          border-radius: var(--radius-xl);
+          border-radius: var(--radius-lg);
           border: 1px solid var(--border-color);
           overflow: hidden;
           display: flex;
@@ -1007,15 +1007,15 @@ export default function HomeClient({ banners: initialBanners, products: initialP
           position: relative;
         }
         .product-preview-card:hover {
-          transform: translateY(-8px);
-          box-shadow: var(--shadow-xl);
+          transform: translateY(-4px);
+          box-shadow: var(--shadow-md);
           border-color: var(--primary-color);
         }
 
         .prod-img-box {
           width: 100%;
           height: auto;
-          aspect-ratio: 16 / 10;
+          aspect-ratio: 2 / 1;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -1042,7 +1042,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
           background: radial-gradient(circle at center, rgba(37,99,235,0.06) 0%, transparent 70%);
         }
 
-        .prod-info-box { padding: 0.75rem; flex: 1; display: flex; flex-direction: column; }
+        .prod-info-box { padding: 0.6rem; flex: 1; display: flex; flex-direction: column; }
 
         .prod-meta {
           display: flex;
@@ -1053,28 +1053,28 @@ export default function HomeClient({ banners: initialBanners, products: initialP
 
         .prod-vol {
           display: inline-block;
-          font-size: 0.6rem;
+          font-size: 0.55rem;
           font-weight: 700;
           color: var(--primary-color);
           background: rgba(37,99,235,0.1);
-          padding: 0.15rem 0.5rem;
+          padding: 0.1rem 0.4rem;
           border-radius: 999px;
           border: 1px solid rgba(37,99,235,0.2);
         }
 
         .prod-badge-best {
           display: inline-block;
-          font-size: 0.58rem;
+          font-size: 0.55rem;
           font-weight: 700;
           color: #ea6a0a;
           background: rgba(249,115,22,0.1);
-          padding: 0.15rem 0.45rem;
+          padding: 0.1rem 0.4rem;
           border-radius: 999px;
           border: 1px solid rgba(249,115,22,0.2);
         }
 
-        .prod-info-box h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.3rem; }
-        .prod-info-box p  { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 0.5rem; flex: 1; }
+        .prod-info-box h3 { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.2rem; }
+        .prod-info-box p  { font-size: 0.7rem; color: var(--text-secondary); line-height: 1.3; margin-bottom: 0.4rem; flex: 1; }
 
         .prod-footer {
           width: 100%;
@@ -1083,12 +1083,12 @@ export default function HomeClient({ banners: initialBanners, products: initialP
           justify-content: space-between;
           margin-top: auto;
           border-top: 1px solid var(--border-color);
-          padding-top: 0.5rem;
+          padding-top: 0.4rem;
         }
 
         .prod-price-label {
           display: block;
-          font-size: 0.6rem;
+          font-size: 0.55rem;
           font-weight: 600;
           color: var(--text-muted);
           text-transform: uppercase;
@@ -1096,7 +1096,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
         }
 
         .prod-price {
-          font-size: 1.1rem;
+          font-size: 0.95rem;
           font-weight: 800;
           color: var(--primary-color);
           font-family: var(--font-heading);
@@ -1104,29 +1104,29 @@ export default function HomeClient({ banners: initialBanners, products: initialP
         }
 
         .prod-footer .btn-sm {
-          padding: 0.35rem 0.75rem;
-          font-size: 0.7rem;
-          min-height: 28px;
+          padding: 0.25rem 0.6rem;
+          font-size: 0.65rem;
+          min-height: 24px;
           line-height: 1;
           border-radius: var(--radius-md);
         }
 
         .view-all-wrap {
           text-align: center;
-          margin-top: 1rem;
+          margin-top: 0.75rem;
         }
         
         .view-all-wrap .btn-lg {
-          padding: 0.55rem 1.3rem;
-          font-size: 0.82rem;
-          min-height: 36px;
+          padding: 0.4rem 1rem;
+          font-size: 0.75rem;
+          min-height: 30px;
           border-radius: var(--radius-md);
           line-height: 1;
         }
         
         .view-all-wrap .btn-lg svg {
-          width: 15px;
-          height: 15px;
+          width: 14px;
+          height: 14px;
         }
 
         /* ── FAQ ────────────────────────────────────────────────────────────── */
