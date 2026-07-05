@@ -250,33 +250,6 @@ export default function HomeClient({ banners: initialBanners, products: initialP
         <div className="story-bg-shape" />
         <div className="container">
           <div className="story-grid">
-            <div className="story-image-container">
-              <div className="story-img-wrapper">
-                {products[0]?.ImageUrl && (
-                  <Image
-                    src={products[0].ImageUrl}
-                    alt={products[0].Name}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    quality={72}
-                    style={{ objectFit: 'cover' }}
-                    className="story-img animate-float-slow"
-                  />
-                )}
-                <div className="story-img-overlay" />
-              </div>
-              <div className="purity-card glass">
-                <div className="purity-icon">💎</div>
-                <div>
-                  <strong>10-Step Pure</strong>
-                  <p>RO + mineral balancing at every stage</p>
-                </div>
-              </div>
-              <div className="story-badge-pill">
-                <span>Since 2018</span>
-              </div>
-            </div>
-
             <div className="story-content">
               <span className="badge badge-primary">About {companyInfo.BrandName}</span>
               <h2 className="story-title">Sourced to refresh.<br />Purified to protect.</h2>
@@ -319,6 +292,33 @@ export default function HomeClient({ banners: initialBanners, products: initialP
                 Discover Our Standards
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </Link>
+            </div>
+
+            <div className="story-image-container">
+              <div className="story-img-wrapper">
+                {products[0]?.ImageUrl && (
+                  <Image
+                    src={products[0].ImageUrl}
+                    alt={products[0].Name}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    quality={72}
+                    style={{ objectFit: 'cover' }}
+                    className="story-img animate-float-slow"
+                  />
+                )}
+                <div className="story-img-overlay" />
+              </div>
+              <div className="purity-card glass">
+                <div className="purity-icon">💎</div>
+                <div>
+                  <strong>10-Step Pure</strong>
+                  <p>RO + mineral balancing at every stage</p>
+                </div>
+              </div>
+              <div className="story-badge-pill">
+                <span>Since 2018</span>
+              </div>
             </div>
           </div>
         </div>
