@@ -354,7 +354,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
             <p>Everything you need to know about our quality standards, plant location, and delivery orders.</p>
           </div>
 
-          <FAQs faqs={faqs} />
+          <FAQs faqs={faqs} variant="compact" />
         </div>
       </section>
 
@@ -1034,21 +1034,28 @@ export default function HomeClient({ banners: initialBanners, products: initialP
         /* ── FAQ ────────────────────────────────────────────────────────────── */
         .faq-section {
           background: var(--bg-secondary);
-          padding-top: 2.25rem;
-          padding-bottom: 2.25rem;
+          padding-top: 1.25rem;
+          padding-bottom: 1.25rem;
         }
 
         .faq-section .section-header {
-          margin-bottom: 1.75rem;
+          margin-bottom: 1rem;
+        }
+
+        .faq-section .section-header .badge {
+          padding: 0.15rem 0.5rem;
+          font-size: 0.65rem;
         }
 
         .faq-section .section-header h2 {
-          margin-top: 0.55rem;
-          margin-bottom: 0.45rem;
+          margin-top: 0.4rem;
+          margin-bottom: 0.25rem;
+          font-size: clamp(1.2rem, 2vw, 1.4rem);
         }
 
         .faq-section .section-header p {
-          line-height: 1.5;
+          line-height: 1.35;
+          font-size: 0.8rem;
         }
 
 
@@ -1092,8 +1099,8 @@ export default function HomeClient({ banners: initialBanners, products: initialP
           .stats-grid { grid-template-columns: 1fr 1fr; }
           .hero-trust-bar { gap: 0.75rem; }
           .trust-divider { display: none; }
-          .faq-section { padding-top: 1.75rem; padding-bottom: 1.75rem; }
-          .faq-section .section-header { margin-bottom: 1.25rem; }
+          .faq-section { padding-top: 1.25rem; padding-bottom: 1.25rem; }
+          .faq-section .section-header { margin-bottom: 1rem; }
         }
 
         @media (prefers-reduced-motion: reduce) {
