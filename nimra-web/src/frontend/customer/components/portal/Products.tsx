@@ -7,13 +7,25 @@ import { useCart } from '@/frontend/customer/hooks/useCart';
 import ProductImage from '../ProductImage';
 import { formatCurrency, isOrderable, normalizeCategory, productId, trackProductView } from '../../utils/commerce';
 
-interface ProductCardProps {
+export interface ProductCardProps {
   product: Product;
   onAdd?: (product: Product) => void;
   onViewMore?: (product: Product) => void;
+  badgeText?: string;
+  priceLabel?: string;
+  index?: number;
+  disableAnimation?: boolean;
 }
 
-export const CatalogCard = React.memo(function CatalogCard({ product, onAdd, onViewMore }: ProductCardProps) {
+export const ProductCard = React.memo(function ProductCard({ 
+  product, 
+  onAdd, 
+  onViewMore,
+  badgeText,
+  priceLabel,
+  index = 0,
+  disableAnimation = false
+}: ProductCardProps) {
   const { addProduct, updateQuantity, items } = useCart();
   const id = productId(product);
   const cartItem = items.find((item) => String(item.productId) === id) ?? null;
@@ -76,7 +88,7 @@ export const CatalogCard = React.memo(function CatalogCard({ product, onAdd, onV
   };
 
   const description = product.Description || '';
-  const maxLen = 150;
+  const maxLen = 65;
   const isLongDescription = description.length > maxLen;
   const shortDescription = isLongDescription 
     ? description.substring(0, maxLen).trim() + '...' 
@@ -85,13 +97,19 @@ export const CatalogCard = React.memo(function CatalogCard({ product, onAdd, onV
   const hasSpecs = !!product.Specifications;
   const needsViewMore = isLongDescription || hasSpecs;
 
+  const displayBadge = badgeText || normalizeCategory(product.Category);
+  const displayPriceLabel = priceLabel || (orderable ? 'Retail Price' : 'Expected Price');
+
   return (
     <article 
       className={`catalog-card glass ${inCart ? 'in-cart' : ''}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
-      style={{ cursor: onViewMore ? 'pointer' : 'default' }}
+      style={{ 
+        cursor: onViewMore ? 'pointer' : 'default', 
+        ...(disableAnimation ? {} : { animationDelay: `${index * 0.1}s` })
+      }}
     >
       <div className="product-img-wrap">
         <ProductImage src={product.ImageUrl} alt={product.Name} />
@@ -102,7 +120,7 @@ export const CatalogCard = React.memo(function CatalogCard({ product, onAdd, onV
       <div className="cat-info-box">
         <div className="cat-meta">
           <span className="cat-volume">{product.Volume}</span>
-          <span className="cat-badge">{normalizeCategory(product.Category)}</span>
+          {displayBadge && <span className={displayBadge === 'Best Seller' ? 'prod-badge-best' : 'cat-badge'}>{displayBadge}</span>}
         </div>
         <h3>{product.Name}</h3>
         <p className="card-desc">
@@ -123,7 +141,7 @@ export const CatalogCard = React.memo(function CatalogCard({ product, onAdd, onV
         </p>
         <div className="cat-price-row">
           <div>
-            <span className="price-lbl">{orderable ? 'Retail Price' : 'Expected Price'}</span>
+            <span className="price-lbl">{displayPriceLabel}</span>
             <div className="price-val">{formatCurrency(Number(product.Price))}</div>
           </div>
 
@@ -190,196 +208,82 @@ export const CatalogCard = React.memo(function CatalogCard({ product, onAdd, onV
   );
 });
 
-export const RecommendationCard = React.memo(function RecommendationCard({ product, onAdd, onViewMore }: ProductCardProps) {
-  const { addProduct } = useCart();
+export interface ProductSectionProps {
+  title?: React.ReactNode;
+  subtitle?: React.ReactNode;
+  badge?: React.ReactNode;
+  products: Product[];
+  emptyState?: React.ReactNode;
+  limit?: number;
+  viewAllLink?: string;
+  viewAllText?: string;
+  onAdd?: (product: Product) => void;
+  onViewMore?: (product: Product) => void;
+  getBadgeText?: (product: Product, index: number) => string | undefined;
+  getPriceLabel?: (product: Product, index: number) => string | undefined;
+  disableAnimation?: boolean;
+}
 
-  const handleAdd = () => {
-    addProduct(product);
-    if (onAdd) {
-      onAdd(product);
-    }
-  };
-
-  const timerRef = React.useRef<NodeJS.Timeout | null>(null);
-
-  React.useEffect(() => {
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, []);
-
-  const handleMouseEnter = () => {
-    timerRef.current = setTimeout(() => {
-      trackProductView(product);
-    }, 800);
-  };
-
-  const handleMouseLeave = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-  };
-
-  const handleClick = (e: React.MouseEvent) => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    trackProductView(product);
-
-    const target = e.target as HTMLElement;
-    if (!target.closest('.add-btn')) {
-      if (onViewMore) onViewMore(product);
-    }
-  };
-
-  const description = product.Description || '';
-  const shortDescription = description.length > 80 ? description.substring(0, 80).trim() + '...' : description;
+export function ProductSection({
+  title,
+  subtitle,
+  badge,
+  products,
+  emptyState,
+  limit,
+  viewAllLink,
+  viewAllText = 'View All Products',
+  onAdd,
+  onViewMore,
+  getBadgeText,
+  getPriceLabel,
+  disableAnimation,
+}: ProductSectionProps) {
+  const displayProducts = limit ? products.slice(0, limit) : products;
 
   return (
-    <div 
-      className="rec-card"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onClick={handleClick}
-      style={{ cursor: onViewMore ? 'pointer' : 'default' }}
-    >
-      <div className="product-img-wrap">
-        <ProductImage src={product.ImageUrl} alt={product.Name} />
-      </div>
-      <div className="rec-info">
-        <span className="rec-vol">{product.Volume}</span>
-        <h3>{product.Name}</h3>
-        <p className="rec-desc">
-          {shortDescription}
-          {onViewMore && description.length > 80 && (
-            <button
-              type="button"
-              className="view-more-text-btn"
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                onViewMore(product);
-              }}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--primary-color)',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                padding: 0,
-                marginLeft: '0.25rem',
-                cursor: 'pointer'
-              }}
-            >
-              View More
-            </button>
-          )}
-        </p>
-        <div className="rec-footer">
-          <span className="rec-price">{formatCurrency(Number(product.Price))}</span>
-          <button
-            type="button"
-            className="btn btn-primary btn-sm add-btn"
-            onClick={handleAdd}
-            style={{ cursor: 'pointer', border: 'none' }}
-          >
-            Add to Cart
-          </button>
+    <div className="product-section">
+      {(badge || title || subtitle) && (
+        <div className="section-header">
+          {badge && <span className="badge badge-primary">{badge}</span>}
+          {title && (typeof title === 'string' ? <h2>{title}</h2> : title)}
+          {subtitle && (typeof subtitle === 'string' ? <p>{subtitle}</p> : subtitle)}
         </div>
-      </div>
-    </div>
-  );
-});
+      )}
 
-export const PreviewCard = React.memo(function PreviewCard({ product, index, onViewMore }: ProductCardProps & { index: number }) {
-  const timerRef = React.useRef<NodeJS.Timeout | null>(null);
-
-  React.useEffect(() => {
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, []);
-
-  const handleMouseEnter = () => {
-    timerRef.current = setTimeout(() => {
-      trackProductView(product);
-    }, 800);
-  };
-
-  const handleMouseLeave = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-  };
-
-  const handleClick = (e: React.MouseEvent) => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    trackProductView(product);
-
-    const target = e.target as HTMLElement;
-    if (!target.closest('.btn')) {
-      if (onViewMore) onViewMore(product);
-    }
-  };
-
-  const description = product.Description || '';
-  const maxLen = 100;
-  const isLongDescription = description.length > maxLen;
-  const shortDescription = isLongDescription 
-    ? description.substring(0, maxLen).trim() + '...' 
-    : description;
-
-  return (
-    <div 
-      className="product-preview-card" 
-      style={{ 
-        animationDelay: `${index * 0.1}s`,
-        cursor: onViewMore ? 'pointer' : 'default'
-      }}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onClick={handleClick}
-    >
-      <div className="product-img-wrap">
-        <ProductImage src={product.ImageUrl} alt={product.Name} />
-        <div className="prod-img-overlay" />
-      </div>
-      <div className="prod-info-box">
-        <div className="prod-meta">
-          <span className="prod-vol">{product.Volume}</span>
-          {index === 0 && <span className="prod-badge-best">Best Seller</span>}
+      {displayProducts.length > 0 ? (
+        <div className="catalog-grid">
+          {displayProducts.map((product, index) => (
+            <ProductCard 
+              key={productId(product)} 
+              product={product} 
+              index={index}
+              onAdd={onAdd}
+              onViewMore={onViewMore}
+              badgeText={getBadgeText ? getBadgeText(product, index) : undefined}
+              priceLabel={getPriceLabel ? getPriceLabel(product, index) : undefined}
+              disableAnimation={disableAnimation}
+            />
+          ))}
         </div>
-        <h3>{product.Name}</h3>
-        <p>
-          {shortDescription}
-          {onViewMore && (isLongDescription || product.Specifications) && (
-            <button
-              type="button"
-              className="view-more-text-btn"
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                onViewMore(product);
-              }}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--primary-color)',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                padding: 0,
-                marginLeft: '0.25rem',
-                cursor: 'pointer'
-              }}
-            >
-              View More
-            </button>
-          )}
-        </p>
-        <div className="prod-footer">
-          <div>
-            <span className="prod-price-label">From</span>
-            <span className="prod-price">₹{product.Price}</span>
+      ) : (
+        emptyState || (
+          <div className="empty-state">
+            <div className="empty-icon">📦</div>
+            <h3>No products found</h3>
+            <p>Try adjusting your filters or check back later.</p>
           </div>
-          <Link href={`/products?add=${product.ID}`} className="btn btn-primary btn-sm" onClick={(e) => e.stopPropagation()}>
-            Order Now
+        )
+      )}
+
+      {viewAllLink && displayProducts.length > 0 && (
+        <div className="view-all-wrap">
+          <Link href={viewAllLink} className="btn btn-secondary btn-lg">
+            {viewAllText}
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </Link>
         </div>
-      </div>
+      )}
     </div>
   );
-});
+}

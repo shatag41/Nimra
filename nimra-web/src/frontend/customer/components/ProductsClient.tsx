@@ -4,7 +4,7 @@ import React, { useDeferredValue, useEffect, useMemo, useRef, useState } from 'r
 import { Product } from '@/types/cms';
 import { useCMSData } from '@/frontend/customer/hooks/useCMSData';
 import { useCart } from '@/frontend/customer/hooks/useCart';
-import { CatalogCard } from './portal/Products';
+import { ProductCard } from './portal/Products';
 import { normalizeCategory } from '../utils/commerce';
 import { UpcomingProducts } from './UpcomingProducts';
 import ProductDetailModal from './portal/ProductDetailModal';
@@ -209,10 +209,11 @@ export default function ProductsClient({ products: initialProducts }: ProductsCl
             <UpcomingProducts upcomingProducts={upcomingProductsList} />
           ) : filteredProducts.length > 0 ? (
             <div className="catalog-grid animate-fade-in">
-              {filteredProducts.map((product) => (
-                <CatalogCard 
+              {filteredProducts.map((product, index) => (
+                <ProductCard 
                   key={String(product.ID || product.Name)} 
                   product={product} 
+                  index={index}
                   onViewMore={setSelectedProduct}
                 />
               ))}
@@ -554,237 +555,11 @@ export default function ProductsClient({ products: initialProducts }: ProductsCl
         .catalog-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(190px, 220px));
-          gap: 0.9rem;
+          gap: 0.7rem;
           justify-content: start;
           position: relative;
           z-index: 20;
           align-items: stretch;
-        }
-
-        /* ── Card ── */
-        .catalog-card {
-          border-radius: var(--radius-lg);
-          padding: 0.6rem;
-          display: flex;
-          flex-direction: column;
-          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-          background: var(--bg-primary);
-          border: 1px solid rgba(150, 150, 150, 0.15);
-          transition: all var(--transition-normal);
-          position: relative;
-          z-index: 1;
-          isolation: isolate;
-          pointer-events: auto;
-          height: 100%;
-        }
-        .catalog-card button,
-        .catalog-card a,
-        .catalog-card [role="button"] {
-          pointer-events: auto;
-        }
-        .catalog-card .cat-price-row,
-        .catalog-card .qty-controls,
-        .catalog-card .view-cart-link,
-        .catalog-card .add-cart-btn {
-          pointer-events: auto;
-        }
-        .catalog-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
-          border-color: var(--primary-color);
-          z-index: 2;
-        }
-        .catalog-card.in-cart {
-          border-color: var(--primary-color);
-          box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1), 0 4px 12px rgba(0,0,0,0.04);
-        }
-        /* .cat-img-box removed — replaced by global .product-img-wrap in globals.css */
-        .catalog-card .product-img-wrap {
-          margin: -0.6rem -0.6rem 0.6rem -0.6rem;
-          width: calc(100% + 1.2rem);
-          border-bottom: 1px solid rgba(150, 150, 150, 0.15);
-        }
-        .cart-count-badge {
-          position: absolute;
-          top: 10px;
-          right: 10px;
-          width: 32px;
-          height: 32px;
-          border-radius: 999px;
-          background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-          color: white;
-          font-size: 0.8rem;
-          font-weight: 800;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: var(--shadow-sm);
-          animation: pop-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-          pointer-events: none;
-        }
-        @keyframes pop-in {
-          from { transform: scale(0); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
-        }
-        .cat-info-box {
-          display: flex;
-          flex: 1;
-          flex-direction: column;
-        }
-        .cat-info-box h3 {
-          font-size: 0.9rem;
-          margin-bottom: 0.25rem;
-        }
-        .cat-info-box p,
-        .card-desc {
-          font-size: 0.75rem;
-          color: var(--text-secondary);
-          line-height: 1.35;
-          margin-bottom: 0.4rem;
-        }
-        .view-more-text-btn {
-          background: none !important;
-          border: none !important;
-          color: var(--primary-color) !important;
-          font-weight: 700 !important;
-          padding: 0 !important;
-          margin-left: 0.35rem !important;
-          cursor: pointer !important;
-          font-size: 0.8rem !important;
-          display: inline-block !important;
-          text-decoration: none !important;
-          pointer-events: auto !important;
-        }
-        .view-more-text-btn:hover {
-          text-decoration: underline !important;
-        }
-        .specs {
-          padding: 0.75rem;
-          background: var(--bg-primary);
-          border: 1px solid var(--border-color);
-          border-radius: var(--radius-md);
-          font-size: 0.8rem !important;
-        }
-        .cat-meta {
-          display: flex;
-          gap: 0.75rem;
-          margin-bottom: 0.75rem;
-          align-items: center;
-          flex-wrap: wrap;
-        }
-        .cat-volume, .cat-badge {
-          font-size: 0.75rem;
-          font-weight: 700;
-          padding: 0.25rem 0.75rem;
-          border-radius: 999px;
-        }
-        .cat-volume {
-          color: var(--primary-color);
-          background: rgba(var(--primary-rgb), 0.1);
-        }
-        .cat-badge {
-          color: var(--text-secondary);
-          background: var(--bg-primary);
-          border: 1px solid var(--border-light);
-        }
-        .cat-price-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 0.5rem;
-          margin-top: auto;
-          border-top: 1px solid rgba(150, 150, 150, 0.15);
-          padding-top: 0.75rem;
-          position: relative;
-          z-index: 3;
-        }
-        .price-lbl {
-          font-size: 0.75rem;
-          color: var(--text-muted);
-          display: block;
-        }
-        .price-val {
-          font-size: 1.4rem;
-          font-weight: 800;
-          color: var(--primary-color);
-          font-family: var(--font-heading);
-          letter-spacing: -0.02em;
-        }
-
-        /* ── Add to Cart Button ── */
-        .add-cart-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.45rem;
-          white-space: nowrap;
-          position: relative;
-          z-index: 3;
-          pointer-events: auto;
-        }
-        button.btn {
-          border: none;
-          cursor: pointer;
-        }
-
-        /* ── Quantity Controls ── */
-        .qty-controls {
-          display: flex;
-          align-items: center;
-          border: 1.5px solid var(--primary-color);
-          border-radius: 999px;
-          overflow: hidden;
-          background: rgba(var(--primary-rgb), 0.06);
-          gap: 0;
-          position: relative;
-          z-index: 3;
-          pointer-events: auto;
-        }
-        .qty-btn {
-          width: 36px;
-          height: 36px;
-          border: none;
-          background: transparent;
-          color: var(--primary-color);
-          font-size: 1.2rem;
-          font-weight: 700;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: background var(--transition-fast);
-          flex-shrink: 0;
-        }
-        .qty-btn:hover {
-          background: rgba(var(--primary-rgb), 0.15);
-        }
-        .qty-count {
-          min-width: 32px;
-          text-align: center;
-          font-weight: 800;
-          font-size: 1rem;
-          color: var(--primary-color);
-        }
-
-        /* ── View Cart Link ── */
-        .view-cart-link {
-          display: block;
-          text-align: center;
-          margin-top: 0.75rem;
-          font-size: 0.85rem;
-          font-weight: 700;
-          color: var(--primary-color);
-          padding: 0.5rem;
-          border-radius: var(--radius-md);
-          background: rgba(var(--primary-rgb), 0.06);
-          border: 1px solid rgba(var(--primary-rgb), 0.2);
-          transition: all var(--transition-fast);
-          position: relative;
-          z-index: 3;
-          pointer-events: auto;
-        }
-        .view-cart-link:hover {
-          background: rgba(var(--primary-rgb), 0.12);
-          border-color: var(--primary-color);
         }
 
         /* ── Responsive ── */

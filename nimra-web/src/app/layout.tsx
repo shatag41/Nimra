@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Suspense } from 'react';
 import { AuthProvider } from '@/frontend/customer/contexts/AuthContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
@@ -9,6 +9,12 @@ import { LocationProvider } from '@/frontend/customer/contexts/LocationContext';
 import { fetchCMSData } from '@/utils/api';
 import StyledJsxRegistry from './registry';
 import { Toaster } from 'sonner';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+};
 
 export async function generateMetadata(): Promise<Metadata> {
   const data = await fetchCMSData();

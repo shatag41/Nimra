@@ -10,7 +10,7 @@ import { FAQs } from './portal/FAQs';
 import ProductDetailModal from './portal/ProductDetailModal';
 import dynamic from 'next/dynamic';
 import { UpcomingProducts } from './UpcomingProducts';
-
+import { ProductSection } from './portal/Products';
 const DynamicProductDetailModal = dynamic(() => import('./portal/ProductDetailModal'), {
   ssr: false,
 });
@@ -328,88 +328,16 @@ export default function HomeClient({ banners: initialBanners, products: initialP
       <section className="product-preview-section home-deferred-section">
         <div className="section-bg-dots" />
         <div className="container">
-          <div className="section-header">
-            <span className="badge badge-primary">Our Offerings</span>
-            <h2>NIMRA Packaged Water Range</h2>
-            <p>From mini desk bottles to massive 20-litre office jars, we cover all your hydration requirements.</p>
-          </div>
-
-          <div className="preview-grid">
-            {spotlightProducts.map((product, i) => (
-              <div 
-                key={product.ID} 
-                className="product-preview-card" 
-                style={{ animationDelay: `${i * 0.1}s`, cursor: 'pointer' }}
-                onClick={(e) => {
-                  const target = e.target as HTMLElement;
-                  if (!target.closest('.btn') && !target.closest('.prod-footer')) {
-                    setSelectedProduct(product);
-                  }
-                }}
-              >
-                <div className="product-img-wrap">
-                  <ProductImage src={product.ImageUrl} alt={product.Name} />
-                  <div className="prod-img-overlay" />
-                </div>
-                <div className="prod-info-box">
-                  <div className="prod-meta">
-                    <span className="prod-vol">{product.Volume}</span>
-                    {i === 0 && <span className="prod-badge-best">Best Seller</span>}
-                  </div>
-                  <h3>{product.Name}</h3>
-                  <p>
-                    {(() => {
-                      const desc = product.Description || '';
-                      return desc.length > 90 ? desc.substring(0, 90).trim() + '...' : desc;
-                    })()}
-                    {(product.Description || '').length > 90 && (
-                      <button
-                        type="button"
-                        className="view-more-text-btn"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setSelectedProduct(product);
-                        }}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: 'var(--primary-color)',
-                          fontWeight: 700,
-                          fontSize: '0.8rem',
-                          cursor: 'pointer',
-                          padding: 0,
-                          marginLeft: '0.25rem'
-                        }}
-                      >
-                        View More
-                      </button>
-                    )}
-                  </p>
-                  <div className="prod-footer">
-                    <div>
-                      <span className="prod-price-label">From</span>
-                      <span className="prod-price">₹{product.Price}</span>
-                    </div>
-                    <Link
-                      href={`/products?add=${encodeURIComponent(String(product.ID))}`}
-                      className="btn btn-primary btn-sm"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      Order Now
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="view-all-wrap">
-            <Link href="/products" className="btn btn-secondary btn-lg">
-              View All Products
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            </Link>
-          </div>
+          <ProductSection 
+            badge="Our Offerings"
+            title="NIMRA Packaged Water Range"
+            subtitle="From mini desk bottles to massive 20-litre office jars, we cover all your hydration requirements."
+            products={spotlightProducts}
+            viewAllLink="/products"
+            viewAllText="View All Products"
+            onViewMore={setSelectedProduct}
+            getBadgeText={(p, i) => i === 0 ? 'Best Seller' : undefined}
+          />
         </div>
       </section>
 

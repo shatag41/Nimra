@@ -13,7 +13,7 @@ interface ProductImageProps {
 
 /**
  * Global product image component.
- * Always renders a 3:4 portrait container with object-fit:contain
+ * Always renders a 1:1 square container with object-fit:contain
  * so every product image looks identical across all sections.
  */
 export default function ProductImage({
@@ -27,7 +27,7 @@ export default function ProductImage({
   const defaultContainerStyle: React.CSSProperties = {
     position: 'relative',
     width: '100%',
-    aspectRatio: '3 / 4',
+    aspectRatio: '1 / 1',
     overflow: 'hidden',
     display: 'flex',
     alignItems: 'center',

@@ -1,11 +1,12 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import { Product } from '@/types/cms';
-import { useCart } from '@/frontend/customer/hooks/useCart';
-import ProductImage from '../ProductImage';
-import { formatCurrency, isOrderable, productId } from '../../utils/commerce';
+import { ProductSection } from './Products';
+import Link from 'next/link';
+import dynamic from 'next/dynamic';
+
+const ProductDetailModal = dynamic(() => import('./ProductDetailModal'), { ssr: false });
 
 interface RecentlyViewedProductsProps {
   products: Product[];
@@ -14,7 +15,7 @@ interface RecentlyViewedProductsProps {
 
 export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProductsProps) {
   const [viewedProducts, setViewedProducts] = React.useState<Product[]>([]);
-  const { addProduct, updateQuantity, items } = useCart();
+  const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
 
   const loadViewedProducts = React.useCallback(() => {
     try {
@@ -57,204 +58,33 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
     };
   }, [loadViewedProducts]);
 
-  const handleAddToCart = (product: Product, event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    addProduct(product);
-  };
-
-  const handleQuantityChange = (cartProductId: string, quantity: number, event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    updateQuantity(cartProductId, quantity);
-  };
-
   return (
-    <div className="panel recently-viewed-panel animate-fade-in-up">
-      <div className="panel-head compact">
-        <div>
-          <span className="eyebrow" style={{ color: 'var(--primary-color)', background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.2)', borderRadius: '999px', padding: '0.2rem 0.75rem', fontSize: '0.7rem' }}>History</span>
-          <h2>Recently Viewed Products</h2>
-        </div>
-      </div>
-
-      {viewedProducts.length > 0 ? (
-        <div className="recently-viewed-grid">
-          {viewedProducts.map((product) => {
-            const cartItem = items.find((item) => String(item.productId) === productId(product));
-
-            return (
-              <div key={productId(product)} className="rv-card glass">
-                <div className="product-img-wrap">
-                  <ProductImage src={product.ImageUrl} alt={product.Name} />
-                </div>
-                <div className="rv-info">
-                  <span className="rv-vol">{product.Volume}</span>
-                  <h3 className="rv-title">{product.Name}</h3>
-                  <div className="rv-footer">
-                    <span className="rv-price">{formatCurrency(Number(product.Price))}</span>
-                    {isOrderable(product) ? (
-                      cartItem && cartItem.quantity > 0 ? (
-                        <div className="rv-qty-controls" onClick={(event) => event.stopPropagation()}>
-                          <button
-                            type="button"
-                            className="rv-qty-btn"
-                            onClick={(event) => handleQuantityChange(cartItem.productId, cartItem.quantity - 1, event)}
-                            aria-label={`Decrease ${product.Name} quantity`}
-                          >
-                            -
-                          </button>
-                          <span className="rv-qty-count">{cartItem.quantity}</span>
-                          <button
-                            type="button"
-                            className="rv-qty-btn"
-                            onClick={(event) => handleQuantityChange(cartItem.productId, cartItem.quantity + 1, event)}
-                            aria-label={`Increase ${product.Name} quantity`}
-                          >
-                            +
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={(e) => handleAddToCart(product, e)}
-                          className="btn btn-primary btn-sm rv-btn"
-                          style={{ cursor: 'pointer', border: 'none' }}
-                        >
-                          Add to Cart
-                        </button>
-                      )
-                    ) : (
-                      <Link
-                        href="/contact?subject=RUSH%20Soda%20Launch"
-                        className="btn btn-secondary btn-sm rv-btn"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        Notify Me
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="empty-state-rv">
-          <div className="empty-icon">💧</div>
-          <h3>No recently viewed products</h3>
-          <p>Products you view in our catalog will appear here for quick access.</p>
-          <Link href="/products" className="btn btn-primary btn-sm">
-            Browse Catalog
-          </Link>
-        </div>
+    <div className="panel recently-viewed-panel" style={{ marginTop: '1rem' }}>
+      <ProductSection
+        badge="History"
+        title="Recently Viewed Products"
+        products={viewedProducts}
+        onAdd={onAdd}
+        onViewMore={setSelectedProduct}
+        disableAnimation={true}
+        emptyState={
+          <div className="empty-state-rv">
+            <div className="empty-icon">💧</div>
+            <h3>No recently viewed products</h3>
+            <p>Products you view in our catalog will appear here for quick access.</p>
+            <Link href="/products" className="btn btn-primary btn-sm" style={{ marginTop: '0.5rem' }}>
+              Browse Catalog
+            </Link>
+          </div>
+        }
+      />
+      {selectedProduct && (
+        <ProductDetailModal 
+          product={selectedProduct} 
+          onClose={() => setSelectedProduct(null)} 
+        />
       )}
-
       <style jsx>{`
-        .recently-viewed-panel {
-          margin-top: 1rem;
-        }
-        .recently-viewed-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
-          gap: 0.75rem;
-          margin-top: 0.5rem;
-        }
-        .rv-card {
-          background: var(--bg-secondary);
-          border: 1px solid var(--border-color);
-          border-radius: var(--radius-lg);
-          padding: 0.55rem;
-          display: flex;
-          flex-direction: column;
-          transition: all var(--transition-normal);
-          box-shadow: var(--shadow-sm);
-        }
-        .rv-card:hover {
-          transform: translateY(-3px);
-          border-color: var(--primary-color);
-          box-shadow: var(--shadow-md);
-        }
-        /* .rv-img-box replaced by global .product-img-wrap */
-        .rv-card .product-img-wrap {
-          margin: -0.55rem -0.55rem 0.45rem -0.55rem;
-          width: calc(100% + 1.1rem);
-          border-bottom: 1px solid var(--border-color);
-        }
-        .rv-info {
-          display: flex;
-          flex-direction: column;
-          flex: 1;
-        }
-        .rv-vol {
-          display: inline-block;
-          font-size: 0.65rem;
-          font-weight: 800;
-          color: var(--primary-color);
-          background: rgba(37, 99, 235, 0.08);
-          padding: 0.15rem 0.5rem;
-          border-radius: 999px;
-          align-self: flex-start;
-          margin-bottom: 0.25rem;
-          border: 1px solid rgba(37, 99, 235, 0.15);
-        }
-        .rv-title {
-          font-size: 0.88rem;
-          font-weight: 700;
-          margin: 0.25rem 0 0.5rem 0;
-          color: var(--text-primary);
-          line-height: 1.3;
-          flex: 1;
-        }
-        .rv-footer {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          border-top: 1px solid var(--border-color);
-          padding-top: 0.5rem;
-          margin-top: auto;
-        }
-        .rv-price {
-          font-size: 0.95rem;
-          font-weight: 800;
-          color: var(--primary-color);
-          font-family: var(--font-heading);
-        }
-        .rv-btn {
-          font-size: 0.75rem !important;
-          padding: 0.3rem 0.7rem !important;
-        }
-        .rv-qty-controls {
-          display: flex;
-          align-items: center;
-          overflow: hidden;
-          border: 1.5px solid var(--primary-color);
-          border-radius: 999px;
-          background: rgba(var(--primary-rgb), 0.06);
-        }
-        .rv-qty-btn {
-          width: 28px;
-          height: 28px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border: 0;
-          background: transparent;
-          color: var(--primary-color);
-          font-size: 1rem;
-          font-weight: 700;
-          cursor: pointer;
-        }
-        .rv-qty-btn:hover {
-          background: rgba(var(--primary-rgb), 0.15);
-        }
-        .rv-qty-count {
-          min-width: 24px;
-          text-align: center;
-          color: var(--primary-color);
-          font-size: 0.8rem;
-          font-weight: 800;
-        }
         .empty-state-rv {
           min-height: 150px;
           display: flex;
@@ -268,6 +98,7 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
           border-radius: var(--radius-xl);
           background: var(--bg-primary);
           padding: 1.5rem 1rem;
+          margin-top: 1rem;
         }
         .empty-icon {
           font-size: 1.8rem;
@@ -284,11 +115,6 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
           margin: 0 0 0.5rem 0;
           max-width: 320px;
           line-height: 1.4;
-        }
-        @media (max-width: 480px) {
-          .recently-viewed-grid {
-            grid-template-columns: 1fr;
-          }
         }
       `}</style>
     </div>

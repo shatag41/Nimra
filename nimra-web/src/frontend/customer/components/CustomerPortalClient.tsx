@@ -16,10 +16,6 @@ import { toast } from 'sonner';
 import { saveUser, requestEmailChangeOTP } from '@/utils/api';
 
 // Lazy-loaded heavy sections for faster page loads
-const RecommendationCard = dynamic(
-  () => import('./portal/Products').then((mod) => mod.RecommendationCard),
-  { ssr: false, loading: () => <div className="loading-state">Loading recommendation...</div> }
-);
 
 const UpcomingProducts = dynamic(
   () => import('./UpcomingProducts').then((mod) => mod.UpcomingProducts),

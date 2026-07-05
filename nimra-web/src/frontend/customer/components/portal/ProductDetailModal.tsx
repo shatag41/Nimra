@@ -13,6 +13,95 @@ interface ProductDetailModalProps {
   onClose: () => void;
 }
 
+interface ParsedSpecification {
+  key: string | null;
+  value: string;
+}
+
+function specificationValueToText(value: unknown): string {
+  if (value == null) return '';
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint') {
+    return String(value);
+  }
+  if (Array.isArray(value)) {
+    return value.map(specificationValueToText).filter(Boolean).join(', ');
+  }
+
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+export function parseProductSpecifications(value: unknown): ParsedSpecification[] {
+  if (value == null || value === '') return [];
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => parseProductSpecifications(item));
+  }
+
+  if (typeof value === 'object') {
+    return Object.entries(value as Record<string, unknown>)
+      .map(([key, entryValue]) => ({ key: key.trim() || null, value: specificationValueToText(entryValue) }))
+      .filter((spec) => spec.value.length > 0);
+  }
+
+  const rawText = specificationValueToText(value);
+  if (!rawText) return [];
+
+  // Sheets and APIs sometimes return a JSON-encoded array or object.
+  if (rawText.startsWith('[') || rawText.startsWith('{')) {
+    try {
+      const decoded: unknown = JSON.parse(rawText);
+      return parseProductSpecifications(decoded);
+    } catch {
+      // Treat invalid JSON as ordinary specification text.
+    }
+  }
+
+  const specs: ParsedSpecification[] = [];
+  const isMarkdownTable = rawText.includes('|') && rawText.includes('---');
+
+  if (isMarkdownTable) {
+    const tokens = rawText.split(/[|\n]/)
+      .map((token) => token.trim())
+      .filter((token) => token.length > 0 && !/^:?-{3,}:?$/.test(token));
+
+    const dataTokens = tokens.filter((token) => {
+      const lower = token.toLowerCase();
+      return !['specification', 'details', 'value', 'feature', 'specifications'].includes(lower);
+    });
+
+    for (let index = 0; index < dataTokens.length; index += 2) {
+      specs.push({
+        key: index + 1 < dataTokens.length ? dataTokens[index] : null,
+        value: index + 1 < dataTokens.length ? dataTokens[index + 1] : dataTokens[index],
+      });
+    }
+
+    return specs;
+  }
+
+  const lines = rawText.split(/[\n;]/).map((line) => line.trim()).filter(Boolean);
+  for (const line of lines) {
+    let matched = false;
+    for (const separator of [':', ' - ', '|']) {
+      const parts = line.split(separator);
+      if (parts.length >= 2) {
+        specs.push({ key: parts[0].trim(), value: parts.slice(1).join(separator).trim() });
+        matched = true;
+        break;
+      }
+    }
+
+    if (!matched) specs.push({ key: null, value: line });
+  }
+
+  return specs;
+}
+
 export default function ProductDetailModal({ product, onClose }: ProductDetailModalProps) {
   const { addProduct, updateQuantity, items } = useCart();
   const modalRef = useRef<HTMLDivElement>(null);
@@ -92,59 +181,10 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
   }, [onClose]);
 
   // Parse specifications into key-value pairs
-  const parsedSpecs = React.useMemo(() => {
-    if (!product.Specifications) return [];
-    
-    const specs: { key: string | null; value: string }[] = [];
-    const rawText = product.Specifications;
-    
-    // Check if it looks like a markdown table (has headers and dashes)
-    const isMarkdownTable = rawText.includes('|') && rawText.includes('---');
-    
-    if (isMarkdownTable) {
-      const tokens = rawText.split(/[|\n]/)
-        .map(t => t.trim())
-        .filter(t => t.length > 0 && !/^[-]+$/.test(t));
-        
-      // Filter out common headers
-      const dataTokens = tokens.filter(t => {
-        const lower = t.toLowerCase();
-        return lower !== 'specification' && lower !== 'details' && lower !== 'value' && lower !== 'feature' && lower !== 'specifications';
-      });
-      
-      // Pair them up
-      for (let i = 0; i < dataTokens.length; i += 2) {
-        if (i + 1 < dataTokens.length) {
-          specs.push({ key: dataTokens[i], value: dataTokens[i + 1] });
-        } else {
-          specs.push({ key: null, value: dataTokens[i] });
-        }
-      }
-    } else {
-      // Regular line-by-line format
-      const lines = rawText.split(/[\n;]/).map(s => s.trim()).filter(Boolean);
-      for (const line of lines) {
-        let parts = line.split(':');
-        if (parts.length >= 2) {
-          specs.push({ key: parts[0].trim(), value: parts.slice(1).join(':').trim() });
-          continue;
-        }
-        parts = line.split(' - ');
-        if (parts.length >= 2) {
-          specs.push({ key: parts[0].trim(), value: parts.slice(1).join(' - ').trim() });
-          continue;
-        }
-        parts = line.split('|');
-        if (parts.length === 2) {
-          specs.push({ key: parts[0].trim(), value: parts[1].trim() });
-          continue;
-        }
-        specs.push({ key: null, value: line });
-      }
-    }
-    
-    return specs;
-  }, [product.Specifications]);
+  const parsedSpecs = React.useMemo(
+    () => parseProductSpecifications(product.Specifications as unknown),
+    [product.Specifications]
+  );
 
   const modal = (
     <div className="product-modal-overlay" onClick={onClose} role="dialog" aria-modal="true">
