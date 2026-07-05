@@ -10777,6 +10777,7 @@ table {
   overflow: hidden !important;
   -webkit-box-orient: vertical !important;
   -webkit-line-clamp: 2 !important;
+  line-clamp: 2 !important;
   line-height: 1.18 !important;
   text-overflow: ellipsis !important;
   white-space: normal !important;
@@ -10791,6 +10792,7 @@ table {
   overflow: hidden !important;
   -webkit-box-orient: vertical !important;
   -webkit-line-clamp: 2 !important;
+  line-clamp: 2 !important;
   line-height: 1.28 !important;
   text-overflow: ellipsis !important;
 }
@@ -11183,6 +11185,7 @@ table {
   overflow: hidden !important;
   -webkit-box-orient: vertical !important;
   -webkit-line-clamp: 2 !important;
+  line-clamp: 2 !important;
   font-size: 0.78rem !important;
   line-height: 1.12 !important;
   white-space: normal !important;
@@ -11197,6 +11200,7 @@ table {
   overflow: hidden !important;
   -webkit-box-orient: vertical !important;
   -webkit-line-clamp: 2 !important;
+  line-clamp: 2 !important;
   font-size: 0.68rem !important;
   line-height: 1.23 !important;
 }
