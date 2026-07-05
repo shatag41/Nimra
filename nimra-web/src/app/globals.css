@@ -10712,3 +10712,588 @@ table {
           border-color: var(--primary-color);
         }
 
+/* Compact product sections: used by Recently Viewed and home offerings. */
+.product-section-compact {
+  --compact-card-pad: clamp(0.28rem, 0.42vw, 0.42rem);
+}
+
+.product-section-compact .section-header {
+  margin-bottom: 0.65rem !important;
+}
+
+.product-section-compact .section-header .badge {
+  margin-bottom: 0.2rem !important;
+  padding-block: 0.22rem !important;
+}
+
+.product-section-compact .section-header h2 {
+  font-size: clamp(1.1rem, 1rem + 0.75vw, 1.35rem) !important;
+  margin: 0.1rem 0 0.2rem !important;
+  line-height: 1.12 !important;
+}
+
+.product-section-compact .section-header p {
+  margin: 0 !important;
+  line-height: 1.32 !important;
+}
+
+.product-section-compact .catalog-grid {
+  gap: clamp(0.5rem, 0.95vw, 0.7rem) !important;
+}
+
+.product-section-compact .catalog-card {
+  padding: var(--compact-card-pad) !important;
+}
+
+.product-section-compact .catalog-card .product-img-wrap {
+  width: calc(100% + var(--compact-card-pad) + var(--compact-card-pad)) !important;
+  margin: calc(0rem - var(--compact-card-pad))
+          calc(0rem - var(--compact-card-pad))
+          0.28rem !important;
+  aspect-ratio: 5 / 4 !important;
+}
+
+.product-section-compact .cat-meta {
+  gap: 0.28rem !important;
+  margin-bottom: 0.18rem !important;
+}
+
+.product-section-compact .cat-volume,
+.product-section-compact .cat-badge,
+.product-section-compact .prod-badge-best {
+  font-size: 0.64rem !important;
+  line-height: 1.05 !important;
+  padding: 0.16rem 0.45rem !important;
+}
+
+.product-section-compact .cat-info-box h3 {
+  display: -webkit-box !important;
+  font-size: clamp(0.76rem, 0.7rem + 0.18vw, 0.88rem) !important;
+  min-height: 2.36em !important;
+  max-height: 2.36em !important;
+  margin-bottom: 0.18rem !important;
+  overflow: hidden !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+  line-height: 1.18 !important;
+  text-overflow: ellipsis !important;
+  white-space: normal !important;
+}
+
+.product-section-compact .cat-info-box p,
+.product-section-compact .card-desc {
+  display: -webkit-box !important;
+  min-height: 2.56em !important;
+  max-height: 2.56em !important;
+  margin-bottom: 0.28rem !important;
+  overflow: hidden !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+  line-height: 1.28 !important;
+  text-overflow: ellipsis !important;
+}
+
+.product-section-compact .view-more-text-btn {
+  font-size: 0.7rem !important;
+  margin-left: 0.24rem !important;
+}
+
+.product-section-compact .cat-price-row {
+  gap: 0.35rem !important;
+  padding-top: 0.42rem !important;
+}
+
+.product-section-compact .price-lbl {
+  font-size: 0.62rem !important;
+  line-height: 1.1 !important;
+}
+
+.product-section-compact .price-val {
+  font-size: 1.08rem !important;
+  line-height: 1.05 !important;
+}
+
+.product-section-compact .add-cart-btn.btn-sm,
+.product-section-compact .cat-price-row .btn-sm {
+  min-height: 1.95rem !important;
+  padding: 0.34rem 0.58rem !important;
+  gap: 0.32rem !important;
+  font-size: 0.72rem !important;
+}
+
+.product-section-compact .add-cart-btn svg {
+  width: 13px !important;
+  height: 13px !important;
+}
+
+.product-section-compact .qty-btn {
+  width: 30px !important;
+  height: 30px !important;
+  font-size: 1rem !important;
+}
+
+.product-section-compact .qty-count {
+  min-width: 28px !important;
+  font-size: 0.88rem !important;
+}
+
+.product-section-compact .view-cart-link {
+  margin-top: 0.45rem !important;
+  padding: 0.35rem !important;
+  font-size: 0.76rem !important;
+}
+
+.product-section-compact .view-all-wrap {
+  display: flex !important;
+  justify-content: center !important;
+  margin: 0.7rem 0 0.2rem !important;
+  text-align: center !important;
+}
+
+.product-section-compact .view-all-wrap .btn-lg {
+  min-height: 2.35rem !important;
+  padding: 0.52rem 1.05rem !important;
+  font-size: 0.82rem !important;
+}
+
+.recently-viewed-panel {
+  padding: clamp(0.75rem, 1.2vw, 1rem) !important;
+}
+
+.recently-viewed-panel .product-section-compact .section-header {
+  margin-bottom: 0.55rem !important;
+}
+
+.recently-viewed-panel .product-section-compact .section-header h2 {
+  font-size: clamp(1rem, 0.92rem + 0.55vw, 1.18rem) !important;
+}
+
+.recently-viewed-panel .product-section-compact .catalog-card .product-img-wrap {
+  aspect-ratio: 4 / 3 !important;
+}
+
+.catalog-card.no-auto-motion,
+.catalog-card.no-auto-motion * {
+  animation: none !important;
+}
+
+/* Home offerings: match the compact product catalog scale. */
+.product-preview-section {
+  padding-block: clamp(0.95rem, 1.5vw, 1.35rem) clamp(0.55rem, 1vw, 0.85rem) !important;
+}
+
+.product-preview-section .container {
+  width: min(100% - clamp(1rem, 2.2vw, 2.25rem), 102rem) !important;
+  max-width: 102rem !important;
+}
+
+.product-preview-section .product-section-compact .section-header {
+  margin-bottom: clamp(0.75rem, 1.35vw, 1.05rem) !important;
+}
+
+.product-preview-section .product-section-compact .section-header .badge {
+  padding: 0.26rem 0.8rem !important;
+  margin-bottom: 0.35rem !important;
+  font-size: 0.72rem !important;
+}
+
+.product-preview-section .product-section-compact .section-header h2 {
+  font-size: clamp(1.45rem, 1.18rem + 1.15vw, 2rem) !important;
+  margin: 0.08rem 0 0.22rem !important;
+}
+
+.product-preview-section .product-section-compact .section-header p {
+  max-width: 52rem !important;
+  margin-inline: auto !important;
+  font-size: 0.92rem !important;
+  line-height: 1.34 !important;
+}
+
+.product-preview-section .product-section-compact .catalog-grid {
+  grid-template-columns: repeat(auto-fit, minmax(17.5rem, 20rem)) !important;
+  gap: clamp(0.85rem, 1.25vw, 1.1rem) !important;
+  justify-content: center !important;
+  align-items: stretch !important;
+}
+
+.product-preview-section .product-section-compact .catalog-card {
+  max-width: none !important;
+  padding: 0.58rem !important;
+  border-radius: 0.9rem !important;
+}
+
+.product-preview-section .product-section-compact .catalog-card .product-img-wrap {
+  width: calc(100% + 1.16rem) !important;
+  margin: -0.58rem -0.58rem 0.46rem !important;
+  aspect-ratio: 4 / 3 !important;
+}
+
+.product-preview-section .product-section-compact .cat-meta {
+  gap: 0.42rem !important;
+  margin-bottom: 0.26rem !important;
+}
+
+.product-preview-section .product-section-compact .cat-volume,
+.product-preview-section .product-section-compact .cat-badge,
+.product-preview-section .product-section-compact .prod-badge-best {
+  padding: 0.24rem 0.62rem !important;
+  font-size: 0.76rem !important;
+}
+
+.product-preview-section .product-section-compact .cat-info-box h3 {
+  min-height: 2.34em !important;
+  max-height: 2.34em !important;
+  margin-bottom: 0.24rem !important;
+  font-size: 1.05rem !important;
+  line-height: 1.17 !important;
+}
+
+.product-preview-section .product-section-compact .cat-info-box p,
+.product-preview-section .product-section-compact .card-desc {
+  min-height: 2.56em !important;
+  max-height: 2.56em !important;
+  margin-bottom: 0.38rem !important;
+  font-size: 0.84rem !important;
+  line-height: 1.28 !important;
+}
+
+.product-preview-section .product-section-compact .cat-price-row {
+  gap: 0.42rem !important;
+  padding-top: 0.48rem !important;
+}
+
+.product-preview-section .product-section-compact .price-lbl {
+  font-size: 0.72rem !important;
+}
+
+.product-preview-section .product-section-compact .price-val {
+  font-size: 1.32rem !important;
+}
+
+.product-preview-section .product-section-compact .add-cart-btn.btn-sm,
+.product-preview-section .product-section-compact .cat-price-row .btn-sm {
+  min-height: 2.35rem !important;
+  padding: 0.48rem 0.82rem !important;
+  gap: 0.4rem !important;
+  font-size: 0.84rem !important;
+  border-radius: 0.72rem !important;
+}
+
+.product-preview-section .product-section-compact .view-all-wrap {
+  margin: 0.8rem 0 0 !important;
+}
+
+.product-preview-section .product-section-compact .view-all-wrap .btn-lg {
+  min-height: 2.7rem !important;
+  padding: 0.68rem 1.25rem !important;
+  font-size: 0.9rem !important;
+}
+
+@media (max-width: 40rem) {
+  .product-preview-section .container {
+    width: min(100% - 0.75rem, 100%) !important;
+  }
+
+  .product-preview-section .product-section-compact .section-header p {
+    display: none !important;
+  }
+
+  .product-preview-section .product-section-compact .catalog-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.48rem !important;
+  }
+
+  .product-preview-section .product-section-compact .catalog-card .product-img-wrap {
+    aspect-ratio: 1 / 1 !important;
+  }
+
+  .product-preview-section .product-section-compact .cat-price-row {
+    align-items: stretch !important;
+    flex-direction: column !important;
+  }
+
+  .product-preview-section .product-section-compact .add-cart-btn.btn-sm,
+  .product-preview-section .product-section-compact .cat-price-row .btn-sm {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}
+
+/* Products page compact catalog: keeps product details visible above the fold. */
+.products-page {
+  padding-block: clamp(0.35rem, 0.8vw, 0.75rem) 1.5rem !important;
+}
+
+.products-page.container {
+  width: min(100% - clamp(1rem, 2vw, 2rem), 118rem) !important;
+  max-width: 118rem !important;
+}
+
+.products-page .page-header {
+  padding-block: 0.35rem 0.55rem !important;
+  margin-bottom: 0.45rem !important;
+}
+
+.products-page .page-header .badge {
+  padding: 0.2rem 0.65rem !important;
+  margin-bottom: 0.3rem !important;
+  font-size: 0.66rem !important;
+}
+
+.products-page .page-header h1 {
+  font-size: clamp(1.18rem, 1rem + 1vw, 1.55rem) !important;
+  margin-bottom: 0.12rem !important;
+  line-height: 1.08 !important;
+}
+
+.products-page .page-header p {
+  max-width: 46rem !important;
+  font-size: clamp(0.74rem, 0.68rem + 0.18vw, 0.84rem) !important;
+  line-height: 1.28 !important;
+}
+
+.products-page .products-layout-grid {
+  grid-template-columns: clamp(10.5rem, 15vw, 13rem) minmax(0, 1fr) !important;
+  gap: clamp(0.75rem, 1.2vw, 1rem) !important;
+  align-items: start !important;
+}
+
+.products-page .products-sidebar {
+  top: clamp(4.25rem, 6.5vw, 5rem) !important;
+  padding: clamp(0.65rem, 0.8vw, 0.85rem) !important;
+  gap: 0.65rem !important;
+  border-radius: 0.75rem !important;
+}
+
+.products-page .sidebar-section h3 {
+  margin-bottom: 0.42rem !important;
+  font-size: 0.76rem !important;
+  line-height: 1.1 !important;
+}
+
+.products-page .filter-options {
+  gap: 0.28rem !important;
+}
+
+.products-page .filter-label {
+  min-height: 2rem !important;
+  gap: 0.48rem !important;
+  padding: 0.34rem 0.48rem !important;
+  border-radius: 0.62rem !important;
+  font-size: 0.76rem !important;
+  line-height: 1.15 !important;
+}
+
+.products-page .filter-radio-control {
+  width: 0.92rem !important;
+  height: 0.92rem !important;
+  flex-basis: 0.92rem !important;
+}
+
+.products-page .filter-radio-control::after {
+  width: 0.38rem !important;
+  height: 0.38rem !important;
+}
+
+.products-page .products-main-content {
+  gap: 0.55rem !important;
+}
+
+.products-page .search-bar-wrapper {
+  max-width: 100% !important;
+  min-height: 2.45rem !important;
+  padding: 0.22rem !important;
+  margin-bottom: 0.1rem !important;
+  border-radius: 0.75rem !important;
+}
+
+.products-page .search-icon {
+  left: 0.8rem !important;
+  width: 0.95rem !important;
+  height: 0.95rem !important;
+}
+
+.products-page .search-input {
+  min-height: 2rem !important;
+  padding: 0.4rem 0.8rem 0.4rem 2.15rem !important;
+  font-size: 0.78rem !important;
+}
+
+.products-page .products-catalog-grid,
+.products-page .catalog-grid {
+  grid-template-columns: repeat(auto-fill, minmax(10.25rem, 12.25rem)) !important;
+  gap: clamp(0.5rem, 0.8vw, 0.7rem) !important;
+  justify-content: start !important;
+  align-items: stretch !important;
+}
+
+.products-page .catalog-card {
+  max-width: none !important;
+  min-height: 0 !important;
+  padding: 0.34rem !important;
+  border-radius: 0.65rem !important;
+}
+
+.products-page .catalog-card .product-img-wrap {
+  width: calc(100% + 0.68rem) !important;
+  margin: -0.34rem -0.34rem 0.28rem !important;
+  aspect-ratio: 4 / 3 !important;
+  border-bottom: 1px solid rgba(150, 150, 150, 0.15) !important;
+}
+
+.products-page .catalog-card .product-img,
+.product-preview-section .catalog-card .product-img,
+.recently-viewed-panel .catalog-card .product-img {
+  object-fit: contain !important;
+  object-position: center !important;
+}
+
+.products-page .cat-meta {
+  gap: 0.25rem !important;
+  margin-bottom: 0.16rem !important;
+}
+
+.products-page .cat-volume,
+.products-page .cat-badge,
+.products-page .prod-badge-best {
+  max-width: 100% !important;
+  padding: 0.14rem 0.42rem !important;
+  font-size: 0.62rem !important;
+  line-height: 1.05 !important;
+}
+
+.products-page .cat-info-box h3 {
+  display: -webkit-box !important;
+  min-height: 2.24em !important;
+  max-height: 2.24em !important;
+  margin-bottom: 0.16rem !important;
+  overflow: hidden !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+  font-size: 0.78rem !important;
+  line-height: 1.12 !important;
+  white-space: normal !important;
+}
+
+.products-page .cat-info-box p,
+.products-page .card-desc {
+  display: -webkit-box !important;
+  min-height: 2.46em !important;
+  max-height: 2.46em !important;
+  margin-bottom: 0.24rem !important;
+  overflow: hidden !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+  font-size: 0.68rem !important;
+  line-height: 1.23 !important;
+}
+
+.products-page .view-more-text-btn {
+  font-size: 0.66rem !important;
+  margin-left: 0.2rem !important;
+}
+
+.products-page .cat-price-row {
+  gap: 0.28rem !important;
+  padding-top: 0.34rem !important;
+}
+
+.products-page .price-lbl {
+  font-size: 0.58rem !important;
+  line-height: 1.05 !important;
+}
+
+.products-page .price-val {
+  font-size: 1rem !important;
+  line-height: 1.05 !important;
+}
+
+.products-page .add-cart-btn.btn-sm,
+.products-page .cat-price-row .btn-sm {
+  min-height: 1.78rem !important;
+  padding: 0.28rem 0.46rem !important;
+  gap: 0.25rem !important;
+  font-size: 0.66rem !important;
+  border-radius: 0.55rem !important;
+}
+
+.products-page .add-cart-btn svg {
+  width: 0.78rem !important;
+  height: 0.78rem !important;
+}
+
+.products-page .cart-count-badge {
+  top: 0.45rem !important;
+  right: 0.45rem !important;
+  width: 1.75rem !important;
+  height: 1.75rem !important;
+  font-size: 0.72rem !important;
+}
+
+.products-page .view-cart-link {
+  margin-top: 0.38rem !important;
+  padding: 0.3rem !important;
+  font-size: 0.7rem !important;
+}
+
+.products-page .qty-btn {
+  width: 1.75rem !important;
+  height: 1.75rem !important;
+  font-size: 0.95rem !important;
+}
+
+.products-page .qty-count {
+  min-width: 1.55rem !important;
+  font-size: 0.8rem !important;
+}
+
+@media (max-width: 64rem) {
+  .products-page .products-layout-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .products-page .products-sidebar {
+    position: static !important;
+  }
+
+  .products-page .filter-options {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)) !important;
+  }
+
+  .products-page .products-catalog-grid,
+  .products-page .catalog-grid {
+    grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)) !important;
+  }
+}
+
+@media (max-width: 40rem) {
+  .products-page.container {
+    width: min(100% - 0.75rem, 100%) !important;
+  }
+
+  .products-page .page-header p {
+    display: none !important;
+  }
+
+  .products-page .products-catalog-grid,
+  .products-page .catalog-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.48rem !important;
+  }
+
+  .products-page .catalog-card .product-img-wrap {
+    aspect-ratio: 1 / 1 !important;
+  }
+
+  .products-page .cat-price-row {
+    align-items: stretch !important;
+    flex-direction: column !important;
+  }
+
+  .products-page .add-cart-btn.btn-sm,
+  .products-page .cat-price-row .btn-sm {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}

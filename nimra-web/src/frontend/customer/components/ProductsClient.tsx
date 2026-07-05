@@ -208,7 +208,7 @@ export default function ProductsClient({ products: initialProducts }: ProductsCl
           {activeTab === 'Upcoming RUSH Soda' ? (
             <UpcomingProducts upcomingProducts={upcomingProductsList} />
           ) : filteredProducts.length > 0 ? (
-            <div className="catalog-grid animate-fade-in">
+            <div className="catalog-grid products-catalog-grid animate-fade-in">
               {filteredProducts.map((product, index) => (
                 <ProductCard 
                   key={String(product.ID || product.Name)} 

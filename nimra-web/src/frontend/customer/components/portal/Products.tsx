@@ -15,6 +15,7 @@ export interface ProductCardProps {
   priceLabel?: string;
   index?: number;
   disableAnimation?: boolean;
+  disableViewTracking?: boolean;
 }
 
 export const ProductCard = React.memo(function ProductCard({ 
@@ -24,7 +25,8 @@ export const ProductCard = React.memo(function ProductCard({
   badgeText,
   priceLabel,
   index = 0,
-  disableAnimation = false
+  disableAnimation = false,
+  disableViewTracking = false
 }: ProductCardProps) {
   const { addProduct, updateQuantity, items } = useCart();
   const id = productId(product);
@@ -65,6 +67,7 @@ export const ProductCard = React.memo(function ProductCard({
   }, []);
 
   const handleMouseEnter = () => {
+    if (disableViewTracking) return;
     timerRef.current = setTimeout(() => {
       trackProductView(product);
     }, 800);
@@ -76,7 +79,9 @@ export const ProductCard = React.memo(function ProductCard({
 
   const handleClick = (e: React.MouseEvent) => {
     if (timerRef.current) clearTimeout(timerRef.current);
-    trackProductView(product);
+    if (!disableViewTracking) {
+      trackProductView(product);
+    }
 
     // If clicking on the card itself, not on control buttons, open the modal
     const target = e.target as HTMLElement;
@@ -102,7 +107,7 @@ export const ProductCard = React.memo(function ProductCard({
 
   return (
     <article 
-      className={`catalog-card glass ${inCart ? 'in-cart' : ''}`}
+      className={`catalog-card glass ${inCart ? 'in-cart' : ''} ${disableAnimation ? 'no-auto-motion' : ''}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
@@ -222,6 +227,8 @@ export interface ProductSectionProps {
   getBadgeText?: (product: Product, index: number) => string | undefined;
   getPriceLabel?: (product: Product, index: number) => string | undefined;
   disableAnimation?: boolean;
+  disableViewTracking?: boolean;
+  compact?: boolean;
 }
 
 export function ProductSection({
@@ -238,11 +245,13 @@ export function ProductSection({
   getBadgeText,
   getPriceLabel,
   disableAnimation,
+  disableViewTracking,
+  compact,
 }: ProductSectionProps) {
   const displayProducts = limit ? products.slice(0, limit) : products;
 
   return (
-    <div className="product-section">
+    <div className={`product-section ${compact ? 'product-section-compact' : ''} ${disableAnimation ? 'product-section-static' : ''}`}>
       {(badge || title || subtitle) && (
         <div className="section-header">
           {badge && <span className="badge badge-primary">{badge}</span>}
@@ -263,6 +272,7 @@ export function ProductSection({
               badgeText={getBadgeText ? getBadgeText(product, index) : undefined}
               priceLabel={getPriceLabel ? getPriceLabel(product, index) : undefined}
               disableAnimation={disableAnimation}
+              disableViewTracking={disableViewTracking}
             />
           ))}
         </div>

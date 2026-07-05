@@ -59,7 +59,7 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
   }, [loadViewedProducts]);
 
   return (
-    <div className="panel recently-viewed-panel" style={{ marginTop: '1rem' }}>
+    <div className="panel recently-viewed-panel" style={{ marginTop: '0.5rem' }}>
       <ProductSection
         badge="History"
         title="Recently Viewed Products"
@@ -67,6 +67,8 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
         onAdd={onAdd}
         onViewMore={setSelectedProduct}
         disableAnimation={true}
+        disableViewTracking={true}
+        compact={true}
         emptyState={
           <div className="empty-state-rv">
             <div className="empty-icon">💧</div>
@@ -86,23 +88,23 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
       )}
       <style jsx>{`
         .empty-state-rv {
-          min-height: 150px;
+          min-height: 120px;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 0.5rem;
+          gap: 0.35rem;
           color: var(--text-secondary);
           text-align: center;
           border: 1.5px dashed var(--border-color);
           border-radius: var(--radius-xl);
           background: var(--bg-primary);
-          padding: 1.5rem 1rem;
-          margin-top: 1rem;
+          padding: 1rem 0.85rem;
+          margin-top: 0.5rem;
         }
         .empty-icon {
-          font-size: 1.8rem;
-          margin-bottom: 0.25rem;
+          font-size: 1.5rem;
+          margin-bottom: 0.1rem;
         }
         .empty-state-rv h3 {
           margin: 0;

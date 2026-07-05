@@ -334,9 +334,10 @@ export default function HomeClient({ banners: initialBanners, products: initialP
             subtitle="From mini desk bottles to massive 20-litre office jars, we cover all your hydration requirements."
             products={spotlightProducts}
             viewAllLink="/products"
-            viewAllText="View All Products"
+            viewAllText="View More Products"
             onViewMore={setSelectedProduct}
             getBadgeText={(p, i) => i === 0 ? 'Best Seller' : undefined}
+            compact={true}
           />
         </div>
       </section>
@@ -881,7 +882,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
         .product-preview-section {
           background: var(--bg-primary);
           position: relative;
-          padding: 1.25rem 0 0.5rem;
+          padding: 0.9rem 0 0.35rem;
         }
 
         .section-bg-dots {

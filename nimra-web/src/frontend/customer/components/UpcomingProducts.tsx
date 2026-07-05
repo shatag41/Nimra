@@ -36,7 +36,7 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
         ))}
       </div>
 
-      <div style={{ padding: '1.5rem 5%', width: '100%', maxWidth: '100%', margin: 0, boxSizing: 'border-box' }}>
+      <div className="rush-inner">
         <div style={{ position: 'relative' }}>
           {upcomingProducts.map((product, idx) => {
             const words = product.Name.split(' ');
@@ -135,10 +135,19 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
           color: white;
           position: relative;
           overflow: hidden;
-          margin: 0 calc(50% - 50vw);
-          width: 100vw;
-          max-width: 100vw;
-          border-radius: 0;
+          width: min(100% - clamp(1rem, 3vw, 3rem), 82rem);
+          max-width: 82rem;
+          margin: clamp(0.65rem, 1.1vw, 0.9rem) auto;
+          border-radius: var(--radius-xl);
+          box-shadow: var(--shadow-md);
+        }
+
+        .rush-inner {
+          width: 100%;
+          padding: clamp(0.6rem, 1.1vw, 0.9rem) clamp(1rem, 2.6vw, 2.1rem);
+          box-sizing: border-box;
+          position: relative;
+          z-index: 1;
         }
 
         .bubble-bg {
@@ -160,15 +169,15 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
         .rush-grid {
           display: grid;
           grid-template-columns: 1.2fr 0.8fr;
-          gap: 1.5rem;
+          gap: clamp(0.8rem, 1.6vw, 1.35rem);
           align-items: center;
         }
 
         .rush-title {
-          font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+          font-size: clamp(1.15rem, 1.8vw, 1.55rem);
           font-weight: 900;
           color: white;
-          margin: 0.3rem 0 0.5rem;
+          margin: 0.18rem 0 0.28rem;
           letter-spacing: -0.02em;
           line-height: 1.1;
         }
@@ -181,24 +190,25 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
 
         .rush-text {
           color: rgba(255,255,255,0.7);
-          line-height: 1.5;
-          margin-bottom: 0.8rem;
-          font-size: 0.85rem;
+          line-height: 1.32;
+          margin-bottom: 0.48rem;
+          font-size: clamp(0.74rem, 0.7rem + 0.18vw, 0.84rem);
+          max-width: 40rem;
         }
 
         .rush-features {
           display: flex;
-          gap: 0.4rem;
+          gap: 0.32rem;
           flex-wrap: wrap;
-          margin-bottom: 1rem;
+          margin-bottom: 0.58rem;
         }
 
         .rush-pill {
-          padding: 0.25rem 0.75rem;
+          padding: 0.22rem 0.62rem;
           border-radius: 999px;
           background: rgba(255,255,255,0.07);
           border: 1px solid rgba(255,255,255,0.12);
-          font-size: 0.7rem;
+          font-size: 0.66rem;
           font-weight: 600;
           color: rgba(255,255,255,0.8);
         }
@@ -206,12 +216,12 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
         .btn-rush {
           display: inline-flex;
           align-items: center;
-          gap: 0.4rem;
-          padding: 0.6rem 1.2rem;
+          gap: 0.34rem;
+          padding: 0.48rem 0.9rem;
           font-family: var(--font-heading);
           font-weight: 700;
-          font-size: 0.8rem;
-          border-radius: var(--radius-xl);
+          font-size: 0.74rem;
+          border-radius: var(--radius-lg);
           border: none;
           cursor: pointer;
           background: #f97316;
@@ -236,16 +246,24 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
 
         .can-outer-glow {
           position: absolute;
-          width: 280px;
-          height: 280px;
+          width: clamp(110px, 13vw, 160px);
+          height: clamp(110px, 13vw, 160px);
           border-radius: 50%;
           background: radial-gradient(circle, rgba(249,115,22,0.12) 0%, transparent 70%);
           pointer-events: none;
         }
 
+        .rush-visual .product-img-wrap {
+          width: clamp(5.5rem, 9vw, 7.5rem);
+          max-width: 100%;
+          aspect-ratio: 4 / 5;
+          border-radius: var(--radius-lg);
+          background: rgba(255,255,255,0.04);
+        }
+
         .can-mockup {
-          width: 100px;
-          height: 200px;
+          width: clamp(62px, 6vw, 80px);
+          height: clamp(124px, 12vw, 160px);
           background: linear-gradient(160deg, #1A2A20 0%, #0D1810 100%);
           border: 1.5px solid rgba(249,115,22,0.25);
           border-radius: 32px;
@@ -332,7 +350,35 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
         @media (max-width: 1024px) {
           .rush-grid {
             grid-template-columns: 1fr;
-            gap: 1.2rem;
+            gap: 0.8rem;
+            text-align: center;
+          }
+
+          .rush-features {
+            justify-content: center;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .rush-section {
+            width: min(100% - 0.75rem, 100%);
+            border-radius: var(--radius-lg);
+          }
+
+          .rush-inner {
+            padding: 0.8rem 0.75rem;
+          }
+
+          .rush-title {
+            font-size: clamp(1.05rem, 6vw, 1.35rem);
+          }
+
+          .rush-text {
+            font-size: 0.74rem;
+          }
+
+          .rush-visual .product-img-wrap {
+            width: min(8rem, 58vw);
           }
         }
       `}</style>

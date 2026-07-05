@@ -16,12 +16,12 @@ interface ImageUploadFieldProps {
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 // Minimum dimensions before rejecting
-const PRODUCT_MIN_W = 600;
-const PRODUCT_MIN_H = 800;
+const PRODUCT_MIN_W = 640;
+const PRODUCT_MIN_H = 480;
 
-// Output canvas size for product images (3:4 portrait)
-const PRODUCT_OUT_W = 900;
-const PRODUCT_OUT_H = 1200;
+// Output canvas size for product images (4:3 landscape)
+const PRODUCT_OUT_W = 1200;
+const PRODUCT_OUT_H = 900;
 
 // Wide output (16:9 banner)
 const WIDE_OUT_W = 1600;
@@ -109,7 +109,7 @@ export default function ImageUploadField({
         if (aspect === 'product') {
           if (img.width < PRODUCT_MIN_W || img.height < PRODUCT_MIN_H) {
             setError(
-              `Image too small (${img.width}x${img.height}px). Minimum required: ${PRODUCT_MIN_W}x${PRODUCT_MIN_H}px. Recommended: 900x1200px or any 3:4 size such as 1200x1600px.`
+              `Image too small (${img.width}x${img.height}px). Minimum required: ${PRODUCT_MIN_W}x${PRODUCT_MIN_H}px. Recommended: 1200x900px or any 4:3 size such as 1600x1200px.`
             );
             setUploading(false);
             return;
@@ -121,7 +121,28 @@ export default function ImageUploadField({
         const targetW = aspect === 'product' ? PRODUCT_OUT_W : WIDE_OUT_W;
         const targetH = aspect === 'product' ? PRODUCT_OUT_H : WIDE_OUT_H;
 
-        drawCroppedToCanvas(img, canvas, targetW, targetH);
+        if (aspect === 'product') {
+          canvas.width = targetW;
+          canvas.height = targetH;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            setError('Failed to optimize image.');
+            setUploading(false);
+            return;
+          }
+
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, targetW, targetH);
+
+          const scale = Math.min(targetW / img.width, targetH / img.height);
+          const drawW = Math.round(img.width * scale);
+          const drawH = Math.round(img.height * scale);
+          const dx = Math.round((targetW - drawW) / 2);
+          const dy = Math.round((targetH - drawH) / 2);
+          ctx.drawImage(img, 0, 0, img.width, img.height, dx, dy, drawW, drawH);
+        } else {
+          drawCroppedToCanvas(img, canvas, targetW, targetH);
+        }
 
         const isPNG = file.type === 'image/png' || file.type === 'image/gif';
         const mimeType = isPNG ? 'image/png' : 'image/jpeg';
@@ -204,7 +225,7 @@ export default function ImageUploadField({
         <label>{label}</label>
         <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
           {aspect === 'product'
-            ? 'Recommended: 900 x 1200 px (3:4), also 1200 x 1600 px'
+            ? 'Recommended: 1200 x 900 px (4:3), also 1600 x 1200 px'
             : 'Recommended: 1600 x 900 px (16:9 Ratio)'}
         </span>
       </div>
@@ -236,8 +257,8 @@ export default function ImageUploadField({
             style={{
               position: 'relative',
               width: '100%',
-              aspectRatio: aspect === 'product' ? '3 / 4' : '16 / 9',
-              maxHeight: aspect === 'product' ? '360px' : '160px',
+              aspectRatio: aspect === 'product' ? '4 / 3' : '16 / 9',
+              maxHeight: aspect === 'product' ? '260px' : '160px',
               borderRadius: '8px',
               overflow: 'hidden',
             }}
@@ -246,7 +267,7 @@ export default function ImageUploadField({
             <img
               src={previewSrc}
               alt={`${label} preview`}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'var(--product-img-bg, #f4f6f8)' }}
+              style={{ width: '100%', height: '100%', objectFit: aspect === 'product' ? 'contain' : 'cover', background: 'var(--product-img-bg, #f4f6f8)' }}
             />
             {uploading && <div className="image-upload-progress">Optimizing &amp; Uploading...</div>}
           </div>
@@ -254,7 +275,7 @@ export default function ImageUploadField({
           <div className={`image-upload-empty ${aspect}`}>
             <span className="image-upload-icon">Upload</span>
             <strong>Drag and drop an image here</strong>
-            <small>JPG, PNG, WebP, or GIF - min {aspect === 'product' ? '600x800px' : '800x450px'}</small>
+            <small>JPG, PNG, WebP, or GIF - min {aspect === 'product' ? '640x480px' : '800x450px'}</small>
           </div>
         )}
 
@@ -281,7 +302,7 @@ export default function ImageUploadField({
       </div>
 
       {error && <p className="image-upload-error" style={{ marginTop: '0.5rem' }}>{error}</p>}
-      {uploading && <p className="image-upload-note">Auto-cropping to {aspect === 'product' ? '3:4' : '16:9'}, compressing, and uploading...</p>}
+      {uploading && <p className="image-upload-note">{aspect === 'product' ? 'Fitting into 4:3' : 'Auto-cropping to 16:9'}, compressing, and uploading...</p>}
       {!error && !uploading && value && <p className="image-upload-note">Saved image will display automatically on the site.</p>}
     </div>
   );
