@@ -12,6 +12,7 @@ import { createReorderCheckoutDraft } from '../utils/reorderDraft';
 import { requestOrderCancellation } from '@/utils/api';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
+import ProductImage from './ProductImage';
 
 const OrderDetailsModal = dynamic(() => import('./portal/OrderDetailsModal'), { ssr: false });
 const CancelOrderModal = dynamic(() => import('./portal/CancelOrderModal'), { ssr: false });
@@ -374,7 +375,7 @@ export default function OrdersClient() {
                           <div key={item.productId} className="amazon-item-row">
                             <div className="item-img-wrapper">
                               {item.imageUrl ? (
-                                <img src={item.imageUrl} alt={item.name} className="item-img" />
+                                <ProductImage src={item.imageUrl} alt={item.name} />
                               ) : (
                                 <span className="fallback-box">📦</span>
                               )}
@@ -470,7 +471,7 @@ export default function OrdersClient() {
                             <div key={idx} className="amazon-item-row">
                               <div className="item-img-wrapper">
                                 {item.imageUrl ? (
-                                  <img src={item.imageUrl} alt={item.name} className="item-img" loading="lazy" decoding="async" />
+                                  <ProductImage src={item.imageUrl} alt={item.name} />
                                 ) : (
                                   <span className="fallback-box">📦</span>
                                 )}

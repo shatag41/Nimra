@@ -517,7 +517,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
         /* Product Media Box — strict 4:5 portrait, matching every product card */
         .card-media-box {
           width: 100%;
-          aspect-ratio: 2 / 3;
+          aspect-ratio: 3 / 4;
           border-radius: 8px;
           overflow: hidden;
           background: var(--product-img-bg, #f4f6f8);

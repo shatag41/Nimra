@@ -143,7 +143,7 @@ const styles = `
   }
   .cart-row .cart-thumb {
     width: 60px;
-    height: 90px;
+    height: 80px;
     flex-shrink: 0;
     border-radius: var(--radius-sm);
     overflow: hidden;
@@ -269,10 +269,10 @@ const styles = `
       gap: 1rem;
       align-items: start;
     } 
-    .cart-row img { 
-      width: 60px; 
-      height: 60px; 
-    } 
+    .cart-row .cart-thumb {
+      width: 60px;
+      height: 80px;
+    }
     .qty, .remove { 
       grid-column: 2; 
       justify-self: start; 

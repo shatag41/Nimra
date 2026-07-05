@@ -13,8 +13,8 @@ interface ProductImageProps {
 
 /**
  * Global product image component.
- * Always renders a 1:1 square container with object-fit:contain
- * so every product image looks identical across all sections.
+ * Always renders a wider 3:4 portrait container with object-fit: contain so every
+ * product image keeps the full product visible inside a uniform card layout.
  */
 export default function ProductImage({
   src,
@@ -27,12 +27,12 @@ export default function ProductImage({
   const defaultContainerStyle: React.CSSProperties = {
     position: 'relative',
     width: '100%',
-    aspectRatio: '1 / 1',
+    aspectRatio: '3 / 4',
     overflow: 'hidden',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'var(--product-img-bg, #f4f6f8)',
+    background: 'var(--product-image-bg, var(--product-img-bg, #f4f6f8))',
     ...style,
   };
 
@@ -48,11 +48,8 @@ export default function ProductImage({
 
   if (!src) {
     return (
-      <div
-        className={`product-image-container ${containerClassName}`}
-        style={defaultContainerStyle}
-      >
-        <span style={{ fontSize: '2rem', opacity: 0.2 }}>💧</span>
+      <div className={`product-image-container ${containerClassName}`} style={defaultContainerStyle}>
+        <span className="product-img-fallback">NIMRA</span>
       </div>
     );
   }
@@ -73,8 +70,7 @@ export default function ProductImage({
           if (parent && !parent.querySelector('.product-img-fallback')) {
             const fallback = document.createElement('span');
             fallback.className = 'product-img-fallback';
-            fallback.style.cssText = 'font-size:2rem;opacity:0.2;';
-            fallback.textContent = '💧';
+            fallback.textContent = 'NIMRA';
             parent.appendChild(fallback);
           }
         }}

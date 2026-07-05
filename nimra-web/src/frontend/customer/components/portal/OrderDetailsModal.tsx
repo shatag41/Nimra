@@ -3,6 +3,7 @@
 import React from 'react';
 import { OrderRecord } from '@/types/cms';
 import { formatCurrency } from '../../utils/commerce';
+import ProductImage from '../ProductImage';
 
 interface TimelineStep {
   key: string;
@@ -93,7 +94,7 @@ export default function OrderDetailsModal({
                     <div className="item-row-left">
                       {item.imageUrl ? (
                         <div className="item-row-img-wrapper">
-                          <img src={item.imageUrl} alt={item.name || 'Order item'} className="item-row-img" />
+                          <ProductImage src={item.imageUrl} alt={item.name || 'Order item'} />
                         </div>
                       ) : null}
                       <div className="item-row-info">
