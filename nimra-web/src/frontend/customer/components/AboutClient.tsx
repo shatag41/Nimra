@@ -15,17 +15,16 @@ function getMapEmbedUrl(embedUrl?: string, fallbackAddress?: string) {
   if (embedUrl && /^https?:\/\//i.test(embedUrl)) {
     return embedUrl;
   }
-
   if (!fallbackAddress) {
     return '';
   }
-
   return `https://www.google.com/maps?q=${encodeURIComponent(fallbackAddress)}&output=embed`;
 }
 
 export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
   const [activeSection, setActiveSection] = useState<AboutSection>('story');
-  const [openStep, setOpenStep] = useState<number | null>(null);
+  const [activeStep, setActiveStep] = useState<number | null>(null);
+  
   const plantMapUrl = getMapEmbedUrl(companyInfo.PlantMapEmbed, companyInfo.PlantAddress);
   const activeFaqs = useMemo(
     () => (faqs || []).filter((faq) => faq.Active !== false && String(faq.Active).toLowerCase() !== 'false'),
@@ -48,97 +47,108 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
   };
 
   const steps = [
-    { title: '1. Sourcing Water', desc: 'We responsibly source our water from deep, clean underground aquifers.' },
-    { title: '2. Sand Filtration', desc: 'Removes dust, silt, and visible particles to clear the water.' },
-    { title: '3. Carbon Filtering', desc: 'Removes chlorine and organic materials, ensuring no odors or color.' },
-    { title: '4. Micron Filtration', desc: 'Blocks tiny particles down to 5 microns before reverse osmosis.' },
-    { title: '5. Reverse Osmosis', desc: 'High-pressure RO removes over 98% of dissolved solids and impurities.' },
-    { title: '6. Adding Minerals', desc: 'We add essential minerals like Potassium and Magnesium for health.' },
-    { title: '7. Fine Polishing', desc: 'Gives the water a crystal-clear, sparkling finish.' },
-    { title: '8. UV Protection', desc: 'Intense ultraviolet light destroys any remaining microbes.' },
-    { title: '9. Ozone Enrichment', desc: 'Active oxygen keeps the water sterile and safe for a long shelf-life.' },
-    { title: '10. Hourly Quality Checks', desc: 'We test water chemistry and purity every hour for absolute safety.' }
+    { id: 1, title: 'Deep Sourcing', desc: 'Pristine extraction from deep aquifers.', icon: '💧' },
+    { id: 2, title: 'Sand Filtration', desc: 'Removes macroscopic particles instantly.', icon: '⏳' },
+    { id: 3, title: 'Carbon Filtering', desc: 'Eliminates chlorine & odors entirely.', icon: '🌑' },
+    { id: 4, title: 'Micron Filtration', desc: 'Blocks particles down to 5 microns.', icon: '🔬' },
+    { id: 5, title: 'Reverse Osmosis', desc: 'Eradicates 98% of dissolved solids.', icon: '🔄' },
+    { id: 6, title: 'Mineralization', desc: 'Infused with Potassium & Magnesium.', icon: '✨' },
+    { id: 7, title: 'Fine Polishing', desc: 'Creates a crystal-clear finish.', icon: '💎' },
+    { id: 8, title: 'UV Protection', desc: 'Ultraviolet sterilization.', icon: '☀️' },
+    { id: 9, title: 'Ozone Enrichment', desc: 'Active oxygen keeps water sterile.', icon: '🫧' },
+    { id: 10, title: 'Hourly Checks', desc: 'Rigorous purity testing hourly.', icon: '✅' }
+  ];
+
+  const features = [
+    { title: 'BIS Certified', desc: 'IS 14543 Standard', icon: '🏆' },
+    { title: '10-Step Purity', desc: 'Advanced Filtration', icon: '🛡️' },
+    { title: 'Touch-Free', desc: 'Automated Bottling', icon: '🤖' },
+    { title: 'Mineral+', desc: 'Essential Nutrients', icon: '⚡' }
   ];
 
   return (
-    <div className="about-page container">
-      {/* Page Header */}
-      <div className="page-header">
-        <span className="badge badge-primary">About Us</span>
-        <h1>Pure Water, Safely Sealed.</h1>
-        <p className="hero-subtitle">Committed to your health and safety with every drop, brought to you by T.S. Enterprises.</p>
-      </div>
-
-      {/* Navigation Sub-menu (Sticky Pills) */}
-      <div className="submenu-bar">
-        <div className="submenu-container glass">
-          <button className={`submenu-btn ${activeSection === 'story' ? 'active' : ''}`} onClick={() => selectSection('story')}>Our Story</button>
-          <button className={`submenu-btn ${activeSection === 'quality' ? 'active' : ''}`} onClick={() => selectSection('quality')}>10-Step Purification</button>
-          <button className={`submenu-btn ${activeSection === 'plant' ? 'active' : ''}`} onClick={() => selectSection('plant')}>Infrastructure</button>
-          <button className={`submenu-btn ${activeSection === 'faqs' ? 'active' : ''}`} onClick={() => selectSection('faqs')}>FAQs</button>
+    <div className="premium-about">
+      {/* Compact Hero Section */}
+      <section className="hero-section" id="hero">
+        <div className="container">
+          <div className="hero-content">
+            <span className="premium-badge">NIMRA Water</span>
+            <h1 className="hero-title">Pure. Premium. Protected.</h1>
+            <p className="hero-subtitle">
+              Committed to absolute purity and your health with every single drop, crafted by T.S. Enterprises.
+            </p>
+          </div>
+          
+          {/* Tab Navigation */}
+          <div className="submenu-bar">
+            <div className="submenu-container">
+              <button className={`submenu-btn ${activeSection === 'story' ? 'active' : ''}`} onClick={() => selectSection('story')}>Our Story</button>
+              <button className={`submenu-btn ${activeSection === 'quality' ? 'active' : ''}`} onClick={() => selectSection('quality')}>10-Step Purity</button>
+              <button className={`submenu-btn ${activeSection === 'plant' ? 'active' : ''}`} onClick={() => selectSection('plant')}>Infrastructure</button>
+              <button className={`submenu-btn ${activeSection === 'faqs' ? 'active' : ''}`} onClick={() => selectSection('faqs')}>FAQs</button>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Fixed-Height Scrolling Card */}
-      <div className="content-card-wrapper">
+      <div className="container main-content">
         <div className="content-card">
           
-          {/* Section Content: Story */}
+          {/* Section: Story */}
           {activeSection === 'story' && (
-            <div className="fade-enter">
-              <div className="about-grid">
-                <div className="about-content">
-                  <h2>Our Story</h2>
+            <div className="fade-enter about-grid">
+              <div className="story-text-col">
+                <h2 className="story-title">The NIMRA Philosophy</h2>
+                <div className="story-paragraph">
                   <p>{companyInfo.AboutStory}</p>
-                  <p style={{ marginTop: '0.75rem' }}>
-                    Every bottle of NIMRA is crafted using advanced technology. We proudly serve communities in Pune with premium water that meets strict BIS and FSSAI quality standards.
+                  <p>
+                    Crafted with state-of-the-art technology, NIMRA delivers premium, 
+                    revitalizing hydration that rigorously exceeds BIS and FSSAI standards.
                   </p>
-                  <div className="stat-row">
-                    <div className="stat-item">
-                      <span className="stat-num">100%</span>
-                      <span className="stat-lbl">Touch-Free Filling</span>
-                    </div>
-                    <div className="stat-item">
-                      <span className="stat-num">IS 14543</span>
-                      <span className="stat-lbl">BIS Certified</span>
-                    </div>
-                    <div className="stat-item">
-                      <span className="stat-num">Mineral+</span>
-                      <span className="stat-lbl">Enriched Taste</span>
-                    </div>
-                  </div>
                 </div>
-                <div className="about-img-box" aria-hidden="true">
-                  <img src="/images/nimra_premium_water.png" alt="NIMRA Premium Water Splash" />
+                
+                <div className="feature-row">
+                  {features.map((feat, i) => (
+                    <div key={i} className="feature-card">
+                      <span className="feat-icon">{feat.icon}</span>
+                      <div className="feat-text">
+                        <strong>{feat.title}</strong>
+                        <span>{feat.desc}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
+              </div>
+              <div className="story-img-col">
+                <img src="/images/nimra_premium_water.png" alt="NIMRA Premium Water" loading="lazy" />
               </div>
             </div>
           )}
 
-          {/* Section Content: Quality */}
+          {/* Section: Quality */}
           {activeSection === 'quality' && (
             <div className="fade-enter">
-              <div className="quality-intro">
-                <h2>Our 10-Step Purification Process</h2>
-                <p>{companyInfo.QualityText}</p>
+              <div className="section-header text-center">
+                <h2 className="section-title">10-Step Purification</h2>
+                <p className="section-subtitle">{companyInfo.QualityText || 'Our advanced multi-stage process ensuring uncompromising quality.'}</p>
               </div>
               
-              <div className="steps-grid">
-                {steps.map((step, idx) => (
-                  <div key={idx} className={`accordion-item ${openStep === idx ? 'open' : ''}`}>
-                    <button 
-                      className="accordion-header" 
-                      onClick={() => setOpenStep(openStep === idx ? null : idx)}
-                    >
-                      <h4>{step.title}</h4>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="chevron">
-                        <path d="m6 9 6 6 6-6"/>
-                      </svg>
-                    </button>
-                    <div className="accordion-content-wrapper">
-                      <div className="accordion-content">
-                        <p>{step.desc}</p>
+              <div className="purification-grid">
+                {steps.map((step) => (
+                  <div 
+                    key={step.id} 
+                    className={`step-card ${activeStep === step.id ? 'active' : ''}`}
+                    onClick={() => setActiveStep(activeStep === step.id ? null : step.id)}
+                  >
+                    <div className="step-header">
+                      <div className="step-badge">
+                        <span className="step-num">{step.id}</span>
+                        <span className="step-icon">{step.icon}</span>
                       </div>
+                      <span className="step-title">{step.title}</span>
+                    </div>
+                    <div className="step-desc-wrapper">
+                      <p className="step-desc">{step.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -146,45 +156,72 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
             </div>
           )}
 
-          {/* Section Content: Plant */}
+          {/* Section: Plant */}
           {activeSection === 'plant' && (
-            <div className="fade-enter">
-              <div className="about-grid plant-grid">
-                <div className="about-content">
-                  <h2>Where Purity Begins</h2>
-                  <p>{companyInfo.InfrastructureText}</p>
-                  <div className="plant-info-card glass">
-                    <h4>Factory Address</h4>
-                    <p>{companyInfo.PlantAddress}</p>
+            <div className="fade-enter infra-grid">
+              <div className="infra-highlights">
+                <h2 className="section-title">World-Class Infrastructure</h2>
+                <p className="story-paragraph">{companyInfo.InfrastructureText}</p>
+                
+                <div className="highlight-list">
+                  <div className="highlight-item">
+                    <span className="hl-icon">📍</span>
+                    <div>
+                      <strong>State-of-the-Art Facility</strong>
+                      <p>{companyInfo.PlantAddress}</p>
+                    </div>
+                  </div>
+                  <div className="highlight-item">
+                    <span className="hl-icon">⚡</span>
+                    <div>
+                      <strong>Fully Automated</strong>
+                      <p>Zero human touch from filtration to final sealing.</p>
+                    </div>
+                  </div>
+                  <div className="highlight-item">
+                    <span className="hl-icon">🔬</span>
+                    <div>
+                      <strong>In-House Laboratory</strong>
+                      <p>Rigorous micro-biological and chemical testing on-site.</p>
+                    </div>
                   </div>
                 </div>
-                <div className="plant-map-box">
-                  {plantMapUrl ? (
-                    <iframe
-                      title="NIMRA Plant Location Map"
-                      src={plantMapUrl}
-                      style={{ border: 0, width: '100%', height: '100%' }}
-                      allowFullScreen={false}
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                    ></iframe>
-                  ) : (
-                    <div className="map-placeholder">
-                      <p>Map location loading...</p>
-                    </div>
-                  )}
-                </div>
+              </div>
+              
+              <div className="infra-map">
+                {plantMapUrl ? (
+                  <iframe
+                    title="NIMRA Facility Location"
+                    src={plantMapUrl}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  ></iframe>
+                ) : (
+                  <div className="map-fallback">Map Loading...</div>
+                )}
               </div>
             </div>
           )}
 
+          {/* Section: FAQs */}
           {activeSection === 'faqs' && (
-            <div id="faqs" className="fade-enter faq-content">
-              <div className="quality-intro">
-                <h2>Common Questions</h2>
-                <p>Everything you need to know about our water, quality, and delivery.</p>
+            <div id="faqs" className="fade-enter faq-grid">
+              <div className="faq-content">
+                <h2 className="section-title">Common Questions</h2>
+                <p className="story-paragraph">Everything you need to know about our premium water, quality standards, and delivery services.</p>
+                <div className="faq-container">
+                  {activeFaqs.length > 0 ? <FAQs faqs={activeFaqs} variant="compact" /> : <p className="text-muted text-center">No FAQs are available right now.</p>}
+                </div>
               </div>
-              {activeFaqs.length > 0 ? <FAQs faqs={activeFaqs} /> : <p className="faq-empty">No FAQs are available right now.</p>}
+              
+              <div className="faq-visual">
+                <div className="support-card">
+                  <div className="support-icon">💬</div>
+                  <h3>Still have questions?</h3>
+                  <p>Our dedicated support team is available 24/7 to assist you.</p>
+                  <a href="/contact" className="support-link">Contact Support →</a>
+                </div>
+              </div>
             </div>
           )}
 
@@ -192,350 +229,491 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
       </div>
 
       <style jsx>{`
-        .about-page {
-          padding-top: 0;
-          padding-bottom: 0.5rem;
-          font-family: var(--font-body);
+        .premium-about {
+          --bg-main: #ffffff;
+          --bg-alt: #f8fafc;
+          --text-strong: #0f172a;
+          --text-base: #334155;
+          --text-muted: #64748b;
+          --border: #e2e8f0;
+          --brand-blue: #0284c7;
+          --brand-light: #e0f2fe;
+          
+          --space-1: 8px;
+          --space-2: 16px;
+          --space-3: 24px;
+          --space-4: 32px;
+          --radius: 16px;
+          
+          --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+          --shadow-md: 0 8px 30px rgba(0,0,0,0.04);
+          --shadow-hover: 0 12px 25px rgba(2, 132, 199, 0.1);
+          
+          font-family: system-ui, -apple-system, sans-serif;
+          background: var(--bg-alt);
+          color: var(--text-base);
+          line-height: 1.5;
+          min-height: calc(100vh - 80px);
+          padding-bottom: var(--space-4);
         }
 
-        /* ── Page Header ── */
-        .page-header {
-          margin-bottom: 0.25rem;
-          padding-bottom: 0;
-          text-align: center;
+        .container {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 0 var(--space-3);
         }
 
-        .page-header h1 {
-          font-size: 1.8rem;
-          font-weight: 800;
-          margin-bottom: 0.5rem;
+        /* ── Typography ── */
+        .section-title {
+          font-size: 1.05rem;
+          font-weight: 700;
+          color: var(--text-strong);
+          margin: 0 0 12px;
           letter-spacing: -0.02em;
-          color: var(--text-primary);
         }
-
-        .hero-subtitle {
+        .section-subtitle {
           color: var(--text-muted);
           font-size: 0.9rem;
-          margin: 0 auto;
+          margin: 0 auto 16px;
           max-width: 600px;
-          line-height: 1.4;
         }
+        .text-center { text-align: center; }
 
-        .badge {
-          display: inline-flex;
-          align-items: center;
-          border-radius: 999px;
-          padding: 0.35rem 0.85rem;
-          font-size: 0.72rem;
+        /* ── Hero ── */
+        .hero-section {
+          padding: 1.25rem 0 2rem;
+          background: linear-gradient(135deg, #ffffff 0%, var(--brand-light) 100%);
+          text-align: center;
+          border-bottom: 1px solid var(--border);
+        }
+        .hero-content {
+          max-width: 700px;
+          margin: 0 auto;
+        }
+        .premium-badge {
+          display: inline-block;
+          font-size: 0.65rem;
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.05em;
-          margin-bottom: 0.5rem;
+          color: var(--brand-blue);
+          background: var(--bg-main);
+          padding: 2px 10px;
+          border-radius: 99px;
+          margin-bottom: 12px;
+          border: 1px solid #bae6fd;
+          box-shadow: var(--shadow-sm);
         }
-        .badge-primary {
-          background: rgba(37, 99, 235, 0.1);
-          color: var(--primary-color);
-          border: 1px solid rgba(37, 99, 235, 0.2);
+        .hero-title {
+          font-size: clamp(1.4rem, 2.7vw, 1.9rem);
+          font-weight: 800;
+          color: var(--text-strong);
+          margin: 0 0 12px;
+          letter-spacing: -0.02em;
+        }
+        .hero-subtitle {
+          font-size: 0.9rem;
+          line-height: 1.3;
+          color: var(--text-muted);
+          margin: 0 auto;
+          max-width: 600px;
         }
 
-        /* ── Tabs (Pills) ── */
+        /* ── Submenu Tabs ── */
         .submenu-bar {
-          margin-top: -1.25rem;
+          margin-top: 14px;
           display: flex;
           justify-content: center;
-          margin-bottom: 0.75rem;
-          padding: 0 1rem;
         }
         .submenu-container {
           display: inline-flex;
-          padding: 0.35rem;
-          border-radius: 999px;
-          border: 1px solid var(--border-color);
-          background: var(--bg-primary);
-          box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-          gap: 0.25rem;
-          max-width: 100%;
-          overflow-x: auto;
+          background: rgba(255, 255, 255, 0.7);
+          backdrop-filter: blur(12px);
+          padding: 3px;
+          border-radius: 99px;
+          border: 1px solid rgba(255, 255, 255, 0.6);
+          box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+          gap: 3px;
         }
         .submenu-btn {
           background: transparent;
           border: none;
-          padding: 0.6rem 1.25rem;
-          border-radius: 999px;
-          font-family: var(--font-heading);
+          padding: 6px 14px;
+          border-radius: 99px;
           font-weight: 600;
-          font-size: 0.85rem;
-          color: var(--text-secondary);
+          font-size: 0.8rem;
+          color: var(--text-muted);
           cursor: pointer;
-          transition: all var(--transition-fast);
-          white-space: nowrap;
+          transition: all 0.2s;
         }
         .submenu-btn:hover {
-          color: var(--text-primary);
-          background: rgba(150, 150, 150, 0.08);
+          color: var(--text-strong);
+          background: rgba(255,255,255,0.5);
         }
         .submenu-btn.active {
-          background: var(--text-primary);
-          color: var(--bg-primary);
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          background: var(--text-strong);
+          color: var(--bg-main);
+          box-shadow: var(--shadow-md);
         }
 
-        /* ── Fixed-Height Content Card ── */
-        .content-card-wrapper {
-          padding: 0;
-          width: 100%;
+        /* ── Content Card (Fixed Container) ── */
+        .main-content {
+          margin-top: -0.75rem;
+          position: relative;
+          z-index: 10;
         }
         .content-card {
-          background-color: var(--bg-secondary);
-          border-radius: var(--radius-2xl);
-          padding: 1rem;
-          box-shadow: 0 8px 30px rgba(0,0,0,0.04);
-          border: 1px solid var(--border-color);
-          position: relative;
+          background: var(--bg-main);
+          border-radius: var(--radius);
+          padding: 1.5rem;
+          box-shadow: var(--shadow-md);
+          border: 1px solid var(--border);
+          min-height: 250px;
         }
 
         /* ── Animations ── */
         .fade-enter {
-          animation: fadeEnter 0.4s ease-out forwards;
+          animation: fadeSlideUp 0.4s ease-out forwards;
         }
-        @keyframes fadeEnter {
+        @keyframes fadeSlideUp {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
         }
 
-        /* ── Layout Grids ── */
+        /* ── Story Section ── */
         .about-grid {
           display: grid;
-          grid-template-columns: 1.1fr 0.9fr;
-          gap: 1rem;
-          align-items: center; /* Changed from stretch to center to match content height */
+          grid-template-columns: 1fr auto;
+          gap: 1.5rem;
+          align-items: center;
         }
-        .about-content {
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
+        .story-title {
+          font-size: 1.3rem;
+          font-weight: 700;
+          color: var(--text-strong);
+          margin: 0 0 6px;
+          letter-spacing: -0.02em;
         }
-        .about-content h2 {
-          font-size: 2rem;
-          margin-bottom: 0.5rem;
-          color: var(--text-primary);
+        .story-paragraph {
+          font-size: 0.85rem;
+          color: var(--text-base);
+          line-height: 1.4;
+          margin-bottom: 1rem;
         }
-        .about-content p {
-          color: var(--text-secondary);
-          line-height: 1.7;
-          font-size: 0.95rem;
+        .story-paragraph p {
+          margin-bottom: 0.4rem;
         }
-
-        /* Stats */
-        .stat-row {
-          display: flex;
-          gap: 1rem;
-          margin-top: 0.5rem;
-        }
-        .stat-item {
-          display: flex;
-          flex-direction: column;
-        }
-        .stat-num {
-          font-size: 2rem;
-          font-weight: 800;
-          color: var(--primary-color);
-          font-family: var(--font-heading);
-          line-height: 1.1;
-        }
-        .stat-lbl {
-          font-size: 0.8rem;
-          color: var(--text-muted);
-          margin-top: 0.35rem;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-        }
-
-        /* Responsive Images & Maps */
-        .about-img-box, .plant-map-box {
-          width: 85%;
-          margin: 0 auto;
-          border-radius: var(--radius-2xl); /* Match large rounded corners */
+        .story-img-col {
+          border-radius: var(--radius);
           overflow: hidden;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-          border: 1px solid var(--border-color);
-          display: flex;
-          aspect-ratio: 4/3; /* Enforce height proportionally to keep it matched to text */
+          box-shadow: var(--shadow-md);
+          width: 400px;
+          aspect-ratio: 3/2;
+          background: var(--bg-alt);
+          flex-shrink: 0;
         }
-        .about-img-box img {
+        .story-img-col img {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          display: block;
+          transition: transform 0.5s ease;
         }
-        .about-water-mark {
-          width: 100%;
+        .story-img-col:hover img {
+          transform: scale(1.02);
+        }
+
+        /* ── Feature Row ── */
+        .feature-row {
           display: grid;
-          place-items: center;
-          color: rgba(255, 255, 255, 0.92);
-          background: radial-gradient(circle at 35% 25%, #7dd3fc, #0284c7 55%, #075985);
-          font-size: clamp(2.5rem, 8vw, 6rem);
-          font-weight: 900;
-          letter-spacing: 0.12em;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 6px;
         }
-        .map-placeholder {
-          height: 100%;
-          width: 100%;
+        .feature-card {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          background: var(--bg-alt);
+          padding: 6px 10px;
+          border-radius: 8px;
+          border: 1px solid var(--border);
+          transition: all 0.2s;
+        }
+        .feature-card:hover {
+          background: var(--brand-light);
+          border-color: #bae6fd;
+          transform: translateY(-1px);
+          box-shadow: var(--shadow-sm);
+        }
+        .feat-icon {
+          font-size: 1rem;
+          background: var(--bg-main);
+          width: 24px;
+          height: 24px;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: var(--bg-primary);
+          border-radius: 6px;
+          box-shadow: var(--shadow-sm);
+          flex-shrink: 0;
+        }
+        .feat-text {
+          display: flex;
+          flex-direction: column;
+        }
+        .feat-text strong {
+          font-size: 0.8rem;
+          color: var(--text-strong);
+        }
+        .feat-text span {
+          font-size: 0.7rem;
           color: var(--text-muted);
         }
 
-        /* ── Accordion (Quality Section) ── */
-        .quality-intro {
-          text-align: center;
-          max-width: 600px;
-          margin: 0 auto 0.5rem;
-        }
-        .quality-intro h2 {
-          font-size: 1.8rem;
-          margin-bottom: 0.5rem;
-        }
-        .quality-intro p {
-          color: var(--text-secondary);
-          line-height: 1.6;
-          font-size: 0.95rem;
-        }
-        .faq-content { max-width: 860px; margin: 0 auto; }
-        .faq-empty { color: var(--text-secondary); text-align: center; }
-
-        .steps-grid {
+        /* ── Purification (5x2 Grid) ── */
+        .purification-grid {
           display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 0.25rem;
-          align-items: start;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 8px;
         }
-
-        .accordion-item {
-          background: var(--bg-primary);
-          border-radius: var(--radius-lg);
-          border: 1px solid var(--border-color);
+        .step-card {
+          background: var(--bg-alt);
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          padding: 10px;
+          cursor: pointer;
+          transition: all 0.2s;
+          position: relative;
           overflow: hidden;
-          transition: all 0.25s ease;
-          height: fit-content;
         }
-        .accordion-item:hover {
-          border-color: rgba(0, 150, 58, 0.4);
-          background: rgba(0, 150, 58, 0.01);
+        .step-card:hover {
+          background: var(--bg-main);
+          border-color: var(--brand-blue);
+          box-shadow: var(--shadow-hover);
         }
-        .accordion-item.open {
-          border-color: var(--primary-color);
-          background: rgba(0, 150, 58, 0.02);
-          box-shadow: none;
+        .step-card.active {
+          background: var(--bg-main);
+          border-color: var(--brand-blue);
+          box-shadow: var(--shadow-hover);
         }
-        .accordion-header {
-          width: 100%;
+        .step-header {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 4px;
+        }
+        .step-badge {
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          padding: 0.6rem 0.75rem;
-          background: transparent;
-          border: none;
-          cursor: pointer;
-          color: var(--text-primary);
+          gap: 4px;
         }
-        .accordion-header h4 {
-          font-size: 0.85rem;
+        .step-num {
+          font-size: 0.7rem;
+          font-weight: 700;
+          color: var(--brand-blue);
+          background: var(--brand-light);
+          padding: 2px 6px;
+          border-radius: 99px;
+        }
+        .step-icon {
+          font-size: 1rem;
+        }
+        .step-title {
+          font-size: 0.8rem;
           font-weight: 600;
-          margin: 0;
-          text-align: left;
+          color: var(--text-strong);
+          line-height: 1.2;
         }
-        .chevron {
-          color: var(--text-muted);
-          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s;
-          flex-shrink: 0;
-          margin-left: 0.5rem;
+        .step-card.active .step-title {
+          color: var(--brand-blue);
         }
-        .accordion-item.open .chevron {
-          transform: rotate(180deg);
-          color: var(--primary-color);
-        }
-        .accordion-item.open .accordion-header h4 {
-          color: var(--primary-color);
-        }
-        .accordion-content-wrapper {
+        .step-desc-wrapper {
           display: grid;
           grid-template-rows: 0fr;
-          transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: grid-template-rows 0.25s ease-out;
         }
-        .accordion-item.open .accordion-content-wrapper {
+        .step-card.active .step-desc-wrapper {
           grid-template-rows: 1fr;
         }
-        .accordion-content {
+        .step-desc {
           overflow: hidden;
-        }
-        .accordion-content p {
-          padding: 0 0.75rem 0.75rem;
+          font-size: 0.75rem;
+          color: var(--text-base);
           margin: 0;
-          color: var(--text-secondary);
-          font-size: 0.8rem;
-          line-height: 1.45;
+          padding-top: 0;
+          line-height: 1.3;
+        }
+        .step-card.active .step-desc {
+          padding-top: 8px;
         }
 
-        .plant-info-card {
-          margin-top: 0.5rem;
-          padding: 1rem;
-          border-radius: var(--radius-lg);
-          border-left: 4px solid var(--primary-color);
-          background: var(--bg-primary);
-          border: 1px solid var(--border-color);
-          border-left-width: 4px;
+        /* ── Infrastructure ── */
+        .infra-grid {
+          display: grid;
+          grid-template-columns: 1fr auto;
+          gap: 1.5rem;
+          align-items: center;
         }
-        .plant-info-card h4 {
-          margin-bottom: 0.5rem;
-          font-size: 0.95rem;
-          color: var(--text-primary);
+        .highlight-list {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          margin-top: 1rem;
         }
-        .plant-info-card p {
+        .highlight-item {
+          display: flex;
+          gap: 12px;
+          align-items: center;
+          background: var(--bg-alt);
+          padding: 8px 12px;
+          border-radius: 8px;
+          border: 1px solid var(--border);
+        }
+        .hl-icon {
+          font-size: 1.1rem;
+          background: var(--bg-main);
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 8px;
+          flex-shrink: 0;
+          box-shadow: var(--shadow-sm);
+        }
+        .highlight-item strong {
+          display: block;
+          font-size: 0.85rem;
+          color: var(--text-strong);
+          margin-bottom: 2px;
+        }
+        .highlight-item p {
           margin: 0;
+          font-size: 0.75rem;
+          color: var(--text-muted);
+        }
+        .infra-map {
+          width: 275px;
+          height: 240px;
+          border-radius: var(--radius);
+          overflow: hidden;
+          border: 1px solid var(--border);
+          box-shadow: var(--shadow-md);
+        }
+        .infra-map iframe {
+          width: 100%;
+          height: 100%;
+          border: none;
+        }
+        .map-fallback {
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--bg-alt);
+          color: var(--text-muted);
           font-size: 0.9rem;
         }
 
+        /* ── FAQs ── */
+        .faq-grid {
+          display: grid;
+          grid-template-columns: 1fr auto;
+          gap: 1.5rem;
+          align-items: flex-start;
+        }
+        .faq-content {
+          display: flex;
+          flex-direction: column;
+        }
+        .faq-container {
+          margin-top: 1rem;
+        }
+        .faq-visual {
+          width: 240px;
+          display: flex;
+          align-items: center;
+        }
+        .support-card {
+          width: 100%;
+          aspect-ratio: 1;
+          background: linear-gradient(135deg, var(--brand-light) 0%, #ffffff 100%);
+          border-radius: var(--radius);
+          border: 1px solid var(--border);
+          box-shadow: var(--shadow-md);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          padding: 1.5rem;
+          gap: 0.5rem;
+        }
+        .support-icon {
+          font-size: 2.5rem;
+          margin-bottom: 0.5rem;
+        }
+        .support-card h3 {
+          font-size: 0.95rem;
+          font-weight: 700;
+          color: var(--brand-blue);
+          margin: 0;
+        }
+        .support-card p {
+          font-size: 0.75rem;
+          color: var(--text-muted);
+          margin: 0 0 0.5rem 0;
+          line-height: 1.4;
+        }
+        .support-link {
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: var(--brand-blue);
+          text-decoration: none;
+          background: white;
+          padding: 6px 16px;
+          border-radius: 99px;
+          box-shadow: var(--shadow-sm);
+          transition: all 0.2s;
+        }
+        .support-link:hover {
+          transform: translateY(-2px);
+          box-shadow: var(--shadow-md);
+        }
+
+        /* ── Responsive ── */
         @media (max-width: 1024px) {
-          .content-card {
-            padding: 1.25rem;
-          }
-          .about-grid {
+          .content-card { padding: 1.5rem; }
+          .purification-grid { grid-template-columns: repeat(3, 1fr); }
+          .infra-map { aspect-ratio: 4/3; }
+        }
+        
+        @media (max-width: 768px) {
+          .about-grid, .infra-grid, .faq-grid {
             grid-template-columns: 1fr;
             gap: 1.5rem;
           }
-          .about-img-box, .plant-map-box {
-            aspect-ratio: 16/9;
+          .story-img-col, .infra-map, .faq-visual {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
           }
-          .stat-row {
-            flex-wrap: wrap;
-            gap: 1.5rem;
+          .purification-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+          .submenu-container {
+            width: 100%;
+            overflow-x: auto;
+            justify-content: flex-start;
           }
         }
         
-        @media (max-width: 640px) {
-          .content-card {
-            border-radius: var(--radius-xl);
-            padding: 1.25rem;
-          }
-          .submenu-btn {
-            padding: 0.5rem 1rem;
-            font-size: 0.8rem;
-          }
-          .about-content h2 {
-            font-size: 1.6rem;
-          }
-          .about-img-box, .plant-map-box {
-            aspect-ratio: 4/3;
-          }
-          .steps-grid {
-            grid-template-columns: 1fr;
-          }
+        @media (max-width: 480px) {
+          .feature-row { grid-template-columns: 1fr; }
+          .purification-grid { grid-template-columns: 1fr; }
+          .content-card { padding: 1.5rem; }
         }
       `}</style>
     </div>
   );
 }
+
