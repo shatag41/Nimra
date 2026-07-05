@@ -288,10 +288,6 @@ export default function HomeClient({ banners: initialBanners, products: initialP
                   </div>
                 ))}
               </div>
-              <Link href="/about" className="btn btn-primary story-cta">
-                Discover Our Standards
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-              </Link>
             </div>
 
             <div className="story-image-container">
@@ -320,6 +316,12 @@ export default function HomeClient({ banners: initialBanners, products: initialP
                 <span>Since 2018</span>
               </div>
             </div>
+          </div>
+          <div className="story-cta-wrap">
+            <Link href="/about" className="btn btn-primary story-cta">
+              Discover Our Standards
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </Link>
           </div>
         </div>
       </section>
@@ -876,7 +878,16 @@ export default function HomeClient({ banners: initialBanners, products: initialP
         .value-item h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.2rem; }
         .value-item p  { font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
         
-        .story-cta { margin-top: 1rem; }
+        .story-cta-wrap {
+          display: flex;
+          justify-content: center;
+          width: 100%;
+          margin-top: 1rem;
+        }
+
+        .story-cta {
+          margin: 0;
+        }
 
         /* ── Products ───────────────────────────────────────────────────────── */
         .product-preview-section {

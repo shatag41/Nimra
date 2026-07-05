@@ -2027,7 +2027,9 @@ body {
 
 .story-cta {
   margin-top: 2rem;
-  display: inline-flex;
+  display: flex;
+  width: fit-content;
+  margin-inline: auto;
 }
 
 section,
@@ -10993,7 +10995,7 @@ table {
 }
 
 .product-preview-section .product-section-compact .view-all-wrap {
-  justify-content: flex-start !important;
+  justify-content: center !important;
   margin: 0.65rem 0 0 !important;
 }
 
