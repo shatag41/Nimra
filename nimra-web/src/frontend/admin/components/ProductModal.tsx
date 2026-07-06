@@ -18,6 +18,9 @@ export default function ProductModal({
   onSubmit,
   saveLoading,
 }: ProductModalProps) {
+  const isUpcomingProduct = /upcoming/i.test(String(editingProduct.Category || ''))
+    || /coming|soon|pre.?launch/i.test(String(editingProduct.StockStatus || ''));
+
   return (
     <div className="modal-backdrop glass">
       <div className="modal-card animate-fade-in">
@@ -94,7 +97,7 @@ export default function ProductModal({
               label="Product Image"
               required
               scope="products"
-              aspect="product"
+              aspect={isUpcomingProduct ? 'upcoming' : 'product'}
               value={editingProduct.ImageUrl || ''}
               onChange={(url) => setEditingProduct(prev => prev ? ({ ...prev, ImageUrl: url }) : null)}
               disabled={saveLoading}

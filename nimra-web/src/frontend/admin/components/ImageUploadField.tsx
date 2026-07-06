@@ -7,7 +7,7 @@ interface ImageUploadFieldProps {
   label: string;
   value?: string;
   scope: 'products' | 'banners';
-  aspect?: 'product' | 'wide';
+  aspect?: 'product' | 'upcoming' | 'wide';
   required?: boolean;
   disabled?: boolean;
   onChange: (url: string) => void;
@@ -21,6 +21,10 @@ const WIDE_OUT_H = 900;
 
 function isProductRatio(width: number, height: number) {
   return width > 0 && height > 0 && width * PRODUCT_RATIO_H === height * PRODUCT_RATIO_W;
+}
+
+function isSquareRatio(width: number, height: number) {
+  return width > 0 && height > 0 && width === height;
 }
 
 function readFileAsDataUrl(file: File): Promise<string> {
@@ -108,6 +112,7 @@ export default function ImageUploadField({
     const formData = new FormData();
     formData.append('file', file);
     formData.append('scope', scope);
+    formData.append('imageKind', aspect);
 
     const res = await fetch('/api/upload', {
       method: 'POST',
@@ -141,6 +146,15 @@ export default function ImageUploadField({
       if (aspect === 'product') {
         if (!isProductRatio(img.width, img.height)) {
           throw new Error(`Product image must use a 3:4 ratio. Selected image is ${img.width}x${img.height}px.`);
+        }
+
+        await uploadFile(file);
+        return;
+      }
+
+      if (aspect === 'upcoming') {
+        if (!isSquareRatio(img.width, img.height)) {
+          throw new Error(`Upcoming product image must use a square 1:1 ratio. Selected image is ${img.width}x${img.height}px.`);
         }
 
         await uploadFile(file);
@@ -182,7 +196,11 @@ export default function ImageUploadField({
 
   const previewSrc = localPreview || getUploadImageUrl(value);
   const hasImage = Boolean(previewSrc);
-  const sizeLabel = aspect === 'product' ? '3:4 product image' : '1600 x 900px, 16:9 banner';
+  const sizeLabel = aspect === 'product'
+    ? '3:4 product image'
+    : aspect === 'upcoming'
+      ? '1:1 upcoming product image'
+      : '1600 x 900px, 16:9 banner';
 
   return (
     <div className={`form-group image-upload-field image-upload-field-${aspect}`}>
@@ -225,7 +243,7 @@ export default function ImageUploadField({
           <div className={`image-upload-preview ${aspect}`}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={previewSrc} alt={`${label} preview`} />
-            {uploading && <div className="image-upload-progress">{aspect === 'product' ? 'Validating and uploading...' : 'Optimizing and uploading...'}</div>}
+            {uploading && <div className="image-upload-progress">{aspect === 'wide' ? 'Optimizing and uploading...' : 'Validating and uploading...'}</div>}
           </div>
         ) : (
           <button
@@ -239,6 +257,8 @@ export default function ImageUploadField({
             <small>
               {aspect === 'product'
                 ? 'JPG, PNG, WebP, or GIF. Must be 3:4 ratio.'
+                : aspect === 'upcoming'
+                  ? 'Square 1:1 image. Transparent PNG preferred; the full product stays visible.'
                 : 'JPG, PNG, WebP, or GIF. Saved as 1600x900px.'}
             </small>
           </button>
@@ -267,11 +287,13 @@ export default function ImageUploadField({
       </div>
 
       {error && <p className="image-upload-error">{error}</p>}
-      {uploading && <p className="image-upload-note">{aspect === 'product' ? 'Validating and uploading...' : 'Resizing and uploading...'}</p>}
+      {uploading && <p className="image-upload-note">{aspect === 'wide' ? 'Resizing and uploading...' : 'Validating and uploading...'}</p>}
       {!error && !uploading && value && (
         <p className="image-upload-note">
           {aspect === 'product'
             ? 'Product images must remain 3:4 ratio.'
+            : aspect === 'upcoming'
+              ? 'Square images are centered and scaled uniformly without cropping. Transparent PNG is preferred.'
             : 'Saved image will display automatically on the site.'}
         </p>
       )}

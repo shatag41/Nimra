@@ -140,11 +140,16 @@ function isProductRatio(width: number, height: number) {
   return width > 0 && height > 0 && width * PRODUCT_RATIO_HEIGHT === height * PRODUCT_RATIO_WIDTH;
 }
 
+function isSquareRatio(width: number, height: number) {
+  return width > 0 && height > 0 && width === height;
+}
+
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
     const file = formData.get('file');
     const scopeValue = String(formData.get('scope') || 'products').toLowerCase();
+    const imageKind = String(formData.get('imageKind') || 'product').toLowerCase();
     if (!STORAGE_SCOPES.has(scopeValue)) {
       return NextResponse.json({ success: false, message: 'Invalid image storage scope.' }, { status: 400 });
     }
@@ -176,11 +181,16 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: false, message: 'Unable to verify product image dimensions.' }, { status: 400 });
       }
 
-      if (!isProductRatio(dimensions.width, dimensions.height)) {
+      const isUpcoming = imageKind === 'upcoming';
+      const hasValidRatio = isUpcoming
+        ? isSquareRatio(dimensions.width, dimensions.height)
+        : isProductRatio(dimensions.width, dimensions.height);
+
+      if (!hasValidRatio) {
         return NextResponse.json(
           {
             success: false,
-            message: `Product images must use a 3:4 ratio. Selected image is ${dimensions.width}x${dimensions.height}px.`,
+            message: `${isUpcoming ? 'Upcoming product images must use a square 1:1 ratio' : 'Product images must use a 3:4 ratio'}. Selected image is ${dimensions.width}x${dimensions.height}px.`,
           },
           { status: 400 }
         );
