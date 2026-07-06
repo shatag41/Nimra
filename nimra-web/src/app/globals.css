@@ -9723,6 +9723,12 @@ textarea,
   overflow-y: auto;
 }
 
+.header .profile-dropdown {
+  max-height: none !important;
+  overflow: hidden !important;
+  overflow-y: hidden !important;
+}
+
 .mobile-drawer {
   max-height: calc(100svh - 3.25rem);
   padding: var(--fluid-gutter);

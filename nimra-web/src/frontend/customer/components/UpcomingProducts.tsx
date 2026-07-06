@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Product } from '@/types/cms';
-import ProductImage from './ProductImage';
 
 interface UpcomingProductsProps {
   upcomingProducts: Product[];
@@ -129,13 +128,13 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
             <div className="rush-visual">
               <div className="product-spotlight" aria-hidden="true" />
               <div className="product-floor" aria-hidden="true" />
-              <div className="product-img-wrap">
-                <ProductImage
-                  src={product.ImageUrl}
-                  alt={product.Name}
-                  style={{ aspectRatio: '1 / 1', background: 'transparent', overflow: 'visible' }}
-                  imgStyle={{ width: '84%', height: '84%', objectFit: 'contain', objectPosition: 'center' }}
-                />
+              <div className="launch-product-wrap">
+                {product.ImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img className="launch-product-image" src={product.ImageUrl} alt={product.Name} />
+                ) : (
+                  <span className="launch-product-fallback">NIMRA</span>
+                )}
               </div>
 
               {hasMultipleProducts && (
@@ -185,7 +184,7 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
 
         .rush-inner {
           width: 100%;
-          padding: clamp(0.6rem, 1.1vw, 0.9rem) clamp(1rem, 2.6vw, 2.1rem);
+          padding: clamp(0.45rem, 0.8vw, 0.7rem) clamp(1rem, 2.6vw, 2.1rem);
           box-sizing: border-box;
           position: relative;
           z-index: 2;
@@ -235,7 +234,7 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
           font-size: clamp(1.35rem, 2.15vw, 1.9rem);
           font-weight: 900;
           color: white;
-          margin: 0.42rem 0 0.22rem;
+          margin: 0.32rem 0 0.18rem;
           letter-spacing: -0.035em;
           line-height: 1.04;
         }
@@ -246,11 +245,11 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
           -webkit-text-fill-color: transparent;
         }
 
-        .rush-tagline { margin: 0 0 0.24rem; color: #fed7aa; font-size: clamp(0.72rem, 0.68rem + 0.18vw, 0.82rem); font-weight: 700; }
+        .rush-tagline { margin: 0 0 0.18rem; color: #fed7aa; font-size: clamp(0.72rem, 0.68rem + 0.18vw, 0.82rem); font-weight: 700; }
         .rush-text {
           color: rgba(255, 255, 255, 0.68);
           line-height: 1.38;
-          margin: 0 0 0.55rem;
+          margin: 0 0 0.42rem;
           font-size: clamp(0.72rem, 0.68rem + 0.16vw, 0.82rem);
           max-width: 41rem;
           display: -webkit-box;
@@ -259,7 +258,7 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
           overflow: hidden;
         }
 
-        .rush-features { display: flex; gap: 0.36rem; flex-wrap: wrap; margin-bottom: 0.65rem; }
+        .rush-features { display: flex; gap: 0.36rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
         .rush-pill {
           padding: 0.23rem 0.62rem;
           border-radius: 999px;
@@ -296,7 +295,7 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
         .btn-rush:hover .bell-icon { animation: bellRing 620ms ease-in-out; transform-origin: 50% 12%; }
         .showcase-column { display: grid; justify-items: center; align-content: center; min-width: 0; }
         .rush-visual {
-          --showcase-size: clamp(180px, 21.5vw, 280px);
+          --showcase-size: clamp(170px, 19.5vw, 248px);
           width: var(--showcase-size);
           height: var(--showcase-size);
           display: grid;
@@ -308,6 +307,7 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
           background: linear-gradient(145deg, rgba(255,255,255,0.09), rgba(255,255,255,0.025));
           box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -22px 42px rgba(249,115,22,0.035), 0 20px 52px rgba(0,0,0,0.22);
           backdrop-filter: blur(14px);
+          overflow: hidden;
         }
 
         .product-spotlight {
@@ -333,7 +333,7 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
           opacity: 0.72;
         }
 
-        .product-img-wrap {
+        .launch-product-wrap {
           width: 100%;
           height: 100%;
           display: grid;
@@ -343,7 +343,30 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
           transition: transform 350ms cubic-bezier(0.22, 1, 0.36, 1), filter 350ms ease;
         }
 
-        .rush-visual:hover .product-img-wrap { transform: scale(1.03); filter: drop-shadow(0 17px 18px rgba(0,0,0,0.3)) drop-shadow(0 0 18px rgba(249,115,22,0.25)); }
+        .launch-product-image {
+          width: 100%;
+          height: 100%;
+          max-width: 100%;
+          max-height: 100%;
+          display: block;
+          object-fit: cover;
+          object-position: center;
+          border-radius: 22px;
+        }
+
+        .launch-product-fallback {
+          display: grid;
+          place-items: center;
+          width: 84%;
+          height: 84%;
+          border-radius: 18px;
+          color: rgba(255,255,255,0.78);
+          background: linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+          font-weight: 850;
+          letter-spacing: 0.16em;
+        }
+
+        .rush-visual:hover .launch-product-wrap { transform: scale(1.03); filter: drop-shadow(0 17px 18px rgba(0,0,0,0.3)) drop-shadow(0 0 18px rgba(249,115,22,0.25)); }
         .showcase-arrow {
           position: absolute;
           z-index: 4;
@@ -369,7 +392,7 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
         .showcase-arrow svg { width: 1rem; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
         .arrow-previous { left: 0.7rem; }
         .arrow-next { right: 0.7rem; }
-        .showcase-dots { display: flex; justify-content: center; gap: 0.42rem; margin-top: 0.48rem; }
+        .showcase-dots { display: flex; justify-content: center; gap: 0.42rem; margin-top: 0.34rem; }
         .showcase-dots button {
           width: 0.42rem;
           height: 0.42rem;
@@ -391,16 +414,16 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
 
         @media (max-width: 1024px) {
           .rush-grid { grid-template-columns: minmax(0, 1.25fr) minmax(210px, 0.75fr); gap: clamp(1rem, 3vw, 2rem); }
-          .rush-visual { --showcase-size: clamp(190px, 25vw, 240px); }
+          .rush-visual { --showcase-size: clamp(175px, 23vw, 220px); }
         }
 
         @media (max-width: 720px) {
           .rush-section { width: min(100% - 0.75rem, 100%); border-radius: var(--radius-lg); }
-          .rush-inner { padding: 0.8rem 0.75rem 0.95rem; }
-          .rush-grid { grid-template-columns: 1fr; gap: 0.7rem; text-align: center; }
+          .rush-inner { padding: 0.65rem 0.75rem 0.78rem; }
+          .rush-grid { grid-template-columns: 1fr; gap: 0.55rem; text-align: center; }
           .showcase-column { grid-row: 1; }
           .rush-content { grid-row: 2; align-items: center; }
-          .rush-visual { --showcase-size: min(220px, 54vw); }
+          .rush-visual { --showcase-size: min(200px, 50vw); }
           .rush-title { font-size: clamp(1.2rem, 6vw, 1.55rem); }
           .rush-text { font-size: 0.72rem; max-width: 34rem; }
           .rush-features { justify-content: center; }
@@ -408,8 +431,8 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .rush-grid, .product-img-wrap, .product-spotlight, .bubble { animation: none; }
-          .btn-rush, .showcase-arrow, .showcase-dots button, .product-img-wrap { transition: none; }
+          .rush-grid, .launch-product-wrap, .product-spotlight, .bubble { animation: none; }
+          .btn-rush, .showcase-arrow, .showcase-dots button, .launch-product-wrap { transition: none; }
         }
       `}</style>
     </section>

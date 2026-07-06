@@ -98,11 +98,11 @@
       "Volume": "500ml",
       "Price": "25.00",
       "Description": "Upcoming extra-fizzy RUSH soda made on NIMRA's purified water base.",
-      "ImageUrl": "products/1783273664760-6a522bc4-bc84-477c-adb9-badd2f033a33.png",
+      "ImageUrl": "products/1783340648242-355f3446-7165-49d8-b1a8-509692d2a33f.png",
       "Specifications": "Coming soon, carbonated beverage, launch stock managed from Sheets",
       "StockStatus": "Coming Soon",
       "Active": true,
-      "oldImagePath": "/uploads/products/1783193811321-e1a32cc5-a45c-44f5-971a-d0f397e2eec3.png"
+      "oldImagePath": "/uploads/products/1783273664760-6a522bc4-bc84-477c-adb9-badd2f033a33.png"
     },
     {
       "ID": 3,
@@ -125,10 +125,10 @@
       "Volume": "100L",
       "Price": "500",
       "Description": "Experience hydration at its finest with NIMRA Premium Packaged Drinking Water—crafted for those who value uncompromising purity, refreshing taste, and premium quality. Every bottle undergoes a rigorous multi-stage purification process to ensure crystal-clear, safe, and refreshing drinking water in every sip.",
-      "ImageUrl": "products/1783335710147-769f5bfb-b6e9-41d3-93f9-f4d8c8c17a32.png",
+      "ImageUrl": "products/1783339684969-9e088760-734a-408d-bf20-473275e83fa8.png",
       "Active": true,
       "Specifications": "💧 99.9% Pure & Safe Advanced multi-stage purification ensures exceptional purity and consistent quality.  🛡️ Quality Assured Processed and bottled under strict hygiene standards for maximum safety and freshness.  ⚖️ Balanced Mineral Composition Carefully maintained mineral balance for a crisp, refreshing taste.",
-      "oldImagePath": "/uploads/products/1783106715502-d19d54f6-9167-449d-a6f2-5d9aa6775c49.png",
+      "oldImagePath": "/uploads/products/1783335710147-769f5bfb-b6e9-41d3-93f9-f4d8c8c17a32.png",
       "ID": 8
     }
   ],
