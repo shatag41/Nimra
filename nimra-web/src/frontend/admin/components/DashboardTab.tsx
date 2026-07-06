@@ -519,7 +519,7 @@ const DashboardTab = React.memo(function DashboardTab({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1.25rem', width: '100%' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.65rem', color: 'var(--text-primary)' }}>
-            👤 Customer Activity Dashboard
+            Customer Activity Dashboard
           </h2>
           <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
             Live enterprise e-commerce metrics, order trends, and customer analytics.
@@ -767,13 +767,13 @@ const DashboardTab = React.memo(function DashboardTab({
       {/* 5. Live Charts (Growth Trends & Peak Hours) */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
         <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          📈 Behavioral Trends & Sales Charts
+          Behavioral Trends & Sales Charts
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', width: '100%' }}>
           
           {/* Customer Growth & Order Trends */}
           <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', position: 'relative' }}>
-            <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '0.9rem', fontWeight: 700 }}>📈 Customer Growth & Order Trends</h4>
+            <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '0.9rem', fontWeight: 700 }}>Customer Growth & Order Trends</h4>
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.75rem', fontSize: '0.75rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                 <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--primary-color)', display: 'inline-block' }} />
@@ -869,7 +869,7 @@ const DashboardTab = React.memo(function DashboardTab({
       {/* 6. Drill-down Panels Grid */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
         <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          🔍 Customer Activity Drill-downs
+          Customer Activity Drill-downs
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem', width: '100%' }}>
           
@@ -1011,7 +1011,7 @@ const DashboardTab = React.memo(function DashboardTab({
           <div className="activity-card glass cancellation-card" style={{ margin: 0, padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', gridColumn: '1 / -1' }}>
             <div className="activity-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: 0, padding: 0 }}>
               <div>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>🛡️ Cancellation Audit Reviews</h3>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Cancellation Audit Reviews</h3>
                 <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Review customer requests before an order is cancelled.</p>
               </div>
               <button
