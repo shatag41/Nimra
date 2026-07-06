@@ -305,7 +305,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                         className="btn btn-primary card-add-btn"
                         onClick={handleAdd}
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
                           <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
                         </svg>
@@ -351,7 +351,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           border-radius: 16px;
           width: min(850px, 92vw);
           max-width: 100%;
-          max-height: 90vh;
+          max-height: 72vh;
           display: flex;
           flex-direction: column;
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
@@ -502,31 +502,36 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           background: #fbfbfc;
           border-left: 1px solid rgba(0, 0, 0, 0.05);
           position: relative;
-          overflow-y: auto;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
         }
 
         .elegant-action-card {
-          padding: 20px 24px;
+          padding: 16px 20px;
           display: flex;
           flex-direction: column;
-          gap: 16px;
-          position: sticky;
-          top: 0;
+          gap: 12px;
+          height: 100%;
         }
 
-        /* Product Media Box — strict 4:5 portrait, matching every product card */
+        /* Product Media Box — Flexible to fit available height */
         .card-media-box {
           width: 100%;
-          aspect-ratio: 3 / 4;
+          flex: 1;
+          min-height: 150px;
           border-radius: 8px;
           overflow: hidden;
           background: var(--product-img-bg, #f4f6f8);
           border: 1px solid rgba(0, 0, 0, 0.04);
           box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+          position: relative;
         }
         .card-media-box .product-image-container {
           border-radius: 0 !important;
           background: transparent !important;
+          height: 100% !important;
+          aspect-ratio: unset !important;
         }
         .card-media-box:hover .product-img {
           transform: scale(1.04);
@@ -595,14 +600,15 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           gap: 0.5rem;
         }
         .card-add-btn {
-          width: 100%;
+          width: 85%;
+          margin: 0 auto;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          gap: 0.4rem;
+          gap: 0.35rem;
           font-weight: 700;
-          padding: 0.5rem 1rem;
-          font-size: 0.8rem;
+          padding: 0.4rem 0.8rem;
+          font-size: 0.75rem;
           border-radius: 6px;
           border: none;
           cursor: pointer;
@@ -620,10 +626,12 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
         .card-qty-box {
           display: flex;
           flex-direction: column;
-          gap: 0.25rem;
+          gap: 0.2rem;
+          width: 85%;
+          margin: 0 auto;
         }
         .qty-lbl {
-          font-size: 0.75rem;
+          font-size: 0.65rem;
           font-weight: 600;
           color: var(--text-secondary);
         }
@@ -631,19 +639,19 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           display: flex;
           align-items: center;
           justify-content: space-between;
-          border: 2px solid var(--primary-color);
+          border: 1.5px solid var(--primary-color);
           border-radius: 6px;
           background: #ffffff;
           overflow: hidden;
-          height: 2rem;
+          height: 1.65rem;
         }
         .qty-btn {
           background: transparent;
           border: none;
           color: var(--primary-color);
-          width: 2rem;
+          width: 1.65rem;
           height: 100%;
-          font-size: 1rem;
+          font-size: 0.85rem;
           font-weight: 700;
           cursor: pointer;
           transition: background 0.2s;
@@ -656,7 +664,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
         }
         .qty-count {
           font-weight: 700;
-          font-size: 0.95rem;
+          font-size: 0.8rem;
           color: var(--text-primary);
         }
 
@@ -715,6 +723,13 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           .elegant-action-card {
             padding: 16px;
             position: static;
+          }
+          .card-media-box {
+            aspect-ratio: 3 / 4;
+            flex: none;
+          }
+          .card-media-box .product-image-container {
+            aspect-ratio: 3 / 4 !important;
           }
           .info-main-title {
             font-size: 1.25rem;
