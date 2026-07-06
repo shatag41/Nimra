@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CompanyInfo, FAQ } from '@/types/cms';
-import { FAQs } from './portal/FAQs';
+import FAQSection from './FAQSection';
 
 interface AboutClientProps {
   companyInfo: CompanyInfo;
@@ -26,11 +26,6 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
   const [activeStep, setActiveStep] = useState<number | null>(null);
   
   const plantMapUrl = getMapEmbedUrl(companyInfo.PlantMapEmbed, companyInfo.PlantAddress);
-  const activeFaqs = useMemo(
-    () => (faqs || []).filter((faq) => faq.Active !== false && String(faq.Active).toLowerCase() !== 'false'),
-    [faqs]
-  );
-
   useEffect(() => {
     const syncSectionFromHash = () => {
       if (window.location.hash.toLowerCase() === '#faqs') setActiveSection('faqs');
@@ -205,23 +200,8 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
 
           {/* Section: FAQs */}
           {activeSection === 'faqs' && (
-            <div id="faqs" className="fade-enter faq-grid">
-              <div className="faq-content">
-                <h2 className="section-title">Common Questions</h2>
-                <p className="story-paragraph">Everything you need to know about our premium water, quality standards, and delivery services.</p>
-                <div className="faq-container">
-                  {activeFaqs.length > 0 ? <FAQs faqs={activeFaqs} variant="compact" /> : <p className="text-muted text-center">No FAQs are available right now.</p>}
-                </div>
-              </div>
-              
-              <div className="faq-visual">
-                <div className="support-card">
-                  <div className="support-icon">💬</div>
-                  <h3>Still have questions?</h3>
-                  <p>Our dedicated support team is available 24/7 to assist you.</p>
-                  <a href="/contact" className="support-link">Contact Support →</a>
-                </div>
-              </div>
+            <div id="faqs" className="fade-enter">
+              <FAQSection faqs={faqs} />
             </div>
           )}
 
@@ -614,72 +594,6 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
           font-size: 0.9rem;
         }
 
-        /* ── FAQs ── */
-        .faq-grid {
-          display: grid;
-          grid-template-columns: 1fr auto;
-          gap: 1.5rem;
-          align-items: flex-start;
-        }
-        .faq-content {
-          display: flex;
-          flex-direction: column;
-        }
-        .faq-container {
-          margin-top: 1rem;
-        }
-        .faq-visual {
-          width: 240px;
-          display: flex;
-          align-items: center;
-        }
-        .support-card {
-          width: 100%;
-          aspect-ratio: 1;
-          background: linear-gradient(135deg, var(--brand-light) 0%, #ffffff 100%);
-          border-radius: var(--radius);
-          border: 1px solid var(--border);
-          box-shadow: var(--shadow-md);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          text-align: center;
-          padding: 1.5rem;
-          gap: 0.5rem;
-        }
-        .support-icon {
-          font-size: 2.5rem;
-          margin-bottom: 0.5rem;
-        }
-        .support-card h3 {
-          font-size: 0.95rem;
-          font-weight: 700;
-          color: var(--brand-blue);
-          margin: 0;
-        }
-        .support-card p {
-          font-size: 0.75rem;
-          color: var(--text-muted);
-          margin: 0 0 0.5rem 0;
-          line-height: 1.4;
-        }
-        .support-link {
-          font-size: 0.75rem;
-          font-weight: 600;
-          color: var(--brand-blue);
-          text-decoration: none;
-          background: white;
-          padding: 6px 16px;
-          border-radius: 99px;
-          box-shadow: var(--shadow-sm);
-          transition: all 0.2s;
-        }
-        .support-link:hover {
-          transform: translateY(-2px);
-          box-shadow: var(--shadow-md);
-        }
-
         /* ── Responsive ── */
         @media (max-width: 1024px) {
           .content-card { padding: 1.5rem; }
@@ -688,11 +602,11 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         }
         
         @media (max-width: 768px) {
-          .about-grid, .infra-grid, .faq-grid {
+          .about-grid, .infra-grid {
             grid-template-columns: 1fr;
             gap: 1.5rem;
           }
-          .story-img-col, .infra-map, .faq-visual {
+          .story-img-col, .infra-map {
             width: 100%;
             max-width: 400px;
             margin: 0 auto;

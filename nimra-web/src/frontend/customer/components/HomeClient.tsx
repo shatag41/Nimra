@@ -4,10 +4,8 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Link from 'next/link';
 import Image from 'next/image';
 import { Banner, Product, FAQ, CompanyInfo } from '@/types/cms';
-import ProductImage from './ProductImage';
 import { useCMSData } from '@/frontend/customer/hooks/useCMSData';
-import { FAQs } from './portal/FAQs';
-import ProductDetailModal from './portal/ProductDetailModal';
+import FAQSection from './FAQSection';
 import dynamic from 'next/dynamic';
 import { UpcomingProducts } from './UpcomingProducts';
 import { ProductSection } from './portal/Products';
@@ -139,10 +137,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
                 className="hero-slide-image"
               />
             )}
-            <div className="hero-depth hero-mountains" aria-hidden="true" />
-            <div className="hero-depth hero-cave" aria-hidden="true" />
             <div className="hero-depth hero-crystals" aria-hidden="true" />
-            <div className="hero-light-rays" aria-hidden="true" />
             <div className="hero-fog hero-fog-one" aria-hidden="true" />
             <div className="hero-fog hero-fog-two" aria-hidden="true" />
             <div className="hero-particles" aria-hidden="true">
@@ -350,13 +345,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
       {/* ─── 6. FAQ ─────────────────────────────────────────────────────────── */}
       <section className="faq-section">
         <div className="container">
-          <div className="section-header">
-            <span className="badge badge-primary">FAQ</span>
-            <h2>Frequently Asked Questions</h2>
-            <p>Everything you need to know about our quality standards, plant location, and delivery orders.</p>
-          </div>
-
-          <FAQs faqs={faqs} variant="compact" />
+          <FAQSection faqs={faqs} />
         </div>
       </section>
 
@@ -408,10 +397,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
         }
 
         .hero-depth { position: absolute; inset: -5%; pointer-events: none; will-change: transform; }
-        .hero-mountains { z-index: 0; opacity: .28; background: linear-gradient(155deg, transparent 45%, rgba(5,21,45,.85) 46% 61%, transparent 62%), linear-gradient(205deg, transparent 49%, rgba(13,46,77,.7) 50% 65%, transparent 66%); transform: translate3d(calc(var(--pointer-x) * -13px), calc(var(--pointer-y) * -8px),0); }
-        .hero-cave { z-index: 1; background: radial-gradient(ellipse at 64% 52%, transparent 0 29%, rgba(2,8,20,.26) 53%, rgba(1,5,14,.78) 78%); transform: translate3d(calc(var(--pointer-x) * 8px), calc(var(--pointer-y) * 5px),0) scale(1.03); }
         .hero-crystals { z-index: 2; opacity: .4; background: conic-gradient(from 190deg at 88% 82%, transparent 0 8%, rgba(96,165,250,.35) 9% 10%, transparent 11% 100%), conic-gradient(from 170deg at 75% 92%, transparent 0 10%, rgba(147,197,253,.28) 11% 12%, transparent 13% 100%); transform: translate3d(calc(var(--pointer-x) * 18px), calc(var(--pointer-y) * 12px),0); }
-        .hero-light-rays { position:absolute; inset:-30% -10%; z-index:2; opacity:.24; background: repeating-linear-gradient(112deg, transparent 0 11%, rgba(147,197,253,.2) 13%, transparent 17% 27%); filter: blur(10px); animation: raysDrift 14s ease-in-out infinite alternate; will-change: transform,opacity; }
         .hero-fog { position:absolute; z-index:3; width:65%; height:28%; border-radius:50%; background:rgba(174,220,255,.12); filter:blur(55px); will-change:transform; pointer-events:none; }
         .hero-fog-one { left:-20%; bottom:4%; animation:fogDrift 18s ease-in-out infinite alternate; }
         .hero-fog-two { right:-18%; top:15%; opacity:.55; animation:fogDrift 22s ease-in-out -7s infinite alternate-reverse; }
@@ -422,7 +408,6 @@ export default function HomeClient({ banners: initialBanners, products: initialP
         .hero-ripples i { position:absolute; inset:30%; border:1px solid rgba(147,197,253,.28); border-radius:50%; animation:ripple 6s ease-out infinite; }
         .hero-ripples i:nth-child(2){animation-delay:2s}.hero-ripples i:nth-child(3){animation-delay:4s}
         @keyframes cinematicZoom { to { transform:translate3d(calc(var(--pointer-x) * -8px),calc(var(--pointer-y) * -6px),0) scale(1.13); } }
-        @keyframes raysDrift { to { transform:translate3d(4%,2%,0) rotate(2deg); opacity:.38; } }
         @keyframes fogDrift { to { transform:translate3d(28%, -12%,0) scale(1.18); } }
         @keyframes bubbleRise { 0%{transform:translate3d(0,0,0) scale(.5);opacity:0} 15%{opacity:.75} 100%{transform:translate3d(18px,-105vh,0) scale(1.2);opacity:0} }
         @keyframes ripple { 0%{transform:scale(.35);opacity:0} 20%{opacity:.6} 100%{transform:scale(3.2);opacity:0} }
@@ -1049,26 +1034,6 @@ export default function HomeClient({ banners: initialBanners, products: initialP
           padding-bottom: 1.25rem;
         }
 
-        .faq-section .section-header {
-          margin-bottom: 1rem;
-        }
-
-        .faq-section .section-header .badge {
-          padding: 0.15rem 0.5rem;
-          font-size: 0.65rem;
-        }
-
-        .faq-section .section-header h2 {
-          margin-top: 0.4rem;
-          margin-bottom: 0.25rem;
-          font-size: clamp(1.2rem, 2vw, 1.4rem);
-        }
-
-        .faq-section .section-header p {
-          line-height: 1.35;
-          font-size: 0.8rem;
-        }
-
 
         /* ── Responsive ─────────────────────────────────────────────────────── */
         @media (max-width: 1024px) {
@@ -1111,13 +1076,12 @@ export default function HomeClient({ banners: initialBanners, products: initialP
           .hero-trust-bar { gap: 0.75rem; }
           .trust-divider { display: none; }
           .faq-section { padding-top: 1.25rem; padding-bottom: 1.25rem; }
-          .faq-section .section-header { margin-bottom: 1rem; }
         }
 
         @media (prefers-reduced-motion: reduce) {
           .hero-section *, .hero-section *::before, .hero-section *::after { animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
           .hero-slide-image, .hero-depth, .hero-visual-column, .hero-card, .hero-card-shell, .hero-card-cta { transform:none !important; }
-          .hero-particles, .hero-ripples, .hero-fog, .hero-light-rays { display:none; }
+          .hero-particles, .hero-ripples, .hero-fog { display:none; }
         }
       `}</style>
     </div>

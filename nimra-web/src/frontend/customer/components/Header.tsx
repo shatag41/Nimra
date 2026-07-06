@@ -19,7 +19,6 @@ interface HeaderProps {
 export default React.memo(function Header({ companyInfo }: HeaderProps) {
   const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState<AppTheme>('light');
-  const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
@@ -54,21 +53,6 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
       document.documentElement.classList.add('theme-transition');
     }, 150);
 
-    let scrollFrame = 0;
-    const getScrollThreshold = () => window.location.pathname === '/' ? 70 : 20;
-    let lastScrolled = window.scrollY > getScrollThreshold();
-    setIsScrolled(lastScrolled);
-    const handleScroll = () => {
-      if (scrollFrame) return;
-      scrollFrame = window.requestAnimationFrame(() => {
-        const nextScrolled = window.scrollY > getScrollThreshold();
-        if (nextScrolled !== lastScrolled) {
-          lastScrolled = nextScrolled;
-          setIsScrolled(nextScrolled);
-        }
-        scrollFrame = 0;
-      });
-    };
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Element;
       if (!target.closest('.profile-menu-container')) {
@@ -78,11 +62,8 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
         setNotificationDropdownOpen(false);
       }
     };
-    window.addEventListener('scroll', handleScroll, { passive: true });
     document.addEventListener('click', handleClickOutside);
     return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (scrollFrame) window.cancelAnimationFrame(scrollFrame);
       document.removeEventListener('click', handleClickOutside);
       window.removeEventListener(THEME_CHANGE_EVENT, handleThemeChange);
 
@@ -211,7 +192,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
 
   return (
     <>
-      <header className={`header ${pathname === '/' ? 'home-overlay' : ''} ${isScrolled ? 'scrolled' : ''}`}>
+      <header className={`header ${pathname === '/' ? 'home-overlay' : ''}`}>
         {/* Top accent bar */}
         <div className="header-accent-bar" />
 
