@@ -6,12 +6,8 @@ import Image from 'next/image';
 import { Banner, Product, FAQ, CompanyInfo } from '@/types/cms';
 import { useCMSData } from '@/frontend/customer/hooks/useCMSData';
 import FAQSection from './FAQSection';
-import dynamic from 'next/dynamic';
 import { UpcomingProducts } from './UpcomingProducts';
 import { ProductSection } from './portal/Products';
-const DynamicProductDetailModal = dynamic(() => import('./portal/ProductDetailModal'), {
-  ssr: false,
-});
 
 interface HomeClientProps {
   banners: Banner[];
@@ -28,7 +24,6 @@ export default function HomeClient({ banners: initialBanners, products: initialP
   const faqs = dynamicFaqs && dynamicFaqs.length > 0 ? dynamicFaqs : initialFaqs;
   const companyInfo = dynamicCompanyInfo && Object.keys(dynamicCompanyInfo).length > 2 ? dynamicCompanyInfo : initialCompanyInfo;
 
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [{ activeBanner, loadedBannerIndexes }, setCarouselState] = useState(() => ({
     activeBanner: 0,
     loadedBannerIndexes: new Set([0, 1]),
@@ -332,8 +327,10 @@ export default function HomeClient({ banners: initialBanners, products: initialP
             products={spotlightProducts}
             viewAllLink="/products"
             viewAllText="View More Products"
-            onViewMore={setSelectedProduct}
-            getBadgeText={(p, i) => i === 0 ? 'Best Seller' : undefined}
+            getBadgeText={(_, i) => ['Best Seller', 'Premium Choice', 'Most Popular'][i]}
+            actionLink="/products"
+            actionText="View More"
+            descriptionOnly={true}
             compact={true}
           />
         </div>
@@ -348,13 +345,6 @@ export default function HomeClient({ banners: initialBanners, products: initialP
           <FAQSection faqs={faqs} />
         </div>
       </section>
-
-      {selectedProduct && (
-        <DynamicProductDetailModal 
-          product={selectedProduct} 
-          onClose={() => setSelectedProduct(null)} 
-        />
-      )}
 
       <style jsx>{`
         /* ── Hero ───────────────────────────────────────────────────────────── */
@@ -1029,7 +1019,12 @@ export default function HomeClient({ banners: initialBanners, products: initialP
 
         /* ── FAQ ────────────────────────────────────────────────────────────── */
         .faq-section {
-          background: var(--bg-secondary);
+          position: relative;
+          overflow: hidden;
+          background:
+            radial-gradient(circle at 12% 22%, rgba(37, 99, 235, 0.08), transparent 28%),
+            radial-gradient(circle at 88% 78%, rgba(14, 165, 233, 0.055), transparent 25%),
+            var(--bg-secondary);
           padding-top: 1.25rem;
           padding-bottom: 1.25rem;
         }

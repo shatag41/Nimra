@@ -57,18 +57,22 @@ export function FAQs({ faqs, variant = 'default', limit }: FAQsProps) {
 
         .faq-item {
           border-radius: var(--radius-lg);
-          background: var(--bg-primary);
-          border: 1px solid var(--border-color);
+          background: linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(37, 99, 235, 0.025)), var(--bg-primary);
+          border: 1px solid rgba(96, 165, 250, 0.2);
           overflow: hidden;
-          transition: all 0.25s ease;
+          box-shadow: 0 5px 16px rgba(2, 8, 23, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+          transition: transform 300ms ease, border-color 300ms ease, box-shadow 300ms ease, background 300ms ease;
         }
         .faq-item:hover {
-          border-color: rgba(0, 150, 58, 0.4);
-          background: rgba(0, 150, 58, 0.01);
+          transform: translateY(-2px);
+          border-color: rgba(59, 130, 246, 0.48);
+          background: linear-gradient(145deg, rgba(59, 130, 246, 0.09), rgba(14, 165, 233, 0.025)), var(--bg-primary);
+          box-shadow: 0 9px 22px rgba(2, 8, 23, 0.1), 0 0 16px rgba(37, 99, 235, 0.07);
         }
         .faq-item.active {
-          border-color: var(--primary-color);
-          background: rgba(0, 150, 58, 0.02);
+          border-color: rgba(59, 130, 246, 0.66);
+          background: linear-gradient(145deg, rgba(37, 99, 235, 0.1), rgba(14, 165, 233, 0.035)), var(--bg-primary);
+          box-shadow: 0 10px 26px rgba(2, 8, 23, 0.11), 0 0 20px rgba(37, 99, 235, 0.09);
         }
 
         .faq-question {
@@ -85,6 +89,11 @@ export function FAQs({ faqs, variant = 'default', limit }: FAQsProps) {
           font: inherit;
           cursor: pointer;
         }
+        .faq-question:focus-visible {
+          outline: 2px solid rgba(59, 130, 246, 0.75);
+          outline-offset: -3px;
+          border-radius: inherit;
+        }
 
         .faq-q-inner {
           display: flex;
@@ -96,7 +105,8 @@ export function FAQs({ faqs, variant = 'default', limit }: FAQsProps) {
           font-size: 0.65rem;
           font-weight: 700;
           color: var(--primary-color);
-          background: rgba(0, 150, 58, 0.1);
+          background: linear-gradient(145deg, rgba(37, 99, 235, 0.18), rgba(14, 165, 233, 0.08));
+          border: 1px solid rgba(96, 165, 250, 0.24);
           width: 26px;
           height: 26px;
           border-radius: 6px;
@@ -129,10 +139,14 @@ export function FAQs({ faqs, variant = 'default', limit }: FAQsProps) {
           flex-shrink: 0;
           transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s;
           color: var(--text-muted);
+          border: 1px solid transparent;
+          background: rgba(37, 99, 235, 0.04);
         }
         .faq-item.active .faq-icon {
           transform: rotate(180deg);
           color: var(--primary-color);
+          border-color: rgba(96, 165, 250, 0.24);
+          background: rgba(37, 99, 235, 0.1);
         }
 
         .faq-answer {
@@ -154,23 +168,22 @@ export function FAQs({ faqs, variant = 'default', limit }: FAQsProps) {
           padding: 0 1rem 0.85rem calc(1rem + 26px + 0.75rem);
         }
 
-        .faq-accordion-box.compact { gap: 0.35rem; max-width: none; }
-        .compact .faq-item { border-width: 1px; border-radius: var(--radius-md); box-shadow: none; }
-        .compact .faq-item:hover { box-shadow: none; }
-        .compact .faq-item.active { box-shadow: 0 0 0 2px rgba(0,150,58,0.08); }
-        .compact .faq-question { padding: 0.5rem 0.55rem; gap: 0.45rem; }
-        .compact .faq-q-inner { gap: 0.5rem; }
-        .compact .faq-num { width: 21px; height: 21px; border-radius: 5px; font-size: 0.56rem; }
-        .compact .faq-question h3 { font-size: 0.72rem; line-height: 1.3; }
-        .compact .faq-icon { width: 22px; height: 22px; border-radius: 5px; }
-        .compact .faq-icon svg { width: 12px; height: 12px; }
+        .faq-accordion-box.compact { gap: 0.55rem; max-width: none; }
+        .compact .faq-item { border-width: 1px; border-radius: 12px; }
+        .compact .faq-question { padding: 0.72rem 0.8rem; gap: 0.6rem; }
+        .compact .faq-q-inner { gap: 0.65rem; }
+        .compact .faq-num { width: 25px; height: 25px; border-radius: 7px; font-size: 0.58rem; }
+        .compact .faq-question h3 { font-size: 0.8rem; line-height: 1.35; letter-spacing: -0.01em; }
+        .compact .faq-icon { width: 25px; height: 25px; border-radius: 7px; }
+        .compact .faq-icon svg { width: 13px; height: 13px; }
         .compact .faq-item.active .faq-answer {
           grid-template-rows: 1fr;
         }
         .compact .faq-answer-inner p { 
-          padding: 0 0.55rem 0.55rem calc(0.55rem + 21px + 0.5rem);
-          font-size: 0.7rem; 
-          line-height: 1.45; 
+          padding: 0 0.8rem 0.78rem calc(0.8rem + 25px + 0.65rem);
+          font-size: 0.74rem;
+          line-height: 1.55;
+          color: var(--text-muted);
         }
 
         @media (max-width: 480px) {
@@ -178,6 +191,14 @@ export function FAQs({ faqs, variant = 'default', limit }: FAQsProps) {
           .faq-answer-inner p { padding: 0 0.75rem 0.75rem; }
           .compact .faq-question { padding: 0.5rem; }
           .compact .faq-answer-inner p { padding: 0 0.5rem 0.5rem; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .faq-item,
+          .faq-icon,
+          .faq-answer {
+            transition-duration: 0.001ms !important;
+          }
         }
       `}</style>
     </div>

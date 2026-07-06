@@ -16,6 +16,10 @@ export interface ProductCardProps {
   index?: number;
   disableAnimation?: boolean;
   disableViewTracking?: boolean;
+  showCategoryWithBadge?: boolean;
+  actionLink?: string;
+  actionText?: string;
+  descriptionOnly?: boolean;
 }
 
 export const ProductCard = React.memo(function ProductCard({ 
@@ -26,7 +30,11 @@ export const ProductCard = React.memo(function ProductCard({
   priceLabel,
   index = 0,
   disableAnimation = false,
-  disableViewTracking = false
+  disableViewTracking = false,
+  showCategoryWithBadge = false,
+  actionLink,
+  actionText = 'View More',
+  descriptionOnly = false
 }: ProductCardProps) {
   const { addProduct, updateQuantity, items } = useCart();
   const id = productId(product);
@@ -103,6 +111,7 @@ export const ProductCard = React.memo(function ProductCard({
   const needsViewMore = isLongDescription || hasSpecs;
 
   const displayBadge = badgeText || normalizeCategory(product.Category);
+  const categoryBadge = normalizeCategory(product.Category);
   const displayPriceLabel = priceLabel || (orderable ? 'Retail Price' : 'Expected Price');
 
   return (
@@ -126,11 +135,14 @@ export const ProductCard = React.memo(function ProductCard({
         <div className="cat-meta">
           <span className="cat-volume">{product.Volume}</span>
           {displayBadge && <span className={displayBadge === 'Best Seller' ? 'prod-badge-best' : 'cat-badge'}>{displayBadge}</span>}
+          {showCategoryWithBadge && badgeText && categoryBadge && categoryBadge !== badgeText && (
+            <span className="cat-badge">{categoryBadge}</span>
+          )}
         </div>
         <h3>{product.Name}</h3>
         <p className="card-desc">
           {shortDescription}
-          {needsViewMore && (
+          {needsViewMore && onViewMore && !descriptionOnly && (
             <button
               type="button"
               className="view-more-text-btn"
@@ -150,7 +162,18 @@ export const ProductCard = React.memo(function ProductCard({
             <div className="price-val">{formatCurrency(Number(product.Price))}</div>
           </div>
 
-          {orderable ? (
+          {actionLink ? (
+            <Link
+              href={actionLink}
+              className="btn btn-primary btn-sm add-cart-btn featured-view-more-btn"
+              onClick={(event) => event.stopPropagation()}
+            >
+              {actionText}
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+            </Link>
+          ) : orderable ? (
             inCart ? (
               <div className="qty-controls" onClick={(event) => event.stopPropagation()}>
                 <button
@@ -229,6 +252,10 @@ export interface ProductSectionProps {
   disableAnimation?: boolean;
   disableViewTracking?: boolean;
   compact?: boolean;
+  showCategoryWithBadge?: boolean;
+  actionLink?: string;
+  actionText?: string;
+  descriptionOnly?: boolean;
 }
 
 export function ProductSection({
@@ -247,6 +274,10 @@ export function ProductSection({
   disableAnimation,
   disableViewTracking,
   compact,
+  showCategoryWithBadge,
+  actionLink,
+  actionText,
+  descriptionOnly,
 }: ProductSectionProps) {
   const displayProducts = limit ? products.slice(0, limit) : products;
 
@@ -273,6 +304,10 @@ export function ProductSection({
               priceLabel={getPriceLabel ? getPriceLabel(product, index) : undefined}
               disableAnimation={disableAnimation}
               disableViewTracking={disableViewTracking}
+              showCategoryWithBadge={showCategoryWithBadge}
+              actionLink={actionLink}
+              actionText={actionText}
+              descriptionOnly={descriptionOnly}
             />
           ))}
         </div>
