@@ -351,7 +351,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           border-radius: 16px;
           width: min(850px, 92vw);
           max-width: 100%;
-          max-height: 90vh;
+          max-height: 72vh;
           display: flex;
           flex-direction: column;
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
@@ -502,31 +502,36 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           background: #fbfbfc;
           border-left: 1px solid rgba(0, 0, 0, 0.05);
           position: relative;
-          overflow-y: auto;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
         }
 
         .elegant-action-card {
-          padding: 20px 24px;
+          padding: 16px 20px;
           display: flex;
           flex-direction: column;
-          gap: 16px;
-          position: sticky;
-          top: 0;
+          gap: 12px;
+          height: 100%;
         }
 
-        /* Product Media Box — strict 4:5 portrait, matching every product card */
+        /* Product Media Box — Flexible to fit available height */
         .card-media-box {
           width: 100%;
-          aspect-ratio: 3 / 4;
+          flex: 1;
+          min-height: 150px;
           border-radius: 8px;
           overflow: hidden;
           background: var(--product-img-bg, #f4f6f8);
           border: 1px solid rgba(0, 0, 0, 0.04);
           box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+          position: relative;
         }
         .card-media-box .product-image-container {
           border-radius: 0 !important;
           background: transparent !important;
+          height: 100% !important;
+          aspect-ratio: unset !important;
         }
         .card-media-box:hover .product-img {
           transform: scale(1.04);
@@ -715,6 +720,13 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           .elegant-action-card {
             padding: 16px;
             position: static;
+          }
+          .card-media-box {
+            aspect-ratio: 3 / 4;
+            flex: none;
+          }
+          .card-media-box .product-image-container {
+            aspect-ratio: 3 / 4 !important;
           }
           .info-main-title {
             font-size: 1.25rem;
