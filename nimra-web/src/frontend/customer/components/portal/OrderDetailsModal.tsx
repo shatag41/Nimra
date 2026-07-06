@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { OrderRecord } from '@/types/cms';
 import { formatCurrency } from '../../utils/commerce';
 import ProductImage from '../ProductImage';
@@ -31,7 +32,22 @@ export default function OrderDetailsModal({
   getTimelineSteps,
   formatDate,
 }: OrderDetailsModalProps) {
+  React.useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSelectedOrder(null);
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [setSelectedOrder]);
+
   if (!selectedOrder) return null;
+  if (typeof document === 'undefined') return null;
 
   const customer = selectedOrder.customer || {};
   const items = Array.isArray(selectedOrder.items) ? selectedOrder.items : [];
@@ -44,9 +60,15 @@ export default function OrderDetailsModal({
     customer.state,
   ].filter(Boolean);
 
-  return (
+  return createPortal(
     <div className="order-details-overlay" onClick={() => setSelectedOrder(null)}>
-      <div className="order-details-modal card animate-scale-in" onClick={(event) => event.stopPropagation()}>
+      <div
+        className="order-details-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Order details for ${selectedOrder.orderId}`}
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="modal-header summary-card">
           <button type="button" className="close-modal-btn top-right" onClick={() => setSelectedOrder(null)} aria-label="Close order details">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -175,6 +197,8 @@ export default function OrderDetailsModal({
         }
 
         .order-details-modal {
+          position: relative;
+          z-index: 1;
           width: min(720px, 100%);
           max-height: min(85vh, 680px);
           display: flex;
@@ -184,6 +208,12 @@ export default function OrderDetailsModal({
           border: 1px solid var(--border-color);
           border-radius: var(--radius-lg);
           box-shadow: var(--shadow-xl);
+          animation: orderDetailsIn 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        @keyframes orderDetailsIn {
+          from { opacity: 0; transform: translateY(12px) scale(0.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         .summary-card {
@@ -537,6 +567,7 @@ export default function OrderDetailsModal({
           }
         }
       `}</style>
-    </div>
+    </div>,
+    document.body
   );
 }
