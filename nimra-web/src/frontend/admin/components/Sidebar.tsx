@@ -24,15 +24,18 @@ export default function Sidebar({ currentUser, activeTab, setActiveTab, isProfil
   return (
     <aside className={`admin-sidebar glass ${isProfilePanelOpen ? 'blur-background' : ''}`}>
       <div className="sidebar-brand">
-        <svg width="28" height="28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M50 5C50 5 15 45 15 65C15 84.33 30.67 100 50 100C69.33 100 85 84.33 85 65C85 45 50 5 50 5Z" fill="url(#sidebarWaterGrad)"/>
-          <defs>
-            <linearGradient id="sidebarWaterGrad" x1="50" y1="5" x2="50" y2="100" gradientUnits="userSpaceOnUse">
-              <stop stopColor="#00E5FF"/>
-              <stop offset="1" stopColor="#00a299"/>
-            </linearGradient>
-          </defs>
-        </svg>
+        <div className="sidebar-logo-icon">
+          <svg width="28" height="28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M50 5C50 5 15 45 15 65C15 84.33 30.67 100 50 100C69.33 100 85 84.33 85 65C85 45 50 5 50 5Z" fill="url(#sidebarNGrad)"/>
+            <text x="50" y="77" textAnchor="middle" fontSize="34" fontWeight="400" fontFamily="inherit" fill="white" letterSpacing="-1">N</text>
+            <defs>
+              <linearGradient id="sidebarNGrad" x1="50" y1="5" x2="50" y2="100" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#3b82f6"/>
+                <stop offset="1" stopColor="#2563eb"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
         <span className="brand-text">NIMRA Console</span>
       </div>
 
