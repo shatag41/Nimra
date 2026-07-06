@@ -106,6 +106,41 @@ export default function FAQsTab({
           </tbody>
         </table>
       </div>
+
+      <style jsx>{`
+        .admin-table th,
+        .admin-table td {
+          vertical-align: middle;
+          white-space: nowrap;
+        }
+        .admin-table th:nth-child(2),
+        .admin-table td:nth-child(2) {
+          min-width: 250px;
+          white-space: normal;
+        }
+        .admin-table th:nth-child(3),
+        .admin-table td:nth-child(3) {
+          min-width: 300px;
+          white-space: normal;
+        }
+        .admin-table th:nth-child(1),
+        .admin-table td:nth-child(1),
+        .admin-table th:nth-child(4),
+        .admin-table td:nth-child(4) {
+          width: 100px;
+          white-space: nowrap;
+        }
+        .badge {
+          display: inline-block;
+          white-space: nowrap;
+        }
+        .actions-flex {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+          flex-wrap: nowrap;
+        }
+      `}</style>
     </div>
   );
 }

@@ -141,6 +141,37 @@ export default React.memo(function ProductsTab({
           </tbody>
         </table>
       </div>
+
+      <style jsx>{`
+        .admin-table th,
+        .admin-table td {
+          vertical-align: middle;
+          white-space: nowrap;
+        }
+        .admin-table th:nth-child(2),
+        .admin-table td:nth-child(2) {
+          min-width: 180px;
+          white-space: normal;
+        }
+        .admin-table th:nth-child(4),
+        .admin-table td:nth-child(4),
+        .admin-table th:nth-child(5),
+        .admin-table td:nth-child(5),
+        .admin-table th:nth-child(6),
+        .admin-table td:nth-child(6) {
+          width: 120px;
+        }
+        .badge {
+          display: inline-block;
+          white-space: nowrap;
+        }
+        .actions-flex {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+          flex-wrap: nowrap;
+        }
+      `}</style>
     </div>
   );
 });
