@@ -109,7 +109,7 @@ const Icon = ({ name }: { name: 'route' | 'package' | 'phone' | 'search' | 'chec
 export default function TrackClient() {
   const params = useSearchParams();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const { orders: customerOrders } = useCustomerOrders();
   const [orderId, setOrderId] = useState(params.get('orderId') || '');
   const [mobile, setMobile] = useState(params.get('mobile') || user?.Mobile || '');
@@ -212,10 +212,13 @@ export default function TrackClient() {
                 <input
                   required
                   value={displayedOrderId}
+                  onChange={(event) => {
+                    if (!user) setOrderId(event.target.value);
+                  }}
                   placeholder="NIMRA-..."
-                  readOnly
-                  aria-readonly="true"
-                  disabled={loading}
+                  readOnly={Boolean(user)}
+                  aria-readonly={Boolean(user)}
+                  disabled={loading || authLoading}
                 />
               </div>
             </label>
@@ -228,10 +231,13 @@ export default function TrackClient() {
                   inputMode="numeric"
                   maxLength={10}
                   value={displayedMobile}
+                  onChange={(event) => {
+                    if (!user) setMobile(event.target.value.replace(/\D/g, ''));
+                  }}
                   placeholder="Registered mobile number"
-                  readOnly
-                  aria-readonly="true"
-                  disabled={loading}
+                  readOnly={Boolean(user)}
+                  aria-readonly={Boolean(user)}
+                  disabled={loading || authLoading}
                 />
               </div>
             </label>
