@@ -12,6 +12,7 @@ import {
   saveEmailPreferences,
 } from '@/utils/api';
 import type { EmailPreferences } from '@/types/cms';
+import CustomerPageHeader from './CustomerPageHeader';
 
 const preferenceOptions: Array<{
   key: keyof EmailPreferences;
@@ -120,14 +121,13 @@ export default function SettingsClient() {
   return (
     <main className="settings-page">
       <div className="settings-shell">
-        <header className="settings-header">
-          <div>
-            <span className="settings-kicker">Account</span>
-            <h1>Settings</h1>
-            <p>Manage security, communication preferences, and your NIMRA account.</p>
-          </div>
+        <CustomerPageHeader
+          badge="SETTINGS"
+          title="Account Settings"
+          subtitle="Manage security, communication preferences, and your NIMRA account."
+        >
           <Link href="/customer-portal" className="back-link">← Back to Portal</Link>
-        </header>
+        </CustomerPageHeader>
 
         <div className="settings-grid">
           <section className="setting-card password-card">
@@ -200,10 +200,6 @@ export default function SettingsClient() {
       <style jsx>{`
         .settings-page { min-height: 100vh; padding: 2rem 1rem 3rem; background: var(--bg-primary); color: var(--text-primary); }
         .settings-shell { width: min(1100px, 100%); margin: 0 auto; }
-        .settings-header { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; margin-bottom: 1.5rem; }
-        .settings-kicker { color: var(--primary-color); font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
-        .settings-header h1 { margin: .2rem 0 .35rem; font-size: clamp(1.8rem, 4vw, 2.5rem); }
-        .settings-header p { margin: 0; color: var(--text-secondary); font-size: .92rem; }
         .back-link { color: var(--primary-color); font-size: .85rem; font-weight: 700; white-space: nowrap; }
         .settings-grid { display: grid; grid-template-columns: minmax(280px, .82fr) minmax(420px, 1.18fr); gap: 1rem; align-items: start; }
         .setting-card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-xl); box-shadow: var(--shadow-md); padding: 1.25rem; }
@@ -253,7 +249,6 @@ export default function SettingsClient() {
         }
         @media (max-width: 560px) {
           .settings-page { padding: 1.25rem .75rem 2rem; }
-          .settings-header { align-items: flex-start; flex-direction: column; }
           .setting-card { padding: 1rem; }
           .preference-row { padding: .75rem; }
           .preference-footer { align-items: stretch; flex-direction: column; }

@@ -8,6 +8,7 @@ import { ProductCard } from './portal/Products';
 import { normalizeCategory } from '../utils/commerce';
 import { UpcomingProducts } from './UpcomingProducts';
 import ProductDetailModal from './portal/ProductDetailModal';
+import CustomerPageHeader from './CustomerPageHeader';
 
 interface ProductsClientProps {
   products: Product[];
@@ -108,12 +109,11 @@ export default function ProductsClient({ products: initialProducts }: ProductsCl
 
   return (
     <div className="products-page container">
-      {/* Page Header */}
-      <div className="page-header animate-slide-up">
-        <span className="badge badge-primary">Products</span>
-        <h1>Our Products</h1>
-        <p>Choose packaged drinking water, mineral water, bulk jars, and future RUSH Soda products managed directly from Google Sheets.</p>
-      </div>
+      <CustomerPageHeader
+        badge="PRODUCTS"
+        title="Explore Our Products"
+        subtitle="Premium packaged drinking water for every need."
+      />
 
       <div className="products-layout-grid animate-fade-in">
         {/* Sidebar Filters */}
@@ -303,46 +303,6 @@ export default function ProductsClient({ products: initialProducts }: ProductsCl
           padding-top: 0;
           padding-bottom: 2rem;
           font-family: var(--font-body);
-        }
-
-        /* ── Page Header ── */
-        .page-header {
-          margin-bottom: 0.75rem;
-          padding-bottom: 0;
-          text-align: center;
-        }
-
-        .page-header h1 {
-          font-size: 1.5rem;
-          font-weight: 700;
-          margin-bottom: 0.25rem;
-          letter-spacing: -0.02em;
-          color: var(--text-primary);
-        }
-
-        .page-header p {
-          color: var(--text-muted);
-          margin: 0 auto;
-          font-size: 0.85rem;
-          line-height: 1.4;
-          max-width: 700px;
-        }
-
-        .badge {
-          display: inline-flex;
-          align-items: center;
-          border-radius: 999px;
-          padding: 0.25rem 0.75rem;
-          font-size: 0.7rem;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          margin-bottom: 0.5rem;
-        }
-        .badge-primary {
-          background: rgba(37, 99, 235, 0.1);
-          color: var(--primary-color);
-          border: 1px solid rgba(37, 99, 235, 0.2);
         }
 
         /* ── Products Grid Layout ── */

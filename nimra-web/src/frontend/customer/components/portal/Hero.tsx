@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Banner } from '@/types/cms';
+import CustomerPageHeader from '../CustomerPageHeader';
 
 interface PortalHeroProps {
   isAuthenticated: boolean;
@@ -12,32 +13,25 @@ interface PortalHeroProps {
 export function PortalHero({ isAuthenticated, name }: PortalHeroProps) {
   if (!isAuthenticated) {
     return (
-      <section className="portal-hero">
-        <div className="portal-hero-content">
-          <div>
-            <span className="eyebrow">Customer Portal</span>
-            <h1>Welcome to NIMRA</h1>
-            <p>Browse products, learn about our water quality, and track an existing order without signing in.</p>
-          </div>
-          <div className="hero-actions">
-            <Link href="/products" className="btn btn-primary">Browse Products</Link>
-            <Link href="/track" className="btn btn-ghost">Track Order</Link>
-          </div>
+      <CustomerPageHeader
+        badge="CUSTOMER PORTAL"
+        title="Welcome to NIMRA"
+        subtitle="Browse products, learn about our water quality, and track an existing order without signing in."
+      >
+        <div className="hero-actions">
+          <Link href="/products" className="btn btn-primary">Browse Products</Link>
+          <Link href="/track" className="btn btn-secondary">Track Order</Link>
         </div>
-      </section>
+      </CustomerPageHeader>
     );
   }
 
   return (
-    <section className="portal-hero">
-      <div className="portal-hero-content">
-        <div>
-          <span className="eyebrow">Customer Portal</span>
-          <h1>Welcome back, {name ? (name.length > 25 ? name.slice(0, 25) + '...' : name) : 'Customer'}</h1>
-          <p>Manage orders, track deliveries, and reach NIMRA support from one clean workspace.</p>
-        </div>
-      </div>
-    </section>
+    <CustomerPageHeader
+      badge="CUSTOMER PORTAL"
+      title={`Welcome back, ${name ? (name.length > 25 ? `${name.slice(0, 25)}...` : name) : 'Customer'}`}
+      subtitle="Manage orders, track deliveries, and reach NIMRA support from one clean workspace."
+    />
   );
 }
 

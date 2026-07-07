@@ -14,6 +14,7 @@ import { migrateLegacyLocalAddresses, normalizeSavedAddresses, persistUserSavedA
 import { clearReorderCheckoutDraft, readReorderCheckoutDraft, ReorderCheckoutDraft, totalsForCheckoutItems } from '@/frontend/customer/utils/reorderDraft';
 import { formatCurrency } from '@/frontend/customer/utils/commerce';
 import type { CartItem, OrderRecord } from '@/types/cms';
+import CustomerPageHeader from './CustomerPageHeader';
 
 const initialForm = {
   name: '',
@@ -457,15 +458,15 @@ export default function CheckoutClient() {
     return (
       <section className="checkout-page">
         <div className="container">
-          <div className="page-header animate-slide-up">
-            <span className="badge badge-primary">Checkout</span>
-            <h1>{searchParams.get('reorder') === '1' ? 'Reorder Not Available' : 'Your Cart is Empty'}</h1>
-            <p>
-              {searchParams.get('reorder') === '1'
+          <CustomerPageHeader
+            badge="CHECKOUT"
+            title={searchParams.get('reorder') === '1' ? 'Reorder Not Available' : 'Your Cart is Empty'}
+            subtitle={
+              searchParams.get('reorder') === '1'
                 ? 'The reorder draft expired or has no valid products. Please choose Reorder again from your order history.'
-                : 'You have no items to checkout. Add NIMRA products to continue.'}
-            </p>
-          </div>
+                : 'You have no items to checkout. Add NIMRA products to continue.'
+            }
+          />
           <div className="empty-cart-action">
              <Link href={searchParams.get('reorder') === '1' ? '/orders' : '/products'} className="btn btn-primary">
               {searchParams.get('reorder') === '1' ? 'Back to Orders' : 'Continue Shopping'}
@@ -480,6 +481,12 @@ export default function CheckoutClient() {
   return (
     <section className="checkout-page">
       <div className="container">
+        <CustomerPageHeader
+          badge="CHECKOUT"
+          title={isReorderCheckout ? 'Reorder Checkout' : 'Secure Checkout'}
+          subtitle="Confirm your delivery details and place your NIMRA order with confidence."
+        />
+
         <div className="checkout-actions-top">
           <Link href={isReorderCheckout ? '/orders' : '/cart'} className="btn btn-secondary btn-sm">
             {isReorderCheckout ? 'Back to Orders' : 'Back to Cart'}

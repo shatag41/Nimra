@@ -8,6 +8,7 @@ import { useCustomerOrders } from '@/frontend/customer/hooks/useCustomerOrders';
 import { trackOrder } from '@/utils/api';
 import { formatCurrency } from '../utils/commerce';
 import ProductImage from './ProductImage';
+import CustomerPageHeader from './CustomerPageHeader';
 
 const deliverySteps: Array<{ status: OrderRecord['status']; label: string; desc: string }> = [
   { status: 'Pending', label: 'Order Placed', desc: 'We received your request.' },
@@ -194,14 +195,11 @@ export default function TrackClient() {
       </div>
 
       <div className="track-shell">
-        <header className="track-header animate-slide-up">
-          <span className="track-badge">
-            <Icon name="route" />
-            Order Tracking
-          </span>
-          <h1>Track Your NIMRA Delivery</h1>
-          <p>Enter your Order ID and registered mobile number to track your order in real time.</p>
-        </header>
+        <CustomerPageHeader
+          badge="TRACK ORDER"
+          title="Track Your NIMRA Delivery"
+          subtitle="Enter your Order ID and registered mobile number to track your order in real time."
+        />
 
         <div className={`tracking-flow ${order ? 'has-result' : ''} ${loading ? 'is-searching' : ''}`}>
           <form className="track-form premium-card search-card" onSubmit={submit}>
@@ -561,52 +559,6 @@ export default function TrackClient() {
         .track-shell {
           width: min(94%, 1360px);
           margin: 0 auto;
-        }
-
-        .track-header {
-          max-width: 680px;
-          margin: 0 auto clamp(0.8rem, 1.6vw, 1.15rem);
-          text-align: center;
-        }
-
-        .track-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.45rem;
-          padding: 0.34rem 0.82rem;
-          border: 1px solid transparent;
-          border-radius: 999px;
-          color: var(--track-accent);
-          background:
-            linear-gradient(var(--track-card-bg-strong), var(--track-card-bg-strong)) padding-box,
-            linear-gradient(135deg, rgba(96, 165, 250, 0.7), rgba(14, 165, 233, 0.18), rgba(37, 99, 235, 0.5)) border-box;
-          box-shadow: 0 10px 24px rgba(37, 99, 235, 0.11);
-          backdrop-filter: blur(16px) saturate(145%);
-          -webkit-backdrop-filter: blur(16px) saturate(145%);
-          font-size: 0.68rem;
-          font-weight: 800;
-          letter-spacing: 0.11em;
-          text-transform: uppercase;
-        }
-
-        .track-header h1 {
-          margin: 0.32rem 0 0.22rem;
-          font-size: clamp(1.2rem, 2.05vw, 2.05rem);
-          font-weight: 800;
-          letter-spacing: 0;
-          line-height: 1.08;
-          color: var(--track-heading);
-          background: linear-gradient(135deg, var(--track-heading) 0%, #1e3a8a 52%, var(--track-accent) 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
-
-        .track-header p {
-          max-width: 650px;
-          margin: 0 auto;
-          color: var(--track-muted);
-          font-size: clamp(0.84rem, 0.8rem + 0.16vw, 0.96rem);
-          line-height: 1.42;
         }
 
         .tracking-flow {
@@ -1315,14 +1267,6 @@ export default function TrackClient() {
             padding-top: 0.55rem;
           }
 
-          .track-header {
-            margin-bottom: 0.85rem;
-          }
-
-          .track-header h1 {
-            font-size: clamp(1.2rem, 7vw, 1.9rem);
-          }
-
           .search-card,
           .order-info-card,
           .timeline-card,
@@ -1406,10 +1350,6 @@ export default function TrackClient() {
             width: min(100% - 0.85rem, 1360px);
           }
 
-          .track-header p {
-            font-size: 0.92rem;
-          }
-
           .input-shell,
           .input-shell input,
           .track-button {
@@ -1486,12 +1426,6 @@ export default function TrackClient() {
           --track-step-line: rgba(148, 163, 184, 0.18);
           --track-active-shadow: 0 0 0 6px rgba(96, 165, 250, 0.12), 0 12px 30px rgba(37, 99, 235, 0.30);
           --track-active-shadow-strong: 0 0 0 10px rgba(96, 165, 250, 0.08), 0 16px 38px rgba(37, 99, 235, 0.34);
-        }
-
-        :global([data-theme="dark"]) .track-header h1 {
-          background: linear-gradient(135deg, var(--track-heading) 0%, #bfdbfe 52%, var(--track-accent-2) 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
         }
 
         :global([data-theme="dark"]) .empty-orbit span,

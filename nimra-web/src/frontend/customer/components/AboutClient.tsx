@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { CompanyInfo, FAQ } from '@/types/cms';
 import FAQSection from './FAQSection';
+import CustomerPageHeader from './CustomerPageHeader';
 
 interface AboutClientProps {
   companyInfo: CompanyInfo;
@@ -63,28 +64,20 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
 
   return (
     <div className="premium-about">
-      {/* Compact Hero Section */}
-      <section className="hero-section" id="hero">
-        <div className="container">
-          <div className="hero-content">
-            <span className="premium-badge">NIMRA Water</span>
-            <h1 className="hero-title">Pure. Premium. Protected.</h1>
-            <p className="hero-subtitle">
-              Committed to absolute purity and your health with every single drop, crafted by T.S. Enterprises.
-            </p>
-          </div>
-          
-          {/* Tab Navigation */}
-          <div className="submenu-bar">
-            <div className="submenu-container">
-              <button className={`submenu-btn ${activeSection === 'story' ? 'active' : ''}`} onClick={() => selectSection('story')}>Our Story</button>
-              <button className={`submenu-btn ${activeSection === 'quality' ? 'active' : ''}`} onClick={() => selectSection('quality')}>10-Step Purity</button>
-              <button className={`submenu-btn ${activeSection === 'plant' ? 'active' : ''}`} onClick={() => selectSection('plant')}>Infrastructure</button>
-              <button className={`submenu-btn ${activeSection === 'faqs' ? 'active' : ''}`} onClick={() => selectSection('faqs')}>FAQs</button>
-            </div>
+      <CustomerPageHeader
+        badge="ABOUT"
+        title="Pure. Premium. Protected."
+        subtitle="Committed to absolute purity and your health with every single drop, crafted by T.S. Enterprises."
+      >
+        <div className="submenu-bar">
+          <div className="submenu-container">
+            <button className={`submenu-btn ${activeSection === 'story' ? 'active' : ''}`} onClick={() => selectSection('story')}>Our Story</button>
+            <button className={`submenu-btn ${activeSection === 'quality' ? 'active' : ''}`} onClick={() => selectSection('quality')}>10-Step Purity</button>
+            <button className={`submenu-btn ${activeSection === 'plant' ? 'active' : ''}`} onClick={() => selectSection('plant')}>Infrastructure</button>
+            <button className={`submenu-btn ${activeSection === 'faqs' ? 'active' : ''}`} onClick={() => selectSection('faqs')}>FAQs</button>
           </div>
         </div>
-      </section>
+      </CustomerPageHeader>
 
       <div className="container main-content">
         <div className="content-card">
@@ -259,49 +252,8 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         }
         .text-center { text-align: center; }
 
-        /* ── Hero ── */
-        .hero-section {
-          padding: 1.25rem 0 2rem;
-          background: linear-gradient(135deg, #ffffff 0%, var(--brand-light) 100%);
-          text-align: center;
-          border-bottom: 1px solid var(--border);
-        }
-        .hero-content {
-          max-width: 700px;
-          margin: 0 auto;
-        }
-        .premium-badge {
-          display: inline-block;
-          font-size: 0.65rem;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          color: var(--brand-blue);
-          background: var(--bg-main);
-          padding: 2px 10px;
-          border-radius: 99px;
-          margin-bottom: 12px;
-          border: 1px solid #bae6fd;
-          box-shadow: var(--shadow-sm);
-        }
-        .hero-title {
-          font-size: clamp(1.4rem, 2.7vw, 1.9rem);
-          font-weight: 800;
-          color: var(--text-strong);
-          margin: 0 0 12px;
-          letter-spacing: -0.02em;
-        }
-        .hero-subtitle {
-          font-size: 0.9rem;
-          line-height: 1.3;
-          color: var(--text-muted);
-          margin: 0 auto;
-          max-width: 600px;
-        }
-
         /* ── Submenu Tabs ── */
         .submenu-bar {
-          margin-top: 14px;
           display: flex;
           justify-content: center;
         }

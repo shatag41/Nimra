@@ -7,6 +7,7 @@ import { useCMSData } from '@/frontend/customer/hooks/useCMSData';
 import { formatCurrency, isOrderable, productId } from '../utils/commerce';
 import ProductImage from './ProductImage';
 import { CartItemsList, CartSummary } from './portal/Cart';
+import CustomerPageHeader from './CustomerPageHeader';
 
 const ArrowLeft = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m6 6-6-6 6-6" /></svg>;
 const Trash = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6" /></svg>;
@@ -27,7 +28,7 @@ export default function CartClient() {
     return (
       <section className="cart-page cart-loading" aria-busy="true" aria-live="polite">
         <div className="cart-shell">
-          <div className="cart-hero"><span className="cart-badge">Cart</span><h1>Loading your cart</h1><p>Restoring your saved NIMRA products…</p></div>
+          <CustomerPageHeader badge="CART" title="Loading your cart" subtitle="Restoring your saved NIMRA products…" />
           <div className="cart-skeleton"><span /><span /><span /></div>
         </div>
         <style jsx global>{styles}</style>
@@ -39,7 +40,7 @@ export default function CartClient() {
     return (
       <section className="cart-page">
         <div className="cart-shell">
-          <div className="cart-hero"><span className="cart-badge">Cart</span><h1>Your shopping cart</h1><p>Everything you choose, ready for one smooth checkout.</p></div>
+          <CustomerPageHeader badge="CART" title="Your shopping cart" subtitle="Everything you choose, ready for one smooth checkout." />
           <div className="empty-cart-card">
             <div className="empty-cart-art" aria-hidden="true"><span className="empty-bubble bubble-one" /><span className="empty-bubble bubble-two" /><svg viewBox="0 0 64 64"><path d="M8 11h7l5 30h27l6-21H18"/><circle cx="25" cy="50" r="3"/><circle cx="45" cy="50" r="3"/><path d="M25 27h19"/></svg></div>
             <span className="cart-kicker">Your next refresh starts here</span>
@@ -57,10 +58,7 @@ export default function CartClient() {
   return (
     <section className="cart-page">
       <div className="cart-shell">
-        <div className="cart-hero">
-          <div className="cart-hero-orb orb-one" aria-hidden="true" /><div className="cart-hero-orb orb-two" aria-hidden="true" />
-          <span className="cart-badge">Cart</span><h1>Your Order Cart</h1><p>Review your selected products and proceed to checkout.</p>
-        </div>
+        <CustomerPageHeader badge="CART" title="Your shopping cart" subtitle="Review your selected products and proceed to checkout." />
         <div className="cart-actions-top">
           <Link href="/products" className="continue-shopping"><ArrowLeft />Continue Shopping</Link>
           <button type="button" className="clear-cart" onClick={clearWithConfirmation}><Trash />Clear Cart</button>
@@ -98,15 +96,6 @@ const styles = `
   .cart-page { --cart-glass: rgba(255,255,255,.76); --cart-border: rgba(148,163,184,.24); min-height: 82vh; padding: 0 0 clamp(2rem,5vw,4.5rem) !important; margin-top: -1.25rem !important; font-family:var(--font-body); position:relative; }
   [data-theme="dark"] .cart-page { --cart-glass:rgba(15,23,42,.72); --cart-border:rgba(96,165,250,.18); }
   .cart-shell { width:min(94%, 1380px); margin:0 auto; }
-  .cart-hero { position:relative; isolation:isolate; overflow:hidden; min-height:auto; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:2.25rem 1rem; border:1px solid var(--cart-border); border-radius:20px; background:linear-gradient(135deg,rgba(255,255,255,.8),rgba(239,246,255,.7)); box-shadow:0 12px 35px rgba(15,23,42,.05); }
-  [data-theme="dark"] .cart-hero { background:linear-gradient(135deg,rgba(15,23,42,.92),rgba(17,35,66,.75)); box-shadow:0 22px 60px rgba(0,0,0,.3); }
-  .cart-hero:before { content:''; position:absolute; z-index:-1; inset:0; background:radial-gradient(circle at 22% 20%,rgba(59,130,246,.18),transparent 31%),radial-gradient(circle at 82% 80%,rgba(14,165,233,.13),transparent 30%); }
-  .cart-hero-orb { position:absolute; z-index:-1; border-radius:50%; border:1px solid rgba(96,165,250,.18); background:rgba(255,255,255,.12); }
-  .orb-one { width:70px;height:70px;left:3%;top:-25px; } .orb-two { width:46px;height:46px;right:4%;bottom:-18px; }
-  .cart-badge { display:inline-flex; padding:.25rem .75rem; margin-bottom:.25rem; border:1px solid rgba(59,130,246,.22); border-radius:999px; background:rgba(255,255,255,.55); backdrop-filter:blur(12px); color:#2563eb; font-size:.64rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; box-shadow:inset 0 1px rgba(255,255,255,.6); }
-  [data-theme="dark"] .cart-badge { background:rgba(30,41,59,.55); color:#93c5fd; }
-  .cart-hero h1 { margin:.1rem 0 .15rem; font-size:clamp(.95rem, 1.45vw, 1.45rem); font-weight:800; letter-spacing:0; line-height:1.05; color:var(--text-primary); background:linear-gradient(135deg,var(--text-primary) 0%,#1e3a8a 52%,var(--primary-color) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-  .cart-hero p { color:var(--text-muted); margin:.1rem 0 0; font-size:clamp(.75rem,0.9vw,.85rem); line-height:1.3; }
   .cart-actions-top { display:flex; align-items:center; justify-content:space-between; margin:.7rem 0 .72rem; }
   .continue-shopping,.clear-cart { min-height:42px; display:inline-flex; align-items:center; gap:.48rem; padding:.65rem .9rem; border-radius:13px; font-size:.79rem; font-weight:750; cursor:pointer; transition:transform 180ms ease,box-shadow 180ms ease,border-color 180ms ease; }
   .continue-shopping { border:1px solid rgba(37,99,235,.24); background:var(--cart-glass); color:var(--primary-color); box-shadow:0 6px 18px rgba(37,99,235,.07); backdrop-filter:blur(12px); }
@@ -170,7 +159,7 @@ const styles = `
   @keyframes cartRowIn { from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none} } @keyframes qtyPop { 50%{transform:scale(1.17);color:#2563eb} } @keyframes checkoutArrow { 50%{transform:translateX(4px);opacity:.65} } @keyframes skeleton { to{background-position:-150% 0} }
   @media (max-width:1280px) { .cart-layout { grid-template-columns:minmax(0,1fr) minmax(285px,330px); } .cart-row { grid-template-columns:104px minmax(160px,1fr) 104px 82px 82px 94px;gap:.55rem;padding:.64rem .72rem; } .cart-thumb { width:100px; } .cart-price-block strong,.cart-price-block b { font-size:.82rem; } .remove { min-width:86px;padding-inline:.55rem; } }
   @media (max-width:1050px) { .cart-layout { grid-template-columns:1fr; } .summary { position:static;margin-top:0; } .cart-row { grid-template-columns:108px minmax(0,1fr) 112px 96px 96px; } .cart-thumb { width:104px;grid-row:1 / span 2; } .cart-quantity-block { grid-column:3;grid-row:1; } .unit-price-block { grid-column:4;grid-row:1; } .line-total-block { grid-column:5;grid-row:1; } .cart-row-actions { grid-column:5;grid-row:2;align-self:center;justify-content:flex-end; } .recommendation-track { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-  @media (max-width:820px) { .cart-page { --cart-hero-gap:12px; } .cart-layout { grid-template-columns:1fr; } .summary { position:static;margin-top:0; } .cart-row { grid-template-columns:100px minmax(0,1fr) auto;gap:.6rem .75rem; } .cart-thumb { width:96px;grid-row:1 / span 3; } .cart-quantity-block { grid-column:2;grid-row:2;align-items:flex-start; } .unit-price-block { grid-column:3;grid-row:1; } .line-total-block { grid-column:3;grid-row:2; } .cart-row-actions { grid-column:3;grid-row:3; } .cart-column-label,.line-subtotal-label { font-size:.55rem; } }
-  @media (max-width:600px) { .cart-page { padding-top:12px!important; } .cart-shell { width:min(100% - 1rem,1380px); } .cart-hero { position:relative;top:auto;z-index:1;min-height:auto;border-radius:16px;padding:.72rem .8rem; } .cart-hero h1 { font-size:clamp(1rem,6vw,1.4rem); } .cart-actions-top { margin:.55rem 0 .62rem; } .continue-shopping,.clear-cart { min-height:44px;font-size:.72rem; } .cart-row { grid-template-columns:88px minmax(0,1fr);gap:.55rem .7rem;min-height:0;padding:.65rem;border-radius:15px;align-items:start; } .cart-thumb { grid-row:1/3;width:88px; } .row-main p { display:none; } .product-pills span:nth-child(n+2) { display:none; } .cart-quantity-block { grid-column:2;grid-row:2;flex-direction:row;align-items:center;justify-content:space-between;margin-top:.08rem; } .cart-quantity-block .cart-column-label { display:none; } .qty { grid-template-columns:38px 35px 38px; } .qty button { width:38px;height:38px; } .unit-price-block { display:none; } .line-total-block { grid-column:1;grid-row:3;align-self:auto;display:flex;flex-direction:column;gap:.05rem;width:auto;align-items:flex-start;padding:0;text-align:left; } .line-total-block b { text-align:left; } .line-total-block .line-subtotal-label { display:block; } .cart-row-actions { grid-column:2;grid-row:3;align-self:end;justify-content:flex-end; } .remove { min-height:40px; } .summary { padding:1rem;border-radius:17px; } .cart-recommendations { margin-top:2rem; } .recommendation-track { display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding:.15rem .05rem .75rem;scrollbar-width:none; } .recommendation-track::-webkit-scrollbar { display:none; } .recommendation-card { flex:0 0 min(82vw,300px);scroll-snap-align:start; } .recommendations-heading { align-items:flex-end; } .recommendation-copy button span { display:inline; } .cart-list-heading { padding-inline:.15rem; } }
+  @media (max-width:820px) { .cart-layout { grid-template-columns:1fr; } .summary { position:static;margin-top:0; } .cart-row { grid-template-columns:100px minmax(0,1fr) auto;gap:.6rem .75rem; } .cart-thumb { width:96px;grid-row:1 / span 3; } .cart-quantity-block { grid-column:2;grid-row:2;align-items:flex-start; } .unit-price-block { grid-column:3;grid-row:1; } .line-total-block { grid-column:3;grid-row:2; } .cart-row-actions { grid-column:3;grid-row:3; } .cart-column-label,.line-subtotal-label { font-size:.55rem; } }
+  @media (max-width:600px) { .cart-page { padding-top:12px!important; } .cart-shell { width:min(100% - 1rem,1380px); } .cart-actions-top { margin:.55rem 0 .62rem; } .continue-shopping,.clear-cart { min-height:44px;font-size:.72rem; } .cart-row { grid-template-columns:88px minmax(0,1fr);gap:.55rem .7rem;min-height:0;padding:.65rem;border-radius:15px;align-items:start; } .cart-thumb { grid-row:1/3;width:88px; } .row-main p { display:none; } .product-pills span:nth-child(n+2) { display:none; } .cart-quantity-block { grid-column:2;grid-row:2;flex-direction:row;align-items:center;justify-content:space-between;margin-top:.08rem; } .cart-quantity-block .cart-column-label { display:none; } .qty { grid-template-columns:38px 35px 38px; } .qty button { width:38px;height:38px; } .unit-price-block { display:none; } .line-total-block { grid-column:1;grid-row:3;align-self:auto;display:flex;flex-direction:column;gap:.05rem;width:auto;align-items:flex-start;padding:0;text-align:left; } .line-total-block b { text-align:left; } .line-total-block .line-subtotal-label { display:block; } .cart-row-actions { grid-column:2;grid-row:3;align-self:end;justify-content:flex-end; } .remove { min-height:40px; } .summary { padding:1rem;border-radius:17px; } .cart-recommendations { margin-top:2rem; } .recommendation-track { display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding:.15rem .05rem .75rem;scrollbar-width:none; } .recommendation-track::-webkit-scrollbar { display:none; } .recommendation-card { flex:0 0 min(82vw,300px);scroll-snap-align:start; } .recommendations-heading { align-items:flex-end; } .recommendation-copy button span { display:inline; } .cart-list-heading { padding-inline:.15rem; } }
   @media (prefers-reduced-motion:reduce) { .cart-page * { animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.001ms!important; } }
 `;

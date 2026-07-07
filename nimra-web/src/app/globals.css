@@ -2049,7 +2049,6 @@ section,
   padding-block: 1.5rem;
 }
 
-.page-header,
 .section-header,
 .checkout-head {
   max-width: 760px;
@@ -2057,7 +2056,6 @@ section,
   margin-bottom: clamp(1rem, 2.8vw, 2rem);
 }
 
-.page-header h1,
 .checkout-head h1,
 .section-header h2 {
   font-size: var(--ds-text-h1) !important;
@@ -2065,7 +2063,6 @@ section,
   letter-spacing: 0;
 }
 
-.page-header p,
 .section-header p,
 .checkout-head p {
   font-size: var(--ds-text-body);
@@ -2755,7 +2752,7 @@ textarea::placeholder {
   border-color: var(--border-color) !important;
 }
 
-.portal-page > section:not(.portal-hero),
+.portal-page > section:not(.customer-page-header),
 .metric-grid,
 .portal-grid,
 .quick-section,
@@ -2878,7 +2875,7 @@ textarea::placeholder {
     grid-template-columns: 1fr !important;
   }
 
-  .portal-page > section:not(.portal-hero),
+  .portal-page > section:not(.customer-page-header),
   .metric-grid,
   .portal-grid,
   .quick-section,
@@ -2972,11 +2969,7 @@ section {
 
 .section-header,
 .hero-text,
-.story-text,
-.contact-hero,
-.products-hero,
-.orders-hero,
-.track-hero {
+.story-text {
   max-width: var(--ds-readable);
 }
 
@@ -3321,27 +3314,6 @@ td {
   padding-top: 0 !important;
 }
 
-.portal-page .portal-hero {
-  margin-top: 0 !important;
-  min-height: auto !important;
-  padding: clamp(0.85rem, 2vw, 1.35rem) clamp(1rem, 4vw, 2rem) clamp(1rem, 2.4vw, 1.65rem) !important;
-}
-
-.portal-page .portal-hero > div,
-.portal-page .portal-hero .hero-actions {
-  width: var(--ds-container-wide);
-  max-width: var(--ds-container-wide);
-  margin-inline: auto !important;
-}
-
-.portal-page .portal-hero h1 {
-  margin-block: 0.35rem !important;
-}
-
-.portal-page .portal-hero p {
-  margin: 0 !important;
-}
-
 .portal-page .hero-actions {
   margin-top: 0.9rem !important;
 }
@@ -3437,10 +3409,6 @@ td {
     --ds-header-offset: 3.6875rem;
   }
 
-  .portal-page .portal-hero {
-    padding: 0.85rem 1rem 1rem !important;
-  }
-
   .portal-page .metric-grid,
   .portal-page .portal-grid,
   .portal-page .quick-section,
@@ -3473,33 +3441,6 @@ td {
 .track-page,
 .contact-page {
   padding-bottom: clamp(1.5rem, 3vw, 2.5rem) !important;
-}
-
-.portal-page .portal-hero,
-.page-header,
-.orders-page .page-header,
-.products-page .page-header,
-.cart-page .page-header {
-  padding-block: clamp(0.65rem, 1.5vw, 1rem) !important;
-  margin-bottom: clamp(0.55rem, 1.4vw, 0.9rem) !important;
-}
-
-.portal-page .portal-hero h1,
-.page-header h1,
-.orders-page .page-header h1,
-.products-page .page-header h1,
-.cart-page .page-header h1 {
-  font-size: clamp(1.25rem, 2.4vw, 1.75rem) !important;
-  margin-bottom: 0.15rem !important;
-}
-
-.portal-page .portal-hero p,
-.page-header p,
-.orders-page .page-header p,
-.products-page .page-header p,
-.cart-page .page-header p {
-  font-size: 0.82rem !important;
-  line-height: 1.4 !important;
 }
 
 .badge,
@@ -9656,18 +9597,12 @@ section,
   padding-block: var(--fluid-section);
 }
 
-.page-header h1,
 .checkout-head h1,
 .section-header h2,
-.hero-text h1,
-.contact-hero h1,
-.products-hero h1,
-.orders-hero h1,
-.track-hero h1 {
+.hero-text h1 {
   font-size: var(--fluid-title) !important;
 }
 
-.page-header p,
 .section-header p,
 .hero-text p {
   max-width: var(--fluid-copy);
@@ -11313,29 +11248,6 @@ table {
   max-width: 118rem !important;
 }
 
-.products-page .page-header {
-  padding-block: 0.35rem 0.55rem !important;
-  margin-bottom: 0.45rem !important;
-}
-
-.products-page .page-header .badge {
-  padding: 0.2rem 0.65rem !important;
-  margin-bottom: 0.3rem !important;
-  font-size: 0.66rem !important;
-}
-
-.products-page .page-header h1 {
-  font-size: clamp(1.18rem, 1rem + 1vw, 1.55rem) !important;
-  margin-bottom: 0.12rem !important;
-  line-height: 1.08 !important;
-}
-
-.products-page .page-header p {
-  max-width: 46rem !important;
-  font-size: clamp(0.74rem, 0.68rem + 0.18vw, 0.84rem) !important;
-  line-height: 1.28 !important;
-}
-
 .products-page .products-layout-grid {
   grid-template-columns: clamp(10.5rem, 15vw, 13rem) minmax(0, 1fr) !important;
   gap: clamp(0.75rem, 1.2vw, 1rem) !important;
@@ -11556,10 +11468,6 @@ table {
 @media (max-width: 40rem) {
   .products-page.container {
     width: min(100% - 0.75rem, 100%) !important;
-  }
-
-  .products-page .page-header p {
-    display: none !important;
   }
 
   .products-page .products-catalog-grid,

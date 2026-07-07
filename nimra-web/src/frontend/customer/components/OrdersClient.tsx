@@ -13,6 +13,7 @@ import { requestOrderCancellation } from '@/utils/api';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
 import ProductImage from './ProductImage';
+import CustomerPageHeader from './CustomerPageHeader';
 
 const OrderDetailsModal = dynamic(() => import('./portal/OrderDetailsModal'), { ssr: false });
 const CancelOrderModal = dynamic(() => import('./portal/CancelOrderModal'), { ssr: false });
@@ -249,12 +250,11 @@ export default function OrdersClient() {
 
   return (
     <div className="orders-page container">
-      {/* Page Header */}
-      <div className="page-header animate-slide-up">
-        <span className="badge badge-primary">Orders</span>
-        <h1>My Orders</h1>
-        <p>Track delivery status, view invoices, cancel pending orders, or place rapid reorders.</p>
-      </div>
+      <CustomerPageHeader
+        badge="ORDERS"
+        title="My Orders"
+        subtitle="Track delivery status, view invoices, cancel pending orders, or place rapid reorders."
+      />
 
       {/* Main Layout Grid */}
       <div className="orders-layout-grid animate-fade-in">
@@ -568,46 +568,6 @@ export default function OrdersClient() {
           padding-bottom: 1rem;
           min-height: 90vh;
           font-family: var(--font-body);
-        }
-
-        /* ── Page Header ── */
-        .page-header {
-          margin-bottom: 2rem;
-          padding-bottom: 1.5rem;
-          border-bottom: 1px solid var(--border-color);
-          text-align: center;
-        }
-
-        .page-header h1 {
-          font-size: 1.75rem;
-          font-weight: 700;
-          margin-bottom: 0.15rem;
-          letter-spacing: -0.02em;
-          color: var(--text-primary);
-        }
-
-        .page-header p {
-          color: var(--text-muted);
-          margin: 0;
-          font-size: 0.875rem;
-          line-height: 1.4;
-        }
-
-        .badge {
-          display: inline-flex;
-          align-items: center;
-          border-radius: 999px;
-          padding: 0.3rem 0.85rem;
-          font-size: 0.75rem;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          margin-bottom: 0.75rem;
-        }
-        .badge-primary {
-          background: rgba(37, 99, 235, 0.1);
-          color: var(--primary-color);
-          border: 1px solid rgba(37, 99, 235, 0.2);
         }
 
         /* Cards List */
@@ -1376,15 +1336,6 @@ export default function OrdersClient() {
           to {
             transform: scale(1);
             opacity: 1;
-          }
-        }
-
-        @media (max-width: 900px) {
-          .page-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
           }
         }
 

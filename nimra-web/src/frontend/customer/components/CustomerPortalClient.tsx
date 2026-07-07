@@ -9,9 +9,9 @@ import { useCustomerOrders } from '@/frontend/customer/hooks/useCustomerOrders';
 import { useCMSData } from '@/frontend/customer/hooks/useCMSData';
 import { useCart } from '@/frontend/customer/contexts/CartProvider';
 import { isOrderable } from '../utils/commerce';
-import { PortalHero } from './portal/Hero';
 import { RecentlyViewedProducts } from './portal/RecentlyViewed';
 import { PortalNotifications } from './portal/Notifications';
+import CustomerPageHeader from './CustomerPageHeader';
 import { toast } from 'sonner';
 import { saveUser, requestEmailChangeOTP } from '@/utils/api';
 
@@ -105,14 +105,39 @@ export default function CustomerPortalClient() {
   const defaultAddress = parsedAddresses.find((a: any) => a.isDefault);
   const homeAddresses = parsedAddresses.filter((a: any) => a.type === 'Home').length;
   const workAddresses = parsedAddresses.filter((a: any) => a.type === 'Work').length;
+  const portalHeader = React.useMemo(() => {
+    if (tab === 'profile') {
+      return {
+        badge: 'PROFILE',
+        title: 'Profile Settings',
+        subtitle: 'Update your personal details and keep your NIMRA account information current.',
+      };
+    }
+    if (tab === 'addresses') {
+      return {
+        badge: 'ADDRESSES',
+        title: 'Saved Addresses',
+        subtitle: 'Manage delivery addresses for faster checkout and smoother order placement.',
+      };
+    }
+    if (tab === 'notifications') {
+      return {
+        badge: 'NOTIFICATIONS',
+        title: 'Notifications',
+        subtitle: 'Review your delivery updates, account alerts, and NIMRA messages.',
+      };
+    }
+    return {
+      badge: 'CUSTOMER PORTAL',
+      title: `Welcome back, ${user?.Name ? (String(user.Name).length > 25 ? `${String(user.Name).slice(0, 25)}...` : user.Name) : 'Customer'}`,
+      subtitle: 'Manage orders, track deliveries, and reach NIMRA support from one clean workspace.',
+    };
+  }, [tab, user?.Name]);
 
   if (!mounted || isLoading) {
     return (
       <div className="portal-page">
-        <div className="portal-hero" style={{ minHeight: '96px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div style={{ width: '250px', height: '40px', background: 'rgba(255,255,255,0.2)', borderRadius: '8px', animation: 'pulse 2s infinite' }} />
-          <div style={{ width: '400px', height: '20px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', marginTop: '1rem', animation: 'pulse 2s infinite' }} />
-        </div>
+        <CustomerPageHeader badge="CUSTOMER PORTAL" title="Loading your portal" subtitle="Preparing your NIMRA workspace…" />
         <section className="portal-grid" style={{ opacity: 0.5 }}>
           <div className="empty-state">
              <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '3px solid var(--primary-color)', borderTopColor: 'transparent', animation: 'spin 1s linear infinite' }} />
@@ -127,7 +152,16 @@ export default function CustomerPortalClient() {
   if (!isAuthenticated) {
     return (
       <div className="portal-page">
-        <PortalHero isAuthenticated={false} />
+        <CustomerPageHeader
+          badge="CUSTOMER PORTAL"
+          title="Welcome to NIMRA"
+          subtitle="Browse products, learn about our water quality, and track an existing order without signing in."
+        >
+          <div className="hero-actions">
+            <Link href="/products" className="btn btn-primary">Browse Products</Link>
+            <Link href="/track" className="btn btn-secondary">Track Order</Link>
+          </div>
+        </CustomerPageHeader>
 
         <section className="quick-section guest">
           <Link href="/products" className="quick-card">
@@ -169,7 +203,7 @@ export default function CustomerPortalClient() {
   return (
     <>
       <div className="portal-page">
-      <PortalHero isAuthenticated={true} name={user?.Name} />
+      <CustomerPageHeader {...portalHeader} />
 
       {tab === 'addresses' ? (
         <section className="portal-tab-section" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1rem', width: '100%' }}>
@@ -348,47 +382,6 @@ const portalStyles = `
     .cart-toast-banner { min-width: unset; width: calc(100vw - 2rem); }
   }
 
-  .portal-hero {
-    padding: 4rem 2.5rem;
-    background: linear-gradient(90deg, #003366 0%, #104489 100%);
-    color: white;
-    position: relative;
-    overflow: hidden;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  }
-  .portal-hero::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 60%;
-    height: 100%;
-    background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
-    pointer-events: none;
-    z-index: 1;
-  }
-  .portal-hero-content {
-    position: relative;
-    z-index: 2;
-    animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  }
-  .portal-hero h1 {
-    max-width: 820px;
-    color: #ffffff;
-    font-size: clamp(1.6rem, 3.2vw, 2.6rem);
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    margin: 0.5rem 0;
-    line-height: 1.2;
-  }
-  .portal-hero p {
-    max-width: 680px;
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 0.98rem;
-    line-height: 1.6;
-    margin: 0;
-  }
-
   .eyebrow {
     display: inline-flex;
     align-items: center;
@@ -525,11 +518,9 @@ const portalStyles = `
     .metric-grid, .quick-section { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .recommendations-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .portal-grid { grid-template-columns: 1fr; }
-    .portal-hero { padding: 1.5rem 2rem 2.5rem; }
   }
 
   @media (max-width: 700px) {
-    .portal-hero { padding: 1.25rem 1.25rem 2rem; }
     .metric-grid, .portal-grid, .quick-section, .recommendations-grid { grid-template-columns: 1fr; padding: 0 1rem; }
     .recommendations-section { padding: 0 1rem; }
     .metric-grid { margin-top: 1.25rem; }
