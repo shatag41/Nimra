@@ -53,9 +53,12 @@ export function CartItemsList() {
             </div>
           </div>
 
-          <div className="cart-price-block">
+          <div className="cart-price-block unit-price-block">
             <span className="cart-column-label">Unit price</span>
             <strong>{formatCurrency(item.price)}</strong>
+          </div>
+
+          <div className="cart-price-block line-total-block">
             <span className="line-subtotal-label">Subtotal</span>
             <b>{formatCurrency(item.price * item.quantity)}</b>
           </div>
