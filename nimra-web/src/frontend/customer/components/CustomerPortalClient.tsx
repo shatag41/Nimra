@@ -99,6 +99,17 @@ export default function CustomerPortalClient() {
 
   const accountAgeDays = user?.CreatedAt ? Math.max(0, Math.floor((Date.now() - new Date(user.CreatedAt).getTime()) / (1000 * 3600 * 24))) : 0;
   
+  const formatDate = React.useCallback((dateStr?: string) => {
+    if (!dateStr) return '';
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return '';
+      return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch (e) {
+      return '';
+    }
+  }, []);
+
   const parsedAddresses = React.useMemo(() => {
     try { return user?.SavedAddresses ? JSON.parse(user.SavedAddresses) : []; } catch (e) { return []; }
   }, [user?.SavedAddresses]);
@@ -220,36 +231,123 @@ export default function CustomerPortalClient() {
       ) : (
         <>
           <section className="metric-grid" aria-label="Account summary">
-            <div className="metric-card">
-              <span>Total Orders</span>
-              <strong>{orders.length}</strong>
-              <small>{loadingOrders ? 'Refreshing...' : 'Synced from your account'}</small>
+            {/* Total Orders Card */}
+            <div className="metric-card accent-blue" tabIndex={0}>
+              <div className="metric-header">
+                <span className="metric-label">Total Orders</span>
+                <div className="metric-icon-wrapper blue">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                  </svg>
+                </div>
+              </div>
+              <div className="metric-body">
+                <strong className="metric-value animate-metric-number">{orders.length}</strong>
+              </div>
+              <div className="metric-footer">
+                <small className="metric-desc">{loadingOrders ? 'Refreshing...' : 'Synced from your account'}</small>
+              </div>
             </div>
-            <div className="metric-card">
-              <span>Active Orders</span>
-              <strong>{metrics.activeOrders}</strong>
-              <small>Pending, confirmed, or in transit</small>
+
+            {/* Active Orders Card */}
+            <div className="metric-card accent-orange" tabIndex={0}>
+              <div className="metric-header">
+                <span className="metric-label">Active Orders</span>
+                <div className="metric-icon-wrapper orange">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="1" y="3" width="15" height="13"></rect>
+                    <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                    <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                    <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                  </svg>
+                </div>
+              </div>
+              <div className="metric-body">
+                <strong className="metric-value animate-metric-number">{metrics.activeOrders}</strong>
+              </div>
+              <div className="metric-footer">
+                <small className="metric-desc">Pending, confirmed, or in transit</small>
+              </div>
             </div>
-            <div className="metric-card">
-              <span>Delivered</span>
-              <strong>{metrics.deliveredOrders}</strong>
-              <small>Completed deliveries</small>
+
+            {/* Delivered Card */}
+            <div className="metric-card accent-green" tabIndex={0}>
+              <div className="metric-header">
+                <span className="metric-label">Delivered</span>
+                <div className="metric-icon-wrapper green">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                </div>
+              </div>
+              <div className="metric-body">
+                <strong className="metric-value animate-metric-number">{metrics.deliveredOrders}</strong>
+              </div>
+              <div className="metric-footer">
+                <small className="metric-desc">Completed deliveries</small>
+              </div>
             </div>
-            <div className="metric-card">
-              <span>Recent Cancel Order Status</span>
-              {metrics.latestCancelOrder ? (
-                <>
-                  <strong style={{ color: /pending/i.test(metrics.latestCancelOrder.cancellationStatus || '') ? 'red' : 'green' }}>
-                    {metrics.latestCancelOrder.cancellationStatus || 'Cancelled'}
-                  </strong>
-                  <small>Order #{metrics.latestCancelOrder.orderId}</small>
-                </>
-              ) : (
-                <>
-                  <strong>N/A</strong>
-                  <small>No cancel requests</small>
-                </>
-              )}
+
+            {/* Recent Cancel Status Card */}
+            <div className="metric-card accent-red" tabIndex={0}>
+              <div className="metric-header">
+                <span className="metric-label">Recent Cancel Status</span>
+                <div className="metric-icon-wrapper red">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                  </svg>
+                </div>
+              </div>
+              <div className="metric-body" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.2rem', width: '100%', margin: '0.15rem 0' }}>
+                {metrics.latestCancelOrder ? (
+                  <>
+                    {(() => {
+                      const cancelStatus = metrics.latestCancelOrder.cancellationStatus || 'Cancelled';
+                      const isPending = /pending/i.test(cancelStatus);
+                      const isApproved = /approved|cancelled/i.test(cancelStatus.toLowerCase());
+                      const isRejected = /rejected/i.test(cancelStatus);
+                      
+                      let pillClass = "status-pill status-pending";
+                      if (isApproved) {
+                        pillClass = "status-pill status-approved";
+                      } else if (isRejected) {
+                        pillClass = "status-pill status-na";
+                      }
+                      
+                      return (
+                        <div className={pillClass}>
+                          <span className={`status-dot ${isPending ? 'pulse' : ''}`} />
+                          <span>{cancelStatus}</span>
+                        </div>
+                      );
+                    })()}
+                  </>
+                ) : (
+                  <div className="status-pill status-na">
+                    <span className="status-dot" />
+                    <span>N/A</span>
+                  </div>
+                )}
+              </div>
+              <div className="metric-footer" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '0.1rem', width: '100%' }}>
+                {metrics.latestCancelOrder ? (
+                  <>
+                    <small className="metric-desc" style={{ fontWeight: 600 }}>Order #{metrics.latestCancelOrder.orderId}</small>
+                    {(metrics.latestCancelOrder.updatedAt || metrics.latestCancelOrder.createdAt) && (
+                      <small className="metric-desc" style={{ fontSize: '0.68rem', opacity: 0.85 }}>
+                        Updated: {formatDate(metrics.latestCancelOrder.updatedAt || metrics.latestCancelOrder.createdAt)}
+                      </small>
+                    )}
+                  </>
+                ) : (
+                  <small className="metric-desc">No cancel requests</small>
+                )}
+              </div>
             </div>
           </section>
 
@@ -266,34 +364,108 @@ export default function CustomerPortalClient() {
             <aside className="side-stack">
               <Profile user={user} />
 
-              <div className="panel next-card">
-                <span className="eyebrow" style={{ color: 'var(--primary-color)', background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.2)', borderRadius: '999px', padding: '0.2rem 0.75rem', fontSize: '0.7rem' }}>Next Step</span>
+              <div className="panel next-card" tabIndex={0}>
+                <div className="next-card-header">
+                  <span className="eyebrow" style={{ color: 'var(--primary-color)', background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.15)', borderRadius: '999px', padding: '0.2rem 0.65rem', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', marginBottom: 0 }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span>Next Step</span>
+                  </span>
+                  <div className="next-card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <circle cx="9" cy="21" r="1"></circle>
+                      <circle cx="20" cy="21" r="1"></circle>
+                      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                  </div>
+                </div>
                 <h2>{cart.totalItems > 0 ? 'Continue to Checkout' : 'Start Your First Order'}</h2>
                 <p>
-                  {cart.totalItems > 0
-                    ? `You have ${cart.totalItems} item(s) in your cart ready for checkout.`
-                    : 'Choose bottles, cans, or bulk jars and place a delivery request in minutes.'}
+                  {cart.totalItems > 0 ? (
+                    <>
+                      You have <strong style={{ color: '#2563eb', fontWeight: 800 }}>{cart.totalItems}</strong> item{cart.totalItems === 1 ? '' : 's'} ready for checkout.
+                    </>
+                  ) : (
+                    'Choose bottles, cans, or bulk jars and place a delivery request in minutes.'
+                  )}
                 </p>
+                
+                <div className="next-progress-steps">
+                  <span className={`step-node ${cart.totalItems > 0 ? 'active' : ''}`}>Cart</span>
+                  <span className="step-arrow">→</span>
+                  <span className="step-node">Checkout</span>
+                  <span className="step-arrow">→</span>
+                  <span className="step-node">Delivery</span>
+                </div>
+
                 <Link
                   href={cart.totalItems > 0 ? '/checkout' : '/products'}
-                  className="btn btn-primary"
+                  className="btn-next-step"
                 >
-                  {cart.totalItems > 0 ? 'Checkout' : 'Shop Products'}
+                  <span>{cart.totalItems > 0 ? 'Checkout' : 'Shop Products'}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                  </svg>
                 </Link>
               </div>
 
-              {activeFaqs.length > 0 && (
-                <div className="panel portal-faq-card">
-                  <div className="portal-faq-head">
-                    <div>
-                      <span className="eyebrow portal-faq-eyebrow">FAQ</span>
-                      <h2>Quick Answers</h2>
-                    </div>
-                    <Link href="/about#faqs" className="portal-faq-link">View All FAQs</Link>
-                  </div>
-                  <FAQs faqs={activeFaqs} limit={2} variant="compact" />
+              <div className="panel portal-quick-controls-card" tabIndex={0}>
+                <div className="quick-controls-head">
+                  <span className="eyebrow quick-controls-eyebrow">QUICK CONTROLS</span>
+                  <h2>Quick Access</h2>
+                  <p className="quick-controls-sub">Manage your account and support in one place.</p>
                 </div>
-              )}
+                
+                <div className="quick-controls-list">
+                  <Link href="/settings" className="quick-control-row">
+                    <div className="quick-control-left">
+                      <div className="quick-control-icon-box">⚙️</div>
+                      <div className="quick-control-text">
+                        <h3>Account Settings</h3>
+                        <p>Manage your profile, password and preferences.</p>
+                      </div>
+                    </div>
+                    <div className="quick-control-arrow">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                      </svg>
+                    </div>
+                  </Link>
+
+                  <Link href="/customer-portal?tab=addresses" className="quick-control-row">
+                    <div className="quick-control-left">
+                      <div className="quick-control-icon-box">📍</div>
+                      <div className="quick-control-text">
+                        <h3>Saved Addresses</h3>
+                        <p>View and manage your delivery locations.</p>
+                      </div>
+                    </div>
+                    <div className="quick-control-arrow">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                      </svg>
+                    </div>
+                  </Link>
+
+                  <Link href="/contact" className="quick-control-row">
+                    <div className="quick-control-left">
+                      <div className="quick-control-icon-box">🎧</div>
+                      <div className="quick-control-text">
+                        <h3>Help & Support</h3>
+                        <p>Get assistance, contact support or raise a request.</p>
+                      </div>
+                    </div>
+                    <div className="quick-control-arrow">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                      </svg>
+                    </div>
+                  </Link>
+                </div>
+              </div>
             </aside>
           </section>
 
@@ -424,16 +596,304 @@ const portalStyles = `
     }
   }
 
-  .metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; max-width: 100%; margin: -1.5rem auto 0; padding: 0 1rem; position: relative; z-index: 2; }
+  /* ── Metric Grid & Cards ── */
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    max-width: 100%;
+    margin: -1.5rem auto 0;
+    padding: 0 1rem;
+    position: relative;
+    z-index: 2;
+  }
 
-  .metric-card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); padding: 1rem; display: flex; flex-direction: column; gap: 0.35rem; transition: transform var(--transition-normal), box-shadow var(--transition-normal); }
-  .metric-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-xl); border-color: rgba(0,150,58,0.3); }
-  .metric-card span { text-transform: uppercase; letter-spacing: 0.04em; font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; }
-  .metric-card small { color: var(--text-muted); font-size: 0.8rem; }
-  .metric-card strong { color: var(--primary-color); font-size: 1.6rem; font-weight: 800; line-height: 1; letter-spacing: -0.02em; font-family: var(--font-heading); }
+  @media (max-width: 1024px) {
+    .metric-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
 
-  .panel, .quick-card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-xl); box-shadow: var(--shadow-md); }
-  .panel { padding: 1.25rem; }
+  @media (max-width: 640px) {
+    .metric-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .metric-card {
+    position: relative;
+    background: linear-gradient(135deg, #ffffff 0%, #f4f9ff 100%);
+    border: 1px solid rgba(191, 219, 254, 0.45);
+    border-radius: 18px;
+    box-shadow: 0 4px 18px -2px rgba(37, 99, 235, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+    padding: 0.7rem 1rem; /* further tightened padding to reduce card height */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 80px; /* compact, premium vertical footprint */
+    overflow: hidden;
+    transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Dark mode overrides */
+  [data-theme="dark"] .metric-card {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(37, 99, 235, 0.04) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35);
+  }
+
+  /* Subtle left accent border */
+  .metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 3.5px;
+    border-top-left-radius: 18px;
+    border-bottom-left-radius: 18px;
+  }
+
+  .metric-card.accent-blue::before { background: #2563eb; }
+  .metric-card.accent-orange::before { background: #ea580c; }
+  .metric-card.accent-green::before { background: #16a34a; }
+  .metric-card.accent-red::before { background: #dc2626; }
+
+  /* Hover State */
+  .metric-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px -4px rgba(37, 99, 235, 0.08), 0 4px 8px -2px rgba(37, 99, 235, 0.03);
+    border-color: rgba(37, 99, 235, 0.32);
+  }
+  
+  [data-theme="dark"] .metric-card:hover {
+    border-color: rgba(59, 130, 246, 0.35);
+    box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.45);
+  }
+
+  /* Keyboard focus state */
+  .metric-card:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+
+  /* Header inside card */
+  .metric-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+    margin-bottom: 0.15rem;
+  }
+
+  .metric-label {
+    text-transform: uppercase;
+    font-size: 0.68rem; /* smaller uppercase */
+    font-weight: 600; /* medium/semibold weight */
+    letter-spacing: 0.06em; /* improved letter spacing */
+    color: var(--text-muted); /* neutral gray */
+    margin: 0;
+  }
+
+  /* Value and Footer */
+  .metric-body {
+    display: flex;
+    align-items: baseline;
+    margin-top: auto;
+    margin-bottom: 0.15rem;
+  }
+
+  .metric-value {
+    color: var(--primary-color); /* Brand blue default */
+    font-size: 1.6rem;
+    font-weight: 800; /* Bold */
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    font-family: var(--font-heading);
+    margin: 0;
+  }
+
+  .metric-card.accent-red .metric-value {
+    color: #dc2626;
+  }
+  
+  .metric-card.accent-green .metric-value {
+    color: #16a34a;
+  }
+
+  .metric-footer {
+    display: flex;
+    align-items: center;
+    width: 100%;
+  }
+
+  .metric-desc {
+    color: var(--text-muted); /* softer gray */
+    font-size: 0.74rem; /* smaller */
+    line-height: 1.35; /* better line height */
+    margin: 0;
+  }
+
+  /* Icon Container */
+  .metric-icon-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px; /* rounded-square */
+    border: 1px solid transparent;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+    transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .metric-card:hover .metric-icon-wrapper {
+    transform: scale(1.06); /* subtle micro interaction */
+  }
+
+  .metric-icon-wrapper.blue {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(37, 99, 235, 0.02) 100%);
+    color: #2563eb;
+    border-color: rgba(37, 99, 235, 0.1);
+  }
+
+  .metric-icon-wrapper.orange {
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(249, 115, 22, 0.02) 100%);
+    color: #ea580c;
+    border-color: rgba(249, 115, 22, 0.1);
+  }
+
+  .metric-icon-wrapper.green {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, rgba(34, 197, 94, 0.02) 100%);
+    color: #16a34a;
+    border-color: rgba(34, 197, 94, 0.1);
+  }
+
+  .metric-icon-wrapper.red {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(239, 68, 68, 0.02) 100%);
+    color: #dc2626;
+    border-color: rgba(239, 68, 68, 0.1);
+  }
+
+  /* Dark mode icon colors */
+  [data-theme="dark"] .metric-icon-wrapper.blue {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.03) 100%);
+    color: #60a5fa;
+    border-color: rgba(59, 130, 246, 0.15);
+  }
+  [data-theme="dark"] .metric-icon-wrapper.orange {
+    background: linear-gradient(135deg, rgba(251, 146, 60, 0.15) 0%, rgba(251, 146, 60, 0.03) 100%);
+    color: #fb923c;
+    border-color: rgba(251, 146, 60, 0.15);
+  }
+  [data-theme="dark"] .metric-icon-wrapper.green {
+    background: linear-gradient(135deg, rgba(74, 222, 128, 0.15) 0%, rgba(74, 222, 128, 0.03) 100%);
+    color: #4ade80;
+    border-color: rgba(74, 222, 128, 0.15);
+  }
+  [data-theme="dark"] .metric-icon-wrapper.red {
+    background: linear-gradient(135deg, rgba(248, 113, 113, 0.15) 0%, rgba(248, 113, 113, 0.03) 100%);
+    color: #f87171;
+    border-color: rgba(248, 113, 113, 0.15);
+  }
+
+  /* Status Pill Styling */
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+    width: fit-content;
+  }
+
+  .status-pill.status-pending {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #dc2626;
+  }
+  [data-theme="dark"] .status-pill.status-pending {
+    background: rgba(248, 113, 113, 0.12);
+    border: 1px solid rgba(248, 113, 113, 0.25);
+    color: #f87171;
+  }
+
+  .status-pill.status-approved, .status-pill.status-completed {
+    background: rgba(34, 197, 94, 0.08);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    color: #16a34a;
+  }
+  [data-theme="dark"] .status-pill.status-approved, [data-theme="dark"] .status-pill.status-completed {
+    background: rgba(74, 222, 128, 0.12);
+    border: 1px solid rgba(74, 222, 128, 0.25);
+    color: #4ade80;
+  }
+
+  .status-pill.status-na {
+    background: rgba(100, 116, 139, 0.08);
+    border: 1px solid rgba(100, 116, 139, 0.2);
+    color: var(--text-muted);
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: currentColor;
+    display: inline-block;
+  }
+
+  .status-dot.pulse {
+    animation: cancel-pulse 2s infinite ease-in-out;
+  }
+
+  @keyframes cancel-pulse {
+    0% { transform: scale(0.85); opacity: 0.6; }
+    50% { transform: scale(1.25); opacity: 1; }
+    100% { transform: scale(0.85); opacity: 0.6; }
+  }
+
+  /* Micro animation: number count/fade in on load */
+  @keyframes metric-number-fade {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-metric-number {
+    animation: metric-number-fade 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .panel, .quick-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(191, 219, 254, 0.45);
+    border-radius: 18px;
+    box-shadow: 0 4px 18px -2px rgba(37, 99, 235, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+    transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  [data-theme="dark"] .panel, [data-theme="dark"] .quick-card {
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35);
+  }
+  .panel:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px -4px rgba(37, 99, 235, 0.08), 0 4px 8px -2px rgba(37, 99, 235, 0.03);
+    border-color: rgba(37, 99, 235, 0.32);
+  }
+  [data-theme="dark"] .panel:hover {
+    border-color: rgba(59, 130, 246, 0.35);
+    box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.45);
+  }
+  .panel { padding: 1.1rem; }
 
   .portal-grid { max-width: 100%; margin: 1rem auto 0; padding: 0 1rem; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 1rem; align-items: start; }
 
@@ -526,6 +986,283 @@ const portalStyles = `
     .metric-grid { margin-top: 1.25rem; }
     .panel-head { align-items: flex-start; flex-direction: column; }
     .guest-checkout { align-items: flex-start; flex-direction: column; padding: 1.25rem; }
+  }
+
+  /* ── Panel visual enhancements & Next Step Card ── */
+  .btn-portal-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.8rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid rgba(191, 219, 254, 0.5);
+    border-radius: 999px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 200ms ease;
+  }
+  .btn-portal-secondary:hover:not(:disabled) {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background: linear-gradient(135deg, #ffffff 0%, #f4f9ff 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.08);
+  }
+  .btn-portal-secondary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .btn-portal-secondary svg.spin {
+    animation: spin-anim 1s linear infinite;
+  }
+  @keyframes spin-anim {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .next-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    padding: 1.1rem;
+  }
+  .next-card:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+  .next-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .next-card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(37, 99, 235, 0.08);
+    color: var(--primary-color);
+  }
+  [data-theme="dark"] .next-card-icon {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+  }
+  .next-card h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+  }
+  .next-card p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.45;
+    margin: 0;
+  }
+  .next-progress-steps {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-top: 0.1rem;
+    margin-bottom: 0.15rem;
+  }
+  .next-progress-steps .step-node.active {
+    color: var(--primary-color);
+  }
+  [data-theme="dark"] .next-progress-steps .step-node.active {
+    color: #60a5fa;
+  }
+  .next-progress-steps .step-arrow {
+    opacity: 0.5;
+  }
+  .btn-next-step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.6rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+    transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .btn-next-step:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+  }
+  .btn-next-step svg {
+    transition: transform 200ms ease;
+  }
+  .btn-next-step:hover svg {
+    transform: translateX(3px);
+  }
+
+  /* ── Quick Controls Card ── */
+  .portal-quick-controls-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+    padding: 1.25rem;
+  }
+  .portal-quick-controls-card:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+  .quick-controls-head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .quick-controls-eyebrow {
+    color: var(--primary-color);
+    background: rgba(37,99,235,0.08);
+    border: 1px solid rgba(37,99,235,0.15);
+    border-radius: 999px;
+    padding: 0.15rem 0.65rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    width: fit-content;
+  }
+  :global([data-theme="dark"]) .quick-controls-eyebrow {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+    border-color: rgba(59, 130, 246, 0.2);
+  }
+  .quick-controls-head h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0.25rem 0 0.1rem 0;
+  }
+  .quick-controls-sub {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  .quick-controls-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+  .quick-control-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0.85rem;
+    background: rgba(150, 150, 150, 0.02);
+    border: 1px solid rgba(191, 219, 254, 0.2);
+    border-radius: 12px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  :global([data-theme="dark"]) .quick-control-row {
+    border-color: rgba(255, 255, 255, 0.03);
+  }
+  .quick-control-row:hover {
+    transform: translateY(-2px);
+    background: rgba(37, 99, 235, 0.03);
+    border-color: rgba(37, 99, 235, 0.25);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.05);
+  }
+  :global([data-theme="dark"]) .quick-control-row:hover {
+    background: rgba(59, 130, 246, 0.04);
+    border-color: rgba(59, 130, 246, 0.2);
+  }
+  
+  .quick-control-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+    flex: 1;
+  }
+  .quick-control-icon-box {
+    font-size: 1.2rem;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: rgba(37, 99, 235, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 250ms ease;
+    flex-shrink: 0;
+  }
+  :global([data-theme="dark"]) .quick-control-icon-box {
+    background: rgba(255, 255, 255, 0.03);
+  }
+  .quick-control-row:hover .quick-control-icon-box {
+    background: rgba(37, 99, 235, 0.12);
+    transform: scale(1.05);
+  }
+  :global([data-theme="dark"]) .quick-control-row:hover .quick-control-icon-box {
+    background: rgba(59, 130, 246, 0.15);
+  }
+
+  .quick-control-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+    flex: 1;
+  }
+  .quick-control-text h3 {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.2;
+    transition: color 200ms ease;
+  }
+  .quick-control-row:hover .quick-control-text h3 {
+    color: var(--primary-color);
+  }
+  :global([data-theme="dark"]) .quick-control-row:hover .quick-control-text h3 {
+    color: #60a5fa;
+  }
+  .quick-control-text p {
+    font-size: 0.74rem;
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .quick-control-arrow {
+    color: var(--text-muted);
+    transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .quick-control-row:hover .quick-control-arrow {
+    color: var(--primary-color);
+    transform: translateX(3px);
+  }
+  :global([data-theme="dark"]) .quick-control-row:hover .quick-control-arrow {
+    color: #60a5fa;
   }
 `;
 

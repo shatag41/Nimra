@@ -190,9 +190,8 @@ export function Profile({ user }: ProfileProps) {
           color: var(--text-secondary);
           font-weight: 600;
           text-align: left;
-          overflow-wrap: break-word;
-          word-break: break-word;
-          line-height: 1.25;
+          overflow-wrap: anywhere;
+          font-size: 0.875rem;
         }
         .profile-detail-value.not-provided {
           color: var(--text-muted);
