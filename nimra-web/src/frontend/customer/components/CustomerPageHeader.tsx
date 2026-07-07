@@ -44,10 +44,10 @@ export default function CustomerPageHeader({
           display: flex;
           align-items: center;
           justify-content: center;
-          width: min(calc(100% - clamp(2rem, 4.4vw, 3.5rem)), 1280px);
+          width: 100vw;
           min-height: var(--customer-page-header-height);
           padding-block: clamp(1rem, 2.2vw, 1.35rem) !important;
-          margin: clamp(0.2rem, 0.8vw, 0.45rem) auto clamp(0.95rem, 1.6vw, 1.2rem);
+          margin: 0 calc(50% - 50vw) clamp(0.95rem, 1.6vw, 1.2rem);
           overflow: hidden;
           border: 1px solid rgba(147, 197, 253, 0.42);
           border-top: 0;
@@ -196,7 +196,7 @@ export default function CustomerPageHeader({
 
         @media (max-width: 640px) {
           .customer-page-header {
-            width: min(calc(100% - 1rem), 1280px);
+            width: 100vw;
             min-height: clamp(1.9rem, 7.2vw, 2.3rem);
             padding-block: clamp(0.6rem, 1.5vw, 0.8rem) !important;
             margin-bottom: 0.8rem;
