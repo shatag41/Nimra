@@ -88,18 +88,34 @@ export default function ContextualBackButton({ hideBackButton }: { hideBackButto
 
   return (
     <>
-      <button className="contextual-back-btn" onClick={handleBack} aria-label={backText}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-        <span>{backText}</span>
-      </button>
+      <div className="contextual-back-wrapper">
+        <button className="contextual-back-btn" onClick={handleBack} aria-label={backText}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+          <span>{backText}</span>
+        </button>
+      </div>
 
       <style jsx>{`
-        .contextual-back-btn {
+        .contextual-back-wrapper {
           position: absolute;
-          top: 1.25rem;
-          left: clamp(1.25rem, 3vw, 4rem);
+          top: 1.15rem;
+          left: 0;
+          right: 0;
+          width: 100%;
+          max-width: var(--ds-container, 1180px);
+          margin: 0 auto;
+          padding-left: clamp(1rem, 3vw, 1.25rem);
+          pointer-events: none;
+          z-index: 20;
+          display: flex;
+          justify-content: flex-start;
+        }
+
+        .contextual-back-btn {
+          position: relative;
+          pointer-events: auto;
           height: 42px;
           padding: 0 16px;
           border-radius: 12px;
@@ -116,7 +132,6 @@ export default function ContextualBackButton({ hideBackButton }: { hideBackButto
           font-size: 14px;
           font-weight: 600;
           transition: all 0.25s ease;
-          z-index: 10;
         }
 
         .contextual-back-btn svg {
@@ -151,8 +166,8 @@ export default function ContextualBackButton({ hideBackButton }: { hideBackButto
         }
 
         @media (max-width: 768px) {
-          .contextual-back-btn {
-            left: max(1rem, calc(50vw - 280px));
+          .contextual-back-wrapper {
+            padding-left: max(1rem, calc(50vw - 280px));
           }
         }
       `}</style>
