@@ -117,6 +117,12 @@ export default function TrackClient() {
   const [order, setOrder] = useState<OrderRecord | null>(null);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const mobileValue = mobile || user?.Mobile || '';
 
   useEffect(() => {
@@ -214,8 +220,8 @@ export default function TrackClient() {
                     if (!user) setOrderId(event.target.value);
                   }}
                   placeholder="NIMRA-..."
-                  readOnly={Boolean(user)}
-                  aria-readonly={Boolean(user)}
+                  readOnly={mounted ? Boolean(user) : false}
+                  aria-readonly={mounted ? Boolean(user) : false}
                   disabled={loading || authLoading}
                 />
               </div>
@@ -233,8 +239,8 @@ export default function TrackClient() {
                     if (!user) setMobile(event.target.value.replace(/\D/g, ''));
                   }}
                   placeholder="Registered mobile number"
-                  readOnly={Boolean(user)}
-                  aria-readonly={Boolean(user)}
+                  readOnly={mounted ? Boolean(user) : false}
+                  aria-readonly={mounted ? Boolean(user) : false}
                   disabled={loading || authLoading}
                 />
               </div>
