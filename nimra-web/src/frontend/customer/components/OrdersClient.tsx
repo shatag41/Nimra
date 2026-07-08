@@ -159,9 +159,6 @@ export default function OrdersClient() {
             <Link href="/login" className="btn btn-primary">
               Login / Register
             </Link>
-            <Link href="/" className="btn btn-secondary">
-              Back to Home
-            </Link>
           </div>
         </div>
         <style jsx>{`

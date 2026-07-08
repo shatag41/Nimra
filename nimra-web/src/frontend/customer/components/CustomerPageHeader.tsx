@@ -1,4 +1,5 @@
 import React from 'react';
+import ContextualBackButton from './ContextualBackButton';
 
 interface CustomerPageHeaderProps {
   badge: string;
@@ -6,6 +7,7 @@ interface CustomerPageHeaderProps {
   subtitle: string;
   className?: string;
   height?: number | string;
+  hideBackButton?: boolean;
   children?: React.ReactNode;
 }
 
@@ -15,6 +17,7 @@ export default function CustomerPageHeader({
   subtitle,
   className = '',
   height,
+  hideBackButton = false,
   children,
 }: CustomerPageHeaderProps) {
   const headingId = React.useId();
@@ -30,6 +33,7 @@ export default function CustomerPageHeader({
       <div className="customer-page-header__glow customer-page-header__glow--right" aria-hidden="true" />
 
       <div className="customer-page-header__content">
+        <ContextualBackButton hideBackButton={hideBackButton} />
         <span className="customer-page-header__badge">{badge}</span>
         <h1 id={headingId}>{title}</h1>
         <p>{subtitle}</p>

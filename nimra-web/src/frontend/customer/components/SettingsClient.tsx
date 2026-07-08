@@ -125,9 +125,7 @@ export default function SettingsClient() {
           badge="SETTINGS"
           title="Account Settings"
           subtitle="Manage security, communication preferences, and your NIMRA account."
-        >
-          <Link href="/customer-portal" className="back-link">← Back to Portal</Link>
-        </CustomerPageHeader>
+        />
 
         <div className="settings-grid">
           <section className="setting-card password-card">
@@ -199,8 +197,7 @@ export default function SettingsClient() {
 
       <style jsx>{`
         .settings-page { min-height: 100vh; padding: 2rem 1rem 3rem; background: var(--bg-primary); color: var(--text-primary); }
-        .settings-shell { width: min(1100px, 100%); margin: 0 auto; }
-        .back-link { color: var(--primary-color); font-size: .85rem; font-weight: 700; white-space: nowrap; }
+        .settings-shell { display: grid; gap: clamp(1.5rem, 3.5vw, 2.5rem); width: min(1100px, 100%); margin: 0 auto; }
         .settings-grid { display: grid; grid-template-columns: minmax(280px, .82fr) minmax(420px, 1.18fr); gap: 1rem; align-items: start; }
         .setting-card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-xl); box-shadow: var(--shadow-md); padding: 1.25rem; }
         .preferences-card { grid-row: span 2; }

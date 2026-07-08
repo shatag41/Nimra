@@ -468,11 +468,6 @@ export default function CheckoutClient() {
                 : 'You have no items to checkout. Add NIMRA products to continue.'
             }
           />
-          <div className="empty-cart-action">
-             <Link href={searchParams.get('reorder') === '1' ? '/orders' : '/products'} className="btn btn-primary">
-              {searchParams.get('reorder') === '1' ? 'Back to Orders' : 'Continue Shopping'}
-             </Link>
-          </div>
         </div>
         <style jsx>{styles}</style>
       </div>
@@ -489,11 +484,6 @@ export default function CheckoutClient() {
           subtitle="Confirm your delivery details and place your NIMRA order with confidence."
         />
 
-        <div className="checkout-actions-top">
-          <Link href={isReorderCheckout ? '/orders' : '/cart'} className="btn btn-secondary btn-sm">
-            {isReorderCheckout ? 'Back to Orders' : 'Back to Cart'}
-          </Link>
-        </div>
 
         {status.kind === 'success' ? (
           <CheckoutSuccess message={status.message} orderId={status.orderId} />
