@@ -120,12 +120,14 @@ export default function HeroActionButtons({ hideBackButton }: { hideBackButton?:
         
         {showFinishOrderButton && (
           <button className="hero-action-btn hero-action-finish" onClick={handleFinishOrder} aria-label="Finish Your Order">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg className="hero-cart-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="9" cy="21" r="1" />
               <circle cx="20" cy="21" r="1" />
               <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
             </svg>
-            <span>Finish Your Order {cartItemCount > 0 ? `• ${cartItemCount} Item${cartItemCount > 1 ? 's' : ''}` : ''} →</span>
+            <span className="hero-finish-text">
+              Finish Your Order {cartItemCount > 0 ? <span className="hero-cart-badge">• {cartItemCount} Item{cartItemCount > 1 ? 's' : ''}</span> : ''} <span className="hero-cart-arrow">→</span>
+            </span>
           </button>
         )}
       </div>
@@ -234,6 +236,137 @@ export default function HeroActionButtons({ hideBackButton }: { hideBackButton?:
           .hero-action-btn {
             width: max-content;
             margin: 0 auto;
+          }
+        }
+
+        /* --- Finish Order CTA Animations --- */
+        .hero-action-finish {
+          --btn-glow-rgb: 37, 99, 235;
+          --btn-shadow-base: 0 4px 12px rgba(37, 99, 235, 0.05);
+          overflow: hidden;
+          animation: floatCTA 2.8s ease-in-out infinite, pulseGlow 2.8s ease-in-out infinite;
+        }
+
+        :global([data-theme="dark"]) .hero-action-finish {
+          --btn-glow-rgb: 96, 165, 250;
+          --btn-shadow-base: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .hero-action-finish > * {
+          position: relative;
+          z-index: 2;
+        }
+
+        .hero-action-finish::before {
+          content: '';
+          position: absolute;
+          top: 0; left: 0; width: 40%; height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
+          transform: translateX(-300%) skewX(-20deg);
+          animation: shimmerSweep 7.5s infinite ease-in-out;
+          pointer-events: none;
+          z-index: 1;
+        }
+
+        :global([data-theme="dark"]) .hero-action-finish::before {
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+        }
+
+        .hero-cart-icon {
+          animation: cartWiggle 5.5s infinite ease-in-out;
+          transform-origin: center;
+          transition: transform 220ms ease;
+        }
+
+        .hero-cart-badge {
+          display: inline-block;
+          animation: badgePulse 3s infinite ease-in-out;
+          color: #1d4ed8;
+          font-weight: 700;
+        }
+
+        :global([data-theme="dark"]) .hero-cart-badge {
+          color: #93c5fd;
+        }
+
+        .hero-cart-arrow {
+          display: inline-block;
+          transition: transform 220ms ease;
+        }
+
+        /* Hover & Active states */
+        .hero-action-finish:hover {
+          transform: translateY(-3px) !important;
+          background: rgba(255, 255, 255, 0.95);
+          box-shadow: 0 8px 22px rgba(37, 99, 235, 0.15), 0 0 18px rgba(var(--btn-glow-rgb), 0.35) !important;
+          animation-play-state: paused;
+        }
+
+        :global([data-theme="dark"]) .hero-action-finish:hover {
+          background: rgba(30, 41, 59, 0.95);
+          box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3), 0 0 18px rgba(var(--btn-glow-rgb), 0.35) !important;
+        }
+
+        .hero-action-finish:active {
+          transform: scale(0.98) translateY(0) !important;
+          box-shadow: var(--btn-shadow-base), 0 0 25px rgba(var(--btn-glow-rgb), 0.45) !important;
+          transition: transform 120ms ease, box-shadow 120ms ease;
+        }
+
+        .hero-action-finish:hover .hero-cart-icon {
+          transform: translateX(3px) !important;
+          animation: none;
+        }
+
+        .hero-action-finish:hover .hero-cart-arrow {
+          transform: translateX(4px);
+        }
+
+        /* Keyframes */
+        @keyframes floatCTA {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-2.5px); }
+        }
+
+        @keyframes pulseGlow {
+          0%, 100% { 
+            box-shadow: var(--btn-shadow-base), 0 0 0 rgba(var(--btn-glow-rgb), 0); 
+          }
+          50% { 
+            box-shadow: var(--btn-shadow-base), 0 0 15px rgba(var(--btn-glow-rgb), 0.25); 
+          }
+        }
+
+        @keyframes shimmerSweep {
+          0%, 86% { transform: translateX(-300%) skewX(-20deg); }
+          100% { transform: translateX(400%) skewX(-20deg); }
+        }
+
+        @keyframes cartWiggle {
+          0%, 85% { transform: rotate(0); }
+          88% { transform: rotate(-6deg); }
+          91% { transform: rotate(6deg); }
+          94% { transform: rotate(-3deg); }
+          97%, 100% { transform: rotate(0); }
+        }
+
+        @keyframes badgePulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.08); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .hero-action-finish {
+            animation: none !important;
+          }
+          .hero-action-finish::before {
+            display: none !important;
+          }
+          .hero-cart-icon {
+            animation: none !important;
+          }
+          .hero-cart-badge {
+            animation: none !important;
           }
         }
       `}</style>
