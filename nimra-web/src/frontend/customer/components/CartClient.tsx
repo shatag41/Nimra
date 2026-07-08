@@ -60,7 +60,6 @@ export default function CartClient() {
       <div className="cart-shell">
         <CustomerPageHeader badge="CART" title="Your shopping cart" subtitle="Review your selected products and proceed to checkout." />
         <div className="cart-actions-top">
-          <Link href="/products" className="continue-shopping"><ArrowLeft />Continue Shopping</Link>
           <button type="button" className="clear-cart" onClick={clearWithConfirmation}><Trash />Clear Cart</button>
         </div>
         <div className="cart-layout">
@@ -93,10 +92,10 @@ function Recommendations({ products, onAdd }: { products: ReturnType<typeof useC
 }
 
 const styles = `
-  .cart-page { --cart-glass: rgba(255,255,255,.76); --cart-border: rgba(148,163,184,.24); min-height: 82vh; padding: 0 0 clamp(2rem,5vw,4.5rem) !important; margin-top: -1.25rem !important; font-family:var(--font-body); position:relative; }
+  .cart-page { --cart-glass: rgba(255,255,255,.76); --cart-border: rgba(148,163,184,.24); min-height: 82vh; padding: 0 0 clamp(2rem,5vw,4.5rem) !important; font-family:var(--font-body); position:relative; }
   [data-theme="dark"] .cart-page { --cart-glass:rgba(15,23,42,.72); --cart-border:rgba(96,165,250,.18); }
   .cart-shell { width:min(94%, 1380px); margin:0 auto; }
-  .cart-actions-top { display:flex; align-items:center; justify-content:space-between; margin:.7rem 0 .72rem; }
+  .cart-actions-top { display:flex; align-items:center; justify-content:flex-end; margin:.7rem 0 .72rem; }
   .continue-shopping,.clear-cart { min-height:42px; display:inline-flex; align-items:center; gap:.48rem; padding:.65rem .9rem; border-radius:13px; font-size:.79rem; font-weight:750; cursor:pointer; transition:transform 180ms ease,box-shadow 180ms ease,border-color 180ms ease; }
   .continue-shopping { border:1px solid rgba(37,99,235,.24); background:var(--cart-glass); color:var(--primary-color); box-shadow:0 6px 18px rgba(37,99,235,.07); backdrop-filter:blur(12px); }
   .continue-shopping svg,.clear-cart svg { width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round; }

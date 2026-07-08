@@ -71,9 +71,15 @@ export default function ContextualBackButton({ hideBackButton }: { hideBackButto
     return '/';
   };
 
-  const backText = prevPath ? `Back to ${getPathName(prevPath)}` : `Back to ${getPathName(getFallbackPath())}`;
+  const isCart = pathname === '/cart';
+  const backText = isCart ? 'Continue Shopping' : (prevPath ? `Back to ${getPathName(prevPath)}` : `Back to ${getPathName(getFallbackPath())}`);
 
   const handleBack = () => {
+    if (isCart) {
+      router.push('/products');
+      return;
+    }
+    
     if (!isAuthenticated) {
       router.push('/');
       return;
