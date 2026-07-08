@@ -47,7 +47,7 @@ export default function CustomerPageHeader({
           width: 100vw;
           min-height: var(--customer-page-header-height);
           padding-block: clamp(1rem, 2.2vw, 1.35rem) !important;
-          margin: 0 calc(50% - 50vw) clamp(0.95rem, 1.6vw, 1.2rem);
+          margin: calc(55px - var(--ds-header-offset)) calc(50% - 50vw) clamp(0.95rem, 1.6vw, 1.2rem);
           overflow: hidden;
           border: 1px solid rgba(147, 197, 253, 0.42);
           border-top: 0;

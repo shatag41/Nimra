@@ -456,9 +456,10 @@ export default function CheckoutClient() {
 
   if (checkoutItems.length === 0 && status.kind !== 'success') {
     return (
-      <section className="checkout-page">
+      <div className="checkout-page">
         <div className="container">
           <CustomerPageHeader
+            className="checkout-hero-flush"
             badge="CHECKOUT"
             title={searchParams.get('reorder') === '1' ? 'Reorder Not Available' : 'Your Cart is Empty'}
             subtitle={
@@ -474,14 +475,15 @@ export default function CheckoutClient() {
           </div>
         </div>
         <style jsx>{styles}</style>
-      </section>
+      </div>
     );
   }
 
   return (
-    <section className="checkout-page">
+    <div className="checkout-page">
       <div className="container">
         <CustomerPageHeader
+          className="checkout-hero-flush"
           badge="CHECKOUT"
           title={isReorderCheckout ? 'Reorder Checkout' : 'Secure Checkout'}
           subtitle="Confirm your delivery details and place your NIMRA order with confidence."
@@ -598,13 +600,20 @@ export default function CheckoutClient() {
         </div>
       )}
       <style jsx>{styles}</style>
-    </section>
+    </div>
   );
 }
 
 const styles = `
-  .checkout-page { padding-top: 0; padding-bottom: 1rem; min-height: calc(100vh - 200px); font-family: var(--font-body); }
+  .checkout-page { padding-top: 0 !important; padding-bottom: 1rem; min-height: calc(100vh - 200px); font-family: var(--font-body); }
   
+  :global(.checkout-hero-flush) {
+    margin-top: calc(55px - var(--ds-header-offset)) !important;
+    border-top: none !important;
+    --customer-page-header-height: clamp(1.6rem, 2.4vw, 2rem) !important;
+    padding-block: clamp(0.8rem, 1.8vw, 1.1rem) !important;
+  }
+
   .checkout-actions-top { margin-top: 1rem; margin-bottom: 1rem; display: flex; justify-content: flex-start; }
 
   .checkout-grid { display: grid; grid-template-columns: 1fr 340px; gap: 1.25rem; align-items: start; }
