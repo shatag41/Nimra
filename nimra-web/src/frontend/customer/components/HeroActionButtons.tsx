@@ -3,12 +3,14 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/frontend/customer/hooks/useAuth';
+import { useCart } from '@/frontend/customer/hooks/useCart';
 
-export default function ContextualBackButton({ hideBackButton }: { hideBackButton?: boolean }) {
+export default function HeroActionButtons({ hideBackButton }: { hideBackButton?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { isAuthenticated } = useAuth();
+  const { items } = useCart();
   const [prevPath, setPrevPath] = useState<string | null>(null);
   
   const tab = searchParams.get('tab');
@@ -30,10 +32,19 @@ export default function ContextualBackButton({ hideBackButton }: { hideBackButto
     }
   }, [pathname, searchParams]);
 
-  // Hide logic
-  if (hideBackButton) return null;
-  if (pathname === '/') return null; // Home
-  if (pathname === '/customer-portal' && (!tab || tab === 'overview')) return null; // Portal Dashboard
+  // Back Button Visibility Logic
+  let showBackButton = true;
+  if (hideBackButton) showBackButton = false;
+  if (pathname === '/') showBackButton = false; // Home
+  if (pathname === '/customer-portal' && (!tab || tab === 'overview')) showBackButton = false; // Portal Dashboard
+
+  // Finish Order Button Visibility Logic
+  const cartItemCount = items.length;
+  const isCartPage = pathname === '/cart';
+  const isCheckoutPage = pathname === '/checkout';
+  const showFinishOrderButton = cartItemCount > 0 && !isCartPage && !isCheckoutPage;
+
+  if (!showBackButton && !showFinishOrderButton) return null;
 
   const getPathName = (path: string | null) => {
     if (!path) return 'Back';
@@ -64,18 +75,17 @@ export default function ContextualBackButton({ hideBackButton }: { hideBackButto
 
   const getFallbackPath = () => {
     if (pathname.startsWith('/products/')) return '/products';
-    if (pathname === '/cart') return '/products';
-    if (pathname === '/checkout') return '/cart';
+    if (isCartPage) return '/products';
+    if (isCheckoutPage) return '/cart';
     if (pathname === '/track') return '/customer-portal?tab=orders';
     if (pathname.startsWith('/customer-portal') && tab) return '/customer-portal';
     return '/';
   };
 
-  const isCart = pathname === '/cart';
-  const backText = isCart ? 'Continue Shopping' : (prevPath ? `Back to ${getPathName(prevPath)}` : `Back to ${getPathName(getFallbackPath())}`);
+  const backText = isCartPage ? 'Continue Shopping' : (prevPath ? `Back to ${getPathName(prevPath)}` : `Back to ${getPathName(getFallbackPath())}`);
 
   const handleBack = () => {
-    if (isCart) {
+    if (isCartPage) {
       router.push('/products');
       return;
     }
@@ -92,19 +102,36 @@ export default function ContextualBackButton({ hideBackButton }: { hideBackButto
     }
   };
 
+  const handleFinishOrder = () => {
+    router.push('/cart');
+  };
+
   return (
     <>
-      <div className="contextual-back-wrapper">
-        <button className="contextual-back-btn" onClick={handleBack} aria-label={backText}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-          <span>{backText}</span>
-        </button>
+      <div className="hero-actions-wrapper">
+        {showBackButton ? (
+          <button className="hero-action-btn hero-action-back" onClick={handleBack} aria-label={backText}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+            <span>{backText}</span>
+          </button>
+        ) : <div className="hero-action-spacer" />}
+        
+        {showFinishOrderButton && (
+          <button className="hero-action-btn hero-action-finish" onClick={handleFinishOrder} aria-label="Finish Your Order">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="9" cy="21" r="1" />
+              <circle cx="20" cy="21" r="1" />
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+            </svg>
+            <span>Finish Your Order {cartItemCount > 0 ? `• ${cartItemCount} Item${cartItemCount > 1 ? 's' : ''}` : ''} →</span>
+          </button>
+        )}
       </div>
 
       <style jsx>{`
-        .contextual-back-wrapper {
+        .hero-actions-wrapper {
           position: absolute;
           top: 1.15rem;
           left: 0;
@@ -112,14 +139,20 @@ export default function ContextualBackButton({ hideBackButton }: { hideBackButto
           width: 100%;
           max-width: var(--ds-container, 1180px);
           margin: 0 auto;
-          padding-left: clamp(1rem, 3vw, 1.25rem);
+          padding: 0 clamp(1rem, 3vw, 1.25rem);
           pointer-events: none;
           z-index: 20;
           display: flex;
-          justify-content: flex-start;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 1rem;
         }
 
-        .contextual-back-btn {
+        .hero-action-spacer {
+          flex: 1;
+        }
+
+        .hero-action-btn {
           position: relative;
           pointer-events: auto;
           height: 42px;
@@ -138,42 +171,69 @@ export default function ContextualBackButton({ hideBackButton }: { hideBackButto
           font-size: 14px;
           font-weight: 600;
           transition: all 0.25s ease;
+          flex-shrink: 0;
         }
 
-        .contextual-back-btn svg {
+        .hero-action-btn svg {
           transition: transform 0.25s ease;
         }
 
-        .contextual-back-btn:hover {
+        .hero-action-btn:hover {
           transform: translateY(-2px);
           background: #f8fbff;
           box-shadow: 0 6px 16px rgba(37, 99, 235, 0.1);
         }
 
-        .contextual-back-btn:hover svg {
+        .hero-action-btn.hero-action-back:hover svg {
           transform: translateX(-3px);
         }
+        
+        .hero-action-btn.hero-action-finish:hover svg {
+          transform: translateX(3px);
+        }
 
-        .contextual-back-btn:active {
+        .hero-action-btn:active {
           transform: translateY(0) scale(0.97);
         }
 
         /* Dark Mode */
-        :global([data-theme="dark"]) .contextual-back-btn {
+        :global([data-theme="dark"]) .hero-action-btn {
           background: rgba(30, 41, 59, 0.75);
           border: 1px solid rgba(59, 130, 246, 0.2);
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
           color: #60a5fa;
         }
 
-        :global([data-theme="dark"]) .contextual-back-btn:hover {
+        :global([data-theme="dark"]) .hero-action-btn:hover {
           background: rgba(30, 41, 59, 0.95);
           box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
         }
 
         @media (max-width: 768px) {
-          .contextual-back-wrapper {
+          .hero-actions-wrapper {
             padding-left: max(1rem, calc(50vw - 280px));
+            padding-right: max(1rem, calc(50vw - 280px));
+          }
+        }
+
+        @media (max-width: 640px) {
+          .hero-actions-wrapper {
+            position: static;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.8rem;
+            padding: 0;
+            gap: 0.5rem;
+          }
+          
+          .hero-action-spacer {
+            display: none;
+          }
+          
+          .hero-action-btn {
+            width: max-content;
+            margin: 0 auto;
           }
         }
       `}</style>

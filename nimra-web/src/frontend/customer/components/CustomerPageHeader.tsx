@@ -1,5 +1,5 @@
 import React from 'react';
-import ContextualBackButton from './ContextualBackButton';
+import HeroActionButtons from './HeroActionButtons';
 
 interface CustomerPageHeaderProps {
   badge: string;
@@ -33,7 +33,7 @@ export default function CustomerPageHeader({
       <div className="customer-page-header__glow customer-page-header__glow--right" aria-hidden="true" />
 
       <div className="customer-page-header__content">
-        <ContextualBackButton hideBackButton={hideBackButton} />
+        <HeroActionButtons hideBackButton={hideBackButton} />
         <span className="customer-page-header__badge">{badge}</span>
         <h1 id={headingId}>{title}</h1>
         <p>{subtitle}</p>
