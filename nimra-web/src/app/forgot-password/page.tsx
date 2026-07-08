@@ -4,9 +4,10 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { sendRequest } from '@/utils/api';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
 
 export default function ForgotPasswordPage() {
+  const { notify } = useNotification();
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -22,13 +23,13 @@ export default function ForgotPasswordPage() {
     try {
       const res = await sendRequest({ type: 'requestOTP', email });
       if (res.success) {
-        toast.success(res.message ?? 'OTP sent successfully.');
+        notify.success('OTP Sent', res.message ?? 'OTP sent successfully.');
         setStep(2);
       } else {
-        toast.error(res.message ?? 'Failed to request OTP.');
+        notify.error('OTP Failed', res.message ?? 'Failed to request OTP.');
       }
     } catch {
-      toast.error('Failed to request OTP.');
+      notify.error('OTP Error', 'Failed to request OTP.');
     } finally {
       setIsLoading(false);
     }
@@ -41,13 +42,13 @@ export default function ForgotPasswordPage() {
     try {
       const res = await sendRequest({ type: 'resetPassword', email, otp, newPassword });
       if (res.success) {
-        toast.success('Password reset successful! Redirecting to login...');
+        notify.success('Password Reset', 'Password reset successful! Redirecting to login...');
         setTimeout(() => router.push('/login'), 2000);
       } else {
-        toast.error(res.message ?? 'Failed to reset password.');
+        notify.error('Reset Failed', res.message ?? 'Failed to reset password.');
       }
     } catch {
-      toast.error('Failed to reset password.');
+      notify.error('Reset Error', 'Failed to reset password.');
     } finally {
       setIsLoading(false);
     }

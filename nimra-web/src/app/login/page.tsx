@@ -5,10 +5,11 @@ import { useAuth } from '@/frontend/customer/contexts/AuthContext';
 import { useGoogleLogin } from '@react-oauth/google';
 import Link from 'next/link';
 import { sendRequest } from '@/utils/api';
-import { toast } from 'sonner';
+import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const { notify } = useNotification();
   const [activeTab, setActiveTab] = useState<'mobile' | 'email'>('mobile');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -63,15 +64,15 @@ export default function LoginPage() {
       const res = await sendRequest({ type: 'login', username: loginIdentifier, password });
       if (res.success && res.user) {
         login(res.user);
-        toast.success(`Welcome back, ${res.user.Name}!`);
+        notify.success('Login Successful', `Welcome back, ${res.user.Name}!`);
       } else {
         setError(res.message ?? 'Login failed. Please try again.');
-        toast.error(res.message ?? 'Login failed.');
+        notify.error('Login Failed', res.message ?? 'Login failed.');
       }
     } catch (err) {
       console.error('Login error:', err);
       setError('Login failed. Please try again.');
-      toast.error('Login failed. Please try again.');
+      notify.error('Login Error', 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -98,14 +99,14 @@ export default function LoginPage() {
 
       if (res.success && res.user) {
         login(res.user);
-        toast.success(`Welcome back, ${res.user.Name}!`);
+        notify.success('Login Successful', `Welcome back, ${res.user.Name}!`);
       } else {
         setError(res.message ?? 'Google Sign-In failed.');
-        toast.error(res.message ?? 'Google Sign-In failed.');
+        notify.error('Login Failed', res.message ?? 'Google Sign-In failed.');
       }
     } catch {
       setError('Google Sign-In failed.');
-      toast.error('Google Sign-In failed.');
+      notify.error('Login Error', 'Google Sign-In failed.');
     }
   };
 

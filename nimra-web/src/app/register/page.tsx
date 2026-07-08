@@ -5,10 +5,11 @@ import { useAuth } from '@/frontend/customer/contexts/AuthContext';
 import { useGoogleLogin } from '@react-oauth/google';
 import Link from 'next/link';
 import { sendRequest } from '@/utils/api';
-import { toast } from 'sonner';
+import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
 
 export default function RegisterPage() {
   const { login } = useAuth();
+  const { notify } = useNotification();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [mobile, setMobile] = useState('');
@@ -101,17 +102,17 @@ export default function RegisterPage() {
         }
         login(res.user);
         if (res.emailError) {
-          toast.warning(`Account created, but welcome email failed: ${res.emailError}`);
+          notify.warning('Email Failed', `Account created, but welcome email failed: ${res.emailError}`);
         } else {
-          toast.success('Registration successful! Welcome to NIMRA.');
+          notify.success('Registration Successful', 'Registration successful! Welcome to NIMRA.');
         }
       } else {
         setError(res.message ?? 'Registration failed. Please try again.');
-        toast.error(res.message ?? 'Registration failed.');
+        notify.error('Registration Failed', res.message ?? 'Registration failed.');
       }
     } catch {
       setError('Registration failed. Please try again.');
-      toast.error('Registration failed. Please try again.');
+      notify.error('Registration Error', 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -150,17 +151,17 @@ export default function RegisterPage() {
         }
         login(res.user);
         if (res.emailError) {
-          toast.warning(`Account created, but welcome email failed: ${res.emailError}`);
+          notify.warning('Email Failed', `Account created, but welcome email failed: ${res.emailError}`);
         } else {
-          toast.success('Registration successful! Welcome to NIMRA.');
+          notify.success('Registration Successful', 'Registration successful! Welcome to NIMRA.');
         }
       } else {
         setError(res.message ?? 'Google Sign-In failed.');
-        toast.error(res.message ?? 'Google Sign-In failed.');
+        notify.error('Registration Failed', res.message ?? 'Google Sign-In failed.');
       }
     } catch {
       setError('Google Sign-In failed.');
-      toast.error('Google Sign-In failed.');
+      notify.error('Registration Error', 'Google Sign-In failed.');
     }
   };
 

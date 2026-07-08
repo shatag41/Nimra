@@ -10,7 +10,7 @@ import { OrderRecord } from '@/types/cms';
 import { formatCurrency } from '../utils/commerce';
 import { createReorderCheckoutDraft } from '../utils/reorderDraft';
 import { requestOrderCancellation } from '@/utils/api';
-import { toast } from 'sonner';
+import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
 import dynamic from 'next/dynamic';
 import ProductImage from './ProductImage';
 import CustomerPageHeader from './CustomerPageHeader';
@@ -38,6 +38,7 @@ export default function OrdersClient() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { orders, loadingOrders, refreshOrders } = useCustomerOrders();
   const { items: cartItems, subtotal, totalItems } = useCart();
+  const { notify } = useNotification();
 
   const [activeTab, setActiveTab] = useState<OrderTab>('all');
   const [dateFilter, setDateFilter] = useState<'all' | '30days' | '6months' | 'year'>('all');
@@ -61,17 +62,17 @@ export default function OrdersClient() {
       const res = await requestOrderCancellation(orderToCancel.orderId);
       if (res.success) {
         clearCustomerOrdersCache(user?.ID);
-        toast.success(`Cancellation request for ${orderToCancel.orderId} submitted for admin approval.`);
+        notify.success('Cancellation Requested', `Cancellation request for ${orderToCancel.orderId} submitted for admin approval.`);
         refreshOrders();
         if (selectedOrder && selectedOrder.orderId === orderToCancel.orderId) {
           setSelectedOrder({ ...selectedOrder, cancellationStatus: 'Pending' });
         }
       } else {
-        toast.error(res.message || 'Failed to cancel the order. Please try again.');
+        notify.error('Cancellation Failed', res.message || 'Failed to cancel the order. Please try again.');
       }
     } catch (error) {
       console.error(error);
-      toast.error('An unexpected error occurred. Please try again.');
+      notify.error('Error', 'An unexpected error occurred. Please try again.');
     } finally {
       setCancelling(false);
       setOrderToCancel(null);
@@ -82,15 +83,15 @@ export default function OrdersClient() {
     try {
       const draft = createReorderCheckoutDraft(order);
       if (!draft) {
-        toast.error('This order has no reorderable items.');
+        notify.error('Cannot Reorder', 'This order has no reorderable items.');
         return;
       }
-      toast.success(`Reordering ${draft.items.length} product${draft.items.length === 1 ? '' : 's'} from ${order.orderId}`);
+      notify.success('Reordering Items', `Reordering ${draft.items.length} product${draft.items.length === 1 ? '' : 's'} from ${order.orderId}`);
       setSelectedOrder(null);
       router.push('/checkout?reorder=1');
     } catch (error) {
       console.error(error);
-      toast.error('Failed to start reorder checkout.');
+      notify.error('Reorder Failed', 'Failed to start reorder checkout.');
     }
   };
 
@@ -453,7 +454,7 @@ export default function OrdersClient() {
                         <span className="meta-label">ORDER ID</span>
                         <span className="order-id-txt" onClick={() => {
                           navigator.clipboard.writeText(order.orderId);
-                          toast.success(`Copied Order ID: #${order.orderId}`);
+                          notify.success('Copied to Clipboard', `Order ID: #${order.orderId}`);
                         }}>
                           #{order.orderId}
                         </span>

@@ -8,7 +8,7 @@ import { useAuth } from '@/frontend/customer/hooks/useAuth';
 import { useLocation } from '@/frontend/customer/contexts/LocationContext';
 import { fetchCustomerOrders, submitOrder, saveUser } from '@/utils/api';
 import { primeCustomerOrderCache, replaceCustomerOrdersCache } from '@/frontend/customer/hooks/useCustomerOrders';
-import { toast } from 'sonner';
+import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
 import { CheckoutForm, CheckoutSummary, CheckoutSuccess, SavedAddress, WORLD_DATA } from './portal/Checkout';
 import { migrateLegacyLocalAddresses, normalizeSavedAddresses, persistUserSavedAddresses } from '@/frontend/customer/utils/userAddresses';
 import { clearReorderCheckoutDraft, readReorderCheckoutDraft, ReorderCheckoutDraft, totalsForCheckoutItems } from '@/frontend/customer/utils/reorderDraft';
@@ -41,6 +41,7 @@ export default function CheckoutClient() {
   const searchParams = useSearchParams();
   const { user, updateUserSession } = useAuth();
   const [form, setForm] = useState<FormState>(initialForm);
+  const { notify } = useNotification();
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [status, setStatus] = useState<{ kind: 'idle' | 'loading' | 'success' | 'error'; message: string; orderId?: string }>({ kind: 'idle', message: '' });
   const [reorderDraft, setReorderDraft] = useState<ReorderCheckoutDraft | null>(null);
@@ -175,9 +176,9 @@ export default function CheckoutClient() {
         pincode: f.pincode || location.pincode,
         locality: f.locality || (location.address ? location.address.split(',')[0].trim() : ''),
       }));
-      toast.success('Address autofilled from current GPS location.');
+      notify.success('Autofilled', 'Address autofilled from current GPS location.');
     } else {
-      toast.error('Could not detect location. Please check your GPS permissions.');
+      notify.error('Location Error', 'Could not detect location. Please check your GPS permissions.');
     }
   };
 
@@ -231,7 +232,7 @@ export default function CheckoutClient() {
         instructions: addr.instructions || '',
         saveAddress: false,
       });
-      toast.info(`Switched delivery address to ${addr.type}`);
+      notify.info('Address Switched', `Switched delivery address to ${addr.type}`);
     }
   };
 
@@ -245,9 +246,9 @@ export default function CheckoutClient() {
     if (result.success) {
       setSavedAddresses(addresses as SavedAddress[]);
       updateUserSession({ ...user, SavedAddresses: JSON.stringify(addresses) });
-      toast.success('Default delivery location updated.');
+      notify.success('Default Updated', 'Default delivery location updated.');
     } else {
-      toast.error(result.message || 'Failed to update default address.');
+      notify.error('Update Failed', result.message || 'Failed to update default address.');
     }
   };
 
@@ -279,13 +280,13 @@ export default function CheckoutClient() {
   const handlePlaceOrderClick = (event: FormEvent) => {
     event.preventDefault();
     if (checkoutItems.length === 0) {
-      toast.error(isReorderCheckout ? 'This reorder has no products to checkout.' : 'Your cart is empty.');
+      notify.error('Cart Empty', isReorderCheckout ? 'This reorder has no products to checkout.' : 'Your cart is empty.');
       return;
     }
 
     // If they are in edit mode, validate the fields.
     if (isEditingAddress && !validate()) {
-      toast.error('Please fix the errors in the form.');
+      notify.error('Form Errors', 'Please fix the errors in the form.');
       return;
     }
 
@@ -342,13 +343,13 @@ export default function CheckoutClient() {
           setSavedAddresses(normalized);
           updateUserSession({ ...user, ...updatePayload });
         } else {
-          toast.error(profileRes.message || 'Failed to save address to your account.');
+          notify.error('Save Failed', profileRes.message || 'Failed to save address to your account.');
           setStatus({ kind: 'error', message: profileRes.message || 'Failed to save address to your account.' });
           return;
         }
       } catch (err) {
         console.error('Failed to auto-persist contact info to backend user profile', err);
-        toast.error('Failed to save address to your account.');
+        notify.error('Save Failed', 'Failed to save address to your account.');
         setStatus({ kind: 'error', message: 'Failed to save address to your account.' });
         return;
       }
@@ -359,7 +360,7 @@ export default function CheckoutClient() {
     if (user && !form.saveAddress && form.altMobile !== (user.AlternateMobile || '')) {
       const profileRes = await saveUser({ ID: user.ID, AlternateMobile: form.altMobile } as any, 'update');
       if (!profileRes.success) {
-        toast.error(profileRes.message || 'Failed to save alternate mobile number.');
+        notify.error('Save Failed', profileRes.message || 'Failed to save alternate mobile number.');
         setStatus({ kind: 'error', message: profileRes.message || 'Failed to save alternate mobile number.' });
         return;
       }
@@ -437,13 +438,13 @@ export default function CheckoutClient() {
       setForm(initialForm);
       setStatus({ kind: 'success', message: result.message, orderId: result.orderId });
       if (result.emailError) {
-        toast.warning(`Order placed, but confirmation email failed: ${result.emailError}`);
+        notify.warning('Email Failed', `Order placed, but confirmation email failed: ${result.emailError}`);
       } else {
-        toast.success('Order placed successfully! 🎉');
+        notify.success('Order Placed', 'Order placed successfully! 🎉');
       }
     } else {
       setStatus({ kind: 'error', message: result.message });
-      toast.error(result.message || 'Failed to place order.');
+      notify.error('Order Failed', result.message || 'Failed to place order.');
     }
   };
 

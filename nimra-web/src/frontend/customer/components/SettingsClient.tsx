@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
 import { useAuth } from '@/frontend/customer/hooks/useAuth';
 import {
   changeAccountPassword,
@@ -35,6 +35,7 @@ function SettingsIcon({ type }: { type: 'lock' | 'mail' | 'trash' }) {
 
 export default function SettingsClient() {
   const { user, isAuthenticated, isLoading, clearSession, updateUserSession } = useAuth();
+  const { notify } = useNotification();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [preferences, setPreferences] = useState<EmailPreferences | null>(null);
@@ -77,18 +78,18 @@ export default function SettingsClient() {
     if (result.success && result.preferences) {
       setPreferences(result.preferences);
       updateUserSession({ ...user, EmailPreferences: JSON.stringify(result.preferences) });
-      toast.success(result.message);
+      notify.success('Preferences Saved', result.message);
     } else {
-      toast.error(result.message);
+      notify.error('Save Failed', result.message);
     }
   };
 
   const handlePasswordChange = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!user?.ID) return;
-    if (newPassword.length < 6) return toast.error('New password must be at least 6 characters.');
-    if (newPassword !== confirmPassword) return toast.error('New passwords do not match.');
-    if (currentPassword === newPassword) return toast.error('Choose a password different from your current password.');
+    if (newPassword.length < 6) return notify.error('Invalid Password', 'New password must be at least 6 characters.');
+    if (newPassword !== confirmPassword) return notify.error('Mismatch', 'New passwords do not match.');
+    if (currentPassword === newPassword) return notify.error('Same Password', 'Choose a password different from your current password.');
 
     setChangingPassword(true);
     const result = await changeAccountPassword(user.ID, currentPassword, newPassword);
@@ -97,9 +98,9 @@ export default function SettingsClient() {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      toast.success(result.message);
+      notify.success('Password Updated', result.message);
     } else {
-      toast.error(result.message);
+      notify.error('Update Failed', result.message);
     }
   };
 
@@ -108,8 +109,8 @@ export default function SettingsClient() {
     setDeletingAccount(true);
     const result = await deleteCustomerAccount(user.ID, deletePassword);
     setDeletingAccount(false);
-    if (!result.success) return toast.error(result.message);
-    toast.success(result.message);
+    if (!result.success) return notify.error('Delete Failed', result.message);
+    notify.success('Account Deleted', result.message);
     clearSession();
     window.location.replace('/');
   };

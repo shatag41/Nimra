@@ -34,14 +34,14 @@ import {
   markInquiryReviewed,
 } from '@/utils/api';
 import { clearBrowserSession, useAuth } from '@/frontend/customer/contexts/AuthContext';
-import { toast } from 'sonner';
+import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
 import { getUploadImageUrl } from '@/utils/uploadImage';
 
 export interface CurrentUser {
   id?: string | number;
   username: string;
   role: 'Admin' | 'Manager';
-  name: string;
+  name: string;
   email?: string;
   phone?: string;
 }
@@ -49,6 +49,7 @@ export interface CurrentUser {
 export const useAdminData = (initialCMSData: CMSData) => {
   const router = useRouter();
   const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
+  const { notify } = useNotification();
 
   // Auth state
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
@@ -86,9 +87,9 @@ export const useAdminData = (initialCMSData: CMSData) => {
   // Alerts
   const showAlert = (text: string, type: 'success' | 'error' = 'success') => {
     if (type === 'success') {
-      toast.success(text);
+      notify.success('Success', text);
     } else {
-      toast.error(text);
+      notify.error('Error', text);
     }
   };
 

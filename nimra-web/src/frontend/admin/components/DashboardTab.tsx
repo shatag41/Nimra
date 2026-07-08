@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { OrderRecord, Inquiry, CancellationRequest, Product, AdminUser, Notification } from '@/types/cms';
 import { formatCurrency } from '@/frontend/customer/utils/commerce';
 import { calculateDonutStats, formatDateLabel } from '../utils/chartUtils';
-import { toast } from 'sonner';
+import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
 import LogoutConfirmationModal from '@/frontend/customer/components/LogoutConfirmationModal';
 
 interface DashboardTabProps {
@@ -33,6 +33,7 @@ const DashboardTab = React.memo(function DashboardTab({
   notifications = [],
   onNavigateToOrdersWithFilter,
 }: DashboardTabProps) {
+  const { notify } = useNotification();
   const [remarksByRequest, setRemarksByRequest] = useState<Record<string, string>>({});
   const [liveUpdateIndex, setLiveUpdateIndex] = useState(0);
   const [isHoveringUpdate, setIsHoveringUpdate] = useState(false);
@@ -323,12 +324,12 @@ const DashboardTab = React.memo(function DashboardTab({
           delete next[request.requestId];
           return next;
         });
-        toast.success(`Successfully ${decision.toLowerCase()} request.`);
+        notify.success('Request Processed', `Successfully ${decision.toLowerCase()} request.`);
       } else {
-        toast.error(`Failed to process request.`);
+        notify.error('Request Failed', `Failed to process request.`);
       }
     } catch (e) {
-      toast.error(`Error processing request.`);
+      notify.error('Request Error', `Error processing request.`);
     } finally {
       setIsProcessingAction(false);
       setConfirmAction(null);

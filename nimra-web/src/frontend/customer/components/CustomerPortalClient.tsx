@@ -12,7 +12,7 @@ import { isOrderable } from '../utils/commerce';
 import { RecentlyViewedProducts } from './portal/RecentlyViewed';
 import { PortalNotifications } from './portal/Notifications';
 import CustomerPageHeader from './CustomerPageHeader';
-import { toast } from 'sonner';
+import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
 import { saveUser, requestEmailChangeOTP } from '@/utils/api';
 
 // Lazy-loaded heavy sections for faster page loads
@@ -1269,6 +1269,7 @@ function EditProfileForm({ user, onUpdate }: { user: any; onUpdate: (user: any) 
   const [isVerifying, setIsVerifying] = React.useState(false);
   const [otp, setOtp] = React.useState('');
   const [loading, setLoading] = React.useState(false);
+  const { notify } = useNotification();
   
   // Validation errors state
   const [errors, setErrors] = React.useState<{ name?: string; mobile?: string; email?: string; otp?: string }>({});
@@ -1310,13 +1311,13 @@ function EditProfileForm({ user, onUpdate }: { user: any; onUpdate: (user: any) 
         const res = await requestEmailChangeOTP(user?.ID, email);
         if (res.success) {
           setIsVerifying(true);
-          toast.success(res.message || 'OTP Sent! Please check your new email.');
+          notify.success('OTP Sent', res.message || 'Please check your new email.');
         } else {
-          toast.error(res.message || 'Failed to send OTP.');
+          notify.error('OTP Failed', res.message || 'Failed to send OTP.');
         }
       } catch (err) {
         console.error(err);
-        toast.error('An unexpected error occurred while requesting OTP.');
+        notify.error('Error', 'An unexpected error occurred while requesting OTP.');
       } finally {
         setLoading(false);
       }
@@ -1330,14 +1331,14 @@ function EditProfileForm({ user, onUpdate }: { user: any; onUpdate: (user: any) 
     try {
       const res = await requestEmailChangeOTP(user?.ID, email);
       if (res.success) {
-        toast.success(res.message || 'OTP resent successfully.');
+        notify.success('OTP Resent', res.message || 'OTP resent successfully.');
         setOtp('');
       } else {
-        toast.error(res.message || 'Failed to resend OTP.');
+        notify.error('OTP Failed', res.message || 'Failed to resend OTP.');
       }
     } catch (err) {
       console.error(err);
-      toast.error('An unexpected error occurred while resending OTP.');
+      notify.error('Error', 'An unexpected error occurred while resending OTP.');
     } finally {
       setLoading(false);
     }
@@ -1366,17 +1367,17 @@ function EditProfileForm({ user, onUpdate }: { user: any; onUpdate: (user: any) 
       if (res.success) {
         onUpdate({ ...user, Name: name, Mobile: mobile, Username: email });
         setIsVerifying(false);
-        toast.success('Profile updated successfully!');
+        notify.success('Profile Updated', 'Profile updated successfully!');
       } else {
         if (verificationOtp) {
           setErrors(prev => ({ ...prev, otp: res.message || 'Invalid or expired OTP.' }));
         } else {
-          toast.error(res.message || 'Failed to save profile changes.');
+          notify.error('Update Failed', res.message || 'Failed to save profile changes.');
         }
       }
     } catch (err) {
       console.error('Failed to update profile:', err);
-      toast.error('An unexpected error occurred while saving profile changes.');
+      notify.error('Error', 'An unexpected error occurred while saving profile changes.');
     } finally {
       setLoading(false);
     }

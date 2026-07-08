@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { fetchPincodeData, ALL_STATES, INDIA_DATA } from '../utils/indiaData';
-import { toast } from 'sonner';
+import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
 
 interface FormStateLike {
   pincode: string;
@@ -16,6 +16,7 @@ export function usePincode<T extends FormStateLike>(
   clearError?: (key: keyof T) => void
 ) {
   const [pincodeLoading, setPincodeLoading] = useState(false);
+  const { notify } = useNotification();
 
   const handlePincodeChange = useCallback(async (raw: string) => {
     const value = raw.replace(/\D/g, '').slice(0, 6);
@@ -37,9 +38,9 @@ export function usePincode<T extends FormStateLike>(
           cities.find((c) => c.toLowerCase().includes(result.city.toLowerCase())) ||
           result.city;
         setForm((cur) => ({ ...cur, state: matchedState, city: matchedCity }));
-        toast.success(`Detected: ${matchedCity}, ${matchedState}`);
+        notify.success('Location Detected', `Detected: ${matchedCity}, ${matchedState}`);
       } else {
-        toast.error('Could not auto-detect location. Please select manually.');
+        notify.error('Location Error', 'Could not auto-detect location. Please select manually.');
       }
     }
   }, [setForm, clearError]);

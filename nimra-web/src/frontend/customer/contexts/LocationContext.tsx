@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
 
 export interface LocationData {
   latitude: number | null;
@@ -40,6 +40,7 @@ const LocationContext = createContext<LocationContextType>({
 
 export const LocationProvider = ({ children }: { children: React.ReactNode }) => {
   const [locationState, setLocationState] = useState<LocationData>(defaultState);
+  const { notify } = useNotification();
 
   useEffect(() => {
     // Check if we are in browser
@@ -79,7 +80,7 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
     if (typeof window === 'undefined') return;
 
     if (!navigator.geolocation) {
-      toast.error('Geolocation is not supported by your browser.');
+      notify.error('Location Error', 'Geolocation is not supported by your browser.');
       setLocationState((prev) => ({ ...prev, error: 'Not supported' }));
       return;
     }
@@ -130,7 +131,7 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
       localStorage.removeItem('nimra_location_denied');
 
       if (force) {
-        toast.success('Location updated successfully.');
+        notify.success('Location Updated', 'Location updated successfully.');
       }
     } catch (err: any) {
       let errorMsg = 'Failed to detect location.';
@@ -161,7 +162,7 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
       }));
 
       if (force) {
-        toast.error(errorMsg);
+        notify.error('Location Error', errorMsg);
       }
     }
   };

@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
 import { OrderRecord } from '@/types/cms';
 import { formatCurrency } from '../../utils/commerce';
 import { createReorderCheckoutDraft } from '../../utils/reorderDraft';
@@ -25,6 +25,7 @@ const formatDate = (value?: string) => {
 
 export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
   const router = useRouter();
+  const { notify } = useNotification();
   const displayedOrders = React.useMemo(() => {
     return orders
       .filter((o) => o.status?.toLowerCase() !== 'cancelled')
@@ -35,13 +36,13 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
     try {
       const draft = createReorderCheckoutDraft(order);
       if (!draft || !draft.items.length) {
-        toast.error('This order has no reorderable items.');
+        notify.error('Cannot Reorder', 'This order has no reorderable items.');
         return;
       }
-      toast.success(`Reordering ${draft.items.length} product${draft.items.length === 1 ? '' : 's'} from ${order.orderId}`);
+      notify.success('Reordering Items', `Reordering ${draft.items.length} product${draft.items.length === 1 ? '' : 's'} from ${order.orderId}`);
       router.push('/checkout?reorder=1');
     } catch {
-      toast.error('Failed to start reorder checkout.');
+      notify.error('Reorder Failed', 'Failed to start reorder checkout.');
     }
   };
 
@@ -117,7 +118,7 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
                       onClick={(e) => {
                         e.stopPropagation();
                         navigator.clipboard.writeText(order.orderId);
-                        toast.success('Order ID copied to clipboard');
+                        notify.success('Copied to Clipboard', 'Order ID copied to clipboard');
                       }}
                       className="copy-btn"
                       title="Copy Order ID"

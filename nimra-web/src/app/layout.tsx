@@ -8,7 +8,7 @@ import { CartProvider } from '@/frontend/customer/contexts/CartProvider';
 import { LocationProvider } from '@/frontend/customer/contexts/LocationContext';
 import { fetchCMSData } from '@/utils/api';
 import StyledJsxRegistry from './registry';
-import { Toaster } from 'sonner';
+import { NotificationProvider } from '@/frontend/customer/contexts/NotificationContext';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -79,38 +79,20 @@ export default async function RootLayout({
         <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'dummy_client_id'}>
           <AuthProvider>
             <StyledJsxRegistry>
-              <CartProvider>
-                <LocationProvider>
-                  <Suspense fallback={null}>
-                    <LayoutWrapper companyInfo={data.companyInfo}>
-                      {children}
-                    </LayoutWrapper>
-                  </Suspense>
-                </LocationProvider>
-              </CartProvider>
+              <NotificationProvider>
+                <CartProvider>
+                  <LocationProvider>
+                    <Suspense fallback={null}>
+                      <LayoutWrapper companyInfo={data.companyInfo}>
+                        {children}
+                      </LayoutWrapper>
+                    </Suspense>
+                  </LocationProvider>
+                </CartProvider>
+              </NotificationProvider>
             </StyledJsxRegistry>
           </AuthProvider>
         </GoogleOAuthProvider>
-        <Toaster 
-          position="bottom-center" 
-          visibleToasts={1}
-          closeButton
-          toastOptions={{
-            unstyled: true,
-            classNames: {
-              toast: 'premium-toast',
-              title: 'premium-toast-title',
-              description: 'premium-toast-description',
-              icon: 'premium-toast-icon',
-              closeButton: 'premium-toast-close',
-              success: 'premium-toast-success',
-              error: 'premium-toast-error',
-              info: 'premium-toast-info',
-              warning: 'premium-toast-warning'
-            }
-          }}
-          offset="80px"
-        />
       </body>
     </html>
   );

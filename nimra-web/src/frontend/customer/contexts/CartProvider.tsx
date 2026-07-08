@@ -5,7 +5,7 @@ import { CartItem, Product } from '@/types/cms';
 import { useAuth } from './AuthContext';
 import { cartSubtotal, deliveryChargeFor, hydrateCartItemsFromCatalog, mergeCartItems, mergeCartSnapshots, normalizeCartItem, productToCartItem } from '../utils/commerce';
 import { syncCart, fetchCart, fetchProducts } from '@/utils/api';
-import { toast } from 'sonner';
+import { useNotification } from './NotificationContext';
 import { useRouter } from 'next/navigation';
 
 interface CartContextValue {
@@ -56,6 +56,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const recentlyAddedCountRef = useRef(0);
   const toastResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const { notify } = useNotification();
+
   useEffect(() => {
     activeStorageKeyRef.current = activeStorageKey;
   }, [activeStorageKey]);
@@ -78,25 +80,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const showAddedToCartToast = useCallback((productName: string, quantity: number) => {
     const nextCount = itemsRef.current.reduce((sum, item) => sum + item.quantity, 0);
-
-    toast.custom((toastId) => (
-      <GlobalCartToast
-        count={nextCount}
-        productName={productName}
-        onClose={() => {
-          toast.dismiss(toastId);
-        }}
-        onViewCart={() => {
-          toast.dismiss(toastId);
-          router.push('/cart');
-        }}
-      />
-    ), {
-      id: 'cart-added-toast',
-      duration: 4500,
-      position: 'bottom-right',
-    });
-  }, [router]);
+    notify.cart(productName, quantity, nextCount);
+  }, [notify]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -252,7 +237,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       addItems(newItems, message) {
         const normalizedItems = mergeCartItems(newItems.map(normalizeCartItem));
         if (!normalizedItems.length) {
-          toast.error('No reorderable items were found for this order.');
+          notify.error('No reorderable items', 'No reorderable items were found for this order.');
           return;
         }
         updateCartItems((current) => {
@@ -276,29 +261,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       removeItem(productId) {
         const targetProductId = String(productId);
         updateCartItems((current) => current.filter((item) => String(item.productId) !== targetProductId));
-        const toastId = `cart-remove-${Date.now()}`;
-        toast.info(
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span>Item removed from cart</span>
-            <button
-              onClick={() => toast.dismiss(toastId)}
-              className="toast-close-btn"
-              aria-label="Close notification"
-            >
-              <svg width="12" height="12" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12.8536 2.85355C13.0488 2.65829 13.0488 2.34171 12.8536 2.14645C12.6583 1.95118 12.3417 1.95118 12.1464 2.14645L7.5 6.79289L2.85355 2.14645C2.65829 1.95118 2.34171 1.95118 2.14645 2.14645C1.95118 2.34171 1.95118 2.65829 2.14645 2.85355L6.79289 7.5L2.14645 12.1464C1.95118 12.3417 1.95118 12.6583 2.14645 12.8536C2.34171 13.0488 2.65829 13.0488 2.85355 12.8536L7.5 8.20711L12.1464 12.8536C12.3417 13.0488 12.6583 13.0488 12.8536 12.8536C13.0488 12.6583 13.0488 12.3417 12.8536 12.1464L8.20711 7.5L12.8536 2.85355Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
-              </svg>
-            </button>
-          </div>,
-          { 
-            id: toastId,
-            style: { width: 'auto', minWidth: 'max-content', paddingRight: '12px' } 
-          }
-        );
+        notify.info('Item Removed', 'Item removed from cart');
       },
       clearCart() {
         updateCartItems(() => []);
-        toast.success('Cart cleared successfully.');
+        notify.success('Cart Cleared', 'Cart cleared successfully.');
       }
     };
   }, [activeStorageKey, hydrated, items, showAddedToCartToast, storageKey, updateCartItems]);
@@ -312,69 +279,3 @@ export const useCart = () => {
   return value;
 };
 
-interface CartAddedToastProps {
-  count: number;
-  productName: string;
-  onClose: () => void;
-  onViewCart: () => void;
-}
-
-export const GlobalCartToast = ({
-  count,
-  productName,
-  onClose,
-  onViewCart,
-}: CartAddedToastProps) => {
-  return (
-    <div 
-      className="premium-cart-toast" 
-      role="alert" 
-      aria-live="polite"
-    >
-      <div className="toast-main-content">
-        <div className="toast-success-icon">
-          <svg className="toast-checkmark" viewBox="0 0 52 52">
-            <circle className="toast-checkmark-circle" cx="26" cy="26" r="25" fill="none" />
-            <path className="toast-checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
-          </svg>
-        </div>
-        
-        <div className="toast-body-text">
-          <div className="toast-primary-text">
-            {count} {count === 1 ? 'item' : 'items'} added to your cart
-          </div>
-          {productName && (
-            <div className="toast-secondary-text">
-              Latest: {productName}
-            </div>
-          )}
-        </div>
-        
-        <button 
-          type="button"
-          onClick={onViewCart} 
-          className="toast-cta-btn"
-          aria-label="View Cart"
-        >
-          <span>View Cart</span>
-          <svg className="toast-arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-            <polyline points="12 5 19 12 12 19"></polyline>
-          </svg>
-        </button>
-
-        <button 
-          type="button"
-          onClick={onClose} 
-          className="toast-close-btn"
-          aria-label="Close notification"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-    </div>
-  );
-};
