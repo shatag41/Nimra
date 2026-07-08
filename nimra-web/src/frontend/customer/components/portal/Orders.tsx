@@ -146,7 +146,7 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
                           <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                           <circle cx="12" cy="10" r="3"></circle>
                         </svg>
-                        Track
+                        Track Order
                       </Link>
                       <button 
                         onClick={() => handleReorder(order)} 
@@ -242,11 +242,14 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
         .orders-table {
           width: 100%;
           border-collapse: separate;
-          border-spacing: 0 6px;
+          border-spacing: 0 4px;
           min-width: 680px;
         }
         .orders-table th {
-          background: linear-gradient(180deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
+          position: sticky;
+          top: 0;
+          z-index: 10;
+          background: var(--bg-secondary);
           color: var(--text-secondary);
           font-size: 0.72rem;
           font-weight: 700;
@@ -256,8 +259,11 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
           text-align: left;
           border-bottom: 1px solid rgba(191, 219, 254, 0.3);
         }
+        :global([data-theme="dark"]) .orders-table th {
+          background: rgba(15, 23, 42, 0.95);
+        }
         .orders-table td {
-          padding: 0.7rem 0.85rem;
+          padding: 0.55rem 0.85rem;
           background: rgba(255, 255, 255, 0.55);
           border-top: 1px solid rgba(191, 219, 254, 0.25);
           border-bottom: 1px solid rgba(191, 219, 254, 0.25);
@@ -287,12 +293,12 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
           border-right: 1px solid rgba(255, 255, 255, 0.04);
         }
         .orders-table tbody tr:hover td {
-          background: rgba(37, 99, 235, 0.035);
-          border-color: rgba(37, 99, 235, 0.15);
+          background: rgba(37, 99, 235, 0.045);
+          border-color: rgba(37, 99, 235, 0.2);
         }
         :global([data-theme="dark"]) .orders-table tbody tr:hover td {
-          background: rgba(37, 99, 235, 0.06);
-          border-color: rgba(59, 130, 246, 0.15);
+          background: rgba(59, 130, 246, 0.08);
+          border-color: rgba(59, 130, 246, 0.2);
         }
         
         .order-id-cell {
@@ -339,31 +345,57 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
           display: inline-flex;
           align-items: center;
           gap: 0.35rem;
-          padding: 0.2rem 0.6rem;
+          padding: 0.25rem 0.7rem;
           border-radius: 999px;
           font-size: 0.72rem;
           font-weight: 700;
           line-height: 1;
+          border: 1px solid transparent;
         }
         .status-badge-portal.pending {
           background: rgba(249, 115, 22, 0.08);
-          border: 1px solid rgba(249, 115, 22, 0.2);
+          border-color: rgba(249, 115, 22, 0.2);
           color: #ea580c;
+          box-shadow: 0 2px 8px rgba(249, 115, 22, 0.08);
         }
         .status-badge-portal.processing {
-          background: rgba(37, 99, 235, 0.08);
-          border: 1px solid rgba(37, 99, 235, 0.2);
+          background: linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(37, 99, 235, 0.03) 100%);
+          border-color: rgba(37, 99, 235, 0.25);
           color: #2563eb;
+          box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
         }
         .status-badge-portal.delivered {
-          background: rgba(34, 197, 94, 0.08);
-          border: 1px solid rgba(34, 197, 94, 0.2);
+          background: linear-gradient(135deg, rgba(34, 197, 94, 0.12) 0%, rgba(34, 197, 94, 0.03) 100%);
+          border-color: rgba(34, 197, 94, 0.25);
           color: #16a34a;
+          box-shadow: 0 2px 8px rgba(34, 197, 94, 0.1);
         }
         .status-badge-portal.cancelled {
-          background: rgba(239, 68, 68, 0.08);
-          border: 1px solid rgba(239, 68, 68, 0.2);
+          background: linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(239, 68, 68, 0.03) 100%);
+          border-color: rgba(239, 68, 68, 0.25);
           color: #dc2626;
+          box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
+        }
+        
+        :global([data-theme="dark"]) .status-badge-portal.pending {
+          background: rgba(251, 146, 60, 0.12);
+          color: #fb923c;
+          border-color: rgba(251, 146, 60, 0.2);
+        }
+        :global([data-theme="dark"]) .status-badge-portal.processing {
+          background: linear-gradient(135deg, rgba(96, 165, 250, 0.15) 0%, rgba(96, 165, 250, 0.05) 100%);
+          color: #60a5fa;
+          border-color: rgba(96, 165, 250, 0.25);
+        }
+        :global([data-theme="dark"]) .status-badge-portal.delivered {
+          background: linear-gradient(135deg, rgba(74, 222, 128, 0.15) 0%, rgba(74, 222, 128, 0.05) 100%);
+          color: #4ade80;
+          border-color: rgba(74, 222, 128, 0.25);
+        }
+        :global([data-theme="dark"]) .status-badge-portal.cancelled {
+          background: linear-gradient(135deg, rgba(248, 113, 113, 0.15) 0%, rgba(248, 113, 113, 0.05) 100%);
+          color: #f87171;
+          border-color: rgba(248, 113, 113, 0.25);
         }
         
         .status-badge-portal .status-dot {
@@ -385,23 +417,40 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
         
         .btn-table-track {
           font-size: 0.72rem;
-          font-weight: 600;
-          color: var(--text-secondary);
+          font-weight: 700;
+          color: #2563eb;
           text-decoration: none;
-          border: 1px solid rgba(191, 219, 254, 0.6);
+          border: 1px solid rgba(37, 99, 235, 0.25);
           border-radius: 999px;
-          padding: 0.22rem 0.6rem;
+          padding: 0.25rem 0.7rem;
           display: inline-flex;
           align-items: center;
           gap: 0.25rem;
-          background: var(--bg-secondary);
-          transition: all 200ms ease;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(224, 242, 254, 0.85) 100%);
+          box-shadow: 0 2px 6px rgba(37, 99, 235, 0.08);
+          transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        :global([data-theme="dark"]) .btn-table-track {
+          background: linear-gradient(135deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.55) 100%);
+          border-color: rgba(59, 130, 246, 0.3);
+          color: #60a5fa;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
         .btn-table-track:hover {
-          border-color: var(--primary-color);
-          color: var(--primary-color);
-          box-shadow: 0 0 8px rgba(37, 99, 235, 0.12);
+          border-color: rgba(37, 99, 235, 0.55);
+          color: #1d4ed8;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.18), 0 0 0 2.5px rgba(37, 99, 235, 0.08);
         }
+        :global([data-theme="dark"]) .btn-table-track:hover {
+          border-color: rgba(59, 130, 246, 0.65);
+          color: #60a5fa;
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3), 0 0 0 2.5px rgba(59, 130, 246, 0.15);
+        }
+        .btn-table-track:active {
+          transform: translateY(0) scale(0.96);
+        }
+        
         .btn-table-reorder {
           background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
           border: none;
@@ -415,13 +464,16 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
           display: inline-flex;
           align-items: center;
           gap: 0.25rem;
-          box-shadow: 0 2px 4px rgba(37, 99, 235, 0.15);
-          transition: all 200ms ease;
+          box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+          transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
         }
         .btn-table-reorder:hover {
           background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
-          transform: translateY(-1px);
-          box-shadow: 0 4px 8px rgba(37, 99, 235, 0.25);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        }
+        .btn-table-reorder:active {
+          transform: translateY(0) scale(0.98);
         }
       `}</style>
     </div>

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useCart } from '@/frontend/customer/hooks/useCart';
 import ProductImage from '../ProductImage';
+import { ProductCard } from './Products';
 import { formatCurrency, isOrderable, normalizeCategory, productId } from '../../utils/commerce';
 
 const ProductDetailModal = dynamic(() => import('./ProductDetailModal'), { ssr: false });
@@ -113,131 +114,17 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
       </div>
 
       {displayedProducts.length > 0 ? (
-        <div className="custom-recently-viewed-grid">
-          {displayedProducts.slice(0, 4).map((product, index) => {
-            const id = productId(product);
-            const cartItem = items.find((item) => String(item.productId) === id) ?? null;
-            const inCart = cartItem !== null && cartItem.quantity > 0;
-            const orderable = isOrderable(product);
-
-            const handleAdd = (e: React.MouseEvent) => {
-              e.preventDefault();
-              e.stopPropagation();
-              addProduct(product);
-              if (onAdd) {
-                onAdd(product);
-              }
-            };
-
-            const handleIncrease = (e: React.MouseEvent) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (cartItem) {
-                updateQuantity(cartItem.productId, cartItem.quantity + 1);
-              } else {
-                addProduct(product);
-              }
-            };
-
-            const handleDecrease = (e: React.MouseEvent) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (cartItem) {
-                updateQuantity(cartItem.productId, cartItem.quantity - 1);
-              }
-            };
-
-            const handleCardClick = () => {
-              setSelectedProduct(product);
-            };
-
-            return (
-              <article 
-                key={id}
-                className={`custom-rv-card ${inCart ? 'in-cart' : ''}`}
-                onClick={handleCardClick}
-              >
-                <div className="rv-img-container">
-                  <ProductImage 
-                    src={product.ImageUrl} 
-                    alt={product.Name} 
-                    style={{ aspectRatio: 'auto', width: '100%', height: '100%', background: 'transparent' }}
-                    imgStyle={{ objectFit: 'contain', padding: '16px' }}
-                  />
-
-                  <span className="rv-time-badge">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '3px' }}>
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                    {getViewedTime(index)}
-                  </span>
-                </div>
-
-                <div className="rv-card-body">
-                  <div className="rv-meta-row">
-                    <span className="rv-vol-badge">{product.Volume || 'Packaged Water'}</span>
-                    <span className="rv-category-badge">{normalizeCategory(product.Category)}</span>
-                  </div>
-
-                  <h3 className="rv-product-name" title={product.Name}>
-                    {product.Name}
-                  </h3>
-
-                  <p className="rv-product-desc">
-                    {product.Description || 'Premium packaged pure mineral drinking water.'}
-                  </p>
-
-                  <div className="rv-extra-info">
-                    <span className="rv-info-pill stock">✔ In Stock</span>
-                    <span className="rv-info-pill">💧 Pure Alkaline</span>
-                    <span className="rv-info-pill">🚚 Fast Delivery</span>
-                  </div>
-
-                  <div className="rv-price-action-row">
-                    <div className="rv-price-box">
-                      <span className="rv-price-lbl">Retail Price</span>
-                      <div className="rv-price-val-row">
-                        <strong className="rv-price-val">{formatCurrency(Number(product.Price))}</strong>
-                        <span className="rv-price-mrp">MRP {formatCurrency(Number(product.Price) * 1.15)}</span>
-                      </div>
-                    </div>
-
-                    {orderable && (
-                      <div className="rv-action-box">
-                        {inCart ? (
-                          <div className="rv-qty-wrap" onClick={(e) => e.stopPropagation()}>
-                            <button type="button" className="rv-qty-btn" onClick={handleDecrease}>−</button>
-                            <span className="rv-qty-count">{cartItem.quantity}</span>
-                            <button type="button" className="rv-qty-btn" onClick={handleIncrease}>+</button>
-                          </div>
-                        ) : (
-                          <button 
-                            type="button" 
-                            className="rv-add-btn"
-                            onClick={handleAdd}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ marginRight: '4px' }}>
-                              <circle cx="9" cy="21" r="1"></circle>
-                              <circle cx="20" cy="21" r="1"></circle>
-                              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                            </svg>
-                            <span>Add</span>
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {inCart && (
-                    <Link href="/cart" className="rv-view-cart-link" onClick={(e) => e.stopPropagation()}>
-                      View Cart ({cartItem.quantity} item{cartItem.quantity > 1 ? 's' : ''}) &rarr;
-                    </Link>
-                  )}
-                </div>
-              </article>
-            );
-          })}
+        <div className="catalog-grid product-section-compact">
+          {displayedProducts.slice(0, 4).map((product, index) => (
+            <ProductCard
+              key={productId(product)}
+              product={product}
+              badgeText={getViewedTime(index)}
+              onViewMore={setSelectedProduct}
+              disableViewTracking={true}
+              index={index}
+            />
+          ))}
         </div>
       ) : (
         <div className="premium-empty-state">

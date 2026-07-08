@@ -233,8 +233,12 @@ export default function CustomerPortalClient() {
           <section className="metric-grid" aria-label="Account summary">
             {/* Total Orders Card */}
             <div className="metric-card accent-blue" tabIndex={0}>
-              <div className="metric-header">
-                <span className="metric-label">Total Orders</span>
+              <div className="metric-card-content">
+                <div className="metric-card-left">
+                  <span className="metric-label">Total Orders</span>
+                  <strong className="metric-value animate-metric-number">{orders.length}</strong>
+                  <small className="metric-desc">{loadingOrders ? 'Refreshing...' : 'Synced from your account'}</small>
+                </div>
                 <div className="metric-icon-wrapper blue">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
@@ -243,18 +247,16 @@ export default function CustomerPortalClient() {
                   </svg>
                 </div>
               </div>
-              <div className="metric-body">
-                <strong className="metric-value animate-metric-number">{orders.length}</strong>
-              </div>
-              <div className="metric-footer">
-                <small className="metric-desc">{loadingOrders ? 'Refreshing...' : 'Synced from your account'}</small>
-              </div>
             </div>
 
             {/* Active Orders Card */}
             <div className="metric-card accent-orange" tabIndex={0}>
-              <div className="metric-header">
-                <span className="metric-label">Active Orders</span>
+              <div className="metric-card-content">
+                <div className="metric-card-left">
+                  <span className="metric-label">Active Orders</span>
+                  <strong className="metric-value animate-metric-number">{metrics.activeOrders}</strong>
+                  <small className="metric-desc">Pending, confirmed, or in transit</small>
+                </div>
                 <div className="metric-icon-wrapper orange">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <rect x="1" y="3" width="15" height="13"></rect>
@@ -264,18 +266,16 @@ export default function CustomerPortalClient() {
                   </svg>
                 </div>
               </div>
-              <div className="metric-body">
-                <strong className="metric-value animate-metric-number">{metrics.activeOrders}</strong>
-              </div>
-              <div className="metric-footer">
-                <small className="metric-desc">Pending, confirmed, or in transit</small>
-              </div>
             </div>
 
             {/* Delivered Card */}
             <div className="metric-card accent-green" tabIndex={0}>
-              <div className="metric-header">
-                <span className="metric-label">Delivered</span>
+              <div className="metric-card-content">
+                <div className="metric-card-left">
+                  <span className="metric-label">Delivered</span>
+                  <strong className="metric-value animate-metric-number">{metrics.deliveredOrders}</strong>
+                  <small className="metric-desc">Completed deliveries</small>
+                </div>
                 <div className="metric-icon-wrapper green">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
@@ -283,18 +283,59 @@ export default function CustomerPortalClient() {
                   </svg>
                 </div>
               </div>
-              <div className="metric-body">
-                <strong className="metric-value animate-metric-number">{metrics.deliveredOrders}</strong>
-              </div>
-              <div className="metric-footer">
-                <small className="metric-desc">Completed deliveries</small>
-              </div>
             </div>
 
             {/* Recent Cancel Status Card */}
             <div className="metric-card accent-red" tabIndex={0}>
-              <div className="metric-header">
-                <span className="metric-label">Recent Cancel Status</span>
+              <div className="metric-card-content">
+                <div className="metric-card-left">
+                  <span className="metric-label">Recent Cancel Status</span>
+                  <div className="metric-cancel-status-wrapper">
+                    {metrics.latestCancelOrder ? (
+                      <>
+                        {(() => {
+                          const cancelStatus = metrics.latestCancelOrder.cancellationStatus || 'Cancelled';
+                          const isPending = /pending/i.test(cancelStatus);
+                          const isApproved = /approved|cancelled/i.test(cancelStatus.toLowerCase());
+                          const isRejected = /rejected/i.test(cancelStatus);
+                          
+                          let pillClass = "status-pill status-pending";
+                          if (isApproved) {
+                            pillClass = "status-pill status-approved";
+                          } else if (isRejected) {
+                            pillClass = "status-pill status-na";
+                          }
+                          
+                          return (
+                            <div className={pillClass}>
+                              <span className={`status-dot ${isPending ? 'pulse' : ''}`} />
+                              <span>{cancelStatus}</span>
+                            </div>
+                          );
+                        })()}
+                      </>
+                    ) : (
+                      <div className="status-pill status-na">
+                        <span className="status-dot" />
+                        <span>N/A</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="metric-cancel-footer">
+                    {metrics.latestCancelOrder ? (
+                      <>
+                        <small className="metric-desc" style={{ fontWeight: 600 }}>Order #{metrics.latestCancelOrder.orderId}</small>
+                        {(metrics.latestCancelOrder.updatedAt || metrics.latestCancelOrder.createdAt) && (
+                          <small className="metric-desc" style={{ fontSize: '0.68rem', opacity: 0.85 }}>
+                            Updated: {formatDate(metrics.latestCancelOrder.updatedAt || metrics.latestCancelOrder.createdAt)}
+                          </small>
+                        )}
+                      </>
+                    ) : (
+                      <small className="metric-desc">No cancel requests</small>
+                    )}
+                  </div>
+                </div>
                 <div className="metric-icon-wrapper red">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
@@ -302,51 +343,6 @@ export default function CustomerPortalClient() {
                     <line x1="12" y1="17" x2="12.01" y2="17"></line>
                   </svg>
                 </div>
-              </div>
-              <div className="metric-body" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.2rem', width: '100%', margin: '0.15rem 0' }}>
-                {metrics.latestCancelOrder ? (
-                  <>
-                    {(() => {
-                      const cancelStatus = metrics.latestCancelOrder.cancellationStatus || 'Cancelled';
-                      const isPending = /pending/i.test(cancelStatus);
-                      const isApproved = /approved|cancelled/i.test(cancelStatus.toLowerCase());
-                      const isRejected = /rejected/i.test(cancelStatus);
-                      
-                      let pillClass = "status-pill status-pending";
-                      if (isApproved) {
-                        pillClass = "status-pill status-approved";
-                      } else if (isRejected) {
-                        pillClass = "status-pill status-na";
-                      }
-                      
-                      return (
-                        <div className={pillClass}>
-                          <span className={`status-dot ${isPending ? 'pulse' : ''}`} />
-                          <span>{cancelStatus}</span>
-                        </div>
-                      );
-                    })()}
-                  </>
-                ) : (
-                  <div className="status-pill status-na">
-                    <span className="status-dot" />
-                    <span>N/A</span>
-                  </div>
-                )}
-              </div>
-              <div className="metric-footer" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '0.1rem', width: '100%' }}>
-                {metrics.latestCancelOrder ? (
-                  <>
-                    <small className="metric-desc" style={{ fontWeight: 600 }}>Order #{metrics.latestCancelOrder.orderId}</small>
-                    {(metrics.latestCancelOrder.updatedAt || metrics.latestCancelOrder.createdAt) && (
-                      <small className="metric-desc" style={{ fontSize: '0.68rem', opacity: 0.85 }}>
-                        Updated: {formatDate(metrics.latestCancelOrder.updatedAt || metrics.latestCancelOrder.createdAt)}
-                      </small>
-                    )}
-                  </>
-                ) : (
-                  <small className="metric-desc">No cancel requests</small>
-                )}
               </div>
             </div>
           </section>
@@ -622,26 +618,22 @@ const portalStyles = `
 
   .metric-card {
     position: relative;
-    background: linear-gradient(135deg, #ffffff 0%, #f4f9ff 100%);
-    border: 1px solid rgba(191, 219, 254, 0.45);
-    border-radius: 18px;
-    box-shadow: 0 4px 18px -2px rgba(37, 99, 235, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
-    padding: 0.7rem 1rem; /* further tightened padding to reduce card height */
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    min-height: 80px; /* compact, premium vertical footprint */
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(240, 247, 255, 0.6) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(191, 219, 254, 0.4);
+    border-radius: 20px;
+    box-shadow: 0 4px 14px -3px rgba(37, 99, 235, 0.03), 0 2px 4px -2px rgba(0, 0, 0, 0.01);
+    padding: 0.65rem 0.95rem;
     overflow: hidden;
-    transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1),
-                box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1),
-                border-color 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 200ms ease;
   }
 
   /* Dark mode overrides */
   [data-theme="dark"] .metric-card {
-    background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(37, 99, 235, 0.04) 100%);
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.65) 100%);
     border: 1px solid rgba(59, 130, 246, 0.15);
-    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
   }
 
   /* Subtle left accent border */
@@ -651,9 +643,9 @@ const portalStyles = `
     top: 0;
     left: 0;
     bottom: 0;
-    width: 3.5px;
-    border-top-left-radius: 18px;
-    border-bottom-left-radius: 18px;
+    width: 4px;
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
   }
 
   .metric-card.accent-blue::before { background: #2563eb; }
@@ -663,14 +655,14 @@ const portalStyles = `
 
   /* Hover State */
   .metric-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 24px -4px rgba(37, 99, 235, 0.08), 0 4px 8px -2px rgba(37, 99, 235, 0.03);
-    border-color: rgba(37, 99, 235, 0.32);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 24px -4px rgba(37, 99, 235, 0.06), 0 4px 8px -2px rgba(37, 99, 235, 0.02);
+    border-color: rgba(37, 99, 235, 0.35);
   }
   
   [data-theme="dark"] .metric-card:hover {
     border-color: rgba(59, 130, 246, 0.35);
-    box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.45);
+    box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.35);
   }
 
   /* Keyboard focus state */
@@ -679,13 +671,22 @@ const portalStyles = `
     outline-offset: 2px;
   }
 
-  /* Header inside card */
-  .metric-header {
+  /* Left/Right layout wrapper */
+  .metric-card-content {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     width: 100%;
-    margin-bottom: 0.15rem;
+    height: 100%;
+    gap: 0.75rem;
+  }
+
+  .metric-card-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    flex: 1;
+    min-width: 0;
   }
 
   .metric-label {
@@ -697,22 +698,14 @@ const portalStyles = `
     margin: 0;
   }
 
-  /* Value and Footer */
-  .metric-body {
-    display: flex;
-    align-items: baseline;
-    margin-top: auto;
-    margin-bottom: 0.15rem;
-  }
-
   .metric-value {
     color: var(--primary-color); /* Brand blue default */
-    font-size: 1.6rem;
+    font-size: 1.45rem;
     font-weight: 800; /* Bold */
     line-height: 1.1;
     letter-spacing: -0.02em;
     font-family: var(--font-heading);
-    margin: 0;
+    margin: 0.05rem 0;
   }
 
   .metric-card.accent-red .metric-value {
@@ -723,30 +716,35 @@ const portalStyles = `
     color: #16a34a;
   }
 
-  .metric-footer {
-    display: flex;
-    align-items: center;
-    width: 100%;
-  }
-
   .metric-desc {
     color: var(--text-muted); /* softer gray */
-    font-size: 0.74rem; /* smaller */
-    line-height: 1.35; /* better line height */
+    font-size: 0.72rem; /* smaller */
+    line-height: 1.3; /* better line height */
     margin: 0;
   }
 
-  /* Icon Container */
+  .metric-cancel-status-wrapper {
+    margin: 0.15rem 0;
+  }
+
+  .metric-cancel-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.05rem;
+  }
+
+  /* Icon Container (circular glass background) */
   .metric-icon-wrapper {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 10px; /* rounded-square */
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
     border: 1px solid transparent;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
-    transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: transform 200ms ease, background 200ms ease;
+    flex-shrink: 0;
   }
 
   .metric-card:hover .metric-icon-wrapper {
@@ -754,49 +752,49 @@ const portalStyles = `
   }
 
   .metric-icon-wrapper.blue {
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(37, 99, 235, 0.02) 100%);
+    background: rgba(37, 99, 235, 0.07);
     color: #2563eb;
     border-color: rgba(37, 99, 235, 0.1);
   }
 
   .metric-icon-wrapper.orange {
-    background: linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(249, 115, 22, 0.02) 100%);
+    background: rgba(249, 115, 22, 0.07);
     color: #ea580c;
     border-color: rgba(249, 115, 22, 0.1);
   }
 
   .metric-icon-wrapper.green {
-    background: linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, rgba(34, 197, 94, 0.02) 100%);
+    background: rgba(34, 197, 94, 0.07);
     color: #16a34a;
     border-color: rgba(34, 197, 94, 0.1);
   }
 
   .metric-icon-wrapper.red {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(239, 68, 68, 0.02) 100%);
+    background: rgba(239, 68, 68, 0.07);
     color: #dc2626;
     border-color: rgba(239, 68, 68, 0.1);
   }
 
   /* Dark mode icon colors */
   [data-theme="dark"] .metric-icon-wrapper.blue {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.03) 100%);
+    background: rgba(59, 130, 246, 0.12);
     color: #60a5fa;
-    border-color: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.2);
   }
   [data-theme="dark"] .metric-icon-wrapper.orange {
-    background: linear-gradient(135deg, rgba(251, 146, 60, 0.15) 0%, rgba(251, 146, 60, 0.03) 100%);
+    background: rgba(251, 146, 60, 0.12);
     color: #fb923c;
-    border-color: rgba(251, 146, 60, 0.15);
+    border-color: rgba(251, 146, 60, 0.2);
   }
   [data-theme="dark"] .metric-icon-wrapper.green {
-    background: linear-gradient(135deg, rgba(74, 222, 128, 0.15) 0%, rgba(74, 222, 128, 0.03) 100%);
+    background: rgba(74, 222, 128, 0.12);
     color: #4ade80;
-    border-color: rgba(74, 222, 128, 0.15);
+    border-color: rgba(74, 222, 128, 0.2);
   }
   [data-theme="dark"] .metric-icon-wrapper.red {
-    background: linear-gradient(135deg, rgba(248, 113, 113, 0.15) 0%, rgba(248, 113, 113, 0.03) 100%);
+    background: rgba(248, 113, 113, 0.12);
     color: #f87171;
-    border-color: rgba(248, 113, 113, 0.15);
+    border-color: rgba(248, 113, 113, 0.2);
   }
 
   /* Status Pill Styling */
@@ -869,31 +867,29 @@ const portalStyles = `
   }
 
   .panel, .quick-card {
-    background: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(191, 219, 254, 0.45);
-    border-radius: 18px;
-    box-shadow: 0 4px 18px -2px rgba(37, 99, 235, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
-    transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1),
-                box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1),
-                border-color 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(191, 219, 254, 0.4);
+    border-radius: 20px;
+    box-shadow: 0 4px 14px -3px rgba(37, 99, 235, 0.03), 0 2px 4px -2px rgba(0, 0, 0, 0.01);
+    transition: all 200ms ease;
   }
   [data-theme="dark"] .panel, [data-theme="dark"] .quick-card {
-    background: rgba(15, 23, 42, 0.75);
+    background: rgba(15, 23, 42, 0.8);
     border: 1px solid rgba(59, 130, 246, 0.15);
-    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
   }
   .panel:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 24px -4px rgba(37, 99, 235, 0.08), 0 4px 8px -2px rgba(37, 99, 235, 0.03);
-    border-color: rgba(37, 99, 235, 0.32);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 24px -4px rgba(37, 99, 235, 0.06), 0 4px 8px -2px rgba(37, 99, 235, 0.02);
+    border-color: rgba(37, 99, 235, 0.35);
   }
   [data-theme="dark"] .panel:hover {
     border-color: rgba(59, 130, 246, 0.35);
-    box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.45);
+    box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.35);
   }
-  .panel { padding: 1.1rem; }
+  .panel { padding: 0.95rem; }
 
   .portal-grid { max-width: 100%; margin: 1rem auto 0; padding: 0 1rem; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 1rem; align-items: start; }
 

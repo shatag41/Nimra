@@ -92,7 +92,8 @@ export default async function RootLayout({
           </AuthProvider>
         </GoogleOAuthProvider>
         <Toaster 
-          position="top-right" 
+          position="bottom-center" 
+          visibleToasts={1}
           closeButton
           toastOptions={{
             unstyled: true,

@@ -52,6 +52,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const cartMutationVersionRef = useRef(0);
   const backendSyncAllowedRef = useRef(false);
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  const recentlyAddedCountRef = useRef(0);
+  const toastResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     activeStorageKeyRef.current = activeStorageKey;
@@ -73,24 +76,25 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems(nextItems);
   }, [storageKey]);
 
-  const showAddedToCartToast = useCallback((title: string, description: string) => {
-    toast.success(title, {
-      description,
-      position: 'bottom-center',
-      duration: 5000,
-      className: 'cart-added-toast',
-      classNames: {
-        content: 'cart-added-toast__content',
-        title: 'cart-added-toast__title',
-        description: 'cart-added-toast__description',
-        icon: 'cart-added-toast__icon',
-        actionButton: 'cart-added-toast__action',
-        closeButton: 'cart-added-toast__close',
-      },
-      action: {
-        label: 'Go to Cart',
-        onClick: () => router.push('/cart'),
-      },
+  const showAddedToCartToast = useCallback((productName: string, quantity: number) => {
+    const nextCount = itemsRef.current.reduce((sum, item) => sum + item.quantity, 0);
+
+    toast.custom((toastId) => (
+      <GlobalCartToast
+        count={nextCount}
+        productName={productName}
+        onClose={() => {
+          toast.dismiss(toastId);
+        }}
+        onViewCart={() => {
+          toast.dismiss(toastId);
+          router.push('/cart');
+        }}
+      />
+    ), {
+      id: 'cart-added-toast',
+      duration: 4500,
+      position: 'bottom-right',
     });
   }, [router]);
 
@@ -243,7 +247,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             ? { ...item, ...nextItem, quantity: item.quantity + nextItem.quantity }
             : item);
         });
-        showAddedToCartToast(product.Name, 'Added to your cart successfully.');
+        showAddedToCartToast(product.Name, Math.max(1, Math.floor(Number(quantity) || 1)));
       },
       addItems(newItems, message) {
         const normalizedItems = mergeCartItems(newItems.map(normalizeCartItem));
@@ -256,8 +260,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         });
         const quantity = normalizedItems.reduce((sum, item) => sum + item.quantity, 0);
         showAddedToCartToast(
-          `${quantity} item${quantity === 1 ? '' : 's'} added to cart`,
-          message || 'Your selected items are ready in the cart.'
+          normalizedItems[0]?.name || 'Items',
+          quantity
         );
       },
       updateQuantity(productId, quantity) {
@@ -306,4 +310,71 @@ export const useCart = () => {
   const value = useContext(CartContext);
   if (!value) throw new Error('useCart must be used inside CartProvider');
   return value;
+};
+
+interface CartAddedToastProps {
+  count: number;
+  productName: string;
+  onClose: () => void;
+  onViewCart: () => void;
+}
+
+export const GlobalCartToast = ({
+  count,
+  productName,
+  onClose,
+  onViewCart,
+}: CartAddedToastProps) => {
+  return (
+    <div 
+      className="premium-cart-toast" 
+      role="alert" 
+      aria-live="polite"
+    >
+      <div className="toast-main-content">
+        <div className="toast-success-icon">
+          <svg className="toast-checkmark" viewBox="0 0 52 52">
+            <circle className="toast-checkmark-circle" cx="26" cy="26" r="25" fill="none" />
+            <path className="toast-checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+          </svg>
+        </div>
+        
+        <div className="toast-body-text">
+          <div className="toast-primary-text">
+            {count} {count === 1 ? 'item' : 'items'} added to your cart
+          </div>
+          {productName && (
+            <div className="toast-secondary-text">
+              Latest: {productName}
+            </div>
+          )}
+        </div>
+        
+        <button 
+          type="button"
+          onClick={onViewCart} 
+          className="toast-cta-btn"
+          aria-label="View Cart"
+        >
+          <span>View Cart</span>
+          <svg className="toast-arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </button>
+
+        <button 
+          type="button"
+          onClick={onClose} 
+          className="toast-close-btn"
+          aria-label="Close notification"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
 };
