@@ -197,7 +197,7 @@ export default function TrackClient() {
       <div className="track-shell">
         <CustomerPageHeader
           badge="TRACK ORDER"
-          title="Track Your NIMRA Delivery"
+          title="Track Your Nimra Delivery"
           subtitle="Enter your Order ID and registered mobile number to track your order in real time."
         />
 
@@ -275,7 +275,7 @@ export default function TrackClient() {
               <div className="empty-orbit">
                 <span><Icon name="package" /></span>
               </div>
-              <h2>Track your order instantly</h2>
+              <h3>Track your order instantly</h3>
               <p>Enter your Order ID and registered mobile number to view live delivery updates.</p>
             </div>
           )}
@@ -448,7 +448,7 @@ export default function TrackClient() {
           position: relative;
           isolation: isolate;
           min-height: calc(100vh - 5rem);
-          padding: clamp(0.45rem, 1.1vw, 0.9rem) 0 clamp(2rem, 4vw, 3.5rem);
+          padding: 0 0 clamp(2rem, 4vw, 3.5rem);
           overflow: hidden;
           font-family: var(--font-body);
           background: var(--track-bg);
@@ -563,7 +563,7 @@ export default function TrackClient() {
 
         .tracking-flow {
           display: grid;
-          gap: clamp(1.15rem, 1.8vw, 1.65rem);
+          gap: clamp(0.8rem, 1.2vw, 1rem);
         }
 
         .tracking-flow.has-result .track-form,
@@ -582,7 +582,7 @@ export default function TrackClient() {
         .search-card {
           width: min(100%, 900px);
           margin-inline: auto;
-          padding: clamp(1.2rem, 1.9vw, 1.8rem);
+          padding: clamp(1rem, 1.5vw, 1.25rem);
         }
 
         .field-group {
@@ -603,7 +603,7 @@ export default function TrackClient() {
           position: relative;
           display: flex;
           align-items: center;
-          min-height: 58px;
+          min-height: 52px;
           border: 1px solid var(--track-input-border);
           border-radius: 16px;
           background: var(--track-input-bg);
@@ -631,8 +631,8 @@ export default function TrackClient() {
         .input-shell input {
           width: 100%;
           height: 100%;
-          min-height: 58px;
-          padding: 0.9rem 1rem 0.9rem 3.65rem;
+          min-height: 52px;
+          padding: 0.8rem 1rem 0.8rem 3.65rem;
           border: 0 !important;
           border-radius: inherit !important;
           outline: 0 !important;
@@ -667,7 +667,7 @@ export default function TrackClient() {
         }
 
         .track-button {
-          min-height: 58px;
+          min-height: 52px;
           min-width: 10.8rem;
           display: inline-flex;
           align-items: center;
@@ -714,11 +714,11 @@ export default function TrackClient() {
         }
 
         .empty-card {
-          min-height: 210px;
+          min-height: 140px;
           display: grid;
           place-items: center;
-          gap: 0.5rem;
-          padding: clamp(1.25rem, 3vw, 2rem);
+          gap: 0.4rem;
+          padding: clamp(1rem, 2vw, 1.25rem);
           text-align: center;
           border: 1px solid rgba(96, 165, 250, 0.34);
           border-radius: 22px;
@@ -728,8 +728,8 @@ export default function TrackClient() {
         }
 
         .empty-orbit {
-          width: 4.5rem;
-          height: 4.5rem;
+          width: 3.8rem;
+          height: 3.8rem;
           display: grid;
           place-items: center;
           border-radius: 999px;
@@ -738,8 +738,8 @@ export default function TrackClient() {
         }
 
         .empty-orbit span {
-          width: 3.45rem;
-          height: 3.45rem;
+          width: 2.8rem;
+          height: 2.8rem;
           display: grid;
           place-items: center;
           border-radius: 999px;
@@ -1353,7 +1353,7 @@ export default function TrackClient() {
           .input-shell,
           .input-shell input,
           .track-button {
-            min-height: 56px;
+            min-height: 48px;
           }
 
           .info-grid {

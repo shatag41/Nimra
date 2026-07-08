@@ -126,7 +126,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
     <div className="contact-page container">
       <CustomerPageHeader
         badge="CONTACT"
-        title="Get In Touch With NIMRA"
+        title="Get In Touch With Nimra"
         subtitle="Reach out for bulk water supplies, dealership opportunities, or quality inquiries."
       />
 

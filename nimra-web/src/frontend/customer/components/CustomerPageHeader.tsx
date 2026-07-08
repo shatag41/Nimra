@@ -147,7 +147,8 @@ export default function CustomerPageHeader({
           font-size: clamp(1.2rem, 1.45vw, 1.55rem);
           font-weight: 900;
           letter-spacing: -0.035em;
-          line-height: 1;
+          line-height: 1.2;
+          padding-bottom: 0.1em;
         }
 
         .customer-page-header p {
@@ -174,6 +175,10 @@ export default function CustomerPageHeader({
             radial-gradient(circle at 83% 52%, rgba(14, 165, 233, 0.18), transparent 34%),
             linear-gradient(110deg, #081525 0%, #0f172a 48%, #0b2436 100%);
           box-shadow: 0 20px 52px rgba(0, 0, 0, 0.3);
+        }
+
+        :global([data-theme="dark"]) .customer-page-header::before {
+          display: none;
         }
 
         :global([data-theme="dark"]) .customer-page-header__badge {
