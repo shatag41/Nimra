@@ -16,8 +16,8 @@ export default function FAQSection({ faqs }: FAQSectionProps) {
   return (
     <div className="shared-faq-section">
       <div className="faq-content">
-        <span className="faq-eyebrow">Help Center</span>
-        <h2>Common Questions</h2>
+        <span className="faq-eyebrow">Faqs</span>
+        <h2>Frequently Asked Questions</h2>
         <p className="faq-intro">
           Everything you need to know about our premium water, quality standards, and delivery services.
         </p>
@@ -103,7 +103,7 @@ export default function FAQSection({ faqs }: FAQSectionProps) {
           width: 260px;
           display: flex;
           align-items: center;
-          padding-top: 1.8rem;
+          padding-top: 5.5rem;
         }
         .support-card {
           position: relative;
