@@ -10875,8 +10875,8 @@ table {
 }
 
 .product-preview-section .product-section-compact .catalog-card .product-img-wrap {
-  width: 40% !important;
-  height: 100% !important;
+  width: 75% !important;
+  height: 55% !important;
   margin: 0 !important;
   aspect-ratio: auto !important;
   flex: 0 0 40%;
@@ -10890,12 +10890,16 @@ table {
 .product-preview-section .product-section-compact .product-image-container {
   width: 100% !important;
   height: 100% !important;
-  padding: clamp(0.65rem, 1vw, 0.9rem) !important;
+  padding: 0 !important;
   aspect-ratio: auto !important;
   background: transparent !important;
 }
 
 .product-preview-section .product-section-compact .product-img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  object-position: center center !important;
   transform-origin: center;
   transition: transform 300ms ease, filter 300ms ease !important;
 }
