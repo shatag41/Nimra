@@ -282,17 +282,15 @@ export default function HomeClient({ banners: initialBanners, products: initialP
 
             <div className="story-image-container">
               <div className="story-img-wrapper">
-                {products[0]?.ImageUrl && (
                   <Image
-                    src={products[0].ImageUrl}
-                    alt={products[0].Name}
+                    src="/nimra_about_image.png"
+                    alt="Nimra Premium Water"
                     fill
                     sizes="(max-width: 768px) 100vw, 50vw"
                     quality={72}
                     style={{ objectFit: 'cover' }}
                     className="story-img animate-float-slow"
                   />
-                )}
                 <div className="story-img-overlay" />
               </div>
               <div className="purity-card glass">
@@ -303,7 +301,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
                 </div>
               </div>
               <div className="story-badge-pill">
-                <span>Since 2018</span>
+                <span>Since 2026</span>
               </div>
             </div>
           </div>
@@ -1062,17 +1060,36 @@ export default function HomeClient({ banners: initialBanners, products: initialP
           box-shadow: 0 0 12px rgba(191, 219, 254, 0.9);
         }
 
+        :global(.home-page .section-header h2),
+        :global(.home-page .faq-content h2),
         .story-title {
-          max-width: 520px;
-          font-size: clamp(1.85rem, 3.2vw, 2.45rem);
-          font-weight: 900;
-          margin: 0.58rem 0 0.8rem;
-          letter-spacing: -0.045em;
-          line-height: 1.08;
-          color: var(--text-primary);
-          background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #2563eb 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
+          max-width: none;
+          font-size: clamp(1.85rem, 3.2vw, 2.45rem) !important;
+          font-weight: 900 !important;
+          margin: 0.58rem 0 0.6rem !important; /* Adjusted margin to account for padding */
+          padding-bottom: 0.2em !important; /* Fixes clipped descenders like 'g' */
+          letter-spacing: -0.045em !important;
+          line-height: 1.08 !important;
+          color: var(--text-primary) !important;
+          background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #2563eb 100%) !important;
+          -webkit-background-clip: text !important;
+          -webkit-text-fill-color: transparent !important;
+        }
+
+        :global([data-theme="dark"] .home-page .section-header h2),
+        :global([data-theme="dark"] .home-page .faq-content h2),
+        :global([data-theme="dark"]) .story-title {
+          background: linear-gradient(135deg, #e0f2fe 0%, #7dd3fc 45%, #3b82f6 100%) !important;
+          -webkit-background-clip: text !important;
+          -webkit-text-fill-color: transparent !important;
+        }
+
+        :global(.home-page .section-header h2) {
+          line-height: 1.25 !important;
+        }
+
+        :global(.home-page .faq-content h2) {
+          font-size: clamp(1.5rem, 2.5vw, 2rem) !important;
         }
 
         .story-description {
