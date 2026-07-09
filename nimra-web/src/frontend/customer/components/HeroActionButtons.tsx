@@ -16,19 +16,36 @@ export default function HeroActionButtons({ hideBackButton }: { hideBackButton?:
   const tab = searchParams.get('tab');
 
   useEffect(() => {
-    // Track history for back button context
-    const storedPrev = sessionStorage.getItem('nimra_prev_path');
-    const storedCurr = sessionStorage.getItem('nimra_curr_path');
+    // Track full history stack for multi-level back navigation
     const fullPath = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '');
+    const historyStackStr = sessionStorage.getItem('nimra_history_stack');
+    let stack: string[] = [];
+    
+    try {
+      stack = historyStackStr ? JSON.parse(historyStackStr) : [];
+      if (!Array.isArray(stack)) stack = [];
+    } catch {
+      stack = [];
+    }
 
-    if (storedCurr !== fullPath) {
-      if (storedCurr) {
-        sessionStorage.setItem('nimra_prev_path', storedCurr);
-        setPrevPath(storedCurr);
+    // Only update stack if path actually changed
+    if (stack[stack.length - 1] !== fullPath) {
+      // Check if user is navigating "Back" (i.e. to the page right before the current one)
+      if (stack.length > 1 && stack[stack.length - 2] === fullPath) {
+        stack.pop(); // Pop current page off stack
+      } else {
+        stack.push(fullPath); // Push new page
+        // Limit stack size to prevent storage bloat
+        if (stack.length > 50) stack.shift();
       }
-      sessionStorage.setItem('nimra_curr_path', fullPath);
+      sessionStorage.setItem('nimra_history_stack', JSON.stringify(stack));
+    }
+    
+    // Set label based on actual previous page
+    if (stack.length > 1) {
+      setPrevPath(stack[stack.length - 2]);
     } else {
-      setPrevPath(storedPrev);
+      setPrevPath(null);
     }
   }, [pathname, searchParams]);
 

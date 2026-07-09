@@ -286,6 +286,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
                     src="/images/nimra_premium_water.png"
                     alt="Nimra Premium Water"
                     fill
+                    priority
                     sizes="(max-width: 768px) 100vw, 50vw"
                     quality={72}
                     style={{ objectFit: 'cover' }}

@@ -108,7 +108,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
                 </div>
               </div>
               <div className="story-img-col">
-                <img src="/images/nimra_premium_water.png" alt="NIMRA Premium Water" loading="lazy" />
+                <img src="/images/nimra_premium_water.png" alt="NIMRA Premium Water" fetchPriority="high" />
               </div>
             </div>
           )}
