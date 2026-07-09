@@ -283,7 +283,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
             <div className="story-image-container">
               <div className="story-img-wrapper">
                   <Image
-                    src="/nimra_about_image.png"
+                    src="/images/nimra_premium_water.png"
                     alt="Nimra Premium Water"
                     fill
                     sizes="(max-width: 768px) 100vw, 50vw"

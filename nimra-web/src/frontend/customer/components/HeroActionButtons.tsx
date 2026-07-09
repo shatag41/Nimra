@@ -90,12 +90,7 @@ export default function HeroActionButtons({ hideBackButton }: { hideBackButton?:
       return;
     }
     
-    if (!isAuthenticated) {
-      router.push('/');
-      return;
-    }
-    
-    if (prevPath && window.history.length > 1) {
+    if (prevPath && typeof window !== 'undefined' && window.history.length > 1) {
       router.back();
     } else {
       router.push(getFallbackPath());
