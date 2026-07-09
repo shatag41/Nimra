@@ -37,7 +37,7 @@ const DashboardTab = React.memo(function DashboardTab({
   const [remarksByRequest, setRemarksByRequest] = useState<Record<string, string>>({});
   const [liveUpdateIndex, setLiveUpdateIndex] = useState(0);
   const [isHoveringUpdate, setIsHoveringUpdate] = useState(false);
-  const [timeFilter, setTimeFilter] = useState<'today' | 'week' | 'month'>('week');
+  const [timeFilter, setTimeFilter] = useState<'overall' | 'today' | 'week' | 'month'>('overall');
   const [hoveredTrendPoint, setHoveredTrendPoint] = useState<any | null>(null);
   const [hoveredBar, setHoveredBar] = useState<any | null>(null);
   const [showPriorityAlerts, setShowPriorityAlerts] = useState(() => {
@@ -97,9 +97,21 @@ const DashboardTab = React.memo(function DashboardTab({
 
   // Time-filtering calculation setup
   const now = new Date();
-  let filterStartDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); // default week
-  if (timeFilter === 'today') {
+  let filterStartDate = new Date();
+  if (timeFilter === 'overall') {
+    const dates = [
+      ...orders.map(o => new Date(o.createdAt || o.updatedAt || now).getTime()),
+      ...users.filter(u => typeof u.ID === 'number' && u.ID > 1000000000000).map(u => new Date(u.ID).getTime()),
+    ];
+    const minDate = dates.length > 0 ? Math.min(...dates) : now.getTime() - 30 * 24 * 60 * 60 * 1000;
+    filterStartDate = new Date(minDate);
+    if (now.getTime() - filterStartDate.getTime() < 24 * 60 * 60 * 1000) {
+      filterStartDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    }
+  } else if (timeFilter === 'today') {
     filterStartDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  } else if (timeFilter === 'week') {
+    filterStartDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   } else if (timeFilter === 'month') {
     filterStartDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   }
@@ -227,6 +239,8 @@ const DashboardTab = React.memo(function DashboardTab({
     let label = '';
     if (timeFilter === 'today') {
       label = pStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else if (timeFilter === 'overall') {
+      label = pStart.toLocaleDateString([], { month: 'short', year: '2-digit' });
     } else {
       label = pStart.toLocaleDateString([], { month: 'short', day: 'numeric' });
     }
@@ -527,7 +541,7 @@ const DashboardTab = React.memo(function DashboardTab({
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.25rem', background: 'var(--bg-secondary)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-          {(['today', 'week', 'month'] as const).map(filter => (
+          {(['overall', 'today', 'week', 'month'] as const).map(filter => (
             <button
               key={filter}
               onClick={() => setTimeFilter(filter)}
