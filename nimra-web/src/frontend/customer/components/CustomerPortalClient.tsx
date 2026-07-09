@@ -617,52 +617,69 @@ const portalStyles = `
   }
 
   .metric-card {
+    --metric-accent: 37, 99, 235;
     position: relative;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(240, 247, 255, 0.6) 100%);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(191, 219, 254, 0.4);
-    border-radius: 20px;
-    box-shadow: 0 4px 14px -3px rgba(37, 99, 235, 0.03), 0 2px 4px -2px rgba(0, 0, 0, 0.01);
+    isolation: isolate;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 250, 252, 0.9) 100%),
+      radial-gradient(circle at top right, rgba(var(--metric-accent), 0.08), transparent 60%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(var(--metric-accent), 0.12);
+    border-radius: 18px;
+    box-shadow:
+      0 10px 30px rgba(15, 23, 42, 0.06),
+      0 2px 8px rgba(var(--metric-accent), 0.04);
     padding: 0.65rem 0.95rem;
     overflow: hidden;
-    transition: all 200ms ease;
+    transition:
+      transform 280ms ease,
+      box-shadow 280ms ease,
+      border-color 280ms ease,
+      background 280ms ease;
+  }
+
+  .metric-card.accent-blue {
+    --metric-accent: 37, 99, 235;
+  }
+
+  .metric-card.accent-orange {
+    --metric-accent: 249, 115, 22;
+  }
+
+  .metric-card.accent-green {
+    --metric-accent: 34, 197, 94;
+  }
+
+  .metric-card.accent-red {
+    --metric-accent: 239, 68, 68;
   }
 
   /* Dark mode overrides */
   [data-theme="dark"] .metric-card {
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.65) 100%);
-    border: 1px solid rgba(59, 130, 246, 0.15);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    background:
+      linear-gradient(180deg, rgba(15, 23, 42, 0.94) 0%, rgba(15, 23, 42, 0.86) 100%),
+      radial-gradient(circle at top right, rgba(var(--metric-accent), 0.16), transparent 60%);
+    border-color: rgba(var(--metric-accent), 0.16);
+    box-shadow:
+      0 10px 30px rgba(2, 6, 23, 0.36),
+      0 2px 8px rgba(37, 99, 235, 0.08);
   }
-
-  /* Subtle left accent border */
-  .metric-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 4px;
-    border-top-left-radius: 20px;
-    border-bottom-left-radius: 20px;
-  }
-
-  .metric-card.accent-blue::before { background: #2563eb; }
-  .metric-card.accent-orange::before { background: #ea580c; }
-  .metric-card.accent-green::before { background: #16a34a; }
-  .metric-card.accent-red::before { background: #dc2626; }
 
   /* Hover State */
   .metric-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 10px 24px -4px rgba(37, 99, 235, 0.06), 0 4px 8px -2px rgba(37, 99, 235, 0.02);
-    border-color: rgba(37, 99, 235, 0.35);
+    box-shadow:
+      0 16px 36px rgba(var(--metric-accent), 0.12),
+      0 8px 18px rgba(15, 23, 42, 0.08);
+    border-color: rgba(var(--metric-accent), 0.22);
   }
   
   [data-theme="dark"] .metric-card:hover {
-    border-color: rgba(59, 130, 246, 0.35);
-    box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.35);
+    border-color: rgba(var(--metric-accent), 0.32);
+    box-shadow:
+      0 16px 36px rgba(var(--metric-accent), 0.18),
+      0 10px 24px rgba(2, 6, 23, 0.38);
   }
 
   /* Keyboard focus state */
@@ -684,42 +701,34 @@ const portalStyles = `
   .metric-card-left {
     display: flex;
     flex-direction: column;
-    gap: 0.15rem;
+    gap: 0.18rem;
     flex: 1;
     min-width: 0;
   }
 
   .metric-label {
     text-transform: uppercase;
-    font-size: 0.68rem; /* smaller uppercase */
-    font-weight: 600; /* medium/semibold weight */
-    letter-spacing: 0.06em; /* improved letter spacing */
-    color: var(--text-muted); /* neutral gray */
+    font-size: 0.84rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: #64748b;
     margin: 0;
   }
 
   .metric-value {
-    color: var(--primary-color); /* Brand blue default */
-    font-size: 1.45rem;
-    font-weight: 800; /* Bold */
+    color: #0f172a;
+    font-size: 1.68rem;
+    font-weight: 850;
     line-height: 1.1;
     letter-spacing: -0.02em;
     font-family: var(--font-heading);
-    margin: 0.05rem 0;
-  }
-
-  .metric-card.accent-red .metric-value {
-    color: #dc2626;
-  }
-  
-  .metric-card.accent-green .metric-value {
-    color: #16a34a;
+    margin: 0.04rem 0 0;
   }
 
   .metric-desc {
-    color: var(--text-muted); /* softer gray */
-    font-size: 0.72rem; /* smaller */
-    line-height: 1.3; /* better line height */
+    color: #64748b;
+    font-size: 0.74rem;
+    line-height: 1.35;
     margin: 0;
   }
 
@@ -735,66 +744,82 @@ const portalStyles = `
 
   /* Icon Container (circular glass background) */
   .metric-icon-wrapper {
+    position: relative;
+    isolation: isolate;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 38px;
-    height: 38px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
-    border: 1px solid transparent;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
-    transition: transform 200ms ease, background 200ms ease;
+    border: 1px solid rgba(var(--metric-accent), 0.12);
+    box-shadow:
+      inset 0 1px rgba(255, 255, 255, 0.72),
+      0 8px 18px rgba(var(--metric-accent), 0.08);
+    transition:
+      transform 280ms ease,
+      box-shadow 280ms ease,
+      background 280ms ease;
     flex-shrink: 0;
   }
 
+  .metric-icon-wrapper::before {
+    content: '';
+    position: absolute;
+    inset: -10px;
+    border-radius: inherit;
+    background: radial-gradient(circle, rgba(var(--metric-accent), 0.2) 0%, rgba(var(--metric-accent), 0.08) 34%, transparent 72%);
+    filter: blur(10px);
+    opacity: 0.55;
+    z-index: -1;
+    transition: opacity 280ms ease, transform 280ms ease;
+  }
+
   .metric-card:hover .metric-icon-wrapper {
-    transform: scale(1.06); /* subtle micro interaction */
+    transform: scale(1.05);
+  }
+
+  .metric-card:hover .metric-icon-wrapper::before {
+    opacity: 0.8;
+    transform: scale(1.06);
   }
 
   .metric-icon-wrapper.blue {
-    background: rgba(37, 99, 235, 0.07);
+    background: linear-gradient(145deg, rgba(37, 99, 235, 0.16), rgba(255, 255, 255, 0.84));
     color: #2563eb;
-    border-color: rgba(37, 99, 235, 0.1);
   }
 
   .metric-icon-wrapper.orange {
-    background: rgba(249, 115, 22, 0.07);
+    background: linear-gradient(145deg, rgba(249, 115, 22, 0.16), rgba(255, 255, 255, 0.84));
     color: #ea580c;
-    border-color: rgba(249, 115, 22, 0.1);
   }
 
   .metric-icon-wrapper.green {
-    background: rgba(34, 197, 94, 0.07);
+    background: linear-gradient(145deg, rgba(34, 197, 94, 0.16), rgba(255, 255, 255, 0.84));
     color: #16a34a;
-    border-color: rgba(34, 197, 94, 0.1);
   }
 
   .metric-icon-wrapper.red {
-    background: rgba(239, 68, 68, 0.07);
+    background: linear-gradient(145deg, rgba(239, 68, 68, 0.16), rgba(255, 255, 255, 0.84));
     color: #dc2626;
-    border-color: rgba(239, 68, 68, 0.1);
   }
 
   /* Dark mode icon colors */
   [data-theme="dark"] .metric-icon-wrapper.blue {
-    background: rgba(59, 130, 246, 0.12);
+    background: linear-gradient(145deg, rgba(59, 130, 246, 0.18), rgba(15, 23, 42, 0.5));
     color: #60a5fa;
-    border-color: rgba(59, 130, 246, 0.2);
   }
   [data-theme="dark"] .metric-icon-wrapper.orange {
-    background: rgba(251, 146, 60, 0.12);
+    background: linear-gradient(145deg, rgba(251, 146, 60, 0.18), rgba(15, 23, 42, 0.5));
     color: #fb923c;
-    border-color: rgba(251, 146, 60, 0.2);
   }
   [data-theme="dark"] .metric-icon-wrapper.green {
-    background: rgba(74, 222, 128, 0.12);
+    background: linear-gradient(145deg, rgba(74, 222, 128, 0.18), rgba(15, 23, 42, 0.5));
     color: #4ade80;
-    border-color: rgba(74, 222, 128, 0.2);
   }
   [data-theme="dark"] .metric-icon-wrapper.red {
-    background: rgba(248, 113, 113, 0.12);
+    background: linear-gradient(145deg, rgba(248, 113, 113, 0.18), rgba(15, 23, 42, 0.5));
     color: #f87171;
-    border-color: rgba(248, 113, 113, 0.2);
   }
 
   /* Status Pill Styling */

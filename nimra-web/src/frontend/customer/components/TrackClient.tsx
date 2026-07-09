@@ -187,8 +187,10 @@ export default function TrackClient() {
   const deliveryCharge = Number(order?.deliveryCharge || 0);
   const total = Number(order?.total || 0);
   const discount = Math.max(0, subtotal + deliveryCharge - total);
-  const displayedOrderId = order?.orderId || orderId;
-  const displayedMobile = order?.customer?.mobile || mobileValue;
+  // Keep the first server/client render identical, then hydrate with user/order data.
+  const displayedOrderId = mounted ? (order?.orderId || orderId) : '';
+  const displayedMobile = mounted ? (order?.customer?.mobile || mobileValue) : '';
+  const inputsDisabled = mounted ? (loading || authLoading) : true;
 
   return (
     <section className="track-page">
@@ -222,7 +224,7 @@ export default function TrackClient() {
                   placeholder="NIMRA-..."
                   readOnly={mounted ? Boolean(user) : false}
                   aria-readonly={mounted ? Boolean(user) : false}
-                  disabled={loading || authLoading}
+                  disabled={inputsDisabled}
                 />
               </div>
             </label>
@@ -241,7 +243,7 @@ export default function TrackClient() {
                   placeholder="Registered mobile number"
                   readOnly={mounted ? Boolean(user) : false}
                   aria-readonly={mounted ? Boolean(user) : false}
-                  disabled={loading || authLoading}
+                  disabled={inputsDisabled}
                 />
               </div>
             </label>
@@ -673,23 +675,29 @@ export default function TrackClient() {
         }
 
         .track-button {
-          min-height: 52px;
-          min-width: 10.8rem;
+          min-height: 48px;
+          min-width: 8.25rem;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          gap: 0.55rem;
-          padding: 0 1.45rem;
+          gap: 0.48rem;
+          padding: 0 1.05rem;
           border: 1px solid rgba(191, 219, 254, 0.4);
           border-radius: 999px;
           color: white;
           background: linear-gradient(135deg, var(--track-button-start, #1d4ed8), var(--track-accent) 52%, var(--track-accent-2));
           box-shadow: 0 16px 34px rgba(37, 99, 235, 0.3);
           font: inherit;
-          font-size: 0.92rem;
+          font-size: 0.88rem;
           font-weight: 850;
           cursor: pointer;
           transition: transform 250ms ease, box-shadow 250ms ease, filter 250ms ease;
+        }
+
+        .track-button :global(svg) {
+          width: 0.95rem;
+          height: 0.95rem;
+          flex-shrink: 0;
         }
 
         .track-button:hover:not(:disabled) {
@@ -1260,6 +1268,7 @@ export default function TrackClient() {
 
           .track-button {
             width: 100%;
+            min-width: 0;
           }
 
           .info-grid {

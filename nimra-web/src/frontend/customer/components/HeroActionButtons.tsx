@@ -255,6 +255,11 @@ export default function HeroActionButtons({ hideBackButton }: { hideBackButton?:
         .hero-action-finish {
           --btn-glow-rgb: 37, 99, 235;
           --btn-shadow-base: 0 4px 12px rgba(37, 99, 235, 0.05);
+          height: 36px;
+          padding: 0 12px;
+          border-radius: 11px;
+          font-size: 12.5px;
+          gap: 5px;
           overflow: hidden;
           animation: floatCTA 2.8s ease-in-out infinite, pulseGlow 2.8s ease-in-out infinite;
         }
@@ -285,6 +290,8 @@ export default function HeroActionButtons({ hideBackButton }: { hideBackButton?:
         }
 
         .hero-cart-icon {
+          width: 14px;
+          height: 14px;
           animation: cartWiggle 5.5s infinite ease-in-out;
           transform-origin: center;
           transition: transform 220ms ease;
@@ -292,6 +299,7 @@ export default function HeroActionButtons({ hideBackButton }: { hideBackButton?:
 
         .hero-cart-badge {
           display: inline-block;
+          font-size: 0.92em;
           animation: badgePulse 3s infinite ease-in-out;
           color: #1d4ed8;
           font-weight: 700;
