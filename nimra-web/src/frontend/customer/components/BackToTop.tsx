@@ -15,7 +15,7 @@ export default function BackToTop() {
 
   useEffect(() => {
     const toggleVisibility = () => {
-      if (window.scrollY > 350) {
+      if (window.scrollY > 250) {
         setIsVisible(true);
       } else {
         setIsVisible(false);
@@ -41,18 +41,19 @@ export default function BackToTop() {
         <motion.button
           className="back-to-top-btn"
           onClick={scrollToTop}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: -20, x: '-50%' }}
+          animate={{ opacity: 1, y: 0, x: '-50%' }}
+          exit={{ opacity: 0, y: -20, x: '-50%' }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
           aria-label="Back to top"
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.92 }}
         >
-          <span className="icon-wrapper">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <span className="icon-wrapper bounce-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="18 15 12 9 6 15"></polyline>
             </svg>
           </span>
-          <span className="btn-text">Back to top</span>
         </motion.button>
       )}
     </AnimatePresence>
