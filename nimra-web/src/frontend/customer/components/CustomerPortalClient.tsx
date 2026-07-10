@@ -14,6 +14,7 @@ import { PortalNotifications } from './portal/Notifications';
 import CustomerPageHeader from './CustomerPageHeader';
 import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
 import { saveUser, requestEmailChangeOTP } from '@/utils/api';
+import { CompactKpiCard } from './CompactKpiCard';
 
 // Lazy-loaded heavy sections for faster page loads
 
@@ -231,120 +232,43 @@ export default function CustomerPortalClient() {
       ) : (
         <>
           <section className="metric-grid" aria-label="Account summary">
-            {/* Total Orders Card */}
-            <div className="metric-card accent-blue" tabIndex={0}>
-              <div className="metric-card-content">
-                <div className="metric-card-left">
-                  <span className="metric-label">Total Orders</span>
-                  <strong className="metric-value animate-metric-number">{orders.length}</strong>
-                  <small className="metric-desc">{loadingOrders ? 'Refreshing...' : 'Synced from your account'}</small>
-                </div>
-                <div className="metric-icon-wrapper blue">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                    <line x1="3" y1="6" x2="21" y2="6"></line>
-                    <path d="M16 10a4 4 0 0 1-8 0"></path>
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Active Orders Card */}
-            <div className="metric-card accent-orange" tabIndex={0}>
-              <div className="metric-card-content">
-                <div className="metric-card-left">
-                  <span className="metric-label">Active Orders</span>
-                  <strong className="metric-value animate-metric-number">{metrics.activeOrders}</strong>
-                  <small className="metric-desc">Pending, confirmed, or in transit</small>
-                </div>
-                <div className="metric-icon-wrapper orange">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <rect x="1" y="3" width="15" height="13"></rect>
-                    <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-                    <circle cx="5.5" cy="18.5" r="2.5"></circle>
-                    <circle cx="18.5" cy="18.5" r="2.5"></circle>
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Delivered Card */}
-            <div className="metric-card accent-green" tabIndex={0}>
-              <div className="metric-card-content">
-                <div className="metric-card-left">
-                  <span className="metric-label">Delivered</span>
-                  <strong className="metric-value animate-metric-number">{metrics.deliveredOrders}</strong>
-                  <small className="metric-desc">Completed deliveries</small>
-                </div>
-                <div className="metric-icon-wrapper green">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Recent Cancel Status Card */}
-            <div className="metric-card accent-red" tabIndex={0}>
-              <div className="metric-card-content">
-                <div className="metric-card-left">
-                  <span className="metric-label">Recent Cancel Status</span>
-                  <div className="metric-cancel-status-wrapper">
-                    {metrics.latestCancelOrder ? (
-                      <>
-                        {(() => {
-                          const cancelStatus = metrics.latestCancelOrder.cancellationStatus || 'Cancelled';
-                          const isPending = /pending/i.test(cancelStatus);
-                          const isApproved = /approved|cancelled/i.test(cancelStatus.toLowerCase());
-                          const isRejected = /rejected/i.test(cancelStatus);
-                          
-                          let pillClass = "status-pill status-pending";
-                          if (isApproved) {
-                            pillClass = "status-pill status-approved";
-                          } else if (isRejected) {
-                            pillClass = "status-pill status-na";
-                          }
-                          
-                          return (
-                            <div className={pillClass}>
-                              <span className={`status-dot ${isPending ? 'pulse' : ''}`} />
-                              <span>{cancelStatus}</span>
-                            </div>
-                          );
-                        })()}
-                      </>
-                    ) : (
-                      <div className="status-pill status-na">
-                        <span className="status-dot" />
-                        <span>N/A</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="metric-cancel-footer">
-                    {metrics.latestCancelOrder ? (
-                      <>
-                        <small className="metric-desc" style={{ fontWeight: 600 }}>Order #{metrics.latestCancelOrder.orderId}</small>
-                        {(metrics.latestCancelOrder.updatedAt || metrics.latestCancelOrder.createdAt) && (
-                          <small className="metric-desc" style={{ fontSize: '0.68rem', opacity: 0.85 }}>
-                            Updated: {formatDate(metrics.latestCancelOrder.updatedAt || metrics.latestCancelOrder.createdAt)}
-                          </small>
-                        )}
-                      </>
-                    ) : (
-                      <small className="metric-desc">No cancel requests</small>
-                    )}
-                  </div>
-                </div>
-                <div className="metric-icon-wrapper red">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                    <line x1="12" y1="9" x2="12" y2="13"></line>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                  </svg>
-                </div>
-              </div>
-            </div>
+            <CompactKpiCard
+              title="Total Orders"
+              value={orders.length}
+              subtitle="Total orders placed"
+              accent="blue"
+              icon={<svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg>}
+            />
+            <CompactKpiCard
+              title="Active Orders"
+              value={metrics.activeOrders}
+              subtitle="Pending & In Transit"
+              accent="orange"
+              icon={<svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8Z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>}
+            />
+            <CompactKpiCard
+              title="Delivered"
+              value={metrics.deliveredOrders}
+              subtitle="Successfully delivered"
+              accent="green"
+              icon={<svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m22 4-10 10.01-3-3"/></svg>}
+            />
+            <CompactKpiCard
+              title="Recent Cancel Status"
+              value={metrics.latestCancelOrder ? (() => {
+                const cancelStatus = metrics.latestCancelOrder.cancellationStatus || 'Cancelled';
+                const isPending = /pending/i.test(cancelStatus);
+                const isApproved = /approved|cancelled/i.test(cancelStatus.toLowerCase());
+                const isRejected = /rejected/i.test(cancelStatus);
+                let pillClass = 'status-pill status-pending';
+                if (isApproved) pillClass = 'status-pill status-approved';
+                else if (isRejected) pillClass = 'status-pill status-na';
+                return <span className={pillClass}><span className={`status-dot ${isPending ? 'pulse' : ''}`} /><span>{cancelStatus}</span></span>;
+              })() : <span className="status-pill status-na"><span className="status-dot" /><span>N/A</span></span>}
+              subtitle="Latest cancellation"
+              accent="red"
+              icon={<svg viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>}
+            />
           </section>
 
           <section className="portal-grid">
