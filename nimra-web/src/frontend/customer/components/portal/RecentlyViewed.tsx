@@ -4,10 +4,8 @@ import React from 'react';
 import { Product } from '@/types/cms';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { useCart } from '@/frontend/customer/hooks/useCart';
-import ProductImage from '../ProductImage';
 import { ProductCard } from './Products';
-import { formatCurrency, isOrderable, normalizeCategory, productId } from '../../utils/commerce';
+import { productId } from '../../utils/commerce';
 import { useAuth } from '../../contexts/AuthContext';
 import { readRecentlyViewed, RECENTLY_VIEWED_EVENT } from '../../utils/recentlyViewed';
 
@@ -18,12 +16,10 @@ interface RecentlyViewedProductsProps {
   onAdd?: (product: Product) => void;
 }
 
-export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProductsProps) {
+export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps) {
   const [viewedProducts, setViewedProducts] = React.useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
   const { user, isLoading } = useAuth();
-  const { addProduct, updateQuantity, items } = useCart();
-  const [wishlist, setWishlist] = React.useState<Record<string, boolean>>({});
 
   const loadViewedProducts = React.useCallback(() => {
     try {
@@ -57,14 +53,8 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
     };
   }, [loadViewedProducts]);
 
-  const toggleWishlist = (id: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setWishlist(prev => ({ ...prev, [id]: !prev[id] }));
-  };
-
   const displayedProducts = React.useMemo(() => {
-    return viewedProducts.slice(0, 4);
+    return viewedProducts;
   }, [viewedProducts]);
 
   const getViewedTime = (index: number) => {
@@ -72,7 +62,7 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
     return times[index] || "Viewed recently";
   };
 
-  if (displayedProducts.length === 0) return null;
+  const hasViewedProducts = displayedProducts.length > 0;
 
   return (
     <div className="panel recently-viewed-panel" style={{ marginTop: '0.5rem' }}>
@@ -86,13 +76,13 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
             History
           </span>
           <h2>Recently Viewed Products</h2>
-          <p className="subtitle-text">Continue where you left off</p>
+          {hasViewedProducts && <p className="subtitle-text">Continue where you left off</p>}
         </div>
       </div>
 
-      {displayedProducts.length > 0 ? (
-        <div className="catalog-grid product-section-compact">
-          {displayedProducts.slice(0, 4).map((product, index) => (
+      <div className={`recently-viewed-content products-page ${hasViewedProducts ? 'has-products' : 'is-empty'}`}>
+        <div className="catalog-grid recently-viewed-product-grid" aria-hidden={!hasViewedProducts}>
+          {displayedProducts.map((product, index) => (
             <ProductCard
               key={productId(product)}
               product={product}
@@ -103,11 +93,15 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
             />
           ))}
         </div>
-      ) : (
-        <div className="premium-empty-state">
-          <div className="empty-icon-wrap">💧</div>
+        <div className="premium-empty-state" aria-hidden={hasViewedProducts}>
+          <div className="empty-icon-wrap" aria-hidden="true">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2.1 12s3.6-6 9.9-6 9.9 6 9.9 6-3.6 6-9.9 6-9.9-6-9.9-6Z" />
+              <circle cx="12" cy="12" r="2.75" />
+            </svg>
+          </div>
           <h3>No recently viewed products yet</h3>
-          <p>Browse our collection to discover premium packaged drinking water.</p>
+          <p>Start exploring our products and the items you view will appear here for quick access.</p>
           <Link href="/products" className="empty-cta-btn">
             <span>Browse Products</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -116,7 +110,7 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
             </svg>
           </Link>
         </div>
-      )}
+      </div>
 
       {selectedProduct && (
         <ProductDetailModal 
@@ -130,7 +124,7 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
           display: flex;
           flex-direction: column;
           gap: 1rem;
-          min-height: 520px;
+          min-height: 390px;
           background: rgba(255, 255, 255, 0.85);
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
@@ -150,6 +144,95 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
         }
         :global([data-theme="dark"]) .recently-viewed-panel:hover {
           border-color: rgba(59, 130, 246, 0.35);
+        }
+
+        .recently-viewed-content {
+          position: relative;
+          min-height: 290px;
+          flex: 1;
+          width: 100% !important;
+          max-width: none !important;
+        }
+        .recently-viewed-product-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 12.25rem) !important;
+          gap: clamp(0.5rem, 0.8vw, 0.7rem) !important;
+          justify-content: start !important;
+          align-items: stretch !important;
+          opacity: 0;
+          visibility: hidden;
+          transform: translateY(6px);
+          transition: opacity 240ms ease, transform 240ms ease, visibility 0s linear 240ms;
+        }
+        .has-products .recently-viewed-product-grid {
+          opacity: 1;
+          visibility: visible;
+          transform: translateY(0);
+          transition-delay: 100ms, 100ms, 0s;
+        }
+        .recently-viewed-product-grid :global(.catalog-card) {
+          width: 12.25rem !important;
+          max-width: none !important;
+          min-width: 12.25rem !important;
+          min-height: 0 !important;
+          padding: 0.34rem !important;
+          border-radius: 0.65rem !important;
+        }
+        .recently-viewed-product-grid :global(.catalog-card .product-img-wrap) {
+          width: calc(100% + 0.68rem) !important;
+          height: auto !important;
+          margin: -0.34rem -0.34rem 0.28rem !important;
+          aspect-ratio: 3 / 4 !important;
+          border-bottom: 1px solid rgba(150, 150, 150, 0.15) !important;
+        }
+        .recently-viewed-product-grid :global(.catalog-card .product-image-container) {
+          width: 100% !important;
+          height: 100% !important;
+          aspect-ratio: 3 / 4 !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          overflow: hidden !important;
+        }
+        .recently-viewed-product-grid :global(.catalog-card .product-img) {
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: contain !important;
+          object-position: center !important;
+          display: block !important;
+        }
+        .recently-viewed-product-grid :global(.cat-meta) {
+          gap: 0.25rem !important;
+          margin-bottom: 0.16rem !important;
+        }
+        .recently-viewed-product-grid :global(.cat-volume),
+        .recently-viewed-product-grid :global(.cat-badge),
+        .recently-viewed-product-grid :global(.prod-badge-best) {
+          max-width: 100% !important;
+          padding: 0.14rem 0.42rem !important;
+          font-size: 0.62rem !important;
+          line-height: 1.05 !important;
+        }
+        .recently-viewed-product-grid :global(.cat-info-box h3) {
+          min-height: 2.24em !important;
+          max-height: 2.24em !important;
+          margin-bottom: 0.16rem !important;
+          overflow: hidden !important;
+          font-size: 0.78rem !important;
+          line-height: 1.12 !important;
+          -webkit-line-clamp: 2 !important;
+        }
+        @media (max-width: 1199px) {
+          .recently-viewed-product-grid { grid-template-columns: repeat(3, 12.25rem) !important; }
+        }
+        @media (max-width: 860px) {
+          .recently-viewed-product-grid { grid-template-columns: repeat(2, 12.25rem) !important; }
+        }
+        @media (max-width: 520px) {
+          .recently-viewed-product-grid {
+            grid-template-columns: 12.25rem !important;
+            justify-content: center !important;
+          }
         }
         
         .section-header-row {
@@ -485,14 +568,26 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
 
         /* Empty State Overhaul */
         .premium-empty-state {
+          position: absolute;
+          inset: 0;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
           gap: 0.6rem;
-          padding: 2.5rem 1.5rem;
+          padding: 1.5rem;
           text-align: center;
-          flex: 1;
+          opacity: 1;
+          visibility: visible;
+          transform: translateY(0);
+          transition: opacity 200ms ease, transform 200ms ease, visibility 0s linear 0s;
+        }
+        .has-products .premium-empty-state {
+          opacity: 0;
+          visibility: hidden;
+          transform: translateY(-6px);
+          pointer-events: none;
+          transition-delay: 0s, 0s, 200ms;
         }
         .empty-icon-wrap {
           width: 54px;
