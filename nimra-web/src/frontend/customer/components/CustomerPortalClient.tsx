@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/frontend/customer/hooks/useAuth';
 import { useCustomerOrders } from '@/frontend/customer/hooks/useCustomerOrders';
 import { useCMSData } from '@/frontend/customer/hooks/useCMSData';
@@ -48,6 +48,7 @@ export default function CustomerPortalClient() {
   const { products, faqs } = useCMSData();
   const { orders, loadingOrders, metrics, refreshOrders } = useCustomerOrders();
   const cart = useCart();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const tab = searchParams.get('tab');
   const [mounted, setMounted] = React.useState(false);
@@ -55,6 +56,12 @@ export default function CustomerPortalClient() {
   React.useEffect(() => {
     setMounted(true);
   }, []);
+
+  React.useEffect(() => {
+    if (mounted && !isLoading && !isAuthenticated) {
+      router.replace('/');
+    }
+  }, [isAuthenticated, isLoading, mounted, router]);
 
   const recommendedProducts = React.useMemo(() => {
     const orderable = (products || []).filter(isOrderable);
@@ -162,54 +169,7 @@ export default function CustomerPortalClient() {
   }
 
   if (!isAuthenticated) {
-    return (
-      <div className="portal-page">
-        <CustomerPageHeader
-          badge="CUSTOMER PORTAL"
-          title="Welcome to NIMRA"
-          subtitle="Browse products, learn about our water quality, and track an existing order without signing in."
-        >
-          <div className="hero-actions">
-            <Link href="/products" className="btn btn-primary">Browse Products</Link>
-            <Link href="/track" className="btn btn-secondary">Track Order</Link>
-          </div>
-        </CustomerPageHeader>
-
-        <section className="quick-section guest">
-          <Link href="/products" className="quick-card">
-            <span className="quick-icon">💧</span>
-            <h3>Product Range</h3>
-            <p>View bottles, cans, jars, pricing, and availability from the live catalog.</p>
-          </Link>
-          <Link href="/track" className="quick-card">
-            <span className="quick-icon">📦</span>
-            <h3>Track Order</h3>
-            <p>Check delivery status using your order details.</p>
-          </Link>
-          <Link href="/about" className="quick-card">
-            <span className="quick-icon">🛡️</span>
-            <h3>Quality</h3>
-            <p>Learn about NIMRA purification, infrastructure, and standards.</p>
-          </Link>
-          <Link href="/contact" className="quick-card">
-            <span className="quick-icon">💬</span>
-            <h3>Support</h3>
-            <p>Ask about bulk delivery, invoices, events, or scheduled supply.</p>
-          </Link>
-        </section>
-
-        <section className="guest-checkout">
-          <div>
-            <span className="eyebrow">Checkout</span>
-            <h2>Sign in when you are ready to place an order.</h2>
-            <p>Browsing is public. Login is only required for checkout and account-specific order history.</p>
-          </div>
-          <Link href="/login" className="btn btn-primary">Login to Checkout</Link>
-        </section>
-
-        <style jsx global>{portalStyles}</style>
-      </div>
-    );
+    return null;
   }
 
   return (

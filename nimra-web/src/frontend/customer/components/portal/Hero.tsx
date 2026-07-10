@@ -12,18 +12,7 @@ interface PortalHeroProps {
 
 export function PortalHero({ isAuthenticated, name }: PortalHeroProps) {
   if (!isAuthenticated) {
-    return (
-      <CustomerPageHeader
-        badge="CUSTOMER PORTAL"
-        title="Welcome to NIMRA"
-        subtitle="Browse products, learn about our water quality, and track an existing order without signing in."
-      >
-        <div className="hero-actions">
-          <Link href="/products" className="btn btn-primary">Browse Products</Link>
-          <Link href="/track" className="btn btn-secondary">Track Order</Link>
-        </div>
-      </CustomerPageHeader>
-    );
+    return null;
   }
 
   return (

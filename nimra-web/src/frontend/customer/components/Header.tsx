@@ -17,6 +17,9 @@ interface HeaderProps {
   companyInfo: CompanyInfo;
 }
 
+const NAVBAR_SKELETON_ITEMS = [64, 82, 58, 62, 74];
+const getUserRole = (user: { Role?: string; role?: string } | null) => user?.Role || user?.role;
+
 export default React.memo(function Header({ companyInfo }: HeaderProps) {
   const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState<AppTheme>('light');
@@ -36,9 +39,13 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
   const { user, logout, isLoading: isAuthLoading } = useAuth();
   const { city, loading, requestLocation, permissionDenied } = useLocation();
 
-  const activeUser = mounted ? user : null;
+  const authReady = mounted && !isAuthLoading;
+  const activeUser = authReady ? user : null;
+  const activeRoleValue = getUserRole(activeUser);
+  const activeRole = activeUser ? normalizeRole(activeRoleValue) : null;
+  const canUseCustomerActions = authReady && (!activeUser || activeRole === 'CUSTOMER');
   const unreadCount = notifications.filter(n => n.Read !== true && n.Read !== 'true').length;
-  const dashboardHref = isAdminRole(activeUser?.Role) ? '/admin' : '/customer-portal';
+  const dashboardHref = isAdminRole(activeRoleValue) ? '/admin' : '/customer-portal';
   const logoHref = activeUser ? dashboardHref : '/';
 
   useEffect(() => {
@@ -73,7 +80,8 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
   }, []);
 
   useEffect(() => {
-    if (!activeUser || normalizeRole(activeUser.Role) !== 'CUSTOMER') {
+    const notificationRole = activeUser ? normalizeRole(getUserRole(activeUser)) : null;
+    if (!activeUser || notificationRole !== 'CUSTOMER') {
       setNotifications([]);
       setNotificationsOwnerKey('');
       return;
@@ -107,7 +115,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
     };
 
     loadNotifications();
-  }, [activeUser, notificationDropdownOpen, notifications.length, notificationsOwnerKey]);
+  }, [activeUser, activeRoleValue, notificationDropdownOpen, notifications.length, notificationsOwnerKey]);
 
   const handleMarkAsRead = async (id: string | number) => {
     try {
@@ -164,15 +172,19 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
   };
 
   const navLinks = useMemo(() => {
-    if (isAdminRole(activeUser?.Role)) {
+    if (!authReady) {
+      return [];
+    }
+    if (!activeUser) {
       return [
-        { name: 'Dashboard', href: '/admin' },
+        { name: 'Home', href: '/' },
         { name: 'Products', href: '/products' },
         { name: 'Track', href: '/track' },
         { name: 'About', href: '/about' },
         { name: 'Contact', href: '/contact' },
       ];
-    } else if (normalizeRole(activeUser?.Role) === 'CUSTOMER') {
+    }
+    if (activeRole === 'CUSTOMER') {
       return [
         { name: 'Portal', href: '/customer-portal' },
         { name: 'Products', href: '/products' },
@@ -182,14 +194,25 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
         { name: 'Contact', href: '/contact' },
       ];
     }
+    if (isAdminRole(activeRoleValue)) {
+      return [
+        { name: 'Dashboard', href: '/admin' },
+        { name: 'Products', href: '/products' },
+        { name: 'Track', href: '/track' },
+        { name: 'About', href: '/about' },
+        { name: 'Contact', href: '/contact' },
+      ];
+    }
     return [
-      { name: 'Home', href: '/' },
+      { name: 'Portal', href: '/customer-portal' },
       { name: 'Products', href: '/products' },
+      { name: 'Orders', href: '/orders' },
       { name: 'Track', href: '/track' },
       { name: 'About', href: '/about' },
       { name: 'Contact', href: '/contact' },
     ];
-  }, [activeUser?.Role]);
+  }, [activeRole, activeRoleValue, activeUser, authReady]);
+  const isNavActive = useCallback((link: { name: string; href: string }) => pathname === link.href, [pathname]);
 
   return (
     <>
@@ -220,15 +243,21 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
 
           {/* Desktop Navigation */}
           <nav className="desktop-nav" aria-label="Main navigation" onMouseLeave={useCallback(() => setHoveredNav(null), [])}>
-            {navLinks.map((link) => (
+            {!authReady ? (
+              <div className="navbar-skeleton" aria-hidden="true">
+                {NAVBAR_SKELETON_ITEMS.map((width, index) => (
+                  <span key={index} className="navbar-skeleton-item" style={{ width }} />
+                ))}
+              </div>
+            ) : navLinks.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
                 prefetch={true}
-                className={`nav-link ${pathname === link.href ? 'active' : ''}`}
+                className={`nav-link ${isNavActive(link) ? 'active' : ''}`}
                 onMouseEnter={() => setHoveredNav(link.href)}
               >
-                {(hoveredNav === link.href || (hoveredNav === null && pathname === link.href)) && (
+                {(hoveredNav === link.href || (hoveredNav === null && isNavActive(link))) && (
                   <motion.span
                     layoutId="homepage-nav-active"
                     className="nav-active-pill"
@@ -244,7 +273,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           <div className="header-actions">
             <div className="header-icon-group">
             {/* Location Indicator - Desktop only */}
-            {mounted && (!activeUser || normalizeRole(activeUser.Role) === 'CUSTOMER') && (
+            {canUseCustomerActions && (
               <button 
                 onClick={() => requestLocation(true)} 
                 className="location-btn" 
@@ -258,7 +287,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
             )}
 
             {/* Cart — only for Customers (placed next to Location) */}
-            {(!activeUser || normalizeRole(activeUser.Role) === 'CUSTOMER') && (
+            {canUseCustomerActions && (
               <Link href="/cart" prefetch={true} className={`cart-link ${pathname === '/cart' ? 'active' : ''}`} aria-label={`Cart with ${mounted ? totalItems : 0} items`}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
                 {mounted && totalItems > 0 && <span className="cart-count">{totalItems}</span>}
@@ -266,7 +295,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
             )}
 
             {/* Admin Notifications Bell */}
-            {normalizeRole(activeUser?.Role) === 'CUSTOMER' && activeUser && (
+            {activeRole === 'CUSTOMER' && activeUser && (
               <div className="notification-container">
                 <button 
                   className="icon-btn" 
@@ -619,12 +648,18 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
         {mobileMenuOpen && (
           <div className="mobile-drawer animate-fade-in">
             <nav className="mobile-nav" aria-label="Mobile navigation">
-              {navLinks.map((link) => (
+              {!authReady ? (
+                <div className="mobile-navbar-skeleton" aria-hidden="true">
+                  {NAVBAR_SKELETON_ITEMS.map((width, index) => (
+                    <span key={index} className="mobile-navbar-skeleton-item" style={{ width }} />
+                  ))}
+                </div>
+              ) : navLinks.map((link) => (
                 <Link
                   key={link.name}
                   href={link.href}
                   prefetch={true}
-                  className={`mobile-nav-link ${pathname === link.href ? 'active' : ''}`}
+                  className={`mobile-nav-link ${isNavActive(link) ? 'active' : ''}`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {link.name}
@@ -633,7 +668,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
 
               <div className="mobile-nav-divider" />
 
-              {(!activeUser || normalizeRole(activeUser.Role) === 'CUSTOMER') && (
+              {canUseCustomerActions && (
                 <Link
                   href="/cart"
                   prefetch={true}
