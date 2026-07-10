@@ -1760,7 +1760,8 @@ function getUsersData(spreadsheet) {
       else if (key === 'Mobile') row['Mobile'] = val;
       else if (key === 'Email' || key === 'Username') row['Username'] = val;
       else if (key === 'Password (hashed)' || key === 'Password') row['Password'] = val;
-      else if (key === 'Role (Admin/Customer)' || key === 'Role') row['Role'] = val;
+      else if (key === 'Role (Admin/Customer)') row['Role'] = val;
+      else if (key === 'Role' && !String(row['Role'] || '').trim()) row['Role'] = val;
       else if (key === 'Status' || key === 'Active') {
         var isActive = (val === 'Active' || val === true || val === 'TRUE');
         row['Active'] = isActive;
@@ -2835,7 +2836,11 @@ function getRequiredUserHeaders() {
     'Password (hashed)',
     'Role (Admin/Customer)',
     'Status',
-    'Registration Date',
+    'Department',
+    'Permissions',
+    'Created By',
+    'Created At',
+    'Updated At',
     'Last Login',
     'Alternate Mobile Number',
     'RecentlyViewed',
@@ -2859,9 +2864,10 @@ function buildSeedAdminUserRow() {
     'Mobile': '',
     'Email': 'admin',
     'Password (hashed)': hashPassword('nimraadmin123'),
-    'Role (Admin/Customer)': 'Admin',
+    'Role (Admin/Customer)': 'SUPER_ADMIN',
     'Status': 'Active',
-    'Registration Date': new Date().toISOString(),
+    'Created At': new Date().toISOString(),
+    'Updated At': new Date().toISOString(),
     'Last Login': '',
   };
   return headers.map(function(header) {
@@ -2875,6 +2881,7 @@ function ensureUsersSheetColumns(sheet) {
 
   var missingHeaders = [];
   for (var i = 0; i < requiredHeaders.length; i++) {
+    if (requiredHeaders[i] === 'Role (Admin/Customer)' && headers.indexOf('Role') !== -1) continue;
     if (headers.indexOf(requiredHeaders[i]) === -1) {
       missingHeaders.push(requiredHeaders[i]);
       headers.push(requiredHeaders[i]);

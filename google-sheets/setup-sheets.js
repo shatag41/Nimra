@@ -164,7 +164,21 @@ function setupNIMRASheets() {
     ensureUsersSetupSheet(usersSheet, userAddressesSheet);
   }
 
-  notifySetupComplete('NIMRA Sheets setup complete. Catalog, inquiry, order, and user tabs are ready.');
+  var activitySheet = getOrCreateSheet(ss, 'AdminActivityLogs');
+  if (activitySheet.getLastRow() === 0) {
+    var activityHeaders = ['LogID', 'AdminID', 'AdminName', 'Role', 'Action', 'Module', 'TargetID', 'OldData', 'NewData', 'IP', 'Browser', 'Timestamp', 'Result'];
+    activitySheet.getRange(1, 1, 1, activityHeaders.length).setValues([activityHeaders]);
+  }
+
+  var permissionsSheet = getOrCreateSheet(ss, 'RolesPermissions');
+  if (permissionsSheet.getLastRow() === 0) {
+    var permissionHeaders = ['Role', 'Orders', 'Products', 'Customers', 'Admins', 'Reports', 'Notifications', 'Settings', 'FAQs', 'Banners', 'Analytics'];
+    permissionsSheet.getRange(1, 1, 1, permissionHeaders.length).setValues([permissionHeaders]);
+    permissionsSheet.appendRow(['SUPER_ADMIN', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*']);
+    permissionsSheet.appendRow(['ADMIN', 'view,create,edit', 'view,create,edit', 'view,edit', '', '', 'view,create', 'view', 'view,create,edit', 'view,create,edit', 'view']);
+  }
+
+  notifySetupComplete('NIMRA Sheets setup complete. Role-based admin, audit, catalog, inquiry, order, and user tabs are ready.');
 }
 
 function getOrCreateSheet(ss, name) {
@@ -207,7 +221,11 @@ function getRequiredUserHeaders() {
     'Password (hashed)',
     'Role (Admin/Customer)',
     'Status',
-    'Registration Date',
+    'Department',
+    'Permissions',
+    'Created By',
+    'Created At',
+    'Updated At',
     'Last Login',
     'Alternate Mobile Number',
     'RecentlyViewed',
@@ -230,9 +248,10 @@ function buildSetupAdminUserRow() {
     'Mobile': '',
     'Email': 'admin',
     'Password (hashed)': 'placeholder_hash',
-    'Role (Admin/Customer)': 'Admin',
+    'Role (Admin/Customer)': 'SUPER_ADMIN',
     'Status': 'Active',
-    'Registration Date': new Date().toISOString(),
+    'Created At': new Date().toISOString(),
+    'Updated At': new Date().toISOString(),
     'Last Login': ''
   };
   return getRequiredUserHeaders().map(function(header) {
@@ -342,6 +361,7 @@ function ensureUsersSetupSheet(sheet, addressSheet) {
   var requiredHeaders = getRequiredUserHeaders();
   var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] || [];
   for (var i = 0; i < requiredHeaders.length; i++) {
+    if (requiredHeaders[i] === 'Role (Admin/Customer)' && headers.indexOf('Role') !== -1) continue;
     if (headers.indexOf(requiredHeaders[i]) === -1) {
       sheet.getRange(1, sheet.getLastColumn() + 1).setValue(requiredHeaders[i]);
       headers.push(requiredHeaders[i]);

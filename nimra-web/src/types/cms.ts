@@ -147,7 +147,7 @@ export interface AdminUser {
   Username: string;
   Mobile?: string;
   Password?: string;
-  Role: 'Admin' | 'Manager' | 'Customer';
+  Role: 'Admin' | 'Manager' | 'Customer' | 'ADMIN' | 'CUSTOMER' | 'SUPER_ADMIN' | 'Super Admin';
   /** @deprecated use flatNo + buildingName + locality instead */
   address?: string;
 }
@@ -205,11 +205,20 @@ export interface AdminUser {
   Username: string;
   Mobile?: string;
   Password?: string;
-  Role: 'Admin' | 'Manager' | 'Customer';
+  Role: 'Admin' | 'Manager' | 'Customer' | 'ADMIN' | 'CUSTOMER' | 'SUPER_ADMIN' | 'Super Admin';
   Name: string;
   Active?: boolean | string;
   SavedAddresses?: string;
   EmailPreferences?: string;
+  Email?: string;
+  Department?: string;
+  Permissions?: string;
+  CreatedBy?: string;
+  CreatedAt?: string;
+  UpdatedAt?: string;
+  LastLogin?: string;
+  OrdersManaged?: number | string;
+  InquiriesResolved?: number | string;
   otp?: string;
 }
 

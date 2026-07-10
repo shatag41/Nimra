@@ -11,6 +11,7 @@ import { useLocation } from '../contexts/LocationContext';
 import { fetchNotifications, saveNotification } from '@/utils/api';
 import LogoutConfirmationModal from './LogoutConfirmationModal';
 import { AppTheme, applyTheme, initializeTheme, THEME_CHANGE_EVENT } from '../utils/theme';
+import { isAdminRole, normalizeRole } from '@/frontend/admin/utils/accessControl';
 
 interface HeaderProps {
   companyInfo: CompanyInfo;
@@ -37,7 +38,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
 
   const activeUser = mounted ? user : null;
   const unreadCount = notifications.filter(n => n.Read !== true && n.Read !== 'true').length;
-  const dashboardHref = activeUser?.Role === 'Admin' ? '/admin' : '/customer-portal';
+  const dashboardHref = isAdminRole(activeUser?.Role) ? '/admin' : '/customer-portal';
   const logoHref = activeUser ? dashboardHref : '/';
 
   useEffect(() => {
@@ -72,7 +73,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
   }, []);
 
   useEffect(() => {
-    if (!activeUser || activeUser.Role !== 'Customer') {
+    if (!activeUser || normalizeRole(activeUser.Role) !== 'CUSTOMER') {
       setNotifications([]);
       setNotificationsOwnerKey('');
       return;
@@ -163,7 +164,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
   };
 
   const navLinks = useMemo(() => {
-    if (activeUser?.Role === 'Admin') {
+    if (isAdminRole(activeUser?.Role)) {
       return [
         { name: 'Dashboard', href: '/admin' },
         { name: 'Products', href: '/products' },
@@ -171,7 +172,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
         { name: 'About', href: '/about' },
         { name: 'Contact', href: '/contact' },
       ];
-    } else if (activeUser?.Role === 'Customer') {
+    } else if (normalizeRole(activeUser?.Role) === 'CUSTOMER') {
       return [
         { name: 'Portal', href: '/customer-portal' },
         { name: 'Products', href: '/products' },
@@ -243,7 +244,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           <div className="header-actions">
             <div className="header-icon-group">
             {/* Location Indicator - Desktop only */}
-            {mounted && (!activeUser || activeUser.Role === 'Customer') && (
+            {mounted && (!activeUser || normalizeRole(activeUser.Role) === 'CUSTOMER') && (
               <button 
                 onClick={() => requestLocation(true)} 
                 className="location-btn" 
@@ -257,7 +258,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
             )}
 
             {/* Cart — only for Customers (placed next to Location) */}
-            {(!activeUser || activeUser.Role === 'Customer') && (
+            {(!activeUser || normalizeRole(activeUser.Role) === 'CUSTOMER') && (
               <Link href="/cart" prefetch={true} className={`cart-link ${pathname === '/cart' ? 'active' : ''}`} aria-label={`Cart with ${mounted ? totalItems : 0} items`}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
                 {mounted && totalItems > 0 && <span className="cart-count">{totalItems}</span>}
@@ -265,7 +266,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
             )}
 
             {/* Admin Notifications Bell */}
-            {activeUser?.Role === 'Customer' && (
+            {normalizeRole(activeUser?.Role) === 'CUSTOMER' && activeUser && (
               <div className="notification-container">
                 <button 
                   className="icon-btn" 
@@ -632,7 +633,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
 
               <div className="mobile-nav-divider" />
 
-              {(!activeUser || activeUser.Role === 'Customer') && (
+              {(!activeUser || normalizeRole(activeUser.Role) === 'CUSTOMER') && (
                 <Link
                   href="/cart"
                   prefetch={true}

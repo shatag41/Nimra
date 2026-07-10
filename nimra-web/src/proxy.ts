@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+const normalizeRole = (role?: string) => String(role || '').trim().toUpperCase().replace(/[\s-]+/g, '_');
+
 export function proxy(request: NextRequest) {
   const userCookie = request.cookies.get('nimra_user')?.value;
   const sessionCookie = request.cookies.get('nimra_session')?.value;
@@ -50,7 +52,8 @@ export function proxy(request: NextRequest) {
     return response;
   }
 
-  const isAdminUser = user?.Role === 'Admin';
+  const role = normalizeRole(user?.Role);
+  const isAdminUser = role === 'ADMIN' || role === 'SUPER_ADMIN';
 
   if (user && isAuthPath) {
     return NextResponse.redirect(new URL(isAdminUser ? '/admin' : '/customer-portal', request.url));

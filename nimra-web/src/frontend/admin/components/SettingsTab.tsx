@@ -17,7 +17,7 @@ export default function SettingsTab({
   handleSettingsFieldChange,
   saveLoading,
 }: SettingsTabProps) {
-  if (currentUser.role !== 'Admin') {
+  if (currentUser.role !== 'ADMIN' && currentUser.role !== 'SUPER_ADMIN') {
     return (
       <div className="settings-tab">
         <div className="access-denied-block">

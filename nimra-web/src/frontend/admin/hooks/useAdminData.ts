@@ -36,11 +36,13 @@ import {
 import { clearBrowserSession, useAuth } from '@/frontend/customer/contexts/AuthContext';
 import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
 import { getUploadImageUrl } from '@/utils/uploadImage';
+import { isAdminRole, normalizeRole } from '../utils/accessControl';
 
 export interface CurrentUser {
   id?: string | number;
   username: string;
-  role: 'Admin' | 'Manager';
+  role: 'ADMIN' | 'SUPER_ADMIN';
+  permissions?: string;
   name: string;
   email?: string;
   phone?: string;
@@ -56,7 +58,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
   const [authChecked, setAuthChecked] = useState(false);
 
   // Tab State
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'products' | 'banners' | 'faqs' | 'inquiries' | 'users' | 'notifications' | 'settings'>(() => {
+  const [activeTab, setActiveTab] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('nimra_admin_active_tab');
       if (saved) return saved as any;
@@ -97,11 +99,12 @@ export const useAdminData = (initialCMSData: CMSData) => {
   useEffect(() => {
     if (authLoading) return;
 
-    if (isAuthenticated && user?.Role === 'Admin') {
+    if (isAuthenticated && user && isAdminRole(user.Role)) {
       const adminSession: CurrentUser = {
         id: user.ID,
         username: user.Username,
-        role: 'Admin',
+        role: normalizeRole(user.Role) as 'ADMIN' | 'SUPER_ADMIN',
+        permissions: (user as typeof user & { Permissions?: string }).Permissions,
         name: user.Name,
         email: user.Username,
         phone: user.Mobile || '',

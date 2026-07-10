@@ -7,6 +7,7 @@ import Footer from './Footer';
 import BackToTop from './BackToTop';
 import { CompanyInfo } from '@/types/cms';
 import { useAuth } from '../contexts/AuthContext';
+import { isAdminRole } from '@/frontend/admin/utils/accessControl';
 
 interface LayoutWrapperProps {
   children: React.ReactNode;
@@ -45,10 +46,10 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
     if (isAuthenticated && isAuthPage) {
       const nextPath = searchParams?.get('next');
       const safeNextPath = nextPath?.startsWith('/') && !nextPath.startsWith('//') ? nextPath : null;
-      router.replace(safeNextPath || (user?.Role === 'Admin' ? '/admin' : '/customer-portal'));
+      router.replace(safeNextPath || (isAdminRole(user?.Role) ? '/admin' : '/customer-portal'));
     } else if (isAdmin && !isAdminLogin && !isAuthenticated) {
       router.replace('/');
-    } else if (isAdmin && !isAdminLogin && user?.Role !== 'Admin') {
+    } else if (isAdmin && !isAdminLogin && !isAdminRole(user?.Role)) {
       router.replace('/customer-portal');
     } else if (!isAuthenticated && isCheckout) {
       const fullPath = window.location.pathname + window.location.search;
@@ -70,7 +71,7 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
   if (isLoading && isProtectedRoute) return renderBareShell(null);
 
   // Also block access if not authenticated
-  if (isAdmin && !isAdminLogin && (!isAuthenticated || user?.Role !== 'Admin')) {
+  if (isAdmin && !isAdminLogin && (!isAuthenticated || !isAdminRole(user?.Role))) {
     return renderBareShell(null);
   }
 

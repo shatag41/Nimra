@@ -4,6 +4,7 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
 import { discardLegacyRecentlyViewed, notifyRecentlyViewedChanged, recentlyViewedKey } from '../utils/recentlyViewed';
+import { isAdminRole } from '@/frontend/admin/utils/accessControl';
 
 export interface User {
   ID: number;
@@ -148,7 +149,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       throw new Error('Invalid login response. Missing user identity.');
     }
 
-    const isAdminUser = userData.Role === 'Admin';
+    const isAdminUser = isAdminRole(userData.Role);
     const nextPath = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('next') : null;
     const safeNextPath = nextPath?.startsWith('/') && !nextPath.startsWith('//') ? nextPath : null;
     const expiresAt = Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000;

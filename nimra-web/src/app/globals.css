@@ -11857,3 +11857,27 @@ table {
     height: 48px !important;
   }
 }
+/* Role-based enterprise admin extensions */
+.enterprise-section { display:flex; flex-direction:column; gap:1.25rem; padding:1.25rem; }
+.enterprise-heading { display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
+.enterprise-heading h2 { margin:.2rem 0; color:var(--text-primary); }
+.enterprise-heading p { margin:0; color:var(--text-secondary); }
+.eyebrow { color:var(--primary-color); font-size:.72rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+.enterprise-kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1rem; }
+.enterprise-kpi-grid .kpi-card { min-height:112px; padding:1rem; border:1px solid var(--border-color); display:flex; flex-direction:column; justify-content:center; gap:.55rem; }
+.enterprise-kpi-grid .kpi-card span { color:var(--text-secondary); font-size:.82rem; font-weight:700; }
+.enterprise-kpi-grid .kpi-card strong { color:var(--text-primary); font-size:1.55rem; }
+.enterprise-grid { display:grid; grid-template-columns:minmax(0,2fr) minmax(280px,1fr); gap:1rem; }
+.enterprise-grid .activity-card,.table-card { padding:1.1rem; border:1px solid var(--border-color); }
+.health-list { display:flex; flex-direction:column; gap:.55rem; margin-top:1rem; }
+.health-list div,.rank-row { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:.7rem 0; border-bottom:1px solid var(--border-color); }
+.health-list span,.rank-row small { color:var(--text-secondary); }
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+.form-grid label { display:flex; flex-direction:column; gap:.4rem; color:var(--text-secondary); font-weight:700; font-size:.82rem; }
+.form-grid .full-field { grid-column:1/-1; }
+.admin-form-modal { width:min(720px,calc(100vw - 2rem)); max-height:90vh; overflow:auto; padding:1.5rem; }
+.permission-table input { width:18px; height:18px; accent-color:var(--primary-color); }
+.metric-bar { height:5px; border-radius:5px; overflow:hidden; background:var(--border-color); }
+.metric-bar i { display:block; height:100%; background:var(--primary-color); }
+.chart-placeholder { min-height:190px; display:grid; place-items:center; border:1px dashed var(--border-color); border-radius:12px; color:var(--text-secondary); margin-top:1rem; }
+@media(max-width:900px){.enterprise-grid{grid-template-columns:1fr}.enterprise-section{padding:.75rem}.form-grid{grid-template-columns:1fr}.form-grid .full-field{grid-column:auto}}

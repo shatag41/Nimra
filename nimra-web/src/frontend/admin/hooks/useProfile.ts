@@ -1,15 +1,7 @@
 import { useState, useEffect } from 'react';
 import Cookies from 'js-cookie';
 import { saveUser } from '@/utils/api';
-
-interface CurrentUser {
-  id?: string | number;
-  username: string;
-  role: 'Admin' | 'Manager';
-  name: string;
-  email?: string;
-  phone?: string;
-}
+import type { CurrentUser } from './useAdminData';
 
 export const useProfile = (
   currentUser: CurrentUser | null,
@@ -117,7 +109,7 @@ export const useProfile = (
       const updatedAdminSession = {
         id: currentUser?.id || parsedCookieUser?.ID || 0,
         username: trimmedEmail,
-        role: 'Admin' as const,
+        role: currentUser?.role || 'ADMIN',
         name: trimmedName,
         email: trimmedEmail,
         phone: cleanedPhone,

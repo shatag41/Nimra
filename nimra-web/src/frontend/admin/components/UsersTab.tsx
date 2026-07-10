@@ -28,7 +28,7 @@ export default React.memo(function UsersTab({
   setUserFormOpen,
   handleUserDelete,
 }: UsersTabProps) {
-  if (currentUser.role !== 'Admin') {
+  if (currentUser.role !== 'ADMIN' && currentUser.role !== 'SUPER_ADMIN') {
     return (
       <div className="users-tab card glass">
         <div className="access-denied-block">

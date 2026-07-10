@@ -4,6 +4,7 @@ import React, { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { sendRequest } from '@/utils/api';
 import { useAuth } from '@/frontend/customer/contexts/AuthContext';
+import { isAdminRole } from '@/frontend/admin/utils/accessControl';
 
 export default function LoginClient() {
   const router = useRouter();
@@ -15,7 +16,7 @@ export default function LoginClient() {
 
   // Redirect if already logged in
   useEffect(() => {
-    if (!authLoading && user?.Role === 'Admin') {
+    if (!authLoading && isAdminRole(user?.Role)) {
       router.replace('/admin');
     }
   }, [authLoading, router, user]);
@@ -29,7 +30,7 @@ export default function LoginClient() {
       const res = await sendRequest({ type: 'login', username, password });
       if (res.success && res.user) {
         const matchedUser = res.user;
-        if (matchedUser.Role !== 'Admin') {
+        if (!isAdminRole(matchedUser.Role)) {
           setError('Admin access requires an active Admin role.');
           return;
         }

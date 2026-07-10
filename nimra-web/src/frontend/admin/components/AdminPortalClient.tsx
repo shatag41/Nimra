@@ -20,6 +20,8 @@ import {
 import Sidebar from './Sidebar';
 import Header from './Header';
 import LogoutConfirmationModal from '@/frontend/customer/components/LogoutConfirmationModal';
+import { isSuperAdmin, normalizeRole } from '../utils/accessControl';
+import { AdminManagementTab, LogsTab, ReportsTab, RolesPermissionsTab, SuperAdminOverview } from './EnterpriseTabs';
 
 // Dynamically loaded Modals & Profile
 const ProfilePanel = dynamic(() => import('./ProfilePanel'), { ssr: false });
@@ -195,8 +197,9 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
     filters.inquiryEndDate
   );
 
+  const customerUsers = users.filter((user) => normalizeRole(user.Role) === 'CUSTOMER');
   const filteredUsers = filterUsers(
-    users,
+    customerUsers,
     searchLower,
     filters.userRoleFilter,
     filters.userStatusFilter
@@ -287,7 +290,11 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
 
           {/* TAB CONTENTS */}
           <div className={`tab-viewport ${loading ? 'is-refreshing' : ''}`}>
-              {activeTab === 'dashboard' && (
+              {activeTab === 'dashboard' && isSuperAdmin(currentUser.role) && (
+                <SuperAdminOverview orders={orders} users={users} products={products} inquiries={inquiries} notifications={notifications} />
+              )}
+
+              {activeTab === 'dashboard' && !isSuperAdmin(currentUser.role) && (
                 <DashboardTab
                   orders={orders}
                   products={products}
@@ -397,6 +404,18 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                   handleUserDelete={handleUserDelete}
                 />
               )}
+
+              {isSuperAdmin(currentUser.role) && activeTab === 'admins' && (
+                <AdminManagementTab users={users} onSave={handleUserSubmit} onDelete={handleUserDelete} />
+              )}
+
+              {isSuperAdmin(currentUser.role) && activeTab === 'roles' && <RolesPermissionsTab />}
+
+              {isSuperAdmin(currentUser.role) && activeTab === 'reports' && (
+                <ReportsTab orders={orders} users={users} products={products} inquiries={inquiries} />
+              )}
+
+              {isSuperAdmin(currentUser.role) && (activeTab === 'logs' || activeTab === 'activity') && <LogsTab />}
 
               {activeTab === 'notifications' && (
                 <NotificationsTab
