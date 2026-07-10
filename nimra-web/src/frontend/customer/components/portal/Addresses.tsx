@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocation } from '@/frontend/customer/contexts/LocationContext';
 import { useAuth } from '@/frontend/customer/hooks/useAuth';
 import { WORLD_DATA } from './Checkout';
 import { migrateLegacyLocalAddresses, normalizeSavedAddresses, persistUserSavedAddresses } from '@/frontend/customer/utils/userAddresses';
+import { CompactKpiCard } from '../CompactKpiCard';
 
 interface Address {
   id: string;
@@ -27,6 +29,9 @@ interface Address {
   isDefault?: boolean;
 }
 
+type AddressFormData = Omit<Address, 'id' | 'fullAddress'>;
+type Coordinates = { latitude: number | null; longitude: number | null };
+
 export function Addresses() {
   const { user, updateUserSession } = useAuth();
   const router = useRouter();
@@ -37,8 +42,13 @@ export function Addresses() {
   const [editId, setEditId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [addressPendingDelete, setAddressPendingDelete] = useState<Address | null>(null);
+  const [duplicateAddress, setDuplicateAddress] = useState<Address | null>(null);
+  const [duplicateSource, setDuplicateSource] = useState<'save' | 'gps'>('save');
+  const [pendingGpsFormData, setPendingGpsFormData] = useState<AddressFormData | null>(null);
+  const [rememberDuplicateChoice, setRememberDuplicateChoice] = useState(false);
+  const [highlightedAddressId, setHighlightedAddressId] = useState<string | null>(null);
   
-  const [formData, setFormData] = useState<Omit<Address, 'id' | 'fullAddress'>>({
+  const [formData, setFormData] = useState<AddressFormData>({
     type: 'Home',
     name: '',
     mobile: '',
@@ -57,6 +67,42 @@ export function Addresses() {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const hasBlockingModal = Boolean(duplicateAddress || addressPendingDelete);
+
+  useEffect(() => {
+    if (!hasBlockingModal || typeof document === 'undefined') return;
+
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const root = document.documentElement;
+    const previousBodyStyles = {
+      overflow: body.style.overflow,
+      position: body.style.position,
+      top: body.style.top,
+      width: body.style.width,
+      paddingRight: body.style.paddingRight,
+    };
+    const previousRootOverflow = root.style.overflow;
+    const scrollbarWidth = window.innerWidth - root.clientWidth;
+
+    root.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.width = '100%';
+    if (scrollbarWidth > 0) body.style.paddingRight = `${scrollbarWidth}px`;
+
+    return () => {
+      root.style.overflow = previousRootOverflow;
+      body.style.overflow = previousBodyStyles.overflow;
+      body.style.position = previousBodyStyles.position;
+      body.style.top = previousBodyStyles.top;
+      body.style.width = previousBodyStyles.width;
+      body.style.paddingRight = previousBodyStyles.paddingRight;
+      window.scrollTo(0, scrollY);
+    };
+  }, [hasBlockingModal]);
 
   useEffect(() => {
     if (!user) {
@@ -84,35 +130,65 @@ export function Addresses() {
 
   const handleUseLocation = async () => {
     await requestLocation(true);
-    
-    let matchedState = formData.state || locationState || '';
-    let matchedCity = formData.city || locationCity || '';
+
+    let detectedLocation: Coordinates & { address?: string; city?: string; state?: string; pincode?: string } = {
+      latitude: null,
+      longitude: null,
+      address: locationAddress,
+      city: locationCity,
+      state: locationState,
+      pincode: locationPincode,
+    };
+    try {
+      const storedLocation = window.localStorage.getItem('nimra_location');
+      if (storedLocation) detectedLocation = { ...detectedLocation, ...JSON.parse(storedLocation) };
+    } catch {
+      // Continue with the location context values when the local snapshot is unavailable.
+    }
+
+    let matchedState = formData.state || detectedLocation.state || '';
+    let matchedCity = formData.city || detectedLocation.city || '';
 
     const currentCountryData = WORLD_DATA[formData.country] || {};
     const stateKeys = Object.keys(currentCountryData);
 
-    if (locationState && !formData.state) {
-      const foundState = stateKeys.find(s => s.toLowerCase().trim() === locationState.toLowerCase().trim());
+    if (detectedLocation.state && !formData.state) {
+      const foundState = stateKeys.find(s => s.toLowerCase().trim() === detectedLocation.state?.toLowerCase().trim());
       if (foundState) matchedState = foundState;
     }
 
-    if (matchedState && !formData.city && locationCity) {
+    if (matchedState && !formData.city && detectedLocation.city) {
       const cities = currentCountryData[matchedState] || [];
-      const searchTarget = `${locationCity} ${locationAddress || ''}`.toLowerCase();
+      const searchTarget = `${detectedLocation.city} ${detectedLocation.address || ''}`.toLowerCase();
       const foundCity = cities.find(c => searchTarget.includes(c.toLowerCase()));
       if (foundCity) {
         matchedCity = foundCity;
       }
     }
 
-    setFormData(prev => ({
-      ...prev,
-      flatNo: prev.flatNo || (locationAddress ? locationAddress.split(',')[0].trim() : ''),
-      locality: prev.locality || (locationAddress ? locationAddress.split(',').slice(1, 3).join(', ').trim() : ''),
+    const gpsFormData: AddressFormData = {
+      ...formData,
+      flatNo: formData.flatNo || (detectedLocation.address ? detectedLocation.address.split(',')[0].trim() : ''),
+      locality: formData.locality || (detectedLocation.address ? detectedLocation.address.split(',').slice(1, 3).join(', ').trim() : ''),
       city: matchedCity,
       state: matchedState,
-      pincode: prev.pincode || locationPincode || ''
-    }));
+      pincode: formData.pincode || detectedLocation.pincode || ''
+    };
+
+    const duplicate = findDuplicateAddress(gpsFormData, detectedLocation);
+    if (duplicate) {
+      if (window.localStorage.getItem('nimra-reuse-duplicate-address') === 'true') {
+        reuseExistingAddress(duplicate);
+        return;
+      }
+      setRememberDuplicateChoice(false);
+      setPendingGpsFormData(gpsFormData);
+      setDuplicateSource('gps');
+      setDuplicateAddress(duplicate);
+      return;
+    }
+
+    setFormData(gpsFormData);
   };
 
   const updateField = (key: string, value: any) => {
@@ -154,10 +230,50 @@ export function Addresses() {
     }
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
+  const normalizeAddressPart = (value?: string) => String(value || '')
+    .toLowerCase()
+    .replace(/[,.]/g, ' ')
+    .replace(/\b(rd)\b/g, 'road')
+    .replace(/\b(st)\b/g, 'street')
+    .replace(/\b(apt)\b/g, 'apartment')
+    .replace(/\b(ave)\b/g, 'avenue')
+    .replace(/\b(blvd)\b/g, 'boulevard')
+    .replace(/\b(ln)\b/g, 'lane')
+    .replace(/\b(hwy)\b/g, 'highway')
+    .replace(/\b(bldg)\b/g, 'building')
+    .replace(/\s+/g, ' ')
+    .trim();
 
+  const coordinatesAreNearby = (address: Address, coordinates?: Coordinates) => {
+    if (coordinates?.latitude == null || coordinates.longitude == null) return false;
+    const storedAddress = address as Address & { latitude?: number; longitude?: number };
+    if (!Number.isFinite(storedAddress.latitude) || !Number.isFinite(storedAddress.longitude)) return false;
+
+    const earthRadiusMetres = 6371000;
+    const toRadians = (degrees: number) => degrees * Math.PI / 180;
+    const latitudeDelta = toRadians(coordinates.latitude - Number(storedAddress.latitude));
+    const longitudeDelta = toRadians(coordinates.longitude - Number(storedAddress.longitude));
+    const latitudeA = toRadians(Number(storedAddress.latitude));
+    const latitudeB = toRadians(coordinates.latitude);
+    const haversine = Math.sin(latitudeDelta / 2) ** 2
+      + Math.cos(latitudeA) * Math.cos(latitudeB) * Math.sin(longitudeDelta / 2) ** 2;
+    const distance = 2 * earthRadiusMetres * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
+    return distance <= 15;
+  };
+
+  const findDuplicateAddress = (candidate: AddressFormData = formData, coordinates?: Coordinates) => addresses.find(address => (
+    coordinatesAreNearby(address, coordinates) || (
+      normalizeAddressPart(address.flatNo) === normalizeAddressPart(candidate.flatNo) &&
+      normalizeAddressPart(address.buildingName) === normalizeAddressPart(candidate.buildingName) &&
+      normalizeAddressPart(address.locality) === normalizeAddressPart(candidate.locality) &&
+      normalizeAddressPart(address.landmark) === normalizeAddressPart(candidate.landmark) &&
+      normalizeAddressPart(address.city) === normalizeAddressPart(candidate.city) &&
+      normalizeAddressPart(address.state) === normalizeAddressPart(candidate.state) &&
+      normalizeAddressPart(address.pincode) === normalizeAddressPart(candidate.pincode)
+    )
+  ));
+
+  const persistCurrentAddress = async () => {
     const compositeAddress = [formData.flatNo, formData.buildingName, formData.locality, formData.landmark]
       .filter(Boolean).join(', ');
 
@@ -169,7 +285,6 @@ export function Addresses() {
 
     let updatedList: Address[];
     if (formData.isDefault) {
-      // Set all other addresses to not default
       const listWithoutDefault = addresses.map(a => ({ ...a, isDefault: false }));
       updatedList = editId
         ? listWithoutDefault.map(a => a.id === editId ? newSavedAddr : a)
@@ -183,13 +298,73 @@ export function Addresses() {
     updatedList = normalizeSavedAddresses(updatedList) as Address[];
     const saved = await saveAddressList(updatedList);
     if (!saved) return;
+    setDuplicateAddress(null);
+    setIsAdding(false);
+    setEditId(null);
+
+    const redirectPath = searchParams ? searchParams.get('redirect') : null;
+    if (redirectPath) router.push(redirectPath);
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+
+    if (!editId) {
+      const duplicate = findDuplicateAddress(formData);
+      if (duplicate) {
+        if (typeof window !== 'undefined' && window.localStorage.getItem('nimra-reuse-duplicate-address') === 'true') {
+          reuseExistingAddress(duplicate);
+          return;
+        }
+        setRememberDuplicateChoice(false);
+        setPendingGpsFormData(null);
+        setDuplicateSource('save');
+        setDuplicateAddress(duplicate);
+        return;
+      }
+    }
+
+    await persistCurrentAddress();
+  };
+
+  const reuseExistingAddress = (address: Address) => {
+    setDuplicateAddress(null);
+    setPendingGpsFormData(null);
     setIsAdding(false);
     setEditId(null);
 
     const redirectPath = searchParams ? searchParams.get('redirect') : null;
     if (redirectPath) {
-      router.push(redirectPath);
+      const separator = redirectPath.includes('?') ? '&' : '?';
+      router.push(`${redirectPath}${separator}addressId=${encodeURIComponent(address.id)}`);
+      return;
     }
+
+    setHighlightedAddressId(address.id);
+    window.setTimeout(() => setHighlightedAddressId(null), 2600);
+    window.requestAnimationFrame(() => document.getElementById(`saved-address-${address.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+  };
+
+  const handleUseDuplicate = () => {
+    if (!duplicateAddress) return;
+    if (rememberDuplicateChoice && typeof window !== 'undefined') {
+      window.localStorage.setItem('nimra-reuse-duplicate-address', 'true');
+    }
+    reuseExistingAddress(duplicateAddress);
+  };
+
+  const handleUseGpsAnyway = () => {
+    if (!pendingGpsFormData) return;
+    setFormData(pendingGpsFormData);
+    setPendingGpsFormData(null);
+    setDuplicateAddress(null);
+  };
+
+  const handleCancelDuplicate = () => {
+    if (saving) return;
+    setPendingGpsFormData(null);
+    setDuplicateAddress(null);
   };
 
   const handleEdit = (address: Address) => {
@@ -276,22 +451,10 @@ export function Addresses() {
   return (
     <div className="addresses-container">
       <section className="addresses-metrics" aria-label="Addresses summary">
-        <div className="address-metric-card">
-          <span className="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>
-          <div className="metric-copy"><strong>{addresses.length}</strong><span>Saved Addresses</span><small>Manage all delivery locations</small></div>
-        </div>
-        <div className="address-metric-card">
-          <span className="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 2 3.1 6.3 6.9 1-5 4.8 1.2 6.9-6.2-3.3L5.8 21 7 14.1 2 9.3l6.9-1L12 2Z"/></svg></span>
-          <div className="metric-copy"><strong>{addresses.find(a => a.isDefault)?.city || 'None'}</strong><span>Default Location</span><small>Primary Delivery Zone</small></div>
-        </div>
-        <div className="address-metric-card">
-          <span className="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z"/></svg></span>
-          <div className="metric-copy"><strong>{addresses.filter(a => String(a.type).toLowerCase() === 'home').length}</strong><span>Home</span><small>Saved Home Address</small></div>
-        </div>
-        <div className="address-metric-card">
-          <span className="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18M10 12v2h4v-2"/></svg></span>
-          <div className="metric-copy"><strong>{addresses.filter(a => String(a.type).toLowerCase() === 'work').length}</strong><span>Work</span><small>Saved Work Address</small></div>
-        </div>
+        <CompactKpiCard title="Saved Addresses" value={addresses.length} subtitle="Manage all delivery locations" icon={<svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>} />
+        <CompactKpiCard title="Default Location" value={addresses.find(a => a.isDefault)?.city || 'None'} subtitle="Primary Delivery Zone" icon={<svg viewBox="0 0 24 24"><path d="m12 2 3.1 6.3 6.9 1-5 4.8 1.2 6.9-6.2-3.3L5.8 21 7 14.1 2 9.3l6.9-1L12 2Z"/></svg>} />
+        <CompactKpiCard title="Home" value={addresses.filter(a => String(a.type).toLowerCase() === 'home').length} subtitle="Saved Home Address" icon={<svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z"/></svg>} />
+        <CompactKpiCard title="Work" value={addresses.filter(a => String(a.type).toLowerCase() === 'work').length} subtitle="Saved Work Address" icon={<svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18M10 12v2h4v-2"/></svg>} />
       </section>
 
       {!isAdding && (
@@ -501,7 +664,7 @@ export function Addresses() {
             </div>
           ) : (
             addresses.map(address => (
-              <article key={address.id} className={`address-card ${address.isDefault ? 'is-default' : ''}`}>
+              <article id={`saved-address-${address.id}`} key={address.id} className={`address-card ${address.isDefault ? 'is-default' : ''} ${highlightedAddressId === address.id ? 'is-highlighted' : ''}`}>
               <div className="address-card-header">
                 <div className="address-meta">
                   <span className={`address-type-icon ${address.type.toLowerCase()}`} aria-hidden="true">
@@ -554,7 +717,41 @@ export function Addresses() {
         </div>
       )}
 
-      {addressPendingDelete && (
+      {duplicateAddress && typeof document !== 'undefined' && createPortal((
+        <div className="duplicate-modal-overlay" role="presentation" onClick={handleCancelDuplicate}>
+          <div className="duplicate-modal" role="dialog" aria-modal="true" aria-labelledby="duplicate-address-title" onClick={(event) => event.stopPropagation()}>
+            <div className="duplicate-modal-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+            </div>
+            <h3 id="duplicate-address-title">Address Already Exists</h3>
+            <p className="duplicate-intro">We found an address that matches the one you&apos;re trying to save.</p>
+            <span className="duplicate-section-label">Existing Address</span>
+            <div className="duplicate-address-preview">
+              <div className="duplicate-badges">
+                <span className={`duplicate-type ${duplicateAddress.type.toLowerCase()}`}>{duplicateAddress.type}</span>
+                {duplicateAddress.isDefault && <span className="duplicate-default">★ Default</span>}
+              </div>
+              <strong>{duplicateAddress.name || user?.Name || 'Delivery Recipient'}</strong>
+              <p>{[duplicateAddress.flatNo, duplicateAddress.buildingName].filter(Boolean).join(', ')}</p>
+              <p>{[duplicateAddress.locality, duplicateAddress.landmark, duplicateAddress.city].filter(Boolean).join(', ')}</p>
+              <p>{duplicateAddress.state} – {duplicateAddress.pincode}</p>
+              {(duplicateAddress.mobile || user?.Mobile) && <span className="duplicate-phone">☎ {duplicateAddress.mobile || user?.Mobile}</span>}
+            </div>
+            <p className="duplicate-note">This address is already saved as your <strong>{duplicateAddress.type}</strong> address.</p>
+            <label className="duplicate-preference">
+              <input type="checkbox" checked={rememberDuplicateChoice} onChange={(event) => setRememberDuplicateChoice(event.target.checked)} />
+              <span>Don&apos;t ask me again for duplicate addresses</span>
+            </label>
+            <div className="duplicate-modal-actions">
+              <button type="button" className="duplicate-use-button" onClick={handleUseDuplicate}>Continue Using This Address</button>
+              <button type="button" className="duplicate-save-button" disabled={saving} onClick={duplicateSource === 'gps' ? handleUseGpsAnyway : () => void persistCurrentAddress()}>{duplicateSource === 'gps' ? 'Use GPS Anyway' : (saving ? 'Saving...' : 'Save Anyway')}</button>
+              <button type="button" className="duplicate-cancel-button" disabled={saving} onClick={handleCancelDuplicate}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      ), document.body)}
+
+      {addressPendingDelete && typeof document !== 'undefined' && createPortal((
         <div className="delete-modal-overlay" role="presentation" onClick={() => !saving && setAddressPendingDelete(null)}>
           <div className="delete-modal" role="dialog" aria-modal="true" aria-labelledby="delete-address-title" onClick={(event) => event.stopPropagation()}>
             <div className="delete-modal-icon" aria-hidden="true">!</div>
@@ -566,7 +763,7 @@ export function Addresses() {
             </div>
           </div>
         </div>
-      )}
+      ), document.body)}
 
       <style jsx>{`
         .addresses-container {
@@ -577,7 +774,7 @@ export function Addresses() {
           animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
  
-        .add-address-row { display: flex; justify-content: flex-end; margin: .45rem 0 .7rem; }
+        .add-address-row { display: flex; justify-content: flex-end; margin: -2.25rem 0 .5rem; }
  
         .btn-add-address {
           display: inline-flex;
@@ -612,27 +809,6 @@ export function Addresses() {
           margin: 0;
         }
 
-        .address-metric-card {
-          min-width: 0;
-          display: flex;
-          align-items: center;
-          gap: .7rem;
-          padding: .72rem .85rem;
-          border: 1px solid rgba(148,163,184,.16);
-          border-radius: 22px;
-          background: linear-gradient(145deg, rgba(255,255,255,.08), rgba(37,99,235,.035)), var(--bg-secondary);
-          box-shadow: 0 10px 30px rgba(15,23,42,.055);
-          transition: transform 250ms ease, box-shadow 250ms ease, border-color 250ms ease;
-        }
-
-        .address-metric-card:hover { transform: translateY(-3px); border-color: rgba(37,99,235,.25); box-shadow: 0 16px 38px rgba(15,23,42,.08); }
-        .metric-icon { flex: 0 0 40px; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; color: var(--primary-color); background: #eef5ff; transition: transform 250ms ease; }
-        .metric-icon svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
-        .address-metric-card:hover .metric-icon { transform: rotate(-4deg) scale(1.04); }
-        .metric-copy { min-width: 0; display: grid; grid-template-columns: auto 1fr; align-items: baseline; column-gap: .5rem; }
-        .metric-copy strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--primary-color); font-size: 1.3rem; line-height: 1; letter-spacing: -.03em; }
-        .metric-copy span { color: var(--text-primary); font-size: .82rem; font-weight: 750; white-space: nowrap; }
-        .metric-copy small { grid-column: 1 / -1; margin-top: .2rem; color: var(--text-secondary); font-size: .7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
  
         .addresses-grid {
           display: grid;
@@ -680,6 +856,12 @@ export function Addresses() {
  
         .address-card:hover::before {
           background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        }
+
+        .address-card.is-highlighted {
+          border-color: rgba(37,99,235,.65);
+          box-shadow: 0 0 0 4px rgba(37,99,235,.12), 0 18px 40px rgba(37,99,235,.16);
+          animation: address-highlight 2.6s ease;
         }
  
         .address-card-header {
@@ -1075,27 +1257,91 @@ export function Addresses() {
           user-select: none;
           grid-column: 1 / -1;
         }
+
+        .duplicate-modal-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 2147483000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 1rem;
+          overflow: hidden;
+          overscroll-behavior: none;
+          background: rgba(15,23,42,.56);
+          backdrop-filter: blur(10px);
+          animation: modal-fade .2s ease both;
+        }
+
+        .duplicate-modal {
+          width: min(500px, 100%);
+          max-height: calc(100dvh - 2rem);
+          box-sizing: border-box;
+          padding: 1.5rem;
+          overflow-x: hidden;
+          overflow-y: auto;
+          overscroll-behavior: contain;
+          border: 1px solid rgba(148,163,184,.2);
+          border-radius: 24px;
+          background: var(--bg-secondary);
+          box-shadow: 0 28px 80px rgba(15,23,42,.24);
+          animation: modal-scale 220ms cubic-bezier(.22,1,.36,1) both;
+        }
+
+        .duplicate-modal-icon { width: 48px; height: 48px; display: grid; place-items: center; margin: 0 auto .8rem; border-radius: 50%; color: var(--primary-color); background: #eef5ff; }
+        .duplicate-modal-icon svg { width: 23px; height: 23px; }
+        .duplicate-modal h3 { margin: 0; text-align: center; font-size: 1.3rem; color: var(--text-primary); }
+        .duplicate-intro { margin: .45rem auto 1rem; max-width: 390px; text-align: center; color: var(--text-secondary); font-size: .86rem; line-height: 1.5; }
+        .duplicate-section-label { display: block; margin-bottom: .4rem; color: var(--text-secondary); font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+        .duplicate-address-preview { display: flex; flex-direction: column; gap: .25rem; padding: 1rem; border: 1px solid rgba(59,130,246,.24); border-radius: 16px; background: linear-gradient(145deg, rgba(239,246,255,.85), rgba(255,255,255,.45)); }
+        .duplicate-address-preview strong { margin-top: .2rem; color: var(--text-primary); font-size: .95rem; }
+        .duplicate-address-preview p { margin: 0; color: var(--text-secondary); font-size: .82rem; line-height: 1.35; }
+        .duplicate-badges { display: flex; align-items: center; gap: .35rem; }
+        .duplicate-type { padding: .2rem .5rem; border-radius: 999px; color: #2563eb; background: rgba(37,99,235,.1); font-size: .65rem; font-weight: 800; }
+        .duplicate-type.work { color: #7c3aed; background: rgba(124,58,237,.1); }
+        .duplicate-type.other { color: #0891b2; background: rgba(8,145,178,.1); }
+        .duplicate-default { padding: .2rem .5rem; border: 1px solid rgba(37,99,235,.16); border-radius: 999px; color: var(--primary-color); background: rgba(37,99,235,.06); font-size: .62rem; font-weight: 800; }
+        .duplicate-phone { margin-top: .35rem; color: var(--text-primary); font-size: .78rem; font-weight: 700; }
+        .duplicate-note { margin: .75rem 0; color: var(--text-secondary); font-size: .8rem; }
+        .duplicate-preference { display: flex; align-items: center; gap: .5rem; color: var(--text-secondary); font-size: .76rem; cursor: pointer; }
+        .duplicate-preference input { accent-color: var(--primary-color); }
+        .duplicate-modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; margin-top: 1rem; }
+        .duplicate-modal-actions button { min-height: 40px; border-radius: 12px; font: inherit; font-size: .76rem; font-weight: 750; cursor: pointer; transition: all 250ms ease; }
+        .duplicate-use-button { grid-column: 1 / -1; border: 0; color: white; background: linear-gradient(135deg, var(--primary-color), var(--primary-hover)); box-shadow: 0 8px 20px rgba(37,99,235,.2); }
+        .duplicate-save-button { border: 1px solid rgba(37,99,235,.25); color: var(--primary-color); background: rgba(37,99,235,.06); }
+        .duplicate-cancel-button { border: 0; color: var(--text-secondary); background: transparent; }
+        .duplicate-modal-actions button:hover:not(:disabled) { transform: translateY(-1px); }
+        .duplicate-modal-actions button:focus-visible { outline: 3px solid rgba(59,130,246,.28); outline-offset: 2px; }
  
         .delete-modal-overlay {
           position: fixed;
           inset: 0;
-          z-index: 1000;
-          display: grid;
-          place-items: center;
+          z-index: 2147483000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           padding: 1rem;
+          overflow: hidden;
+          overscroll-behavior: none;
           background: rgba(2, 6, 23, 0.72);
           backdrop-filter: blur(6px);
+          animation: modal-fade 200ms ease-out both;
         }
  
         .delete-modal {
           width: min(380px, 100%);
+          max-height: calc(100dvh - 2rem);
           box-sizing: border-box;
           padding: 1.5rem;
+          overflow-x: hidden;
+          overflow-y: auto;
+          overscroll-behavior: contain;
           border: 1px solid var(--border-color);
           border-radius: var(--radius-xl);
           background: var(--bg-secondary);
           box-shadow: var(--shadow-xl);
           text-align: center;
+          animation: modal-scale 220ms cubic-bezier(.22,1,.36,1) both;
         }
  
         .delete-modal-icon {
@@ -1176,6 +1422,10 @@ export function Addresses() {
         @keyframes spin-kf {
           to { transform: rotate(360deg); }
         }
+
+        @keyframes modal-fade { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes modal-scale { from { opacity: 0; transform: translateY(10px) scale(.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes address-highlight { 0%, 65% { border-color: rgba(37,99,235,.65); } 100% { border-color: rgba(148,163,184,.17); } }
  
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(10px); }
@@ -1200,9 +1450,11 @@ export function Addresses() {
           .addresses-container { margin-top: -2.5rem; }
           .addresses-metrics, .addresses-grid { grid-template-columns: 1fr; }
           .addresses-metrics { gap: .7rem; }
-          .address-metric-card { padding: .72rem .85rem; }
           .address-card { padding: .75rem; }
           .address-card-footer { grid-template-columns: 1fr; }
+          .duplicate-modal { padding: 1.15rem; border-radius: 20px; }
+          .duplicate-modal-actions { grid-template-columns: 1fr; }
+          .duplicate-use-button { grid-column: auto; }
           .address-actions { gap: .3rem; }
           .action-btn { width: 34px; height: 34px; }
           .btn-add-address {

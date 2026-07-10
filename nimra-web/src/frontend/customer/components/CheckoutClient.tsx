@@ -39,6 +39,7 @@ type FormState = typeof initialForm;
 export default function CheckoutClient() {
   const cart = useCart();
   const searchParams = useSearchParams();
+  const requestedAddressId = searchParams.get('addressId');
   const { user, updateUserSession } = useAuth();
   const [form, setForm] = useState<FormState>(initialForm);
   const { notify } = useNotification();
@@ -78,7 +79,7 @@ export default function CheckoutClient() {
       }
       setSavedAddresses(parsed);
       if (parsed.length > 0) {
-        const defaultAddr = parsed.find(a => a.isDefault) || parsed[0];
+        const defaultAddr = parsed.find(a => a.id === requestedAddressId) || parsed.find(a => a.isDefault) || parsed[0];
         setSelectedAddressId(defaultAddr.id);
         setIsEditingAddress(false);
         setForm({
@@ -105,7 +106,7 @@ export default function CheckoutClient() {
     return () => {
       cancelled = true;
     };
-  }, [updateUserSession, user]);
+  }, [requestedAddressId, updateUserSession, user]);
 
   // Pre-detect country based on location details or timezone fallback
   useEffect(() => {
