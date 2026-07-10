@@ -259,7 +259,7 @@ export default function OrdersClient() {
         {/* Sidebar Filters */}
         <aside className="orders-sidebar card">
           <div className="sidebar-section">
-            <h3>Filter by Status</h3>
+            <h3><span className="section-icon" aria-hidden="true">&#9776;</span> Filter by Status</h3>
             <div className="filter-options">
               {(
                 [
@@ -285,7 +285,7 @@ export default function OrdersClient() {
           </div>
 
           <div className="sidebar-section">
-            <h3>Order Date</h3>
+            <h3><span className="section-icon" aria-hidden="true">&#128197;</span> Order Date</h3>
             <div className="filter-options">
               {(
                 [
@@ -342,7 +342,20 @@ export default function OrdersClient() {
             </div>
           )}
 
-          {activeTab === 'checkout-required' ? (
+          {loadingOrders && activeTab !== 'checkout-required' ? (
+            <div className="orders-cards-list" aria-label="Loading orders" aria-busy="true">
+              {[0, 1, 2].map((index) => (
+                <div className="order-skeleton" key={index}>
+                  <div className="skeleton-header"><span /><span /><span /><span /></div>
+                  <div className="skeleton-body">
+                    <div className="skeleton-image shimmer" />
+                    <div className="skeleton-copy"><span className="shimmer" /><span className="shimmer short" /><span className="shimmer tiny" /></div>
+                    <div className="skeleton-actions"><span className="shimmer" /><span className="shimmer" /></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : activeTab === 'checkout-required' ? (
             /* ── Checkout Required: show current cart items ── */
             cartItems.length > 0 ? (
               <div className="orders-cards-list">
@@ -430,15 +443,18 @@ export default function OrdersClient() {
                     <div className="amazon-card-header">
                       <div className="header-meta-columns">
                         <div className="meta-col">
-                          <span className="meta-label">ORDER PLACED</span>
+                          <span className="meta-icon" aria-hidden="true">&#128197;</span>
+                          <span className="meta-label">Order Date</span>
                           <span className="meta-value">{formatDate(order.createdAt)}</span>
                         </div>
                         <div className="meta-col">
-                          <span className="meta-label">TOTAL</span>
+                          <span className="meta-icon" aria-hidden="true">&#8377;</span>
+                          <span className="meta-label">Total</span>
                           <span className="meta-value highlight-price">{formatCurrency(Number(order.total || 0))}</span>
                         </div>
                         <div className="meta-col tooltip-trigger" onClick={(e) => e.stopPropagation()}>
-                          <span className="meta-label">SHIP TO</span>
+                          <span className="meta-icon" aria-hidden="true">&#128100;</span>
+                          <span className="meta-label">Ship To</span>
                           <span className="meta-value underline-dotted">{order.customer.name}</span>
                           <div className="address-tooltip-bubble">
                             <div className="tooltip-title">{order.customer.name}</div>
@@ -451,7 +467,8 @@ export default function OrdersClient() {
                         </div>
                       </div>
                       <div className="header-id-column" onClick={(e) => e.stopPropagation()}>
-                        <span className="meta-label">ORDER ID</span>
+                        <span className="meta-icon" aria-hidden="true">&#128230;</span>
+                        <span className="meta-label">Order ID</span>
                         <span className="order-id-txt" onClick={() => {
                           navigator.clipboard.writeText(order.orderId);
                           notify.success('Copied to Clipboard', `Order ID: #${order.orderId}`);
@@ -480,11 +497,14 @@ export default function OrdersClient() {
                                 <span className="item-price-qty">{item.quantity} × {formatCurrency(item.price)}</span>
                               </div>
                               <div className="item-status-column">
-                                <div className="status-label-group">
-                                  <span className={`status-dot-indicator ${statusLower}`}></span>
+                                <div className={`status-label-group status-chip ${statusLower.replace(/\s+/g, '-')}`}>
+                                  <span className="status-dot-indicator"></span>
                                   <span className="status-header-text">{order.status}</span>
                                 </div>
-                                <span className="status-desc-text">Payment: {order.paymentMethod || 'COD'}</span>
+                                <div className="status-facts">
+                                  <span><b>Payment</b>{order.paymentMethod || 'COD'}</span>
+                                  {statusLower === 'delivered' && <span><b>Invoice</b>Available</span>}
+                                </div>
                               </div>
                             </div>
                           ))}
@@ -492,14 +512,14 @@ export default function OrdersClient() {
 
                         <div className="actions-column" onClick={(e) => e.stopPropagation()}>
                           <button onClick={() => handleReorder(order)} className="amazon-action-btn primary-action">
-                            Reorder
+                            <span aria-hidden="true">&#8635;</span> Reorder
                           </button>
                           <button onClick={(e) => { e.stopPropagation(); setSelectedOrder(order); }} className="amazon-action-btn">
-                            View details
+                            <span aria-hidden="true">&#128065;</span> View Details
                           </button>
                           {isCancelable && (
                             <button onClick={(e) => { e.stopPropagation(); setOrderToCancel(order); }} className="amazon-action-btn danger-action">
-                              Cancel Order
+                              <span aria-hidden="true">&times;</span> Cancel Order
                             </button>
                           )}
                           {cancellationClosed && (
@@ -514,6 +534,12 @@ export default function OrdersClient() {
                         </div>
                       </div>
                     </div>
+                    <div className="order-card-footer">
+                      <span><b>{order.items.length}</b> Items Ordered</span>
+                      <span><b>{order.items.reduce((sum, item) => sum + Number(item.quantity || 0), 0)}</b> Total Quantity</span>
+                      <span><b>{formatCurrency(Number(order.total || 0))}</b> Order Value</span>
+                      <span><b>{statusLower === 'delivered' ? 'Available' : 'Pending'}</b> Invoice Status</span>
+                    </div>
                   </div>
                 );
               })}
@@ -522,15 +548,15 @@ export default function OrdersClient() {
           ) : (
             <div className="empty-orders card animate-scale-in">
               <div className="empty-icon-glow">📦</div>
-              <h3>No Orders Found</h3>
+              <h3>{searchQuery || dateFilter !== 'all' || activeTab !== 'all' ? 'No Orders Found' : 'No Orders Yet'}</h3>
               <p>
                 {searchQuery || dateFilter !== 'all' || activeTab !== 'all'
                   ? "We couldn't find any orders matching your search or filters. Try adjusting them!"
-                  : "You don't have any orders listed yet."}
+                  : 'Your orders will appear here once you place your first purchase.'}
               </p>
               {!searchQuery && dateFilter === 'all' && activeTab === 'all' && (
                 <Link href="/products" className="btn btn-primary">
-                  Shop Products
+                  Browse Products
                 </Link>
               )}
             </div>
@@ -953,6 +979,72 @@ export default function OrdersClient() {
 
         /* ── Loading ── */
         /* ── Details Modal ── */
+        /* Premium orders UI */
+        .orders-page { padding-bottom: 3rem; }
+        .orders-cards-list { gap: 1.1rem; }
+        :global(.orders-layout-grid) { gap: 1.25rem; grid-template-columns: minmax(250px, 265px) minmax(0, 1fr); }
+        :global(.orders-sidebar) { top: 92px; gap: 1.1rem; padding: 1rem; border: 1px solid var(--border-color); border-radius: 20px; background: color-mix(in srgb, var(--bg-secondary) 86%, transparent); backdrop-filter: blur(18px); box-shadow: 0 16px 42px rgba(15,23,42,.08); }
+        :global(.orders-sidebar .sidebar-section + .sidebar-section) { padding-top: .9rem; border-top: 1px solid rgba(148,163,184,.18); }
+        :global(.orders-sidebar .sidebar-section h3) { display: flex; align-items: center; gap: .5rem; margin-bottom: .55rem; font-size: .75rem; letter-spacing: .08em; }
+        .section-icon { display: grid; place-items: center; width: 27px; height: 27px; border-radius: 9px; color: var(--primary-color); background: color-mix(in srgb, var(--primary-color) 12%, transparent); font-size: .82rem; }
+        :global(.orders-sidebar .filter-options) { gap: .15rem; }
+        :global(.orders-sidebar .filter-label) { min-height: 42px; padding: .35rem .5rem; border-radius: 11px; transition: background 180ms ease, color 180ms ease, transform 180ms ease; }
+        :global(.orders-sidebar .filter-label:has(input:checked)) { color: #1d4ed8; background: rgba(37,99,235,.08); transform: translateX(2px); }
+        :global(.orders-sidebar .filter-radio) { appearance: none; width: 17px; height: 17px; border: 1.5px solid var(--text-muted); border-radius: 50%; background: var(--bg-secondary); box-shadow: inset 0 0 0 4px var(--bg-secondary); transition: 180ms ease; }
+        :global(.orders-sidebar .filter-radio:checked) { border-color: var(--primary-color); background: var(--primary-color); box-shadow: inset 0 0 0 4px var(--bg-secondary), 0 0 0 3px rgba(37,99,235,.12); }
+        :global(.orders-page .search-bar-wrapper) { min-height: 48px; padding: 0 .6rem; margin: 0; border-radius: 999px; border-color: rgba(148,163,184,.25); box-shadow: inset 0 2px 5px rgba(15,23,42,.04), 0 8px 28px rgba(15,23,42,.05); transition: border-color 200ms ease, box-shadow 200ms ease; }
+        :global(.orders-page .search-bar-wrapper:focus-within) { border-color: rgba(37,99,235,.55); box-shadow: inset 0 2px 5px rgba(15,23,42,.03), 0 0 0 4px rgba(37,99,235,.1), 0 12px 30px rgba(37,99,235,.08); }
+        :global(.orders-page .search-input::placeholder) { color: #94a3b8; }
+        .amazon-order-card { border-radius: 20px; border-color: var(--border-color); background: var(--bg-secondary); color: var(--text-primary); box-shadow: 0 4px 12px rgba(15,23,42,.04), 0 18px 40px rgba(15,23,42,.06); transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease; }
+        .amazon-order-card:hover { transform: translateY(-3px); border-color: rgba(37,99,235,.22); box-shadow: 0 8px 18px rgba(15,23,42,.06), 0 24px 50px rgba(37,99,235,.1); }
+        .amazon-card-header { align-items: stretch; padding: .65rem .85rem; background: color-mix(in srgb, var(--bg-secondary) 94%, var(--primary-color) 3%); border-bottom-color: var(--border-color); }
+        .header-meta-columns { flex: 1; display: grid; grid-template-columns: repeat(3,minmax(120px,1fr)); gap: 1rem; }
+        .meta-col, .header-id-column { display: grid; grid-template-columns: 26px 1fr; grid-template-rows: auto auto; column-gap: .5rem; align-items: center; }
+        .header-id-column { min-width: 170px; align-items: center; text-align: left; }
+        .meta-icon { grid-row: 1 / 3; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; color: var(--primary-color); background: color-mix(in srgb, var(--primary-color) 10%, transparent); font-size: .78rem; font-weight: 800; }
+        .meta-label { margin: 0; font-size: .62rem; font-weight: 700; letter-spacing: .08em; }
+        .meta-value, .order-id-txt { font-size: .86rem; font-weight: 700; color: var(--text-primary); overflow-wrap: anywhere; }
+        .amazon-card-body { padding: .7rem .85rem; }
+        .card-body-content-split { grid-template-columns: minmax(0,1fr) 170px; gap: .85rem; align-items: stretch; }
+        .items-list-column { gap: 0; }
+        .amazon-item-row { grid-template-columns: 58px minmax(0,1.3fr) minmax(9rem,.8fr); gap: .7rem; padding: .5rem 0; }
+        .amazon-item-row:first-child { padding-top: 0; } .amazon-item-row:last-child { padding-bottom: 0; }
+        .amazon-item-row + .amazon-item-row { border-top: 1px solid rgba(148,163,184,.17); }
+        .item-img-wrapper { width: 58px; height: 58px; padding: 4px; border: 0; border-radius: 13px; background: var(--bg-tertiary); box-shadow: inset 0 0 0 1px var(--border-color); }
+        .item-details-column { gap: .12rem; } .item-title-txt { font-size: .92rem; font-weight: 750; letter-spacing: -.01em; }
+        .item-meta-txt, .item-price-qty { font-size: .78rem; }
+        .item-status-column { justify-content: center; gap: .4rem; border-left-color: rgba(148,163,184,.18); }
+        .status-chip { width: fit-content; padding: .3rem .58rem; border-radius: 999px; animation: fadeIn 200ms ease both; }
+        .status-chip .status-dot-indicator { width: 7px; height: 7px; background: currentColor; }
+        .status-chip.pending { color: #a16207; background: #fef9c3; } .status-chip.delivered { color: #15803d; background: #dcfce7; }
+        .status-chip.cancelled { color: #b91c1c; background: #fee2e2; }
+        .status-chip.confirmed, .status-chip.processing, .status-chip.dispatched, .status-chip.out-for-delivery { color: #1d4ed8; background: #dbeafe; }
+        .status-chip .status-header-text { color: inherit; font-size: .78rem; font-weight: 750; }
+        .status-facts { display: flex; flex-direction: column; gap: .35rem; color: #64748b; font-size: .72rem; }
+        .status-facts span { display: flex; gap: .35rem; flex-wrap: wrap; } .status-facts b { color: var(--text-secondary); }
+        .actions-column { gap: 7px; padding-left: .7rem; border-left-color: rgba(148,163,184,.18); }
+        .amazon-action-btn { position: relative; overflow: hidden; min-height: 36px; display: flex; align-items: center; justify-content: center; gap: .4rem; border-radius: 11px; font-size: .76rem; transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease; }
+        .amazon-action-btn:hover { transform: translateY(-2px); box-shadow: 0 7px 16px rgba(15,23,42,.1); } .amazon-action-btn:active { transform: translateY(0); }
+        .amazon-action-btn.primary-action { border: 0; background: linear-gradient(135deg,#3b82f6,#1d4ed8); box-shadow: 0 7px 16px rgba(37,99,235,.22); }
+        .amazon-action-btn.danger-action { border-color: rgba(220,38,38,.35); background: var(--bg-secondary); }
+        .amazon-action-btn:disabled { opacity: .55; cursor: not-allowed; transform: none; box-shadow: none; }
+        .order-card-footer { display: flex; flex-wrap: wrap; gap: .32rem; padding: .45rem .85rem .55rem; border-top: 1px solid var(--border-color); background: var(--bg-secondary); }
+        .order-card-footer span { display: inline-flex; align-items: center; gap: .24rem; min-height: 21px; padding: .18rem .45rem; border-radius: 999px; background: var(--bg-tertiary); color: var(--text-muted); font-size: .63rem; } .order-card-footer b { color: var(--text-primary); }
+        .empty-orders { min-height: 360px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-secondary); box-shadow: 0 18px 40px rgba(15,23,42,.06); }
+        .empty-icon-glow { width: 84px; height: 84px; border: 0; background: linear-gradient(145deg,#dbeafe,#fff); box-shadow: 0 12px 30px rgba(37,99,235,.15); }
+        .order-skeleton { overflow: hidden; border: 1px solid var(--border-color); border-radius: 20px; background: var(--bg-secondary); box-shadow: 0 14px 36px rgba(15,23,42,.05); }
+        .skeleton-header { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; padding: 1.25rem; background: var(--bg-tertiary); }
+        .skeleton-header span, .shimmer { display: block; height: 13px; border-radius: 999px; background: #e8edf4; }
+        .skeleton-body { display: grid; grid-template-columns: 72px 1fr 180px; gap: 1.2rem; align-items: center; padding: 1.4rem; }
+        .skeleton-image { width: 72px; height: 72px; border-radius: 16px; }
+        .skeleton-copy, .skeleton-actions { display: flex; flex-direction: column; gap: .65rem; }
+        .skeleton-copy .short { width: 65%; } .skeleton-copy .tiny { width: 40%; } .skeleton-actions span { height: 42px; border-radius: 14px; }
+        .shimmer, .skeleton-header span { background: linear-gradient(100deg,var(--bg-tertiary) 30%,var(--border-color) 50%,var(--bg-tertiary) 70%); background-size: 220% 100%; animation: shimmer 1.25s linear infinite; }
+        @keyframes shimmer { to { background-position-x: -220%; } }
+        @media (max-width: 900px) { :global(.orders-layout-grid) { grid-template-columns: 1fr; } :global(.orders-sidebar) { position: static; } .card-body-content-split { grid-template-columns: 1fr; } .actions-column { border: 0; padding: 0; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); } .actions-column .amazon-action-btn { width: 100%; min-width: 0; } }
+        @media (max-width: 640px) { .amazon-card-header { flex-direction: column; padding: 1rem; } .header-meta-columns { grid-template-columns: repeat(2,minmax(0,1fr)); } .header-id-column { min-width: 0; align-self: stretch; } .amazon-card-body { padding: 1rem; } .amazon-item-row { grid-template-columns: 60px 1fr; } .item-img-wrapper { width: 60px; height: 60px; } .item-status-column { grid-column: 1 / -1; } .actions-column { grid-template-columns: 1fr; } .skeleton-header { grid-template-columns: 1fr 1fr; } .skeleton-body { grid-template-columns: 60px 1fr; } .skeleton-image { width: 60px; height: 60px; } .skeleton-actions { grid-column: 1 / -1; } }
+        @media (prefers-reduced-motion: reduce) { .amazon-order-card, .amazon-action-btn, .status-chip, .shimmer, .skeleton-header span { animation: none; transition: none; } }
+
         .modal-overlay {
           position: fixed;
           top: 0;

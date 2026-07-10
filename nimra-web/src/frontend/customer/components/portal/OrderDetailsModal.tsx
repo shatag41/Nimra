@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { OrderRecord } from '@/types/cms';
 import { formatCurrency } from '../../utils/commerce';
 import ProductImage from '../ProductImage';
@@ -24,6 +25,22 @@ interface OrderDetailsModalProps {
   formatDate: (date?: string) => string;
 }
 
+const ModalIcon = ({ name }: { name: 'package' | 'status' | 'calendar' | 'payment' | 'user' | 'total' | 'location' | 'phone' | 'track' }) => {
+  const common = { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true };
+  const paths = {
+    package: <><path d="m21 8-9-5-9 5 9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8M12 13v8"/></>,
+    status: <><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/></>,
+    calendar: <><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></>,
+    payment: <><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h2"/></>,
+    user: <><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></>,
+    total: <><path d="M7 5h10M7 9h10M8 5c5 0 5 7 0 7l8 7M7 12h4"/></>,
+    location: <><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></>,
+    phone: <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.4 2.1L8 9.8A16 16 0 0 0 14.2 16l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.5 2.7.6A2 2 0 0 1 22 16.9Z"/>,
+    track: <><path d="M5 12h14M13 6l6 6-6 6"/><circle cx="5" cy="12" r="2"/></>,
+  };
+  return <svg {...common}>{paths[name]}</svg>;
+};
+
 export default function OrderDetailsModal({
   selectedOrder,
   setSelectedOrder,
@@ -32,6 +49,7 @@ export default function OrderDetailsModal({
   getTimelineSteps,
   formatDate,
 }: OrderDetailsModalProps) {
+  const router = useRouter();
   React.useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -74,31 +92,20 @@ export default function OrderDetailsModal({
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
           
-          <div className="summary-card-details single-row">
-            <div className="summary-item">
-              <span className="meta-label">Order ID</span>
-              <span className="meta-value">#{selectedOrder.orderId || 'N/A'}</span>
-            </div>
-            <div className="summary-item">
-              <span className="meta-label">Status</span>
-              <span className={`status-badge compact-badge ${status.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}>{status}</span>
-            </div>
-            <div className="summary-item">
-              <span className="meta-label">Date</span>
-              <span className="meta-value">{formatDate(selectedOrder.createdAt)}</span>
-            </div>
-            <div className="summary-item">
-              <span className="meta-label">Total</span>
-              <span className="meta-value-price">{formatCurrency(Number(selectedOrder.total || 0))}</span>
-            </div>
-            <div className="summary-item">
-              <span className="meta-label">Customer</span>
-              <span className="meta-value">{customer.name || 'N/A'}</span>
-            </div>
-            <div className="summary-item">
-              <span className="meta-label">Payment</span>
-              <span className="meta-value">{selectedOrder.paymentMethod || 'COD'}</span>
-            </div>
+          <div className="summary-card-details">
+            {([
+              ['package', 'Order ID', `#${selectedOrder.orderId || 'N/A'}`, ''],
+              ['status', 'Status', status, `status-badge compact-badge ${status.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`],
+              ['calendar', 'Date & Time', formatDate(selectedOrder.createdAt), ''],
+              ['payment', 'Payment Method', selectedOrder.paymentMethod || 'COD', ''],
+              ['user', 'Customer', customer.name || 'N/A', ''],
+              ['total', 'Order Total', formatCurrency(Number(selectedOrder.total || 0)), 'meta-value-price'],
+            ] as const).map(([icon, label, value, valueClass]) => (
+              <div className="summary-item" key={label}>
+                <span className="summary-icon"><ModalIcon name={icon} /></span>
+                <div><span className="meta-label">{label}</span><span className={`${valueClass || 'meta-value'} ${label === 'Order ID' ? 'order-id-value' : ''}`}>{value}</span></div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -109,7 +116,7 @@ export default function OrderDetailsModal({
               <h3>Items</h3>
               <span className="item-count-badge">{items.length}</span>
             </div>
-            <div className="details-items-list">
+            <div className={`details-items-list ${items.length > 2 ? 'is-scrollable' : ''}`}>
               {items.length ? (
                 items.map((item, index) => (
                   <div key={`${item.productId || item.name || 'item'}-${index}`} className="details-item-row">
@@ -125,10 +132,8 @@ export default function OrderDetailsModal({
                       </div>
                     </div>
                     <div className="item-row-right">
-                      <span className="item-row-math">
-                        {Number(item.quantity || 1)} x {formatCurrency(Number(item.price || 0))}
-                      </span>
-                      <strong className="item-row-total">{formatCurrency(Number(item.quantity || 1) * Number(item.price || 0))}</strong>
+                      <span className="item-row-math"><b>Qty ×{Number(item.quantity || 1)}</b><span>{formatCurrency(Number(item.price || 0))} each</span></span>
+                      <strong className="item-row-total"><small>Total</small> {formatCurrency(Number(item.quantity || 1) * Number(item.price || 0))}</strong>
                     </div>
                   </div>
                 ))
@@ -139,13 +144,10 @@ export default function OrderDetailsModal({
           </div>
 
           <div className="delivery-section">
-            <h3>Delivery Address</h3>
+            <h3><ModalIcon name="location" /> Delivery Address</h3>
             <div className="delivery-address-box">
               <div className="address-icon-wrap">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
+                <ModalIcon name="location" />
               </div>
               <div className="address-text-wrap">
                 <strong>{customer.name || 'Customer'}</strong>
@@ -153,7 +155,7 @@ export default function OrderDetailsModal({
                   {addressParts.length ? addressParts.join(', ') : 'Address not available'}
                   {customer.pincode ? ` - ${customer.pincode}` : ''}
                 </p>
-                <p className="delivery-phone">📞 {customer.mobile || 'Not available'}</p>
+                <p className="delivery-phone"><ModalIcon name="phone" /> {customer.mobile || 'Not available'}</p>
               </div>
             </div>
           </div>
@@ -173,11 +175,11 @@ export default function OrderDetailsModal({
             </div>
           ) : null}
           <div className="footer-right-actions">
-            <button type="button" onClick={() => setSelectedOrder(null)} className="btn btn-secondary">
-              Close
-            </button>
             <button type="button" onClick={() => handleReorder(selectedOrder)} className="btn btn-primary">
               Reorder
+            </button>
+            <button type="button" onClick={() => { setSelectedOrder(null); router.push(`/track?orderId=${encodeURIComponent(selectedOrder.orderId)}`); }} className="btn btn-track">
+              <ModalIcon name="track" /> Track Order <span aria-hidden="true">→</span>
             </button>
           </div>
         </div>
@@ -526,7 +528,47 @@ export default function OrderDetailsModal({
           text-align: center;
         }
 
+        /* Premium modal refinement */
+        .order-details-overlay { background: rgba(15, 23, 42, .62); backdrop-filter: blur(12px); }
+        .order-details-modal { width: min(820px, 100%); max-height: min(88vh, 720px); border: 1px solid var(--border-color); border-radius: 28px; background: var(--bg-secondary); color: var(--text-primary); box-shadow: 0 32px 90px rgba(15,23,42,.24), 0 4px 18px rgba(15,23,42,.1); }
+        .summary-card { padding: 1.4rem 3rem 1.25rem 1.35rem; border-bottom: 1px solid var(--border-color); background: color-mix(in srgb, var(--bg-secondary) 84%, var(--primary-color) 6%); backdrop-filter: blur(18px); }
+        .summary-card-details { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .75rem; }
+        .summary-item { min-width: 0; display: flex; flex-direction: row; align-items: center; gap: .65rem; padding: .7rem; border: 1px solid var(--border-color); border-radius: 14px; background: color-mix(in srgb, var(--bg-secondary) 94%, transparent); box-shadow: 0 3px 12px rgba(15,23,42,.035); }
+        .summary-item > div { min-width: 0; display: flex; flex-direction: column; gap: .16rem; }
+        .summary-icon { width: 30px; height: 30px; flex: 0 0 30px; display: grid; place-items: center; border-radius: 9px; color: var(--primary-color); background: color-mix(in srgb, var(--primary-color) 12%, transparent); }
+        .meta-label { letter-spacing: .08em; color: var(--text-muted); }
+        .meta-value, .meta-value-price { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-primary); font-size: .82rem; }
+        .order-id-value { overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; font-size: .78rem; }
+        .meta-value-price { color: #1d4ed8; }
+        .close-modal-btn.top-right { top: .9rem; right: .9rem; width: 30px; height: 30px; background: var(--bg-tertiary); }
+        .modal-scroll-area { overflow: hidden; padding: 1.15rem 1.35rem 1.3rem; gap: 1.35rem; background: var(--bg-secondary); }
+        .items-section { min-height: 0; flex: 0 0 auto; isolation: isolate; }
+        .items-section h3, .delivery-section h3 { color: var(--text-primary); }
+        .delivery-section { position: relative; z-index: 1; flex: 0 0 auto; clear: both; background: var(--bg-secondary); }
+        .delivery-section h3 { display: flex; align-items: center; gap: .45rem; }
+        .details-items-list { display: flex; flex-direction: column; gap: .65rem; border: 0; border-radius: 0; overflow: visible; background: transparent; }
+        .details-items-list.is-scrollable { height: 220px; max-height: 220px; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding-right: .35rem; scrollbar-gutter: stable; border-radius: 16px; }
+        .details-item-row { min-height: 96px; padding: .7rem; border: 1px solid var(--border-color); border-radius: 16px; background: var(--bg-secondary); box-shadow: 0 6px 18px rgba(15,23,42,.05); }
+        .details-item-row:last-child { border-bottom: 1px solid rgba(148,163,184,.17); }
+        .item-row-left { gap: .85rem; }
+        .item-row-img-wrapper { width: 72px; height: 72px; flex: 0 0 72px; padding: 5px; border: 0; border-radius: 14px; background: var(--bg-tertiary); box-shadow: inset 0 0 0 1px var(--border-color); }
+        .item-row-info { gap: .25rem; } .item-row-name { font-size: .92rem; } .item-row-category { font-size: .72rem; }
+        .item-row-right { min-width: 125px; gap: .4rem; }
+        .item-row-math { display: flex; flex-direction: column; gap: .1rem; } .item-row-math b { color: var(--text-secondary); font-size: .73rem; }
+        .item-row-total { color: var(--text-primary); font-size: .9rem; } .item-row-total small { color: var(--text-muted); font-size: .65rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+        .delivery-address-box { gap: .9rem; padding: 1.05rem; border-color: var(--border-color); border-radius: 16px; background: color-mix(in srgb, var(--bg-secondary) 94%, var(--primary-color) 3%); box-shadow: 0 7px 20px rgba(15,23,42,.05); }
+        .address-icon-wrap { width: 36px; height: 36px; color: var(--primary-color); background: color-mix(in srgb, var(--primary-color) 15%, transparent); }
+        .address-text-wrap { gap: .3rem; } .address-text-wrap strong { font-size: .92rem; } .address-text-wrap p { line-height: 1.55; }
+        .delivery-phone { display: flex; align-items: center; gap: .4rem; margin-top: .35rem !important; color: #1e3a8a !important; }
+        .modal-footer-actions { padding: .9rem 1.35rem; border-top-color: var(--border-color); background: var(--bg-secondary); }
+        .footer-right-actions { gap: .6rem; }
+        .btn { min-height: 42px; padding: .55rem 1rem; border-radius: 12px; gap: .42rem; transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease; }
+        .btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 7px 16px rgba(15,23,42,.1); }
+        .btn-outline-danger { border-color: #ef4444; color: #ef4444; background: var(--bg-secondary); }
+        .btn-track { color: #fff; border: 1px solid #2563eb; background: linear-gradient(135deg,#3b82f6,#1d4ed8); box-shadow: 0 6px 16px rgba(37,99,235,.22); }
+
         @media (max-width: 768px) {
+          .summary-card-details { grid-template-columns: repeat(2,minmax(0,1fr)); }
           .summary-card-details.single-row {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -535,6 +577,11 @@ export default function OrderDetailsModal({
         }
         
         @media (max-width: 540px) {
+          .order-details-overlay { padding: .55rem; }
+          .order-details-modal { border-radius: 22px; max-height: 94vh; }
+          .summary-card { padding: 1.25rem 2.8rem 1rem 1rem; }
+          .summary-card-details { grid-template-columns: 1fr; gap: .5rem; }
+          .summary-item { padding: .58rem .65rem; }
           .summary-card-details.single-row {
             grid-template-columns: repeat(2, 1fr);
           }
@@ -555,6 +602,8 @@ export default function OrderDetailsModal({
             align-items: stretch;
             gap: 0.5rem;
           }
+
+          .item-row-img-wrapper { width: 64px; height: 64px; flex-basis: 64px; }
 
           .item-row-right {
             display: flex;
