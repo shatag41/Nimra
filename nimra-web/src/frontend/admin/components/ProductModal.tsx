@@ -109,9 +109,18 @@ export default function ProductModal({
             <input
               type="text"
               value={editingProduct.Specifications || ''}
-              onChange={(e) => setEditingProduct(prev => prev ? ({ ...prev, Specifications: e.target.value }) : null)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val.length <= 215) {
+                  setEditingProduct(prev => prev ? ({ ...prev, Specifications: val }) : null);
+                }
+              }}
               placeholder="e.g. Balanced minerals, UV ozone treated"
             />
+            <div className="char-counter" style={{ fontSize: '0.8rem', color: (editingProduct.Specifications?.length || 0) >= 215 ? '#dc2626' : '#6b7280', marginTop: '4px' }}>
+              {(editingProduct.Specifications?.length || 0)}/215
+              {(editingProduct.Specifications?.length || 0) >= 215 && <span style={{ marginLeft: '8px' }}>Maximum 215 characters allowed.</span>}
+            </div>
           </div>
 
           <div className="form-group">

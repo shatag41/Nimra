@@ -276,13 +276,6 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                 </div>
               </div>
 
-              {/* Additional Details */}
-              <div className="pdm-detail-section">
-                <h4 className="pdm-section-title">Additional Details</h4>
-                <p className="pdm-detail-description">
-                  Purified through an advanced multi-stage filtration process including reverse osmosis, micron filtration, and ozonation to deliver crisp, fresh taste and optimal hydration.
-                </p>
-              </div>
             </div>
           </div>
 

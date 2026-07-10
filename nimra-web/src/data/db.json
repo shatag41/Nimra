@@ -127,9 +127,33 @@
       "Description": "Experience hydration at its finest with NIMRA Premium Packaged Drinking Water—crafted for those who value uncompromising purity, refreshing taste, and premium quality. Every bottle undergoes a rigorous multi-stage purification process to ensure crystal-clear, safe, and refreshing drinking water in every sip.",
       "ImageUrl": "products/1783339684969-9e088760-734a-408d-bf20-473275e83fa8.png",
       "Active": true,
-      "Specifications": "💧 99.9% Pure & Safe Advanced multi-stage purification ensures exceptional purity and consistent quality.  🛡️ Quality Assured Processed and bottled under strict hygiene standards for maximum safety and freshness.  ⚖️ Balanced Mineral Composition Carefully maintained mineral balance for a crisp, refreshing taste.",
-      "oldImagePath": "/uploads/products/1783335710147-769f5bfb-b6e9-41d3-93f9-f4d8c8c17a32.png",
+      "Specifications": "💧 99.9% Pure & Safe Advanced multi-stage purification ensures exceptional purity and consistent quality.  🛡️ Quality Assured Processed and bottled under strict hygiene standards for maximum safety and freshness. ",
+      "oldImagePath": "/uploads/products/1783339684969-9e088760-734a-408d-bf20-473275e83fa8.png",
       "ID": 8
+    },
+    {
+      "Name": "Testing ",
+      "Category": "Packaged Water",
+      "Volume": "1L",
+      "Price": "222.03",
+      "Description": "TESTING",
+      "ImageUrl": "products/1783689694799-3bacc838-e182-47bb-9263-618db5ec0efe.png",
+      "Active": true,
+      "Specifications": "TESTING PRODUCT",
+      "oldImagePath": "",
+      "ID": 9
+    },
+    {
+      "Name": "Testing 3",
+      "Category": "Mineral Water",
+      "Volume": "1L",
+      "Price": "2233",
+      "Description": "ssss💧 99.9% Pure & Safe Advanced multi-stage purification ensures exceptional purity and consistent quality.  🛡️ Quality Assured Processed and bottled under strict hygiene standards for maximum safety and freshness. 💧 99.9% Pure & Safe Advanced multi-stage purification ensures exceptional purity and consistent quality.  🛡️ Quality Assured Processed and bottled under strict hygiene standards for maximum safety and freshness. ",
+      "ImageUrl": "products/1783690709988-e37b4987-9392-4974-8b02-2d46d43ba788.png",
+      "Active": true,
+      "Specifications": "💧 99.9% Pure & Safe Advanced multi-stage purification ensures exceptional purity and consistent quality.  🛡️ Quality Assured Processed and bottled under strict hygiene standards for maximum safety and freshness. s",
+      "oldImagePath": "",
+      "ID": 10
     }
   ],
   "faqs": [

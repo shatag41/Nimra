@@ -425,6 +425,15 @@ export async function handlePost(req: Request) {
       ? getUploadStoragePath(payload.banner.ImageUrl)
       : '';
 
+    if (payload.type === 'productCRUD' && cmsCrudAction !== 'delete') {
+      if (payload.product?.Specifications && String(payload.product.Specifications).length > 215) {
+        return NextResponse.json(
+          { success: false, message: 'Specification Details cannot exceed 215 characters.' },
+          { status: 400 }
+        );
+      }
+    }
+
     if (
       payload.type === 'productCRUD' &&
       cmsCrudAction !== 'delete'
