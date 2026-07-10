@@ -11327,20 +11327,6 @@ table {
   font-size: 0.8rem !important;
 }
 
-@media (min-width: 75rem) and (max-width: 89.9375rem) {
-  .products-page.container {
-    --products-column-count: 4;
-    --products-catalog-width: calc(49rem + var(--products-grid-gap) + var(--products-grid-gap) + var(--products-grid-gap));
-  }
-}
-
-@media (min-width: 64rem) and (max-width: 74.9375rem) {
-  .products-page.container {
-    --products-column-count: 3;
-    --products-catalog-width: calc(36.75rem + var(--products-grid-gap) + var(--products-grid-gap));
-  }
-}
-
 @media (max-width: 63.9375rem) {
   .products-page.container {
     --products-column-count: 2;
