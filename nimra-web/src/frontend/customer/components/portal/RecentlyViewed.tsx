@@ -8,6 +8,8 @@ import { useCart } from '@/frontend/customer/hooks/useCart';
 import ProductImage from '../ProductImage';
 import { ProductCard } from './Products';
 import { formatCurrency, isOrderable, normalizeCategory, productId } from '../../utils/commerce';
+import { useAuth } from '../../contexts/AuthContext';
+import { readRecentlyViewed, RECENTLY_VIEWED_EVENT } from '../../utils/recentlyViewed';
 
 const ProductDetailModal = dynamic(() => import('./ProductDetailModal'), { ssr: false });
 
@@ -19,27 +21,14 @@ interface RecentlyViewedProductsProps {
 export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProductsProps) {
   const [viewedProducts, setViewedProducts] = React.useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
+  const { user, isLoading } = useAuth();
   const { addProduct, updateQuantity, items } = useCart();
   const [wishlist, setWishlist] = React.useState<Record<string, boolean>>({});
 
   const loadViewedProducts = React.useCallback(() => {
     try {
-      let userId = '';
-      const cookies = document.cookie.split(';');
-      const userCookie = cookies.find(c => c.trim().startsWith('nimra_user='));
-      if (userCookie) {
-        try {
-          const userJson = decodeURIComponent(userCookie.split('=')[1]);
-          const user = JSON.parse(userJson);
-          if (user && user.ID) {
-            userId = String(user.ID);
-          }
-        } catch (e) {}
-      }
-      const key = userId ? `nimra-recently-viewed-${userId}` : 'nimra-recently-viewed';
-      const stored = localStorage.getItem(key);
-      if (stored) {
-        const parsed = JSON.parse(stored) as Product[];
+      if (!isLoading) {
+        const parsed = readRecentlyViewed(user?.ID);
         const mapped = parsed
           .map((p) => products.find((prod) => String(prod.ID || prod.Name) === String(p.ID || p.Name)))
           .filter((p): p is Product => {
@@ -56,15 +45,15 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
     } catch (e) {
       console.error('Failed to load recently viewed products:', e);
     }
-  }, [products]);
+  }, [isLoading, products, user?.ID]);
 
   React.useEffect(() => {
     loadViewedProducts();
 
     // Listen to updates
-    window.addEventListener('nimra-recently-viewed-updated', loadViewedProducts);
+    window.addEventListener(RECENTLY_VIEWED_EVENT, loadViewedProducts);
     return () => {
-      window.removeEventListener('nimra-recently-viewed-updated', loadViewedProducts);
+      window.removeEventListener(RECENTLY_VIEWED_EVENT, loadViewedProducts);
     };
   }, [loadViewedProducts]);
 
@@ -75,27 +64,15 @@ export function RecentlyViewedProducts({ products, onAdd }: RecentlyViewedProduc
   };
 
   const displayedProducts = React.useMemo(() => {
-    const list = [...viewedProducts];
-    const availableCatalog = (products || []).filter((p) => {
-      const stock = String(p.StockStatus || '').toLowerCase();
-      const cat = String(p.Category || '').toLowerCase();
-      const isUpcoming = stock.includes('coming') || stock.includes('upcoming') || cat.includes('upcoming');
-      return !isUpcoming;
-    });
-
-    for (const p of availableCatalog) {
-      if (list.length >= 4) break;
-      if (!list.some(dp => String(dp.ID || dp.Name) === String(p.ID || p.Name))) {
-        list.push(p);
-      }
-    }
-    return list;
-  }, [viewedProducts, products]);
+    return viewedProducts.slice(0, 4);
+  }, [viewedProducts]);
 
   const getViewedTime = (index: number) => {
     const times = ["Viewed 10m ago", "Viewed 35m ago", "Viewed 2h ago", "Viewed Yesterday"];
     return times[index] || "Viewed recently";
   };
+
+  if (displayedProducts.length === 0) return null;
 
   return (
     <div className="panel recently-viewed-panel" style={{ marginTop: '0.5rem' }}>

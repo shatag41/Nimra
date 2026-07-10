@@ -3,6 +3,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
+import { discardLegacyRecentlyViewed, notifyRecentlyViewedChanged, recentlyViewedKey } from '../utils/recentlyViewed';
 
 export interface User {
   ID: number;
@@ -163,7 +164,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     Cookies.set(SESSION_COOKIE, JSON.stringify(session), { path: '/', sameSite: 'lax' });
 
     if (typeof window !== 'undefined') {
+      discardLegacyRecentlyViewed();
       window.sessionStorage.setItem(TAB_SESSION_KEY, session.token);
+      notifyRecentlyViewedChanged();
 
       try {
         const guestCart1Str = localStorage.getItem('nimra-cart');
@@ -220,6 +223,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const clearSession = useCallback(() => {
     setUser(null);
     clearBrowserSession();
+    notifyRecentlyViewedChanged();
   }, []);
 
   const updateUserSession = useCallback((userData: User) => {
@@ -264,7 +268,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [router, user]);
 
   const logout = useCallback(() => {
+    setUser(null);
     clearBrowserSession();
+    notifyRecentlyViewedChanged();
 
     if (typeof window !== 'undefined') {
       window.location.replace('/');
@@ -279,7 +285,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (!user || typeof window === 'undefined') return;
 
-    const key = `nimra-recently-viewed-${user.ID}`;
+    const key = recentlyViewedKey(user.ID);
 
     // 1. Initial sync: if user has RecentlyViewed, load it into localStorage
     try {
@@ -294,7 +300,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (JSON.stringify(localIds) !== JSON.stringify(dbIdsStr)) {
             const newLocal = dbParsed.map((id: any) => ({ ID: id, Name: String(id) }));
             localStorage.setItem(key, JSON.stringify(newLocal));
-            window.dispatchEvent(new Event('nimra-recently-viewed-updated'));
+            notifyRecentlyViewedChanged();
           }
         }
       }

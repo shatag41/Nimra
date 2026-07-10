@@ -1,4 +1,5 @@
 import { CartItem, Product } from '@/types/cms';
+import { MAX_RECENTLY_VIEWED_PRODUCTS, notifyRecentlyViewedChanged, readRecentlyViewed, recentlyViewedKey } from './recentlyViewed';
 
 export const DELIVERY_CHARGE = 30;
 export const FREE_DELIVERY_MINIMUM = 500;
@@ -155,21 +156,17 @@ export const trackProductView = (product: Product) => {
         }
       } catch (e) {}
     }
-    const key = userId ? `nimra-recently-viewed-${userId}` : 'nimra-recently-viewed';
-    const existingStr = localStorage.getItem(key);
-    let existing: Product[] = [];
-    if (existingStr) {
-      existing = JSON.parse(existingStr);
-    }
+    const key = recentlyViewedKey(userId || null);
+    let existing = readRecentlyViewed(userId || null);
     // Remove if already exists to move to front
     existing = existing.filter((p) => String(p.ID || p.Name) !== String(product.ID || product.Name));
     // Add to front
     existing.unshift(product);
-    // Keep last 4 products
-    existing = existing.slice(0, 4);
+    // Keep the newest ten products.
+    existing = existing.slice(0, MAX_RECENTLY_VIEWED_PRODUCTS);
     localStorage.setItem(key, JSON.stringify(existing));
     // Dispatch a custom event to notify listeners (e.g. the dashboard section)
-    window.dispatchEvent(new Event('nimra-recently-viewed-updated'));
+    notifyRecentlyViewedChanged();
   } catch (e) {
     console.error('Error tracking product view:', e);
   }

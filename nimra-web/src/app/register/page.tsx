@@ -6,6 +6,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 import Link from 'next/link';
 import { sendRequest } from '@/utils/api';
 import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
+import { recentlyViewedKey } from '@/frontend/customer/utils/recentlyViewed';
 
 export default function RegisterPage() {
   const { login } = useAuth();
@@ -95,7 +96,7 @@ export default function RegisterPage() {
         if (typeof window !== 'undefined') {
           localStorage.removeItem('nimra-cart');
           localStorage.removeItem('nimra-cart-v2:guest');
-          localStorage.removeItem('nimra-recently-viewed');
+          localStorage.setItem(recentlyViewedKey(res.user.ID), '[]');
           localStorage.removeItem('nimra_location');
           localStorage.removeItem('nimra_location_denied');
           localStorage.removeItem('nimra_read_notifs_guest');
@@ -143,7 +144,7 @@ export default function RegisterPage() {
           if (typeof window !== 'undefined') {
             localStorage.removeItem('nimra-cart');
             localStorage.removeItem('nimra-cart-v2:guest');
-            localStorage.removeItem('nimra-recently-viewed');
+            localStorage.setItem(recentlyViewedKey(res.user.ID), '[]');
             localStorage.removeItem('nimra_location');
             localStorage.removeItem('nimra_location_denied');
             localStorage.removeItem('nimra_read_notifs_guest');
