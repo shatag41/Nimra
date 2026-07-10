@@ -197,7 +197,7 @@ export default function SettingsClient() {
       </div>
 
       <style jsx>{`
-        .settings-page { min-height: 100vh; padding: 2rem 1rem 3rem; background: var(--bg-primary); color: var(--text-primary); }
+        .settings-page { min-height: 100vh; padding: 0.5rem 1rem 3rem; background: var(--bg-primary); color: var(--text-primary); }
         .settings-shell { display: grid; gap: clamp(1.5rem, 3.5vw, 2.5rem); width: min(1100px, 100%); margin: 0 auto; }
         .settings-grid { display: grid; grid-template-columns: minmax(280px, .82fr) minmax(420px, 1.18fr); gap: 1rem; align-items: start; }
         .setting-card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-xl); box-shadow: var(--shadow-md); padding: 1.25rem; }
@@ -246,7 +246,7 @@ export default function SettingsClient() {
           .preferences-card { grid-row: auto; }
         }
         @media (max-width: 560px) {
-          .settings-page { padding: 1.25rem .75rem 2rem; }
+          .settings-page { padding: 0.5rem .75rem 2rem; }
           .setting-card { padding: 1rem; }
           .preference-row { padding: .75rem; }
           .preference-footer { align-items: stretch; flex-direction: column; }
