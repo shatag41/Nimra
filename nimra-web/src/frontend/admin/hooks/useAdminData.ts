@@ -281,28 +281,10 @@ export const useAdminData = (initialCMSData: CMSData) => {
       ? products.find((p) => String(p.ID) === String(editingProduct.ID))
       : undefined;
     const oldImagePath = oldProduct?.ImageUrl || '';
+    // Apps Script writes the complete Products row. Always send the merged
+    // record so ImageUrl replacement and every neighboring column stay aligned.
     const productForSave: Partial<Product> = action === 'update' && oldProduct
-      ? ([
-          'Name',
-          'Category',
-          'Volume',
-          'Price',
-          'Description',
-          'ImageUrl',
-          'Specifications',
-          'StockStatus',
-          'DiscountPercent',
-          'ComboPack',
-          'Active',
-        ] as (keyof Product)[]).reduce<Partial<Product>>((changes, field) => {
-          if (!Object.prototype.hasOwnProperty.call(editingProduct, field)) return changes;
-          const nextValue = editingProduct[field];
-          if (field === 'ImageUrl' && !nextValue && oldProduct.ImageUrl) return changes;
-          if (String(nextValue ?? '') !== String(oldProduct[field] ?? '')) {
-            return { ...changes, [field]: nextValue };
-          }
-          return changes;
-        }, { ID: editingProduct.ID })
+      ? { ...oldProduct, ...editingProduct, ImageUrl: editingProduct.ImageUrl || oldProduct.ImageUrl }
       : editingProduct;
     try {
       const res = await saveProduct(productForSave, action, oldImagePath);

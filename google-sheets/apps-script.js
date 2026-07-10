@@ -1694,7 +1694,7 @@ function getSheetData(sheet) {
     var row = {};
     var active = true;
     for (var j = 0; j < headers.length; j++) {
-      var key = headers[j].toString().trim();
+      var key = normalizeImageUrlHeader(headers[j]);
       var val = data[i][j];
       // Convert dates to ISO strings
       if (val instanceof Date) {
@@ -1711,6 +1711,33 @@ function getSheetData(sheet) {
     }
   }
   return rows;
+}
+
+function normalizeImageUrlHeader(header) {
+  var key = String(header || '').trim();
+  var compact = key.toLowerCase().replace(/[\s_-]+/g, '');
+  return compact === 'imageurl' ? 'ImageUrl' : key;
+}
+
+function ensureImageUrlSheetColumn(sheet) {
+  var lastColumn = sheet.getLastColumn();
+  if (lastColumn === 0) {
+    sheet.getRange(1, 1).setValue('ImageUrl');
+    return 0;
+  }
+
+  var headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0] || [];
+  for (var i = 0; i < headers.length; i++) {
+    if (normalizeImageUrlHeader(headers[i]) === 'ImageUrl') {
+      if (String(headers[i] || '').trim() !== 'ImageUrl') {
+        sheet.getRange(1, i + 1).setValue('ImageUrl');
+      }
+      return i;
+    }
+  }
+
+  sheet.getRange(1, lastColumn + 1).setValue('ImageUrl');
+  return lastColumn;
 }
 
 function getCompanyInfoData(sheet) {
@@ -1805,37 +1832,13 @@ function handleProductCRUD(spreadsheet, params) {
   var data = sheet.getDataRange().getValues();
   var headers = data[0];
   var idIndex = headers.indexOf('ID');
-  var hasProductField = function(field) {
-    return Object.prototype.hasOwnProperty.call(product, field) && product[field] !== undefined;
-  };
-
-  // ImageUrl is a portable path relative to the web app's upload storage,
-  // for example "products/1234-image.jpg". Never store a browser-only blob
-  // URL or a server-specific absolute URL in Sheets.
-  var imagePath = normalizeUploadedImagePath(product.ImageUrl, 'products');
-  if (action === 'create' && !imagePath) {
-    return { success: false, message: 'Upload a valid product image before saving.' };
-  }
-
-  var productValues = {};
-  if (hasProductField('ID')) productValues.ID = product.ID;
-  if (hasProductField('Name')) productValues.Name = product.Name;
-  if (hasProductField('Category')) productValues.Category = product.Category;
-  if (hasProductField('Volume')) productValues.Volume = product.Volume;
-  if (hasProductField('Price')) productValues.Price = product.Price;
-  if (hasProductField('Description')) productValues.Description = product.Description;
-  if (imagePath) productValues.ImageUrl = imagePath;
-  if (hasProductField('Specifications')) productValues.Specifications = product.Specifications || '';
-  if (hasProductField('StockStatus')) productValues.StockStatus = product.StockStatus || 'In Stock';
-  if (hasProductField('DiscountPercent')) productValues.DiscountPercent = product.DiscountPercent || '';
-  if (hasProductField('ComboPack')) productValues.ComboPack = product.ComboPack || '';
-  if (hasProductField('Active')) productValues.Active = product.Active;
-  if (action === 'create' && !hasProductField('Active')) productValues.Active = true;
-  // Build the row from the actual sheet headers. This keeps ImageUrl in the
-  // correct column even when the Products sheet has extra/reordered columns.
-  var rowValues = headers.map(function(header) {
-    return productValues[header] !== undefined ? productValues[header] : '';
-  });
+  var suppliedProductImage = product.ImageUrl || product.imageUrl || product['Image URL'] || product.ImageURL || '';
+  var rowValues = [
+    product.ID, product.Name, product.Category, product.Volume, product.Price,
+    product.Description, suppliedProductImage, product.Specifications || '',
+    product.StockStatus || 'In Stock', product.DiscountPercent || '',
+    product.ComboPack || '', product.Active !== undefined ? product.Active : true
+  ];
 
   if (action === 'create') {
     // Generate new numeric ID if not provided
@@ -1846,11 +1849,10 @@ function handleProductCRUD(spreadsheet, params) {
         if (!isNaN(currId) && currId > maxId) maxId = currId;
       }
       product.ID = maxId + 1;
-      productValues.ID = product.ID;
-      rowValues[idIndex] = product.ID;
+      rowValues[0] = product.ID;
     }
     sheet.appendRow(rowValues);
-    return { success: true, message: 'Product created successfully', ID: product.ID };
+    return { success: true, message: 'Product created successfully', ID: product.ID, ImageUrl: suppliedProductImage };
   }
 
   for (var i = 1; i < data.length; i++) {
@@ -1859,11 +1861,8 @@ function handleProductCRUD(spreadsheet, params) {
         sheet.deleteRow(i + 1);
         return { success: true, message: 'Product deleted successfully' };
       } else if (action === 'update') {
-        var updatedRow = headers.map(function(header, columnIndex) {
-          return productValues[header] !== undefined ? productValues[header] : data[i][columnIndex];
-        });
-        sheet.getRange(i + 1, 1, 1, updatedRow.length).setValues([updatedRow]);
-        return { success: true, message: 'Product updated successfully' };
+        sheet.getRange(i + 1, 1, 1, rowValues.length).setValues([rowValues]);
+        return { success: true, message: 'Product updated successfully', ImageUrl: suppliedProductImage };
       }
     }
   }
@@ -1880,23 +1879,12 @@ function handleBannerCRUD(spreadsheet, params) {
   var headers = data[0];
   var idIndex = headers.indexOf('ID');
 
-  var imagePath = normalizeUploadedImagePath(banner.ImageUrl, 'banners');
-  if (action !== 'delete' && !imagePath) {
-    return { success: false, message: 'Upload a valid banner image before saving.' };
-  }
-
-  var bannerValues = {
-    ID: banner.ID,
-    Title: banner.Title,
-    Subtitle: banner.Subtitle,
-    ImageUrl: imagePath,
-    ButtonText: banner.ButtonText,
-    ButtonLink: banner.ButtonLink,
-    Active: banner.Active !== undefined ? banner.Active : true
-  };
-  var rowValues = headers.map(function(header) {
-    return bannerValues[header] !== undefined ? bannerValues[header] : '';
-  });
+  var suppliedBannerImage = banner.ImageUrl || banner.imageUrl || banner['Image URL'] || banner.ImageURL || '';
+  var rowValues = [
+    banner.ID, banner.Title, banner.Subtitle, suppliedBannerImage,
+    banner.ButtonText, banner.ButtonLink,
+    banner.Active !== undefined ? banner.Active : true
+  ];
 
   if (action === 'create') {
     if (!banner.ID) {
@@ -1906,11 +1894,10 @@ function handleBannerCRUD(spreadsheet, params) {
         if (!isNaN(currId) && currId > maxId) maxId = currId;
       }
       banner.ID = maxId + 1;
-      bannerValues.ID = banner.ID;
-      rowValues[idIndex] = banner.ID;
+      rowValues[0] = banner.ID;
     }
     sheet.appendRow(rowValues);
-    return { success: true, message: 'Banner created successfully', ID: banner.ID };
+    return { success: true, message: 'Banner created successfully', ID: banner.ID, ImageUrl: suppliedBannerImage };
   }
 
   for (var i = 1; i < data.length; i++) {
@@ -1919,11 +1906,8 @@ function handleBannerCRUD(spreadsheet, params) {
         sheet.deleteRow(i + 1);
         return { success: true, message: 'Banner deleted successfully' };
       } else if (action === 'update') {
-        var updatedRow = headers.map(function(header, columnIndex) {
-          return bannerValues[header] !== undefined ? bannerValues[header] : data[i][columnIndex];
-        });
-        sheet.getRange(i + 1, 1, 1, updatedRow.length).setValues([updatedRow]);
-        return { success: true, message: 'Banner updated successfully' };
+        sheet.getRange(i + 1, 1, 1, rowValues.length).setValues([rowValues]);
+        return { success: true, message: 'Banner updated successfully', ImageUrl: suppliedBannerImage };
       }
     }
   }
