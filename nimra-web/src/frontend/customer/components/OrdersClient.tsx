@@ -278,6 +278,7 @@ export default function OrdersClient() {
                     onChange={() => setActiveTab(tab.id)}
                     className="filter-radio"
                   />
+                  <span className="filter-radio-control" aria-hidden="true" />
                   <span>{tab.label}</span>
                 </label>
               ))}
@@ -303,6 +304,7 @@ export default function OrdersClient() {
                     onChange={() => setDateFilter(opt.id)}
                     className="filter-radio"
                   />
+                  <span className="filter-radio-control" aria-hidden="true" />
                   <span>{opt.label}</span>
                 </label>
               ))}
@@ -987,11 +989,16 @@ export default function OrdersClient() {
         :global(.orders-sidebar .sidebar-section + .sidebar-section) { padding-top: .9rem; border-top: 1px solid rgba(148,163,184,.18); }
         :global(.orders-sidebar .sidebar-section h3) { display: flex; align-items: center; gap: .5rem; margin-bottom: .55rem; font-size: .75rem; letter-spacing: .08em; }
         .section-icon { display: grid; place-items: center; width: 27px; height: 27px; border-radius: 9px; color: var(--primary-color); background: color-mix(in srgb, var(--primary-color) 12%, transparent); font-size: .82rem; }
-        :global(.orders-sidebar .filter-options) { gap: .15rem; }
-        :global(.orders-sidebar .filter-label) { min-height: 42px; padding: .35rem .5rem; border-radius: 11px; transition: background 180ms ease, color 180ms ease, transform 180ms ease; }
-        :global(.orders-sidebar .filter-label:has(input:checked)) { color: #1d4ed8; background: rgba(37,99,235,.08); transform: translateX(2px); }
-        :global(.orders-sidebar .filter-radio) { appearance: none; width: 17px; height: 17px; border: 1.5px solid var(--text-muted); border-radius: 50%; background: var(--bg-secondary); box-shadow: inset 0 0 0 4px var(--bg-secondary); transition: 180ms ease; }
-        :global(.orders-sidebar .filter-radio:checked) { border-color: var(--primary-color); background: var(--primary-color); box-shadow: inset 0 0 0 4px var(--bg-secondary), 0 0 0 3px rgba(37,99,235,.12); }
+        :global(.orders-sidebar .filter-options) { display: flex; flex-direction: column; gap: 0.5rem; }
+        :global(.orders-sidebar .filter-label) { position: relative; display: flex; align-items: center; gap: 0.65rem; min-height: 38px; padding: 0.5rem 0.6rem; border: 1px solid transparent; border-radius: var(--radius-md); font-size: 0.875rem; color: var(--text-secondary); cursor: pointer; font-weight: 600; transition: color var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast); }
+        :global(.orders-sidebar .filter-label:hover) { color: var(--text-primary); background: var(--bg-secondary); border-color: var(--border-color); }
+        :global(.orders-sidebar .filter-label:has(.filter-radio:checked)) { color: var(--primary-color); background: rgba(var(--primary-rgb), 0.08); border-color: rgba(var(--primary-rgb), 0.25); }
+        :global(.orders-sidebar .filter-radio) { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+        :global(.orders-sidebar .filter-radio-control) { width: 17px; height: 17px; border: 1.5px solid var(--text-muted); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 17px; background: var(--bg-primary); transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast); }
+        :global(.orders-sidebar .filter-radio-control::after) { content: ''; width: 7px; height: 7px; border-radius: 50%; background: white; transform: scale(0); transition: transform var(--transition-fast); }
+        :global(.orders-sidebar .filter-radio:checked + .filter-radio-control) { border-color: var(--primary-color); background: var(--primary-color); box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.12); }
+        :global(.orders-sidebar .filter-radio:checked + .filter-radio-control::after) { transform: scale(1); }
+        :global(.orders-sidebar .filter-radio:focus-visible + .filter-radio-control) { outline: 2px solid var(--primary-color); outline-offset: 3px; }
         :global(.orders-page .search-bar-wrapper) { min-height: 48px; padding: 0 .6rem; margin: 0; border-radius: 999px; border-color: rgba(148,163,184,.25); box-shadow: inset 0 2px 5px rgba(15,23,42,.04), 0 8px 28px rgba(15,23,42,.05); transition: border-color 200ms ease, box-shadow 200ms ease; }
         :global(.orders-page .search-bar-wrapper:focus-within) { border-color: rgba(37,99,235,.55); box-shadow: inset 0 2px 5px rgba(15,23,42,.03), 0 0 0 4px rgba(37,99,235,.1), 0 12px 30px rgba(37,99,235,.08); }
         :global(.orders-page .search-input::placeholder) { color: #94a3b8; }
