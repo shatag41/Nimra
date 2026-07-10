@@ -19,7 +19,6 @@ export default function Sidebar({ currentUser, activeTab, setActiveTab, isProfil
     { id: 'notifications', name: 'Notifications', icon: '●', module: 'notifications' },
     { id: 'reports', name: 'Reports & Analytics', icon: '▥', module: 'reports', superOnly: true },
     { id: 'logs', name: 'System Logs', icon: '≡', module: 'reports', superOnly: true },
-    { id: 'activity', name: 'Activity Monitor', icon: '⌁', module: 'analytics', superOnly: true },
     { id: 'settings', name: 'Settings', icon: '⚙', module: 'settings' },
   ].filter((tab) => (!tab.superOnly || superAdmin) && hasPermission(currentUser, tab.module));
 

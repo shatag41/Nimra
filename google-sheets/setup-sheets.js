@@ -164,12 +164,6 @@ function setupNIMRASheets() {
     ensureUsersSetupSheet(usersSheet, userAddressesSheet);
   }
 
-  var activitySheet = getOrCreateSheet(ss, 'AdminActivityLogs');
-  if (activitySheet.getLastRow() === 0) {
-    var activityHeaders = ['LogID', 'AdminID', 'AdminName', 'Role', 'Action', 'Module', 'TargetID', 'OldData', 'NewData', 'IP', 'Browser', 'Timestamp', 'Result'];
-    activitySheet.getRange(1, 1, 1, activityHeaders.length).setValues([activityHeaders]);
-  }
-
   var permissionsSheet = getOrCreateSheet(ss, 'RolesPermissions');
   if (permissionsSheet.getLastRow() === 0) {
     var permissionHeaders = ['Role', 'Orders', 'Products', 'Customers', 'Admins', 'Reports', 'Notifications', 'Settings', 'FAQs', 'Banners', 'Analytics'];
@@ -178,7 +172,7 @@ function setupNIMRASheets() {
     permissionsSheet.appendRow(['ADMIN', 'view,create,edit', 'view,create,edit', 'view,edit', '', '', 'view,create', 'view', 'view,create,edit', 'view,create,edit', 'view']);
   }
 
-  notifySetupComplete('NIMRA Sheets setup complete. Role-based admin, audit, catalog, inquiry, order, and user tabs are ready.');
+  notifySetupComplete('NIMRA Sheets setup complete. Role-based admin, catalog, inquiry, order, and user tabs are ready.');
 }
 
 function getOrCreateSheet(ss, name) {

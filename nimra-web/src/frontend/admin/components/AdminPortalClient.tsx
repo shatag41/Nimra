@@ -415,7 +415,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                 <ReportsTab orders={orders} users={users} products={products} inquiries={inquiries} />
               )}
 
-              {isSuperAdmin(currentUser.role) && (activeTab === 'logs' || activeTab === 'activity') && <LogsTab />}
+              {isSuperAdmin(currentUser.role) && activeTab === 'logs' && <LogsTab />}
 
               {activeTab === 'notifications' && (
                 <NotificationsTab
