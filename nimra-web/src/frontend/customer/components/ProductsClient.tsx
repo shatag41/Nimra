@@ -110,6 +110,7 @@ export default function ProductsClient({ products: initialProducts }: ProductsCl
   return (
     <div className="products-page container">
       <CustomerPageHeader
+        className="products-page-header"
         badge="PRODUCTS"
         title="Explore Our Products"
         subtitle="Premium packaged drinking water for every need."
