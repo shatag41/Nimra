@@ -166,7 +166,7 @@ function setupNIMRASheets() {
 
   var permissionsSheet = getOrCreateSheet(ss, 'RolesPermissions');
   if (permissionsSheet.getLastRow() === 0) {
-    var permissionHeaders = ['Role', 'Orders', 'Products', 'Customers', 'Admins', 'Notifications', 'Settings', 'FAQs', 'Banners', 'Analytics'];
+    var permissionHeaders = ['Role', 'Orders', 'Products', 'Customers', 'Admins', 'Reports', 'Notifications', 'Settings', 'FAQs', 'Banners', 'Analytics'];
     permissionsSheet.getRange(1, 1, 1, permissionHeaders.length).setValues([permissionHeaders]);
     permissionsSheet.appendRow(['SUPER_ADMIN', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*']);
     permissionsSheet.appendRow(['ADMIN', 'view,create,edit', 'view,create,edit', 'view,edit', '', '', 'view,create', 'view', 'view,create,edit', 'view,create,edit', 'view']);

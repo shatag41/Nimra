@@ -29,6 +29,7 @@ export default function Header({
 }: HeaderProps) {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
+  const isSuperAdminDashboard = activeTab === 'dashboard' && currentUser.role.toUpperCase().replaceAll(' ', '_') === 'SUPER_ADMIN';
   
   // Close profile dropdown when clicking outside
   useEffect(() => {
@@ -49,7 +50,7 @@ export default function Header({
   return (
     <header className="main-header glass">
       <h1>
-        {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Panel
+        {isSuperAdminDashboard ? 'Super Admin Command Center' : `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Panel`}
       </h1>
       <div className="header-actions">
         {showSearchAndFilter && (
