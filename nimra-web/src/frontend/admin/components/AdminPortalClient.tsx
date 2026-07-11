@@ -21,7 +21,7 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import LogoutConfirmationModal from '@/frontend/customer/components/LogoutConfirmationModal';
 import { isSuperAdmin, normalizeRole } from '../utils/accessControl';
-import { AdminManagementTab, LogsTab, ReportsTab, RolesPermissionsTab, SuperAdminOverview } from './EnterpriseTabs';
+import { AdminManagementTab, LogsTab, RolesPermissionsTab, SuperAdminOverview } from './EnterpriseTabs';
 
 // Dynamically loaded Modals & Profile
 const ProfilePanel = dynamic(() => import('./ProfilePanel'), { ssr: false });
@@ -410,10 +410,6 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
               )}
 
               {isSuperAdmin(currentUser.role) && activeTab === 'roles' && <RolesPermissionsTab />}
-
-              {isSuperAdmin(currentUser.role) && activeTab === 'reports' && (
-                <ReportsTab orders={orders} users={users} products={products} inquiries={inquiries} />
-              )}
 
               {isSuperAdmin(currentUser.role) && activeTab === 'logs' && <LogsTab />}
 
