@@ -94,8 +94,6 @@ export default function RegisterPage() {
       });
       if (res.success && res.user) {
         if (typeof window !== 'undefined') {
-          localStorage.removeItem('nimra-cart');
-          localStorage.removeItem('nimra-cart-v2:guest');
           localStorage.setItem(recentlyViewedKey(res.user.ID), '[]');
           localStorage.removeItem('nimra_location');
           localStorage.removeItem('nimra_location_denied');
@@ -142,8 +140,6 @@ export default function RegisterPage() {
       if (res.success && res.user) {
         if (res.message === 'Registration successful') {
           if (typeof window !== 'undefined') {
-            localStorage.removeItem('nimra-cart');
-            localStorage.removeItem('nimra-cart-v2:guest');
             localStorage.setItem(recentlyViewedKey(res.user.ID), '[]');
             localStorage.removeItem('nimra_location');
             localStorage.removeItem('nimra_location_denied');

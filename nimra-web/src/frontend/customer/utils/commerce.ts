@@ -28,6 +28,11 @@ export const normalizeCartItem = (item: CartItem): CartItem => ({
   quantity: Math.max(1, Math.floor(Number(item.quantity) || 1)),
 });
 
+const cartItemKey = (item: CartItem) => {
+  const normalized = normalizeCartItem(item);
+  return `${normalized.productId}\u0000${comparableText(normalized.volume)}`;
+};
+
 export const normalizeCategory = (category: string) => {
   const value = category.trim();
   if (/bulk|20l|jar/i.test(value)) return 'Bulk Water';
@@ -85,14 +90,15 @@ export const mergeCartItems = (items: CartItem[]) => {
   const merged = new Map<string, CartItem>();
 
   items.map(normalizeCartItem).forEach((item) => {
-    const existing = merged.get(item.productId);
+    const key = cartItemKey(item);
+    const existing = merged.get(key);
     if (!existing) {
-      merged.set(item.productId, item);
+      merged.set(key, item);
       return;
     }
 
     const preferredMetadata = item.price > 0 ? item : existing;
-    merged.set(item.productId, {
+    merged.set(key, {
       ...existing,
       ...preferredMetadata,
       quantity: existing.quantity + item.quantity,
@@ -107,14 +113,15 @@ export const mergeCartSnapshots = (items: CartItem[]) => {
   const merged = new Map<string, CartItem>();
 
   items.map(normalizeCartItem).forEach((item) => {
-    const existing = merged.get(item.productId);
+    const key = cartItemKey(item);
+    const existing = merged.get(key);
     if (!existing) {
-      merged.set(item.productId, item);
+      merged.set(key, item);
       return;
     }
 
     const preferredMetadata = item.price > 0 ? item : existing;
-    merged.set(item.productId, {
+    merged.set(key, {
       ...existing,
       ...preferredMetadata,
       quantity: item.quantity || existing.quantity,

@@ -5,6 +5,8 @@ import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
 import { discardLegacyRecentlyViewed, notifyRecentlyViewedChanged, recentlyViewedKey } from '../utils/recentlyViewed';
 import { isAdminRole } from '@/frontend/admin/utils/accessControl';
+import type { CartItem } from '@/types/cms';
+import { mergeCartItems, mergeCartSnapshots, normalizeCartItem } from '../utils/commerce';
 
 export interface User {
   ID: number;
@@ -172,31 +174,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const guestCart1Str = localStorage.getItem('nimra-cart');
         const guestCart2Str = localStorage.getItem('nimra-cart-v2:guest');
-        const guestCart1 = guestCart1Str ? JSON.parse(guestCart1Str) : [];
-        const guestCart2 = guestCart2Str ? JSON.parse(guestCart2Str) : [];
-        const guestItems = [...(Array.isArray(guestCart1) ? guestCart1 : []), ...(Array.isArray(guestCart2) ? guestCart2 : [])];
+        const guestCart1: unknown = guestCart1Str ? JSON.parse(guestCart1Str) : [];
+        const guestCart2: unknown = guestCart2Str ? JSON.parse(guestCart2Str) : [];
+        const guestItems = mergeCartSnapshots([
+          ...(Array.isArray(guestCart1) ? guestCart1 : []),
+          ...(Array.isArray(guestCart2) ? guestCart2 : []),
+        ].map((item) => normalizeCartItem(item as CartItem)));
         
         if (guestItems.length > 0) {
           const userCartKey = `nimra-cart-${userData.ID}`;
           const userCartStr = localStorage.getItem(userCartKey);
-          const userCart = userCartStr ? JSON.parse(userCartStr) : [];
-          const userItems = Array.isArray(userCart) ? userCart : [];
-          
-          const mergedMap = new Map();
-          [...userItems, ...guestItems].forEach(item => {
-            const id = item.productId || item.id;
-            if (id) {
-              if (mergedMap.has(id)) {
-                const existing = mergedMap.get(id);
-                existing.quantity = (existing.quantity || 1) + (item.quantity || 1);
-              } else {
-                mergedMap.set(id, { ...item });
-              }
-            }
-          });
-          const mergedList = Array.from(mergedMap.values());
+          const userCart: unknown = userCartStr ? JSON.parse(userCartStr) : [];
+          const userItems = mergeCartSnapshots(
+            (Array.isArray(userCart) ? userCart : []).map((item) => normalizeCartItem(item as CartItem))
+          );
+          const mergedList = mergeCartItems([...userItems, ...guestItems]);
           localStorage.setItem(userCartKey, JSON.stringify(mergedList));
-          
+
+          // Remove guest snapshots only after the authenticated cart is safely persisted.
           localStorage.removeItem('nimra-cart');
           localStorage.removeItem('nimra-cart-v2:guest');
         }
