@@ -8,6 +8,7 @@ import { useAuth } from '@/frontend/customer/hooks/useAuth';
 import {
   changeAccountPassword,
   deleteCustomerAccount,
+  fetchAccountDeletionStatus,
   fetchEmailPreferences,
   saveEmailPreferences,
 } from '@/utils/api';
@@ -49,6 +50,8 @@ export default function SettingsClient() {
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [deletingAccount, setDeletingAccount] = useState(false);
+  const [checkingDeletion, setCheckingDeletion] = useState(false);
+  const [hasActiveOrders, setHasActiveOrders] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -113,6 +116,16 @@ export default function SettingsClient() {
     notify.success('Account Deleted', result.message);
     clearSession();
     window.location.replace('/');
+  };
+
+  const openDeleteWorkflow = async () => {
+    if (!user?.ID) return;
+    setCheckingDeletion(true);
+    const result = await fetchAccountDeletionStatus(user.ID);
+    setCheckingDeletion(false);
+    if (!result.success) return notify.error('Unable to Check Orders', result.message);
+    setHasActiveOrders(Boolean(result.hasActiveOrders));
+    setShowDelete(true);
   };
 
   if (!mounted || isLoading || (!isAuthenticated && !user)) {
@@ -180,9 +193,24 @@ export default function SettingsClient() {
               <div><h2>Delete Account</h2><p>Permanently remove your profile and saved account information.</p></div>
             </div>
             {!showDelete ? (
-              <button className="settings-btn danger-outline" onClick={() => setShowDelete(true)}>Delete Account</button>
+              <button className="settings-btn danger-outline" onClick={openDeleteWorkflow} disabled={checkingDeletion}>{checkingDeletion ? 'Checking Orders...' : 'Delete Account'}</button>
             ) : (
+              hasActiveOrders ? (
+              <div className="delete-confirmation" role="dialog" aria-labelledby="active-order-title">
+                <h2 id="active-order-title">Active Order In Progress</h2>
+                <p>You currently have one or more active orders.</p>
+                <p>Your account cannot be deleted until all active orders are completed or cancelled.</p>
+                <p>Would you like to cancel your active order(s) first?</p>
+                <div className="delete-actions">
+                  <button className="settings-btn secondary" onClick={() => setShowDelete(false)}>Keep My Account</button>
+                  <button className="settings-btn primary" onClick={() => router.push('/orders')}>Cancel Active Order(s)</button>
+                </div>
+              </div>
+              ) : (
               <div className="delete-confirmation">
+                <h2>Delete Account?</h2>
+                <p>Your account will be permanently deleted.</p>
+                <p>Completed and cancelled order history will also be permanently removed from your account.</p>
                 <p>This action cannot be undone. Enter your password and type <strong>DELETE</strong> to continue.</p>
                 <label>Current Password<input type="password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} autoComplete="current-password" /></label>
                 <label>Confirmation<input type="text" value={deleteConfirmation} onChange={(e) => setDeleteConfirmation(e.target.value)} placeholder="Type DELETE" autoComplete="off" /></label>
@@ -191,6 +219,7 @@ export default function SettingsClient() {
                   <button className="settings-btn danger-solid" onClick={handleAccountDelete} disabled={deletingAccount || !deletePassword || deleteConfirmation !== 'DELETE'}>{deletingAccount ? 'Deleting…' : 'Delete Permanently'}</button>
                 </div>
               </div>
+              )
             )}
           </section>
         </div>

@@ -523,15 +523,25 @@ export async function handlePost(req: Request) {
     const urlValPost = getAppsScriptUrl();
     if (urlValPost) {
       try {
-        const res = await fetch(urlValPost, {
-          method: 'POST',
-          redirect: 'follow',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        });
+        const postToAppsScript = () => fetch(urlValPost, {
+            method: 'POST',
+            redirect: 'follow',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          });
+        const retryableAccountRead = payload.type === 'accountSettings' &&
+          ['getPreferences', 'getDeletionStatus'].includes(String(payload.action || ''));
+        let res: Response;
+        try {
+          res = await postToAppsScript();
+        } catch (firstError) {
+          if (!retryableAccountRead) throw firstError;
+          console.warn(`[CMS API Proxy] Retrying read-only account settings request after Google connection failure.`);
+          res = await postToAppsScript();
+        }
 
         const text = await res.text();
         if (!text.trim().startsWith('<')) {
@@ -656,11 +666,9 @@ export async function handlePost(req: Request) {
         const orderUserId = String(order.userId || order.customer?.userId || '').trim();
         const orderEmail = String(order.customer?.email || '').trim().toLowerCase();
         const orderMobile = String(order.customer?.mobile || '').replace(/\D/g, '').slice(-10);
-        return Boolean(
-          (customerUserId && orderUserId === customerUserId) ||
-          (customerEmail && orderEmail === customerEmail) ||
-          (customerMobile && orderMobile === customerMobile)
-        );
+        if (customerUserId) return orderUserId === customerUserId;
+        if (orderUserId) return false;
+        return Boolean((customerEmail && orderEmail === customerEmail) || (customerMobile && orderMobile === customerMobile));
       });
       return NextResponse.json({
         success: true,
@@ -881,6 +889,18 @@ export async function handlePost(req: Request) {
         return NextResponse.json({ success: true, message: 'Email preferences saved.', preferences });
       }
 
+      const activeStatuses = new Set(['pending', 'confirmed', 'processing', 'packed', 'out for delivery', 'in transit']);
+      const ownedOrders = fallbackData.orders.filter((order: any) =>
+        String(order.userId || order.customer?.userId || '').trim() === String(payload.userId).trim()
+      );
+      const activeOrders = ownedOrders
+        .filter((order: any) => activeStatuses.has(String(order.status || '').trim().toLowerCase()))
+        .map((order: any) => ({ orderId: order.orderId, status: order.status }));
+
+      if (action === 'getDeletionStatus') {
+        return NextResponse.json({ success: true, message: activeOrders.length ? 'Active orders must be completed or cancelled before account deletion.' : 'Account can be deleted.', hasActiveOrders: activeOrders.length > 0, activeOrders });
+      }
+
       if (action === 'changePassword') {
         const currentPassword = String(payload.currentPassword || '');
         const newPassword = String(payload.newPassword || '');
@@ -899,8 +919,13 @@ export async function handlePost(req: Request) {
         if (!localPasswordMatches(currentUser.Password, String(payload.currentPassword || ''))) {
           return NextResponse.json({ success: false, message: 'Current password is incorrect.' }, { status: 400 });
         }
+        if (activeOrders.length) {
+          return NextResponse.json({ success: false, message: 'Your account cannot be deleted until all active orders are completed or cancelled.', hasActiveOrders: true, activeOrders }, { status: 409 });
+        }
         fallbackData.users.splice(userIndex, 1);
         fallbackData.carts = (fallbackData.carts || []).filter((cart: any) => String(cart.userId) !== String(payload.userId));
+        fallbackData.orders = fallbackData.orders.filter((order: any) => String(order.userId || order.customer?.userId || '').trim() !== String(payload.userId).trim());
+        fallbackData.notifications = (fallbackData.notifications || []).filter((event: any) => String(event.UserID || event.UserId || '').trim() !== String(payload.userId).trim());
         await syncLocalDB('save');
         return NextResponse.json({ success: true, message: 'Account deleted successfully.' });
       }

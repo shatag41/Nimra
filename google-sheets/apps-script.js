@@ -846,10 +846,9 @@ function getAllOrders(spreadsheet, userId, mobile, email) {
   // the durable Customer User ID (new orders) or legacy contact columns.
   var hasScope = Boolean(String(userId || '').trim() || normalizeDigits(mobile) || normalizeEmail(email));
   if (hasScope) {
-    var addressOwnerById = String(userId || '').trim() ? buildAddressOwnerLookupFast(spreadsheet) : {};
     var scopedOrders = [];
     for (var s = 1; s < data.length; s++) {
-      if (orderRowMatchesScopeFast(headers, data[s], userId, mobile, email, addressOwnerById)) {
+      if (orderRowMatchesScopeFast(headers, data[s], userId, mobile, email)) {
         scopedOrders.push(rowToOrderFast(headers, data[s]));
       }
     }
@@ -895,18 +894,13 @@ function buildAddressOwnerLookupFast(spreadsheet) {
   return lookup;
 }
 
-function orderRowMatchesScopeFast(headers, row, userId, mobile, email, addressOwnerById) {
+function orderRowMatchesScopeFast(headers, row, userId, mobile, email) {
   var requestedUserId = String(userId || '').trim();
   var requestedMobile = normalizeDigits(mobile);
   var requestedEmail = normalizeEmail(email);
 
   if (requestedUserId) {
-    if (String(orderRowValue(headers, row, 'Customer User ID') || '').trim() === requestedUserId) return true;
-    if (addressOwnerById) {
-      var savedAddressId = String(orderRowValue(headers, row, 'Saved Address ID') || '').trim();
-      if (savedAddressId && String(addressOwnerById[savedAddressId] || '').trim() === requestedUserId) return true;
-    }
-    return false;
+    return String(orderRowValue(headers, row, 'Customer User ID') || '').trim() === requestedUserId;
   }
 
   var orderUserId = String(orderRowValue(headers, row, 'Customer User ID') || '').trim();
@@ -2024,12 +2018,9 @@ function handleUserCRUD(spreadsheet, params) {
 
   if (action === 'create') {
     if (!user.ID) {
-      var maxId = 0;
-      for (var i = 1; i < data.length; i++) {
-        var currId = Number(data[i][idIndex]);
-        if (!isNaN(currId) && currId > maxId) maxId = currId;
-      }
-      user.ID = maxId + 1;
+      // User IDs are permanent ownership keys. UUIDs cannot be recycled when
+      // the highest/last user row is deleted, unlike max(existing ID) + 1.
+      user.ID = Utilities.getUuid();
       rowValues[idIndex] = user.ID;
     }
     Logger.log('handleUserCRUD - appending row: ' + JSON.stringify(rowValues));
@@ -2182,6 +2173,16 @@ function handleAccountSettings(spreadsheet, params) {
     return { success: true, message: 'Email preferences saved.', preferences: updatedPreferences };
   }
 
+  if (action === 'getDeletionStatus') {
+    var activeOrders = getActiveOrdersForUser(spreadsheet, userId);
+    return {
+      success: true,
+      message: activeOrders.length ? 'Active orders must be completed or cancelled before account deletion.' : 'Account can be deleted.',
+      hasActiveOrders: activeOrders.length > 0,
+      activeOrders: activeOrders
+    };
+  }
+
   var currentPassword = String(params.currentPassword || '');
   var storedPassword = String(data[rowIndex][passwordIndex] || '');
   var passwordMatches = storedPassword === currentPassword || storedPassword === hashPassword(currentPassword);
@@ -2197,12 +2198,48 @@ function handleAccountSettings(spreadsheet, params) {
   }
 
   if (action === 'deleteAccount') {
-    deleteUserAddresses(spreadsheet, userId);
+    var activeOrders = getActiveOrdersForUser(spreadsheet, userId);
+    if (activeOrders.length) {
+      return { success: false, message: 'Your account cannot be deleted until all active orders are completed or cancelled.', hasActiveOrders: true, activeOrders: activeOrders };
+    }
+    deleteCustomerOwnedData(spreadsheet, userId);
     sheet.deleteRow(rowIndex + 1);
     return { success: true, message: 'Account deleted successfully.' };
   }
 
   return { success: false, message: 'Unsupported account settings action.' };
+}
+
+function getActiveOrdersForUser(spreadsheet, userId) {
+  var activeStatuses = { pending: true, confirmed: true, processing: true, packed: true, 'out for delivery': true, 'in transit': true };
+  return getAllOrders(spreadsheet, userId, '', '').filter(function(order) {
+    return activeStatuses[String(order.status || '').trim().toLowerCase()] === true;
+  }).map(function(order) {
+    return { orderId: order.orderId, status: order.status };
+  });
+}
+
+function deleteRowsOwnedByUser(spreadsheet, sheetName, ownerHeaders, userId) {
+  var sheet = SpreadsheetService.getInstance().getSheet(sheetName);
+  if (!sheet || sheet.getLastRow() <= 1) return;
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0] || [];
+  var ownerIndex = findHeaderIndex(headers, ownerHeaders);
+  if (ownerIndex < 0) return;
+  for (var i = data.length - 1; i >= 1; i--) {
+    if (String(data[i][ownerIndex] || '').trim() === String(userId).trim()) sheet.deleteRow(i + 1);
+  }
+}
+
+function deleteCustomerOwnedData(spreadsheet, userId) {
+  deleteUserAddresses(spreadsheet, userId);
+  deleteRowsOwnedByUser(spreadsheet, 'Orders', ['Customer User ID'], userId);
+  deleteRowsOwnedByUser(spreadsheet, 'Carts', ['User ID', 'UserID'], userId);
+  deleteRowsOwnedByUser(spreadsheet, 'Events', ['UserID', 'User ID'], userId);
+  deleteRowsOwnedByUser(spreadsheet, 'Sessions', ['User ID', 'UserID'], userId);
+  deleteRowsOwnedByUser(spreadsheet, 'Wishlist', ['User ID', 'UserID'], userId);
+  deleteRowsOwnedByUser(spreadsheet, 'RecentlyViewed', ['User ID', 'UserID'], userId);
+  deleteRowsOwnedByUser(spreadsheet, 'UserPreferences', ['User ID', 'UserID'], userId);
 }
 
 function getNotificationsData(spreadsheet) {
@@ -2568,7 +2605,8 @@ function getCustomerNotifications(spreadsheet, userId, email) {
   return getEventsByAudience(spreadsheet, 'CUSTOMER_NOTIFICATION').filter(function(event) {
     var eventUserId = String(event.UserID || '').trim();
     var eventEmail = normalizeEmail(event.Username);
-    if (eventUserId) return requestedUserId && eventUserId === requestedUserId;
+    if (requestedUserId) return eventUserId ? eventUserId === requestedUserId : !eventEmail;
+    if (eventUserId) return false;
     if (eventEmail) return requestedEmail && eventEmail === requestedEmail;
     return true;
   }).map(function(event) {

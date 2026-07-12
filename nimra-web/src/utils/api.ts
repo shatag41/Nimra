@@ -972,6 +972,8 @@ type AccountSettingsResponse = {
   success: boolean;
   message: string;
   preferences?: EmailPreferences;
+  hasActiveOrders?: boolean;
+  activeOrders?: Array<{ orderId: string; status: string }>;
 };
 
 const accountSettingsRequest = async (payload: Record<string, unknown>): Promise<AccountSettingsResponse> => {
@@ -1007,3 +1009,6 @@ export const changeAccountPassword = (
 
 export const deleteCustomerAccount = (userId: string | number, currentPassword: string) =>
   accountSettingsRequest({ action: 'deleteAccount', userId, currentPassword });
+
+export const fetchAccountDeletionStatus = (userId: string | number) =>
+  accountSettingsRequest({ action: 'getDeletionStatus', userId });
