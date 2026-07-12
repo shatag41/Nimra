@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 interface LogoutConfirmationModalProps {
   isOpen: boolean;
@@ -41,6 +42,11 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const onCloseRef = useRef(onClose);
   const isProcessingRef = useRef(isProcessing);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -96,12 +102,12 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
     };
   }, [isOpen]);
 
-  if (!isOpen) {
+  if (!isOpen || !mounted) {
     return null;
   }
 
   if (!stableFlowLayout) {
-    return (
+    return createPortal(
       <>
         <div ref={overlayRef} className="legacy-modal-overlay" onClick={() => !isProcessing && onClose()} role="presentation" aria-hidden="true" />
         <div ref={contentRef} role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-description" className="legacy-modal-content" onClick={(e) => e.stopPropagation()}>
@@ -122,11 +128,12 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
           @keyframes legacyScaleIn { from { opacity: 0; transform: translate(-50%,-50%) scale(.9); } to { opacity: 1; transform: translate(-50%,-50%) scale(1); } }
           @media (max-width:480px) { .legacy-modal-content { width:95%; padding:1.5rem; } .legacy-modal-actions { flex-direction:column-reverse; } }
         `}</style>
-      </>
+      </>,
+      document.body
     );
   }
 
-  return (
+  return createPortal(
       <div
         ref={overlayRef}
         className="modal-overlay"
@@ -188,12 +195,12 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
             flex-direction: column;
             width: 520px;
             max-width: 92vw;
-            height: min(500px, 90vh);
-            min-height: 340px;
+            min-height: 220px;
+            height: auto;
             max-height: 90vh;
             overflow: hidden;
             background: var(--bg-primary);
-            padding: 2rem;
+            padding: 1.25rem;
             border-radius: var(--radius-xl);
             box-shadow: var(--shadow-xl);
             border: 1px solid var(--border-color);
@@ -211,37 +218,46 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
           .modal-title {
             flex: 0 0 auto;
             font-family: var(--font-heading);
-            font-size: 1.5rem;
+            font-size: 1.15rem;
             font-weight: 700;
             color: var(--text-primary);
-            margin: 0 0 0.75rem;
+            margin: 0 0 0.35rem;
           }
 
           .modal-description {
             flex: 0 0 auto;
             color: var(--text-secondary);
-            font-size: 0.95rem;
-            line-height: 1.55;
+            font-size: 0.8rem;
+            line-height: 1.45;
             margin: 0;
           }
 
           .modal-body {
             display: flex;
             flex: 1;
-            min-height: 180px;
             flex-direction: column;
             justify-content: center;
             overflow: auto;
-            padding: 1rem 0;
+            padding: 0.5rem 0;
+          }
+
+          .modal-body:empty {
+            display: none;
           }
 
           .modal-actions {
             display: flex;
             flex: 0 0 auto;
-            gap: 1rem;
+            gap: 0.75rem;
             justify-content: flex-end;
-            padding-top: 1rem;
+            padding-top: 0.75rem;
             border-top: 1px solid var(--border-color);
+          }
+
+          .modal-actions :global(button) {
+            min-height: 32px;
+            padding: 0.35rem 0.8rem;
+            font-size: 0.75rem;
           }
 
           @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -250,12 +266,11 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
 
           @media (max-width: 480px) {
             .modal-overlay { padding: .75rem; }
-            .modal-content { width: 520px; max-width: 92vw; height: min(500px, 90vh); min-height: min(340px, calc(90vh - 1.5rem)); padding: 1.5rem; }
-            .modal-body { min-height: 150px; }
-            .modal-actions { flex-direction: column-reverse; }
+            .modal-content { width: 520px; max-width: 92vw; min-height: 200px; height: auto; padding: 1rem; }
           }
         `}</style>
-      </div>
+      </div>,
+      document.body
   );
 });
 

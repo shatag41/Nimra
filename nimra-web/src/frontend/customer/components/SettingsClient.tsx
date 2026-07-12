@@ -299,65 +299,75 @@ export default function SettingsClient() {
           {otpSent && <button type="button" className="resend-otp" onClick={sendDeletionOtp} disabled={resendSeconds > 0 || sendingOtp}>{resendSeconds > 0 ? `Resend OTP in ${resendSeconds}s` : 'Resend OTP'}</button>}
         </div>}
       </LogoutConfirmationModal>
-
       <style jsx>{`
-        .settings-page { min-height: 100vh; padding: 0.5rem 1rem 3rem; background: var(--bg-primary); color: var(--text-primary); }
-        .settings-shell { display: grid; gap: clamp(1.5rem, 3.5vw, 2.5rem); width: min(1100px, 100%); margin: 0 auto; }
+        .settings-page { min-height: 100vh; padding: 0.5rem 1rem 2rem; background: var(--bg-primary); color: var(--text-primary); }
+        .settings-shell { display: grid; gap: clamp(1rem, 2vw, 1.25rem); width: min(1100px, 100%); margin: 0 auto; }
+        
+        :global(.settings-page .customer-page-header) {
+          padding-block: clamp(0.6rem, 1.5vw, 0.9rem) !important;
+          margin-bottom: 0 !important;
+        }
+        :global(.settings-page .customer-page-header h1) {
+          font-size: clamp(1.1rem, 1.3vw, 1.25rem) !important;
+        }
+
         .settings-grid { display: grid; grid-template-columns: minmax(280px, .82fr) minmax(420px, 1.18fr); gap: 1rem; align-items: start; }
-        .setting-card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-xl); box-shadow: var(--shadow-md); padding: 1.25rem; }
+        .setting-card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-xl); box-shadow: var(--shadow-md); padding: .7rem; }
         .preferences-card { grid-row: span 2; }
-        .card-heading { display: flex; align-items: flex-start; gap: .8rem; margin-bottom: 1.15rem; }
-        .card-heading h2 { margin: 0 0 .25rem; font-size: 1.05rem; }
-        .card-heading p { margin: 0; color: var(--text-secondary); font-size: .78rem; line-height: 1.5; }
-        .card-icon { width: 36px; height: 36px; display: grid; place-items: center; flex: 0 0 auto; color: var(--primary-color); background: color-mix(in srgb, var(--primary-color) 10%, transparent); border: 1px solid color-mix(in srgb, var(--primary-color) 22%, transparent); border-radius: 10px; }
-        .card-icon :global(svg) { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+        .card-heading { display: flex; align-items: flex-start; gap: .4rem; margin-bottom: .4rem; }
+        .card-heading h2 { margin: 0 0 .1rem; font-size: .95rem; }
+        .card-heading p { margin: 0; color: var(--text-secondary); font-size: .75rem; line-height: 1.35; }
+        .card-icon { width: 28px; height: 28px; display: grid; place-items: center; flex: 0 0 auto; color: var(--primary-color); background: color-mix(in srgb, var(--primary-color) 10%, transparent); border: 1px solid color-mix(in srgb, var(--primary-color) 22%, transparent); border-radius: 8px; }
+        .card-icon :global(svg) { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
         .card-icon.danger { color: #dc2626; background: rgba(220,38,38,.08); border-color: rgba(220,38,38,.18); }
-        .settings-form, .delete-confirmation { display: grid; gap: .8rem; }
-        label { display: grid; gap: .35rem; color: var(--text-secondary); font-size: .75rem; font-weight: 700; }
-        input[type='password'], input[type='text'], input[type='email'] { width: 100%; min-height: 40px; padding: .65rem .75rem; color: var(--text-primary); background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-md); font: inherit; outline: none; }
+        .settings-form, .delete-confirmation { display: grid; gap: .3rem; }
+        label { display: grid; gap: .1rem; color: var(--text-secondary); font-size: .7rem; font-weight: 700; }
+        input[type='password'], input[type='text'], input[type='email'] { width: 100%; min-height: 28px; padding: .2rem .4rem; color: var(--text-primary); background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-md); font: inherit; font-size: .75rem; outline: none; }
         input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 12%, transparent); }
-        .settings-btn { min-height: 38px; padding: .55rem .9rem; border: 1px solid transparent; border-radius: var(--radius-md); font: inherit; font-size: .78rem; font-weight: 800; cursor: pointer; transition: transform var(--transition-fast), opacity var(--transition-fast), background var(--transition-fast); }
+        .settings-btn { min-height: 26px; padding: .25rem .6rem; border: 1px solid transparent; border-radius: var(--radius-md); font: inherit; font-size: .7rem; font-weight: 800; cursor: pointer; transition: transform var(--transition-fast), opacity var(--transition-fast), background var(--transition-fast); }
         .settings-btn:hover:not(:disabled) { transform: translateY(-1px); }
         .settings-btn:disabled { opacity: .55; cursor: not-allowed; }
         .settings-btn.primary { color: white; background: var(--primary-color); }
-        .settings-form .settings-btn { justify-self: start; margin-top: .15rem; }
+        .settings-form .settings-btn { justify-self: start; margin-top: .1rem; }
         .preference-list { border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden; }
-        .preference-row { position: relative; grid-template-columns: 1fr auto; align-items: center; gap: 1rem; padding: .85rem .95rem; border-bottom: 1px solid var(--border-color); cursor: pointer; }
+        .preference-row { position: relative; grid-template-columns: 1fr auto; align-items: center; gap: 0.75rem; padding: .65rem .75rem; border-bottom: 1px solid var(--border-color); cursor: pointer; }
         .preference-row:last-child { border-bottom: 0; }
-        .preference-row > span:first-child { display: grid; gap: .15rem; }
-        .preference-row strong { color: var(--text-primary); font-size: .82rem; }
-        .preference-row small { color: var(--text-muted); font-size: .7rem; font-weight: 500; line-height: 1.4; }
+        .preference-row > span:first-child { display: grid; gap: .1rem; }
+        .preference-row strong { color: var(--text-primary); font-size: .8rem; }
+        .preference-row small { color: var(--text-muted); font-size: .7rem; font-weight: 500; line-height: 1.3; }
         .preference-row input { position: absolute; opacity: 0; pointer-events: none; }
-        .toggle { width: 38px; height: 22px; padding: 2px; display: flex; align-items: center; background: var(--border-color); border-radius: 999px; transition: background var(--transition-fast); }
-        .toggle span { width: 18px; height: 18px; background: white; border-radius: 50%; box-shadow: 0 1px 4px rgba(0,0,0,.2); transition: transform var(--transition-fast); }
+        .toggle { width: 34px; height: 20px; padding: 2px; display: flex; align-items: center; background: var(--border-color); border-radius: 999px; transition: background var(--transition-fast); }
+        .toggle span { width: 16px; height: 16px; background: white; border-radius: 50%; box-shadow: 0 1px 4px rgba(0,0,0,.2); transition: transform var(--transition-fast); }
         .preference-row input:checked + .toggle { background: var(--primary-color); }
-        .preference-row input:checked + .toggle span { transform: translateX(16px); }
+        .preference-row input:checked + .toggle span { transform: translateX(14px); }
         .preference-row input:focus-visible + .toggle { outline: 3px solid color-mix(in srgb, var(--primary-color) 25%, transparent); outline-offset: 2px; }
-        .preference-footer { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: 1rem; }
+        .preference-footer { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 0.75rem; }
         .preference-footer > span { color: var(--text-muted); font-size: .7rem; }
-        .preference-skeleton, .load-error { min-height: 230px; display: grid; place-items: center; align-content: center; gap: .65rem; color: var(--text-secondary); border: 1px dashed var(--border-color); border-radius: var(--radius-lg); font-size: .82rem; }
+        .preference-skeleton, .load-error { min-height: 200px; display: grid; place-items: center; align-content: center; gap: .5rem; color: var(--text-secondary); border: 1px dashed var(--border-color); border-radius: var(--radius-lg); font-size: .8rem; }
         .load-error p { margin: 0; }
         .load-error button { border: 0; background: transparent; color: var(--primary-color); font-weight: 700; cursor: pointer; }
         .danger-card { border-color: rgba(220,38,38,.2); }
         .danger-outline { color: #dc2626; background: transparent; border-color: rgba(220,38,38,.35); }
         .danger-solid { color: white; background: #dc2626; }
         .secondary { color: var(--text-primary); background: var(--bg-tertiary); border-color: var(--border-color); }
-        .delete-confirmation { padding-top: .8rem; border-top: 1px solid var(--border-color); }
-        .delete-confirmation p { margin: 0 0 .15rem; color: var(--text-secondary); font-size: .75rem; line-height: 1.5; }
+        .delete-confirmation { padding-top: .6rem; border-top: 1px solid var(--border-color); }
+        .delete-confirmation p { margin: 0 0 .15rem; color: var(--text-secondary); font-size: .75rem; line-height: 1.4; }
         .delete-actions { display: flex; justify-content: flex-end; gap: .55rem; margin-top: .25rem; }
-        .deletion-verification-fields { display: grid; gap: .8rem; }
-        .otp-message { margin: 0; color: #dc2626; font-size: .75rem; }
+        .deletion-verification-fields { display: grid; gap: .45rem; }
+        .deletion-verification-fields label { gap: .15rem; font-size: .7rem; }
+        .deletion-verification-fields input { min-height: 30px; padding: .3rem .5rem; }
+        .otp-message { margin: 0; color: #dc2626; font-size: .7rem; }
         .otp-message.success { color: #16a34a; }
-        .resend-otp { justify-self: start; padding: 0; color: var(--primary-color); background: transparent; border: 0; font: inherit; font-size: .75rem; font-weight: 700; cursor: pointer; }
+        .resend-otp { justify-self: start; padding: 0; color: var(--primary-color); background: transparent; border: 0; font: inherit; font-size: .7rem; font-weight: 700; cursor: pointer; }
         .resend-otp:disabled { color: var(--text-muted); cursor: not-allowed; }
         @media (max-width: 800px) {
           .settings-grid { grid-template-columns: 1fr; }
           .preferences-card { grid-row: auto; }
         }
         @media (max-width: 560px) {
-          .settings-page { padding: 0.5rem .75rem 2rem; }
-          .setting-card { padding: 1rem; }
-          .preference-row { padding: .75rem; }
+          .settings-page { padding: 0.5rem .75rem 1.5rem; }
+          .setting-card { padding: 0.85rem; }
+          .preference-row { padding: .65rem; }
           .preference-footer { align-items: stretch; flex-direction: column; }
           .preference-footer .settings-btn { width: 100%; }
           .delete-actions { flex-direction: column-reverse; }
