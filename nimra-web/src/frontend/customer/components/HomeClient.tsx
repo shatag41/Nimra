@@ -734,9 +734,9 @@ export default function HomeClient({ banners: initialBanners, products: initialP
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 0.24rem;
-          min-height: 6.45rem;
-          padding: 0.82rem 0.95rem;
+          gap: 0;
+          min-height: 3.5rem;
+          padding: 0.25rem 0.95rem;
           text-align: center;
           position: relative;
           overflow: hidden;
@@ -782,7 +782,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
           display: grid;
           place-items: center;
           border-radius: 999px;
-          margin-bottom: 0.18rem;
+          margin-bottom: 0;
           font-size: 1.08rem;
           line-height: 1;
           background:
@@ -817,7 +817,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
         }
 
         .stat-label {
-          margin-top: 0.1rem;
+          margin-top: 0;
           font-size: 0.62rem;
           font-weight: 750;
           color: color-mix(in srgb, var(--text-secondary) 86%, #334155 14%);
