@@ -974,6 +974,10 @@ type AccountSettingsResponse = {
   preferences?: EmailPreferences;
   hasActiveOrders?: boolean;
   activeOrders?: Array<{ orderId: string; status: string }>;
+  otpVerified?: boolean;
+  expired?: boolean;
+  attemptsRemaining?: number;
+  confirmationEmailSent?: boolean;
 };
 
 const accountSettingsRequest = async (payload: Record<string, unknown>): Promise<AccountSettingsResponse> => {
@@ -1007,8 +1011,14 @@ export const changeAccountPassword = (
   newPassword: string
 ) => accountSettingsRequest({ action: 'changePassword', userId, currentPassword, newPassword });
 
-export const deleteCustomerAccount = (userId: string | number, currentPassword: string) =>
-  accountSettingsRequest({ action: 'deleteAccount', userId, currentPassword });
+export const deleteCustomerAccount = (userId: string | number) =>
+  accountSettingsRequest({ action: 'deleteAccount', userId });
 
 export const fetchAccountDeletionStatus = (userId: string | number) =>
   accountSettingsRequest({ action: 'getDeletionStatus', userId });
+
+export const sendAccountDeletionOTP = (userId: string | number, email: string) =>
+  accountSettingsRequest({ action: 'sendDeletionOTP', userId, email });
+
+export const verifyAccountDeletionOTP = (userId: string | number, email: string, otp: string) =>
+  accountSettingsRequest({ action: 'verifyDeletionOTP', userId, email, otp });

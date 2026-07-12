@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
@@ -10,10 +10,15 @@ import {
   deleteCustomerAccount,
   fetchAccountDeletionStatus,
   fetchEmailPreferences,
+  sendAccountDeletionOTP,
   saveEmailPreferences,
+  verifyAccountDeletionOTP,
 } from '@/utils/api';
 import type { EmailPreferences } from '@/types/cms';
 import CustomerPageHeader from './CustomerPageHeader';
+import LogoutConfirmationModal from './LogoutConfirmationModal';
+
+type DeleteStep = 'closed' | 'confirm' | 'active' | 'verify' | 'success';
 
 const preferenceOptions: Array<{
   key: keyof EmailPreferences;
@@ -46,12 +51,17 @@ export default function SettingsClient() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
-  const [showDelete, setShowDelete] = useState(false);
-  const [deletePassword, setDeletePassword] = useState('');
-  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [deleteStep, setDeleteStep] = useState<DeleteStep>('closed');
+  const [deletionEmail, setDeletionEmail] = useState('');
+  const [deletionOtp, setDeletionOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otpMessage, setOtpMessage] = useState('');
+  const [resendSeconds, setResendSeconds] = useState(0);
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [checkingDeletion, setCheckingDeletion] = useState(false);
-  const [hasActiveOrders, setHasActiveOrders] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const verifyingOtpRef = useRef('');
 
   useEffect(() => {
     setMounted(true);
@@ -72,6 +82,27 @@ export default function SettingsClient() {
     });
     return () => { active = false; };
   }, [user?.ID]);
+
+  useEffect(() => {
+    if (resendSeconds <= 0) return;
+    const timer = window.setInterval(() => setResendSeconds((value) => Math.max(0, value - 1)), 1000);
+    return () => window.clearInterval(timer);
+  }, [resendSeconds]);
+
+  useEffect(() => {
+    if (!otpSent || deletionOtp.length !== 6 || !user?.ID || verifyingOtpRef.current === deletionOtp) return;
+    verifyingOtpRef.current = deletionOtp;
+    setOtpMessage('Verifying code...');
+    verifyAccountDeletionOTP(user.ID, deletionEmail, deletionOtp).then((result) => {
+      if (result.success && result.otpVerified) {
+        setOtpVerified(true);
+        setOtpMessage('Email verified successfully.');
+      } else {
+        setOtpVerified(false);
+        setOtpMessage(result.message);
+      }
+    });
+  }, [deletionEmail, deletionOtp, otpSent, user?.ID]);
 
   const handlePreferenceSave = async () => {
     if (!user?.ID || !preferences) return;
@@ -108,25 +139,74 @@ export default function SettingsClient() {
   };
 
   const handleAccountDelete = async () => {
-    if (!user?.ID || deleteConfirmation !== 'DELETE') return;
+    if (!user?.ID || !otpVerified) return;
     setDeletingAccount(true);
-    const result = await deleteCustomerAccount(user.ID, deletePassword);
+    const result = await deleteCustomerAccount(user.ID);
     setDeletingAccount(false);
     if (!result.success) return notify.error('Delete Failed', result.message);
-    notify.success('Account Deleted', result.message);
-    clearSession();
-    window.location.replace('/');
+    setDeleteStep('success');
   };
 
-  const openDeleteWorkflow = async () => {
+  const checkDeletionStatus = async () => {
     if (!user?.ID) return;
     setCheckingDeletion(true);
     const result = await fetchAccountDeletionStatus(user.ID);
     setCheckingDeletion(false);
     if (!result.success) return notify.error('Unable to Check Orders', result.message);
-    setHasActiveOrders(Boolean(result.hasActiveOrders));
-    setShowDelete(true);
+    if (result.hasActiveOrders) return setDeleteStep('active');
+    setDeletionEmail(String(user.Username || ''));
+    setDeleteStep('verify');
   };
+
+  const sendDeletionOtp = async () => {
+    if (!user?.ID) return;
+    if (deletionEmail.trim().toLowerCase() !== String(user.Username || '').trim().toLowerCase()) {
+      setOtpMessage('The email address must match your registered email.');
+      return;
+    }
+    setSendingOtp(true);
+    const result = await sendAccountDeletionOTP(user.ID, deletionEmail);
+    setSendingOtp(false);
+    if (!result.success) {
+      setOtpMessage(result.message);
+      if (result.hasActiveOrders) setDeleteStep('active');
+      return;
+    }
+    setOtpSent(true);
+    setOtpVerified(false);
+    setDeletionOtp('');
+    verifyingOtpRef.current = '';
+    setResendSeconds(60);
+    setOtpMessage('');
+    notify.success('OTP Sent', 'OTP sent successfully to your registered email.');
+  };
+
+  const closeAfterDeletion = () => {
+    if (user?.ID) localStorage.removeItem(`nimra-cart-${user.ID}`);
+    clearSession();
+    window.location.replace('/');
+  };
+
+  const deletionModalTitle = deleteStep === 'confirm' ? 'Delete Your Account?'
+    : deleteStep === 'active' ? 'Active Order Detected'
+    : deleteStep === 'success' ? 'Account Deleted Successfully'
+    : 'Verify Your Email';
+  const deletionModalDescription = deleteStep === 'confirm'
+    ? "You're about to permanently delete your NIMRA account. Before proceeding, we'll check if you have any active orders."
+    : deleteStep === 'active'
+      ? 'You currently have one or more active orders. Your account cannot be deleted until your active orders are cancelled and the cancellation request has been reviewed by an administrator.'
+      : deleteStep === 'success'
+        ? 'Your account has been permanently deleted. A confirmation email has been sent to your registered email address.'
+        : 'Confirm your registered email address and enter the verification code to securely delete your account.';
+  const deletionModalConfirmText = deleteStep === 'confirm' ? 'Continue'
+    : deleteStep === 'active' ? 'Cancel Active Order(s)'
+    : deleteStep === 'success' ? 'Close'
+    : otpSent ? 'Delete Permanently' : 'Send OTP';
+  const handleDeletionModalConfirm = deleteStep === 'confirm' ? checkDeletionStatus
+    : deleteStep === 'active' ? () => { sessionStorage.setItem('nimra-delete-account-cancellation-flow', '1'); router.push('/orders'); }
+    : deleteStep === 'success' ? closeAfterDeletion
+    : otpSent ? handleAccountDelete : sendDeletionOtp;
+  const handleDeletionModalClose = deleteStep === 'success' ? closeAfterDeletion : () => setDeleteStep('closed');
 
   if (!mounted || isLoading || (!isAuthenticated && !user)) {
     return <main className="settings-loading">Loading account settings…</main>;
@@ -192,38 +272,33 @@ export default function SettingsClient() {
               <span className="card-icon danger"><SettingsIcon type="trash" /></span>
               <div><h2>Delete Account</h2><p>Permanently remove your profile and saved account information.</p></div>
             </div>
-            {!showDelete ? (
-              <button className="settings-btn danger-outline" onClick={openDeleteWorkflow} disabled={checkingDeletion}>{checkingDeletion ? 'Checking Orders...' : 'Delete Account'}</button>
-            ) : (
-              hasActiveOrders ? (
-              <div className="delete-confirmation" role="dialog" aria-labelledby="active-order-title">
-                <h2 id="active-order-title">Active Order In Progress</h2>
-                <p>You currently have one or more active orders.</p>
-                <p>Your account cannot be deleted until all active orders are completed or cancelled.</p>
-                <p>Would you like to cancel your active order(s) first?</p>
-                <div className="delete-actions">
-                  <button className="settings-btn secondary" onClick={() => setShowDelete(false)}>Keep My Account</button>
-                  <button className="settings-btn primary" onClick={() => router.push('/orders')}>Cancel Active Order(s)</button>
-                </div>
-              </div>
-              ) : (
-              <div className="delete-confirmation">
-                <h2>Delete Account?</h2>
-                <p>Your account will be permanently deleted.</p>
-                <p>Completed and cancelled order history will also be permanently removed from your account.</p>
-                <p>This action cannot be undone. Enter your password and type <strong>DELETE</strong> to continue.</p>
-                <label>Current Password<input type="password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} autoComplete="current-password" /></label>
-                <label>Confirmation<input type="text" value={deleteConfirmation} onChange={(e) => setDeleteConfirmation(e.target.value)} placeholder="Type DELETE" autoComplete="off" /></label>
-                <div className="delete-actions">
-                  <button className="settings-btn secondary" onClick={() => { setShowDelete(false); setDeletePassword(''); setDeleteConfirmation(''); }}>Cancel</button>
-                  <button className="settings-btn danger-solid" onClick={handleAccountDelete} disabled={deletingAccount || !deletePassword || deleteConfirmation !== 'DELETE'}>{deletingAccount ? 'Deleting…' : 'Delete Permanently'}</button>
-                </div>
-              </div>
-              )
-            )}
+            <button className="settings-btn danger-outline" onClick={() => setDeleteStep('confirm')}>Delete Account</button>
           </section>
         </div>
       </div>
+
+      <LogoutConfirmationModal
+        isOpen={deleteStep !== 'closed'}
+        onClose={handleDeletionModalClose}
+        onConfirm={handleDeletionModalConfirm}
+        title={deletionModalTitle}
+        description={deletionModalDescription}
+        confirmText={deletionModalConfirmText}
+        cancelText={deleteStep === 'active' ? 'Keep My Account' : 'Cancel'}
+        confirmButtonClass={deleteStep === 'success' ? 'btn btn-primary' : 'btn btn-error'}
+        isProcessing={checkingDeletion || sendingOtp || deletingAccount}
+        confirmDisabled={deleteStep === 'verify' && otpSent && !otpVerified}
+        showCancelButton={deleteStep !== 'success'}
+        contentKey={`${deleteStep}-${otpSent ? 'otp' : 'email'}`}
+        stableFlowLayout
+      >
+        {deleteStep === 'verify' && <div className="deletion-verification-fields">
+          <label>Current Email Address<input type="email" value={deletionEmail} onChange={(event) => { setDeletionEmail(event.target.value); setOtpVerified(false); }} autoComplete="email" /></label>
+          {otpSent && <label>OTP<input type="text" inputMode="numeric" maxLength={6} value={deletionOtp} onChange={(event) => { setDeletionOtp(event.target.value.replace(/\D/g, '').slice(0, 6)); setOtpVerified(false); setOtpMessage(''); }} autoComplete="one-time-code" /></label>}
+          {otpMessage && <p className={otpVerified ? 'otp-message success' : 'otp-message'}>{otpMessage}</p>}
+          {otpSent && <button type="button" className="resend-otp" onClick={sendDeletionOtp} disabled={resendSeconds > 0 || sendingOtp}>{resendSeconds > 0 ? `Resend OTP in ${resendSeconds}s` : 'Resend OTP'}</button>}
+        </div>}
+      </LogoutConfirmationModal>
 
       <style jsx>{`
         .settings-page { min-height: 100vh; padding: 0.5rem 1rem 3rem; background: var(--bg-primary); color: var(--text-primary); }
@@ -239,7 +314,7 @@ export default function SettingsClient() {
         .card-icon.danger { color: #dc2626; background: rgba(220,38,38,.08); border-color: rgba(220,38,38,.18); }
         .settings-form, .delete-confirmation { display: grid; gap: .8rem; }
         label { display: grid; gap: .35rem; color: var(--text-secondary); font-size: .75rem; font-weight: 700; }
-        input[type='password'], input[type='text'] { width: 100%; min-height: 40px; padding: .65rem .75rem; color: var(--text-primary); background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-md); font: inherit; outline: none; }
+        input[type='password'], input[type='text'], input[type='email'] { width: 100%; min-height: 40px; padding: .65rem .75rem; color: var(--text-primary); background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-md); font: inherit; outline: none; }
         input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 12%, transparent); }
         .settings-btn { min-height: 38px; padding: .55rem .9rem; border: 1px solid transparent; border-radius: var(--radius-md); font: inherit; font-size: .78rem; font-weight: 800; cursor: pointer; transition: transform var(--transition-fast), opacity var(--transition-fast), background var(--transition-fast); }
         .settings-btn:hover:not(:disabled) { transform: translateY(-1px); }
@@ -270,6 +345,11 @@ export default function SettingsClient() {
         .delete-confirmation { padding-top: .8rem; border-top: 1px solid var(--border-color); }
         .delete-confirmation p { margin: 0 0 .15rem; color: var(--text-secondary); font-size: .75rem; line-height: 1.5; }
         .delete-actions { display: flex; justify-content: flex-end; gap: .55rem; margin-top: .25rem; }
+        .deletion-verification-fields { display: grid; gap: .8rem; }
+        .otp-message { margin: 0; color: #dc2626; font-size: .75rem; }
+        .otp-message.success { color: #16a34a; }
+        .resend-otp { justify-self: start; padding: 0; color: var(--primary-color); background: transparent; border: 0; font: inherit; font-size: .75rem; font-weight: 700; cursor: pointer; }
+        .resend-otp:disabled { color: var(--text-muted); cursor: not-allowed; }
         @media (max-width: 800px) {
           .settings-grid { grid-template-columns: 1fr; }
           .preferences-card { grid-row: auto; }

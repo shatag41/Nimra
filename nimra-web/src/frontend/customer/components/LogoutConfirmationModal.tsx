@@ -12,6 +12,11 @@ interface LogoutConfirmationModalProps {
   cancelText?: string;
   confirmButtonClass?: string;
   isProcessing?: boolean;
+  confirmDisabled?: boolean;
+  showCancelButton?: boolean;
+  children?: React.ReactNode;
+  contentKey?: React.Key;
+  stableFlowLayout?: boolean;
 }
 
 const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
@@ -24,23 +29,33 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
   cancelText = 'Cancel',
   confirmButtonClass = 'btn btn-error',
   isProcessing = false,
+  confirmDisabled = false,
+  showCancelButton = true,
+  children,
+  contentKey,
+  stableFlowLayout = false,
 }: LogoutConfirmationModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
+  const onCloseRef = useRef(onClose);
+  const isProcessingRef = useRef(isProcessing);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+    isProcessingRef.current = isProcessing;
+  }, [onClose, isProcessing]);
 
   useEffect(() => {
     if (isOpen) {
       const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape' && !isProcessing) {
-          onClose();
+        if (e.key === 'Escape' && !isProcessingRef.current) {
+          onCloseRef.current();
         }
         if (e.key === 'Tab') {
           e.preventDefault();
-          const focusableElements = [
-            confirmButtonRef.current,
-            cancelButtonRef.current,
-          ].filter(Boolean) as HTMLElement[];
+          const focusableElements = Array.from(contentRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), a[href]') || []);
           if (focusableElements.length > 0) {
             const currentIndex = focusableElements.indexOf(
               document.activeElement as HTMLElement
@@ -68,7 +83,7 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
         activeElementBeforeModal?.focus();
       };
     }
-  }, [isOpen, onClose, isProcessing]);
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -85,130 +100,162 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
     return null;
   }
 
+  if (!stableFlowLayout) {
+    return (
+      <>
+        <div ref={overlayRef} className="legacy-modal-overlay" onClick={() => !isProcessing && onClose()} role="presentation" aria-hidden="true" />
+        <div ref={contentRef} role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-description" className="legacy-modal-content" onClick={(e) => e.stopPropagation()}>
+          <h2 id="modal-title" className="legacy-modal-title">{title}</h2>
+          <p id="modal-description" className="legacy-modal-description">{description}</p>
+          <div className="legacy-modal-actions">
+            {showCancelButton && <button ref={cancelButtonRef} className="btn btn-secondary" onClick={onClose} aria-label={cancelText} disabled={isProcessing}>{cancelText}</button>}
+            <button ref={confirmButtonRef} className={confirmButtonClass} onClick={onConfirm} aria-label={confirmText} disabled={isProcessing || confirmDisabled}>{isProcessing ? 'Processing...' : confirmText}</button>
+          </div>
+        </div>
+        <style jsx>{`
+          .legacy-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.6); z-index: 10000; animation: legacyFadeIn .2s ease-out; }
+          .legacy-modal-content { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--bg-primary); padding: 2rem; border-radius: var(--radius-xl); box-shadow: var(--shadow-xl); border: 1px solid var(--border-color); z-index: 10001; width: 90%; max-width: 400px; animation: legacyScaleIn .3s ease-out; }
+          .legacy-modal-title { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin: 0 0 .75rem; }
+          .legacy-modal-description { color: var(--text-secondary); font-size: .95rem; margin: 0 0 1.5rem; }
+          .legacy-modal-actions { display: flex; gap: 1rem; justify-content: flex-end; }
+          @keyframes legacyFadeIn { from { opacity: 0; } to { opacity: 1; } }
+          @keyframes legacyScaleIn { from { opacity: 0; transform: translate(-50%,-50%) scale(.9); } to { opacity: 1; transform: translate(-50%,-50%) scale(1); } }
+          @media (max-width:480px) { .legacy-modal-content { width:95%; padding:1.5rem; } .legacy-modal-actions { flex-direction:column-reverse; } }
+        `}</style>
+      </>
+    );
+  }
+
   return (
-    <>
       <div
         ref={overlayRef}
         className="modal-overlay"
         onClick={() => !isProcessing && onClose()}
         role="presentation"
-        aria-hidden="true"
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modal-title"
-        aria-describedby="modal-description"
-        className="modal-content"
-        onClick={(e) => e.stopPropagation()}
       >
-        <h2 id="modal-title" className="modal-title">
-          {title}
-        </h2>
-        <p id="modal-description" className="modal-description">
-          {description}
-        </p>
-        <div className="modal-actions">
-          <button
-            ref={cancelButtonRef}
-            className="btn btn-secondary"
-            onClick={onClose}
-            aria-label={cancelText}
-            disabled={isProcessing}
-          >
-            {cancelText}
-          </button>
-          <button
-            ref={confirmButtonRef}
-            className={confirmButtonClass}
-            onClick={onConfirm}
-            aria-label={confirmText}
-            disabled={isProcessing}
-          >
-            {isProcessing ? 'Processing...' : confirmText}
-          </button>
+        <div
+          ref={contentRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-title"
+          aria-describedby="modal-description"
+          className="modal-content"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div key={contentKey} className="modal-step">
+            <h2 id="modal-title" className="modal-title">{title}</h2>
+            <p id="modal-description" className="modal-description">{description}</p>
+            <div className="modal-body">{children}</div>
+          </div>
+          <div className="modal-actions">
+            {showCancelButton && <button
+              ref={cancelButtonRef}
+              className="btn btn-secondary"
+              onClick={onClose}
+              aria-label={cancelText}
+              disabled={isProcessing}
+            >
+              {cancelText}
+            </button>}
+            <button
+              ref={confirmButtonRef}
+              className={confirmButtonClass}
+              onClick={onConfirm}
+              aria-label={confirmText}
+              disabled={isProcessing || confirmDisabled}
+            >
+              {isProcessing ? 'Processing...' : confirmText}
+            </button>
+          </div>
         </div>
-      </div>
-      <style jsx>{`
-        .modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.6);
-          z-index: 10000;
-          animation: fadeIn 0.2s ease-out;
-        }
-
-        .modal-content {
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          background: var(--bg-primary);
-          padding: 2rem;
-          border-radius: var(--radius-xl);
-          box-shadow: var(--shadow-xl);
-          border: 1px solid var(--border-color);
-          z-index: 10001;
-          width: 90%;
-          max-width: 400px;
-          animation: scaleIn 0.3s ease-out;
-        }
-
-        .modal-title {
-          font-family: var(--font-heading);
-          font-size: 1.5rem;
-          font-weight: 700;
-          color: var(--text-primary);
-          margin: 0 0 0.75rem 0;
-        }
-
-        .modal-description {
-          color: var(--text-secondary);
-          font-size: 0.95rem;
-          margin: 0 0 1.5rem 0;
-        }
-
-        .modal-actions {
-          display: flex;
-          gap: 1rem;
-          justify-content: flex-end;
-        }
-
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
+        <style jsx>{`
+          .modal-overlay {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 10000;
+            animation: fadeIn 0.2s ease-out;
           }
-          to {
-            opacity: 1;
-          }
-        }
 
-        @keyframes scaleIn {
-          from {
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(0.9);
-          }
-          to {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
-          }
-        }
-
-        @media (max-width: 480px) {
           .modal-content {
-            width: 95%;
-            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            width: 520px;
+            max-width: 92vw;
+            height: min(500px, 90vh);
+            min-height: 340px;
+            max-height: 90vh;
+            overflow: hidden;
+            background: var(--bg-primary);
+            padding: 2rem;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            border: 1px solid var(--border-color);
+            animation: scaleIn 0.3s ease-out;
+          }
+
+          .modal-step {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+            flex-direction: column;
+            animation: stepIn 0.2s ease-out;
+          }
+
+          .modal-title {
+            flex: 0 0 auto;
+            font-family: var(--font-heading);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0 0 0.75rem;
+          }
+
+          .modal-description {
+            flex: 0 0 auto;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.55;
+            margin: 0;
+          }
+
+          .modal-body {
+            display: flex;
+            flex: 1;
+            min-height: 180px;
+            flex-direction: column;
+            justify-content: center;
+            overflow: auto;
+            padding: 1rem 0;
           }
 
           .modal-actions {
-            flex-direction: column-reverse;
+            display: flex;
+            flex: 0 0 auto;
+            gap: 1rem;
+            justify-content: flex-end;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
           }
-        }
-      `}</style>
-    </>
+
+          @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+          @keyframes scaleIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+          @keyframes stepIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+          @media (max-width: 480px) {
+            .modal-overlay { padding: .75rem; }
+            .modal-content { width: 520px; max-width: 92vw; height: min(500px, 90vh); min-height: min(340px, calc(90vh - 1.5rem)); padding: 1.5rem; }
+            .modal-body { min-height: 150px; }
+            .modal-actions { flex-direction: column-reverse; }
+          }
+        `}</style>
+      </div>
   );
 });
 

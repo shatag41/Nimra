@@ -14,6 +14,7 @@ import { useNotification } from '@/frontend/customer/contexts/NotificationContex
 import dynamic from 'next/dynamic';
 import ProductImage from './ProductImage';
 import CustomerPageHeader from './CustomerPageHeader';
+import LogoutConfirmationModal from './LogoutConfirmationModal';
 
 const OrderDetailsModal = dynamic(() => import('./portal/OrderDetailsModal'), { ssr: false });
 const CancelOrderModal = dynamic(() => import('./portal/CancelOrderModal'), { ssr: false });
@@ -47,6 +48,7 @@ export default function OrdersClient() {
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
   const [orderToCancel, setOrderToCancel] = useState<OrderRecord | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [showDeletionCancellationSuccess, setShowDeletionCancellationSuccess] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [visibleOrderCount, setVisibleOrderCount] = useState(10);
   const loadMoreRef = React.useRef<HTMLDivElement | null>(null);
@@ -66,6 +68,10 @@ export default function OrdersClient() {
         refreshOrders();
         if (selectedOrder && selectedOrder.orderId === orderToCancel.orderId) {
           setSelectedOrder({ ...selectedOrder, cancellationStatus: 'Pending' });
+        }
+        if (sessionStorage.getItem('nimra-delete-account-cancellation-flow') === '1') {
+          sessionStorage.removeItem('nimra-delete-account-cancellation-flow');
+          setShowDeletionCancellationSuccess(true);
         }
       } else {
         notify.error('Cancellation Failed', res.message || 'Failed to cancel the order. Please try again.');
@@ -587,6 +593,17 @@ export default function OrdersClient() {
           handleCancelOrder={handleCancelOrder}
         />
       )}
+
+      <LogoutConfirmationModal
+        isOpen={showDeletionCancellationSuccess}
+        onClose={() => setShowDeletionCancellationSuccess(false)}
+        onConfirm={() => setShowDeletionCancellationSuccess(false)}
+        title="Cancellation Request Submitted"
+        description="Your cancellation request has been submitted successfully. You can delete your account after an administrator reviews and approves your cancellation request."
+        confirmText="OK"
+        showCancelButton={false}
+        confirmButtonClass="btn btn-primary"
+      />
 
       <style jsx>{`
         .orders-page {

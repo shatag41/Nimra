@@ -158,6 +158,7 @@ type CustomerOrderIdentity = {
 
 // Store OTPs in-memory for local fallback mode
 const localOTPCache = new Map<string, { otp: string; expiresAt: number }>();
+const localDeletionOTPCache = new Map<string, { otp: string; email: string; expiresAt: number; attempts: number; verified?: boolean }>();
 
 function invalidateCMSCache() {
   cachedCMSData = null;
@@ -901,6 +902,36 @@ export async function handlePost(req: Request) {
         return NextResponse.json({ success: true, message: activeOrders.length ? 'Active orders must be completed or cancelled before account deletion.' : 'Account can be deleted.', hasActiveOrders: activeOrders.length > 0, activeOrders });
       }
 
+      const registeredEmail = String(currentUser.Username || '').trim().toLowerCase();
+      if (action === 'sendDeletionOTP') {
+        const requestedEmail = String(payload.email || '').trim().toLowerCase();
+        if (!requestedEmail || requestedEmail !== registeredEmail) {
+          return NextResponse.json({ success: false, message: 'The email address must match your registered email.' }, { status: 400 });
+        }
+        if (activeOrders.length) return NextResponse.json({ success: false, message: 'Your account cannot be deleted while active orders exist.', hasActiveOrders: true }, { status: 409 });
+        const otp = String(Math.floor(100000 + Math.random() * 900000));
+        localDeletionOTPCache.set(String(payload.userId), { otp, email: registeredEmail, expiresAt: Date.now() + 10 * 60 * 1000, attempts: 0 });
+        console.info(`[Local fallback] Account deletion OTP for ${registeredEmail}: ${otp}`);
+        return NextResponse.json({ success: true, message: 'OTP sent successfully to your registered email.' });
+      }
+
+      if (action === 'verifyDeletionOTP') {
+        const state = localDeletionOTPCache.get(String(payload.userId));
+        if (!state || Date.now() > state.expiresAt) {
+          localDeletionOTPCache.delete(String(payload.userId));
+          return NextResponse.json({ success: false, message: 'OTP has expired. Please request a new code.', expired: true }, { status: 400 });
+        }
+        if (String(payload.email || '').trim().toLowerCase() !== state.email) return NextResponse.json({ success: false, message: 'The email address must match your registered email.' }, { status: 400 });
+        if (String(payload.otp || '') !== state.otp) {
+          state.attempts += 1;
+          if (state.attempts >= 5) localDeletionOTPCache.delete(String(payload.userId));
+          return NextResponse.json({ success: false, message: state.attempts >= 5 ? 'Maximum OTP attempts reached. Request a new code.' : 'Incorrect OTP.', attemptsRemaining: Math.max(0, 5 - state.attempts) }, { status: 400 });
+        }
+        state.verified = true;
+        state.otp = '';
+        return NextResponse.json({ success: true, message: 'Email verified successfully.', otpVerified: true });
+      }
+
       if (action === 'changePassword') {
         const currentPassword = String(payload.currentPassword || '');
         const newPassword = String(payload.newPassword || '');
@@ -916,18 +947,20 @@ export async function handlePost(req: Request) {
       }
 
       if (action === 'deleteAccount') {
-        if (!localPasswordMatches(currentUser.Password, String(payload.currentPassword || ''))) {
-          return NextResponse.json({ success: false, message: 'Current password is incorrect.' }, { status: 400 });
-        }
         if (activeOrders.length) {
           return NextResponse.json({ success: false, message: 'Your account cannot be deleted until all active orders are completed or cancelled.', hasActiveOrders: true, activeOrders }, { status: 409 });
+        }
+        const deletionVerification = localDeletionOTPCache.get(String(payload.userId));
+        if (!deletionVerification?.verified || deletionVerification.email !== registeredEmail || Date.now() > deletionVerification.expiresAt) {
+          return NextResponse.json({ success: false, message: 'Email verification is required before deleting your account.' }, { status: 403 });
         }
         fallbackData.users.splice(userIndex, 1);
         fallbackData.carts = (fallbackData.carts || []).filter((cart: any) => String(cart.userId) !== String(payload.userId));
         fallbackData.orders = fallbackData.orders.filter((order: any) => String(order.userId || order.customer?.userId || '').trim() !== String(payload.userId).trim());
         fallbackData.notifications = (fallbackData.notifications || []).filter((event: any) => String(event.UserID || event.UserId || '').trim() !== String(payload.userId).trim());
+        localDeletionOTPCache.delete(String(payload.userId));
         await syncLocalDB('save');
-        return NextResponse.json({ success: true, message: 'Account deleted successfully.' });
+        return NextResponse.json({ success: true, message: 'Account deleted successfully.', confirmationEmailSent: false });
       }
 
       return NextResponse.json({ success: false, message: 'Unsupported account settings action.' }, { status: 400 });

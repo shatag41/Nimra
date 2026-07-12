@@ -2149,6 +2149,8 @@ function handleAccountSettings(spreadsheet, params) {
   var idIndex = findHeaderIndex(headers, ['User ID', 'ID']);
   var passwordIndex = findHeaderIndex(headers, ['Password (hashed)', 'Password']);
   var preferencesIndex = findHeaderIndex(headers, ['Email Preferences']);
+  var emailIndex = findHeaderIndex(headers, ['Email', 'Username']);
+  var nameIndex = findHeaderIndex(headers, ['Full Name', 'Name']);
   var userId = String(params.userId || '').trim();
   var rowIndex = -1;
 
@@ -2183,12 +2185,63 @@ function handleAccountSettings(spreadsheet, params) {
     };
   }
 
-  var currentPassword = String(params.currentPassword || '');
-  var storedPassword = String(data[rowIndex][passwordIndex] || '');
-  var passwordMatches = storedPassword === currentPassword || storedPassword === hashPassword(currentPassword);
-  if (!passwordMatches) return { success: false, message: 'Current password is incorrect.' };
+  if (action === 'sendDeletionOTP') {
+    var registeredEmail = normalizeEmail(data[rowIndex][emailIndex]);
+    var requestedEmail = normalizeEmail(params.email);
+    if (!requestedEmail || requestedEmail !== registeredEmail) {
+      return { success: false, message: 'The email address must match your registered email.' };
+    }
+    if (getActiveOrdersForUser(spreadsheet, userId).length) {
+      return { success: false, message: 'Your account cannot be deleted while active orders exist.', hasActiveOrders: true };
+    }
+    var otpEntropy = Utilities.getUuid().replace(/-/g, '').substring(0, 12);
+    var otp = String((parseInt(otpEntropy, 16) % 900000) + 100000);
+    CacheService.getScriptCache().put('account_delete_otp_' + userId, JSON.stringify({
+      otp: otp,
+      email: registeredEmail,
+      attempts: 0,
+      expiresAt: Date.now() + 10 * 60 * 1000
+    }), 600);
+    CacheService.getScriptCache().remove('account_delete_verified_' + userId);
+    var customerName = String(data[rowIndex][nameIndex] || 'Customer').trim();
+    var subject = 'NIMRA Account Deletion Verification';
+    var plainBody = 'Hello ' + customerName + ',\n\nWe received a request to permanently delete your NIMRA account.\n\nUse the verification code below to continue:\n\n' + otp + '\n\nThis OTP is valid for 10 minutes.\n\nIf you did not request this deletion, please ignore this email.\n\nThank you,\n\nNIMRA Team';
+    var htmlBody = '<p>Hello ' + escapeHtml(customerName) + ',</p><p>We received a request to permanently delete your NIMRA account.</p><p>Use the verification code below to continue:</p><p style="font-size:24px;font-weight:700;letter-spacing:4px">' + otp + '</p><p>This OTP is valid for 10 minutes.</p><p>If you did not request this deletion, please ignore this email.</p><p>Thank you,<br>NIMRA Team</p>';
+    var emailResult = sendNimraEmail(registeredEmail, subject, plainBody, htmlBody, 'NIMRA Team');
+    if (!emailResult.sent) return { success: false, message: emailResult.error || 'Unable to send OTP email.' };
+    return { success: true, message: 'OTP sent successfully to your registered email.' };
+  }
+
+  if (action === 'verifyDeletionOTP') {
+    var otpCache = CacheService.getScriptCache();
+    var otpKey = 'account_delete_otp_' + userId;
+    var cachedValue = otpCache.get(otpKey);
+    if (!cachedValue) return { success: false, message: 'OTP has expired. Please request a new code.', expired: true };
+    var otpState = JSON.parse(cachedValue);
+    if (Date.now() > Number(otpState.expiresAt || 0)) {
+      otpCache.remove(otpKey);
+      return { success: false, message: 'OTP has expired. Please request a new code.', expired: true };
+    }
+    if (normalizeEmail(params.email) !== normalizeEmail(otpState.email)) return { success: false, message: 'The email address must match your registered email.' };
+    if (String(params.otp || '').trim() !== String(otpState.otp)) {
+      otpState.attempts = Number(otpState.attempts || 0) + 1;
+      if (otpState.attempts >= 5) {
+        otpCache.remove(otpKey);
+        return { success: false, message: 'Maximum OTP attempts reached. Request a new code.', attemptsRemaining: 0 };
+      }
+      otpCache.put(otpKey, JSON.stringify(otpState), Math.max(1, Math.ceil((otpState.expiresAt - Date.now()) / 1000)));
+      return { success: false, message: 'Incorrect OTP.', attemptsRemaining: 5 - otpState.attempts };
+    }
+    otpCache.remove(otpKey);
+    otpCache.put('account_delete_verified_' + userId, normalizeEmail(otpState.email), 600);
+    return { success: true, message: 'Email verified successfully.', otpVerified: true };
+  }
 
   if (action === 'changePassword') {
+    var currentPassword = String(params.currentPassword || '');
+    var storedPassword = String(data[rowIndex][passwordIndex] || '');
+    var passwordMatches = storedPassword === currentPassword || storedPassword === hashPassword(currentPassword);
+    if (!passwordMatches) return { success: false, message: 'Current password is incorrect.' };
     var newPassword = String(params.newPassword || '');
     if (newPassword.length < 6) {
       return { success: false, message: 'New password must be at least 6 characters.' };
@@ -2202,9 +2255,20 @@ function handleAccountSettings(spreadsheet, params) {
     if (activeOrders.length) {
       return { success: false, message: 'Your account cannot be deleted until all active orders are completed or cancelled.', hasActiveOrders: true, activeOrders: activeOrders };
     }
+    var verifiedEmail = CacheService.getScriptCache().get('account_delete_verified_' + userId);
+    var registeredEmail = normalizeEmail(data[rowIndex][emailIndex]);
+    if (!verifiedEmail || normalizeEmail(verifiedEmail) !== registeredEmail) {
+      return { success: false, message: 'Email verification is required before deleting your account.' };
+    }
+    var customerName = String(data[rowIndex][nameIndex] || 'Customer').trim();
     deleteCustomerOwnedData(spreadsheet, userId);
     sheet.deleteRow(rowIndex + 1);
-    return { success: true, message: 'Account deleted successfully.' };
+    CacheService.getScriptCache().remove('account_delete_verified_' + userId);
+    var deletionSubject = 'Your NIMRA Account Has Been Deleted';
+    var deletionBody = 'Hello ' + customerName + ',\n\nYour NIMRA account has been permanently deleted as requested.\n\nWe\'re sorry to see you go.\n\nThank you for choosing NIMRA.\n\nIf this deletion was not initiated by you, please contact our support team immediately.\n\nBest regards,\n\nNIMRA Team';
+    var deletionHtml = '<p>Hello ' + escapeHtml(customerName) + ',</p><p>Your NIMRA account has been permanently deleted as requested.</p><p>We\'re sorry to see you go.</p><p>Thank you for choosing NIMRA.</p><p>If this deletion was not initiated by you, please contact our support team immediately.</p><p>Best regards,<br>NIMRA Team</p>';
+    var deletionEmail = sendNimraEmail(registeredEmail, deletionSubject, deletionBody, deletionHtml, 'NIMRA Team');
+    return { success: true, message: 'Account deleted successfully.', confirmationEmailSent: deletionEmail.sent };
   }
 
   return { success: false, message: 'Unsupported account settings action.' };
