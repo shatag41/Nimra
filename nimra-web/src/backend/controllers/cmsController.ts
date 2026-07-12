@@ -160,21 +160,35 @@ type CustomerOrderIdentity = {
 const localOTPCache = new Map<string, { otp: string; expiresAt: number }>();
 const localDeletionOTPCache = new Map<string, { otp: string; email: string; expiresAt: number; attempts: number; verified?: boolean }>();
 
-function invalidateCMSCache() {
-  cachedCMSData = null;
-  lastFetchTime = 0;
-  liveGetCache.clear();
-  try {
-    const { clearCMSDataCache } = require('@/utils/api');
-    clearCMSDataCache();
-  } catch (err) {
-    console.error('[invalidateCMSCache] Failed to clear CMS API cache:', err);
-  }
-  try {
-    const { revalidateTag } = require('next/cache');
-    revalidateTag('cms-data');
-  } catch (err) {
-    // Ignore context errors
+function invalidateCMSCache(type?: string) {
+  const cmsTypes = ['productCRUD', 'bannerCRUD', 'faqCRUD', 'companyInfoUpdate'];
+  const dataMutations = [
+    'createOrder', 'order', 'updateOrder', 'cancelRequest', 'requestOrderCancellation',
+    'updateCancellation', 'reviewCancellationRequest', 'updateOrderStatus', 'registerUser',
+    'userAction', 'saveAddress', 'accountSettings', 'userAddresses', 'login', 'register',
+    'verifyRegistrationOTP', 'createVerifiedUser', 'googleSignIn', 'cartSync', 'notificationCRUD',
+    'adminUpdateCRUD', 'inquiryCRUD', 'inquiryReview'
+  ];
+
+  if (!type || cmsTypes.includes(type)) {
+    cachedCMSData = null;
+    lastFetchTime = 0;
+    liveGetCache.clear();
+    try {
+      const { clearCMSDataCache } = require('@/utils/api');
+      clearCMSDataCache();
+    } catch (err) {
+      console.error('[invalidateCMSCache] Failed to clear CMS API cache:', err);
+    }
+    try {
+      const { revalidateTag } = require('next/cache');
+      revalidateTag('cms-data');
+    } catch (err) {
+      // Ignore context errors
+    }
+  } else if (dataMutations.includes(type)) {
+    // Only clear dynamic cache, preserving static catalog/CMS cache
+    liveGetCache.clear();
   }
 }
 
@@ -249,8 +263,8 @@ export async function handleGet(req: Request) {
     });
   }
 
-  // Bypass cachedCMSData to fetch updates directly
-  if (false && !action && cachedCMSData && (now - lastFetchTime < CACHE_TTL)) {
+  // Return cached CMS data if still fresh
+  if (!action && cachedCMSData && (now - lastFetchTime < CACHE_TTL)) {
     return NextResponse.json(cachedCMSData, { headers: cacheHeaders });
   }
   
@@ -502,7 +516,7 @@ export async function handlePost(req: Request) {
       payload.banner = { ...bannerFields, ImageUrl: resolvedBannerPath };
     }
 
-    invalidateCMSCache();
+    invalidateCMSCache(payload.type);
 
     if (payload.type === 'login') {
       const username = String(payload.username || '').trim();
@@ -572,7 +586,7 @@ export async function handlePost(req: Request) {
               newImagePath
             );
           }
-          invalidateCMSCache();
+          invalidateCMSCache(payload.type);
           return NextResponse.json(data);
         }
         backendError = 'Apps Script returned a non-JSON response. Check the Web App deployment URL and access settings.';

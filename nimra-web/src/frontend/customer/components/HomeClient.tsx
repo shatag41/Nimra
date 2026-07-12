@@ -5,9 +5,15 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Banner, Product, FAQ, CompanyInfo } from '@/types/cms';
 import { useCMSData } from '@/frontend/customer/hooks/useCMSData';
-import FAQSection from './FAQSection';
-import { UpcomingProducts } from './UpcomingProducts';
+import dynamic from 'next/dynamic';
+
+const FAQSection = dynamic(() => import('./FAQSection'));
+
+const UpcomingProducts = dynamic(
+  () => import('./UpcomingProducts').then((mod) => mod.UpcomingProducts)
+);
 import { ProductSection } from './portal/Products';
+
 
 interface HomeClientProps {
   banners: Banner[];

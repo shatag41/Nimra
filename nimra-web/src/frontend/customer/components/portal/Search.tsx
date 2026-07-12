@@ -9,6 +9,26 @@ interface SearchProps {
 }
 
 export function Search({ value, onChange, placeholder = 'Search products...' }: SearchProps) {
+  const [localValue, setLocalValue] = React.useState(value);
+
+  React.useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      if (localValue !== value) {
+        onChange(localValue);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [localValue, onChange, value]);
+
+  const handleClear = () => {
+    setLocalValue('');
+    onChange('');
+  };
+
   return (
     <div className="search-wrapper">
       <span className="search-icon">
@@ -19,13 +39,13 @@ export function Search({ value, onChange, placeholder = 'Search products...' }: 
       <input
         type="text"
         className="search-input"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+        value={localValue}
+        onChange={(e) => setLocalValue(e.target.value)}
         placeholder={placeholder}
         aria-label="Search"
       />
-      {value && (
-        <button className="clear-btn" onClick={() => onChange('')} aria-label="Clear search">
+      {localValue && (
+        <button className="clear-btn" onClick={handleClear} aria-label="Clear search">
           ✕
         </button>
       )}

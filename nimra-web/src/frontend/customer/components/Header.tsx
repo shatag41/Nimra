@@ -46,7 +46,9 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
   const activeRoleValue = getUserRole(activeUser);
   const activeRole = activeUser ? normalizeRole(activeRoleValue) : null;
   const canUseCustomerActions = authReady && (!activeUser || activeRole === 'CUSTOMER');
-  const unreadCount = notifications.filter(n => n.Read !== true && n.Read !== 'true').length;
+  const unreadCount = useMemo(() => {
+    return notifications.filter(n => n.Read !== true && n.Read !== 'true').length;
+  }, [notifications]);
   const dashboardHref = isAdminRole(activeRoleValue) ? '/admin' : '/customer-portal';
   const logoHref = activeUser ? dashboardHref : '/';
 
@@ -119,7 +121,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
     loadNotifications();
   }, [activeUser, activeRoleValue, notificationDropdownOpen, notifications.length, notificationsOwnerKey]);
 
-  const handleMarkAsRead = async (id: string | number) => {
+  const handleMarkAsRead = useCallback(async (id: string | number) => {
     try {
       setNotifications(prev => prev.map(n => String(n.ID) === String(id) ? { ...n, Read: true } : n));
       
@@ -139,9 +141,9 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
     } catch (err) {
       console.error('Failed to mark notification as read:', err);
     }
-  };
+  }, [activeUser]);
 
-  const handleMarkAllAsRead = async () => {
+  const handleMarkAllAsRead = useCallback(async () => {
     try {
       const unread = notifications.filter(n => n.Read !== true && n.Read !== 'true');
       if (!unread.length) return;
@@ -165,13 +167,13 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
     } catch (err) {
       console.error('Failed to mark all as read:', err);
     }
-  };
+  }, [activeUser, notifications]);
 
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
     applyTheme(newTheme, true);
-  };
+  }, [theme]);
 
   const navLinks = useMemo(() => {
     if (!authReady) {

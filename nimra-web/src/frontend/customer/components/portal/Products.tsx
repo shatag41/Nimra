@@ -20,6 +20,8 @@ export interface ProductCardProps {
   actionLink?: string;
   actionText?: string;
   descriptionOnly?: boolean;
+  cartQty?: number;
+  onUpdateQuantity?: (productId: string, quantity: number) => void;
 }
 
 export const ProductCard = React.memo(function ProductCard({ 
@@ -34,35 +36,31 @@ export const ProductCard = React.memo(function ProductCard({
   showCategoryWithBadge = false,
   actionLink,
   actionText = 'View More',
-  descriptionOnly = false
+  descriptionOnly = false,
+  cartQty = 0,
+  onUpdateQuantity
 }: ProductCardProps) {
-  const { addProduct, updateQuantity, items } = useCart();
   const id = productId(product);
-  const cartItem = items.find((item) => String(item.productId) === id) ?? null;
-  const inCart = cartItem !== null && cartItem.quantity > 0;
+  const inCart = cartQty > 0;
   const orderable = isOrderable(product);
 
   const handleAdd = () => {
-    addProduct(product);
     if (onAdd) {
       onAdd(product);
     }
   };
 
   const handleIncrease = () => {
-    if (cartItem) {
-      updateQuantity(cartItem.productId, cartItem.quantity + 1);
+    if (inCart) {
+      if (onUpdateQuantity) onUpdateQuantity(id, cartQty + 1);
     } else {
-      addProduct(product);
-      if (onAdd) {
-        onAdd(product);
-      }
+      if (onAdd) onAdd(product);
     }
   };
 
   const handleDecrease = () => {
-    if (cartItem) {
-      updateQuantity(cartItem.productId, cartItem.quantity - 1);
+    if (inCart && onUpdateQuantity) {
+      onUpdateQuantity(id, cartQty - 1);
     }
   };
 
@@ -91,7 +89,6 @@ export const ProductCard = React.memo(function ProductCard({
       trackProductView(product);
     }
 
-    // If clicking on the card itself, not on control buttons, open the modal
     const target = e.target as HTMLElement;
     if (!target.closest('.qty-controls') && !target.closest('.add-cart-btn') && !target.closest('.btn-secondary') && !target.closest('.view-cart-link')) {
       if (onViewMore) {
@@ -128,7 +125,7 @@ export const ProductCard = React.memo(function ProductCard({
       <div className="product-img-wrap">
         <ProductImage src={product.ImageUrl} alt={product.Name} />
         {inCart && (
-          <div className="cart-count-badge">{cartItem.quantity}</div>
+          <div className="cart-count-badge">{cartQty}</div>
         )}
       </div>
       <div className="cat-info-box">
@@ -188,7 +185,7 @@ export const ProductCard = React.memo(function ProductCard({
                 >
                   −
                 </button>
-                <span className="qty-count">{cartItem.quantity}</span>
+                <span className="qty-count">{cartQty}</span>
                 <button
                   type="button"
                   className="qty-btn qty-plus"
@@ -228,7 +225,7 @@ export const ProductCard = React.memo(function ProductCard({
 
         {inCart && (
           <Link href="/cart" className="view-cart-link" onClick={(event) => event.stopPropagation()}>
-            View Cart ({cartItem.quantity} item{cartItem.quantity > 1 ? 's' : ''}) →
+            View Cart ({cartQty} item{cartQty > 1 ? 's' : ''}) →
           </Link>
         )}
       </div>
@@ -280,6 +277,26 @@ export function ProductSection({
   descriptionOnly,
 }: ProductSectionProps) {
   const displayProducts = limit ? products.slice(0, limit) : products;
+  const { addProduct, updateQuantity, items } = useCart();
+
+  const cartItemsMap = React.useMemo(() => {
+    const map: Record<string, number> = {};
+    items.forEach((item) => {
+      map[String(item.productId)] = item.quantity;
+    });
+    return map;
+  }, [items]);
+
+  const handleAdd = React.useCallback((product: Product) => {
+    addProduct(product);
+    if (onAdd) {
+      onAdd(product);
+    }
+  }, [addProduct, onAdd]);
+
+  const handleUpdateQuantity = React.useCallback((productId: string, quantity: number) => {
+    updateQuantity(productId, quantity);
+  }, [updateQuantity]);
 
   return (
     <div className={`product-section ${compact ? 'product-section-compact' : ''} ${disableAnimation ? 'product-section-static' : ''}`}>
@@ -293,23 +310,28 @@ export function ProductSection({
 
       {displayProducts.length > 0 ? (
         <div className="catalog-grid">
-          {displayProducts.map((product, index) => (
-            <ProductCard 
-              key={productId(product)} 
-              product={product} 
-              index={index}
-              onAdd={onAdd}
-              onViewMore={onViewMore}
-              badgeText={getBadgeText ? getBadgeText(product, index) : undefined}
-              priceLabel={getPriceLabel ? getPriceLabel(product, index) : undefined}
-              disableAnimation={disableAnimation}
-              disableViewTracking={disableViewTracking}
-              showCategoryWithBadge={showCategoryWithBadge}
-              actionLink={actionLink}
-              actionText={actionText}
-              descriptionOnly={descriptionOnly}
-            />
-          ))}
+          {displayProducts.map((product, index) => {
+            const id = productId(product);
+            return (
+              <ProductCard 
+                key={id} 
+                product={product} 
+                index={index}
+                onAdd={handleAdd}
+                onUpdateQuantity={handleUpdateQuantity}
+                cartQty={cartItemsMap[id] || 0}
+                onViewMore={onViewMore}
+                badgeText={getBadgeText ? getBadgeText(product, index) : undefined}
+                priceLabel={getPriceLabel ? getPriceLabel(product, index) : undefined}
+                disableAnimation={disableAnimation}
+                disableViewTracking={disableViewTracking}
+                showCategoryWithBadge={showCategoryWithBadge}
+                actionLink={actionLink}
+                actionText={actionText}
+                descriptionOnly={descriptionOnly}
+              />
+            );
+          })}
         </div>
       ) : (
         emptyState || (

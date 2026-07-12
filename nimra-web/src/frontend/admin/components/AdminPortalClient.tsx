@@ -21,8 +21,11 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import LogoutConfirmationModal from '@/frontend/customer/components/LogoutConfirmationModal';
 import { isSuperAdmin, normalizeRole } from '../utils/accessControl';
-import { AdminManagementTab, LogsTab, RolesPermissionsTab } from './EnterpriseTabs';
-import SuperAdminOverview from './SuperAdminDashboard';
+const AdminManagementTab = dynamic(() => import('./EnterpriseTabs').then((mod) => mod.AdminManagementTab), { ssr: false });
+const LogsTab = dynamic(() => import('./EnterpriseTabs').then((mod) => mod.LogsTab), { ssr: false });
+const RolesPermissionsTab = dynamic(() => import('./EnterpriseTabs').then((mod) => mod.RolesPermissionsTab), { ssr: false });
+const SuperAdminOverview = dynamic(() => import('./SuperAdminDashboard'), { ssr: false });
+
 
 // Dynamically loaded Modals & Profile
 const ProfilePanel = dynamic(() => import('./ProfilePanel'), { ssr: false });
