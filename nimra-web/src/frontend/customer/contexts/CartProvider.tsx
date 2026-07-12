@@ -6,7 +6,6 @@ import { useAuth } from './AuthContext';
 import { cartSubtotal, deliveryChargeFor, hydrateCartItemsFromCatalog, mergeCartItems, mergeCartSnapshots, normalizeCartItem, productToCartItem } from '../utils/commerce';
 import { syncCart, fetchCart, fetchProducts } from '@/utils/api';
 import { useNotification } from './NotificationContext';
-import { useRouter } from 'next/navigation';
 
 interface CartContextValue {
   items: CartItem[];
@@ -42,7 +41,6 @@ const readStoredCartItems = (key: string): CartItem[] => {
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
-  const router = useRouter();
   const storageKey = getStorageKey(user);
   const [items, setItems] = useState<CartItem[]>([]);
   const itemsRef = useRef<CartItem[]>([]);

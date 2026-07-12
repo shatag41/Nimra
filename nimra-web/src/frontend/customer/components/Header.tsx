@@ -12,6 +12,7 @@ import { fetchNotifications, saveNotification } from '@/utils/api';
 import LogoutConfirmationModal from './LogoutConfirmationModal';
 import { AppTheme, applyTheme, initializeTheme, THEME_CHANGE_EVENT } from '../utils/theme';
 import { isAdminRole, normalizeRole } from '@/frontend/admin/utils/accessControl';
+import { useNotification } from '../contexts/NotificationContext';
 
 interface HeaderProps {
   companyInfo: CompanyInfo;
@@ -38,6 +39,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
   const { totalItems } = useCart();
   const { user, logout, isLoading: isAuthLoading } = useAuth();
   const { city, loading, requestLocation, permissionDenied } = useLocation();
+  const { notify } = useNotification();
 
   const authReady = mounted && !isAuthLoading;
   const activeUser = authReady ? user : null;
@@ -242,7 +244,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="desktop-nav" aria-label="Main navigation" onMouseLeave={useCallback(() => setHoveredNav(null), [])}>
+          <nav className="desktop-nav" aria-label="Main navigation" onMouseLeave={() => setHoveredNav(null)}>
             {!authReady ? (
               <div className="navbar-skeleton" aria-hidden="true">
                 {NAVBAR_SKELETON_ITEMS.map((width, index) => (
@@ -630,7 +632,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
 
             {/* Mobile Hamburger */}
             <button
-              onClick={useCallback(() => setMobileMenuOpen(prev => !prev), [])}
+              onClick={() => setMobileMenuOpen(prev => !prev)}
               className="mobile-menu-btn"
               aria-label="Toggle Menu"
               aria-expanded={mobileMenuOpen}
@@ -709,7 +711,9 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
         onClose={() => setIsLogoutModalOpen(false)}
         onConfirm={() => {
           setIsLogoutModalOpen(false);
-          logout();
+          notify.success('Logged Out', 'You have been successfully logged out.');
+          // Brief delay so the toast registers before the page replaces
+          setTimeout(() => logout(), 150);
         }}
       />
     </>

@@ -68,7 +68,7 @@ export default function SettingsClient() {
   }, []);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) router.replace('/login?next=/settings');
+    if (!isLoading && !isAuthenticated) router.replace('/');
   }, [isAuthenticated, isLoading, router]);
 
   useEffect(() => {
@@ -183,8 +183,10 @@ export default function SettingsClient() {
 
   const closeAfterDeletion = () => {
     if (user?.ID) localStorage.removeItem(`nimra-cart-${user.ID}`);
+    notify.success('Account Deleted', 'Your account has been permanently deleted. Goodbye!');
     clearSession();
-    window.location.replace('/');
+    // Brief delay so the success toast is visible before navigation
+    setTimeout(() => window.location.replace('/'), 200);
   };
 
   const deletionModalTitle = deleteStep === 'confirm' ? 'Delete Your Account?'

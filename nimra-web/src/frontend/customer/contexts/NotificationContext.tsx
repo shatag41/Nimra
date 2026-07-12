@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, useRef, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect, useMemo, ReactNode } from 'react';
 import Link from 'next/link';
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info' | 'cart' | 'order' | 'login' | 'profile';
@@ -47,6 +47,25 @@ const NotificationContext = createContext<NotificationContextValue | null>(null)
 const DURATION = 4000;
 const TICK_RATE = 10;
 
+// Returns the accent color for the progress bar based on notification type
+function getProgressColor(type: NotificationType | undefined): string {
+  switch (type) {
+    case 'error':
+      return '#EF4444';
+    case 'warning':
+      return '#F59E0B';
+    case 'info':
+      return '#2563EB';
+    case 'success':
+    case 'cart':
+    case 'order':
+    case 'login':
+    case 'profile':
+    default:
+      return '#22C55E';
+  }
+}
+
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const [notification, setNotification] = useState<NotificationPayload | null>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -57,6 +76,14 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const timeRemainingRef = useRef(DURATION);
   const isPausedRef = useRef(false);
   const lastTickTimeRef = useRef(Date.now());
+
+  // Cleanup all timers on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+    };
+  }, []);
 
   const dismiss = useCallback(() => {
     setIsVisible(false);
@@ -122,7 +149,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     isPausedRef.current = false;
   }, []);
 
-  const notify = {
+  const notify = useMemo(() => ({
     success: (title: string, message?: string) => showNotification({ type: 'success', title, message }),
     error: (title: string, message?: string) => showNotification({ type: 'error', title, message }),
     warning: (title: string, message?: string) => showNotification({ type: 'warning', title, message }),
@@ -138,7 +165,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     login: (title: string, message?: string) => showNotification({ type: 'login', title, message }),
     profile: (title: string, message?: string) => showNotification({ type: 'profile', title, message }),
     custom: showNotification
-  };
+  }), [showNotification]);
 
   return (
     <NotificationContext.Provider value={{ notification, isVisible, notify, dismiss, pauseTimer, resumeTimer, progress }}>
@@ -160,6 +187,9 @@ function NotificationBanner() {
   if (!notification && !isVisible) return null;
 
   const { type, title, message, quantity, productName, primaryAction, secondaryAction, id } = notification || {};
+
+  const progressColor = getProgressColor(type);
+  const trackColor = `${progressColor}1A`; // 10% alpha version
   
   // Icon mapping
   const getIcon = () => {
@@ -184,6 +214,16 @@ function NotificationBanner() {
             </svg>
           </div>
         );
+      case 'info':
+        return (
+          <div className="nm-icon-wrapper nm-info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="8.01"></line>
+              <line x1="12" y1="12" x2="12" y2="16"></line>
+            </svg>
+          </div>
+        );
       default: // success, cart, profile, login, order
         return (
           <div className="nm-icon-wrapper nm-success">
@@ -203,8 +243,8 @@ function NotificationBanner() {
       onMouseLeave={resumeTimer}
       role="alert"
     >
-      <div className="nm-progress-track">
-        <div className="nm-progress-bar" style={{ width: `${progress}%` }} />
+      <div className="nm-progress-track" style={{ background: trackColor }}>
+        <div className="nm-progress-bar" style={{ width: `${progress}%`, background: progressColor }} />
       </div>
 
       <button className="nm-close-btn" onClick={dismiss} aria-label="Close">
@@ -222,6 +262,7 @@ function NotificationBanner() {
             {type === 'success' || type === 'order' || type === 'profile' || type === 'cart' || type === 'login' ? '✓ ' : ''}
             {type === 'error' ? '✕ ' : ''}
             {type === 'warning' ? '⚠ ' : ''}
+            {type === 'info' ? 'ℹ ' : ''}
             {title}
           </h4>
           
@@ -312,12 +353,10 @@ function NotificationBanner() {
           left: 0;
           width: 100%;
           height: 3px;
-          background: rgba(37, 99, 235, 0.1);
         }
 
         .nm-progress-bar {
           height: 100%;
-          background: #2563eb;
           transition: width 10ms linear;
         }
 
@@ -371,8 +410,8 @@ function NotificationBanner() {
         }
 
         .nm-success {
-          background: rgba(37, 99, 235, 0.1);
-          color: #2563eb;
+          background: rgba(34, 197, 94, 0.12);
+          color: #22c55e;
         }
 
         .nm-error {
@@ -383,6 +422,11 @@ function NotificationBanner() {
         .nm-warning {
           background: rgba(245, 158, 11, 0.1);
           color: #f59e0b;
+        }
+
+        .nm-info {
+          background: rgba(37, 99, 235, 0.1);
+          color: #2563eb;
         }
 
         .nm-icon-wrapper svg {

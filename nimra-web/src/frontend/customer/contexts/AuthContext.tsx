@@ -267,15 +267,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(null);
     clearBrowserSession();
     notifyRecentlyViewedChanged();
-
-    if (typeof window !== 'undefined') {
-      window.location.replace('/');
-      return;
-    }
-
-    setUser(null);
-    router.replace('/');
-  }, [router]);
+    // Use hard navigation so all React state is fully reset and the
+    // guest navbar renders correctly on the home page.
+    window.location.replace('/');
+  }, []);
 
   // Synchronize Recently Viewed Products with Database
   useEffect(() => {
