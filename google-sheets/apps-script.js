@@ -156,6 +156,9 @@ function doPost(e) {
       'inquiryReview': function() { return updateInquiryReview(spreadsheet, data.payload || data); },
       'login': function() { return handleAuthLogin(spreadsheet, data.payload || data); },
       'register': function() { return handleAuthRegister(spreadsheet, data.payload || data); },
+      'sendRegistrationOTP': function() { return sendRegistrationOTP(spreadsheet, data.payload || data); },
+      'verifyRegistrationOTP': function() { return verifyRegistrationOTP(spreadsheet, data.payload || data); },
+      'createVerifiedUser': function() { return createVerifiedUser(spreadsheet, data.payload || data); },
       'cartSync': function() { return handleCartSync(spreadsheet, data.payload || data); },
       'getCart': function() { return getCart(spreadsheet, data.payload || data); },
       'requestOTP': function() { return handleAuthRequestOTP(spreadsheet, data.payload || data); },
@@ -2006,7 +2009,8 @@ function handleUserCRUD(spreadsheet, params) {
     else if (key === 'Password (hashed)' || key === 'Password') rowValues[j] = user.Password || '';
     else if (key === 'Role (Admin/Customer)' || key === 'Role') rowValues[j] = user.Role || 'Customer';
     else if (key === 'Status' || key === 'Active') rowValues[j] = (user.Active !== false) ? 'Active' : 'Inactive';
-    else if (key === 'Registration Date') rowValues[j] = action === 'create' ? new Date().toISOString() : data[1] ? data[1][j] : '';
+    else if (key === 'Registration Date' || key === 'Created At') rowValues[j] = action === 'create' ? new Date().toISOString() : data[1] ? data[1][j] : '';
+    else if (key === 'Updated At') rowValues[j] = new Date().toISOString();
     else if (key === 'SavedAddresses' || key === 'Saved Addresses') rowValues[j] = user.SavedAddresses ? normalizeSavedAddressesForStorage(user.SavedAddresses) : '[]';
     else if (key === 'RecentlyViewed') rowValues[j] = user.RecentlyViewed || '[]';
     else if (key === 'Email Preferences') rowValues[j] = user.EmailPreferences || JSON.stringify(getDefaultEmailPreferences());
@@ -2897,6 +2901,103 @@ function handleAuthRegister(spreadsheet, params) {
     return response;
   }
   return result;
+}
+
+function validateRegistrationUser(spreadsheet, user) {
+  user = user || {};
+  var name = String(user.Name || '').trim();
+  var mobile = getUserMobile(user);
+  var email = normalizeEmail(user.Username);
+  var password = String(user.Password || '');
+  if (!name || !email || !mobile || !password) return { success: false, message: 'All registration fields are required.' };
+  if (!isValidEmail(email)) return { success: false, message: 'Please enter a valid email address.' };
+  if (!/^[0-9]{10}$/.test(mobile)) return { success: false, message: 'Mobile number must be 10 digits.' };
+  if (password.length < 6) return { success: false, message: 'Password must be at least 6 characters.' };
+  var users = getUsersData(spreadsheet);
+  for (var i = 0; i < users.length; i++) {
+    if (normalizeEmail(users[i].Username) === email) return { success: false, message: 'Email already registered.' };
+    if (normalizeDigits(users[i].Mobile) === mobile) return { success: false, message: 'Mobile number already registered.' };
+  }
+  return { success: true, email: email, mobile: mobile };
+}
+
+function registrationFingerprint(user) {
+  var source = [
+    String(user.Name || '').trim(), normalizeEmail(user.Username), getUserMobile(user),
+    hashPassword(String(user.Password || '')), String(user.Role || 'Customer').trim()
+  ].join('|');
+  var digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, source);
+  return Utilities.base64EncodeWebSafe(digest);
+}
+
+function registrationOtpKey(email) {
+  return 'registration_otp_' + Utilities.base64EncodeWebSafe(normalizeEmail(email)).replace(/=+$/g, '');
+}
+
+function sendRegistrationOTP(spreadsheet, params) {
+  var user = params.user || params;
+  var validation = validateRegistrationUser(spreadsheet, user);
+  if (!validation.success) return validation;
+  var otp = String((parseInt(Utilities.getUuid().replace(/-/g, '').substring(0, 12), 16) % 900000) + 100000);
+  var state = {
+    otp: otp,
+    fingerprint: registrationFingerprint(user),
+    expiresAt: Date.now() + 10 * 60 * 1000,
+    attempts: 0,
+    verified: false
+  };
+  CacheService.getScriptCache().put(registrationOtpKey(validation.email), JSON.stringify(state), 600);
+  var plainBody = 'Welcome to NIMRA.\n\nUse the verification code below to complete your registration.\n\nOTP:\n' + otp + '\n\nThis code expires in 10 minutes.\n\nIf you did not request this registration, simply ignore this email.\n\nRegards,\nNIMRA Team';
+  var htmlBody = '<p>Welcome to NIMRA.</p><p>Use the verification code below to complete your registration.</p><p><strong>OTP:</strong><br><span style="font-size:28px;font-weight:700;letter-spacing:6px">' + otp + '</span></p><p>This code expires in 10 minutes.</p><p>If you did not request this registration, simply ignore this email.</p><p>Regards,<br>NIMRA Team</p>';
+  var emailResult = sendNimraEmail(validation.email, 'Verify your NIMRA Account', plainBody, htmlBody, 'NIMRA Team');
+  if (!emailResult.sent) {
+    CacheService.getScriptCache().remove(registrationOtpKey(validation.email));
+    return { success: false, message: emailResult.error || 'Unable to send verification email.' };
+  }
+  return { success: true, message: 'Verification code sent.', expiresAt: state.expiresAt };
+}
+
+function verifyRegistrationOTP(spreadsheet, params) {
+  var user = params.user || params;
+  var email = normalizeEmail(user.Username || params.email);
+  var otp = String(params.otp || '').trim();
+  if (!/^\d{6}$/.test(otp)) return { success: false, message: 'Invalid OTP. Please try again.' };
+  var cache = CacheService.getScriptCache();
+  var key = registrationOtpKey(email);
+  var cached = cache.get(key);
+  if (!cached) return { success: false, message: 'OTP expired. Please request a new one.', expired: true };
+  var state = JSON.parse(cached);
+  if (Date.now() > Number(state.expiresAt || 0)) {
+    cache.remove(key);
+    return { success: false, message: 'OTP expired. Please request a new one.', expired: true };
+  }
+  if (state.fingerprint !== registrationFingerprint(user)) return { success: false, message: 'Registration details changed. Please request a new OTP.' };
+  if (state.otp !== otp) {
+    state.attempts = Number(state.attempts || 0) + 1;
+    cache.put(key, JSON.stringify(state), Math.max(1, Math.ceil((state.expiresAt - Date.now()) / 1000)));
+    return { success: false, message: 'Invalid OTP. Please try again.' };
+  }
+  state.otp = '';
+  state.verified = true;
+  cache.put(key, JSON.stringify(state), Math.max(1, Math.ceil((state.expiresAt - Date.now()) / 1000)));
+  return { success: true, message: 'Email verified successfully.' };
+}
+
+function createVerifiedUser(spreadsheet, params) {
+  var user = params.user || params;
+  var email = normalizeEmail(user.Username);
+  var cache = CacheService.getScriptCache();
+  var key = registrationOtpKey(email);
+  var cached = cache.get(key);
+  if (!cached) return { success: false, message: 'OTP expired. Please request a new one.', expired: true };
+  var state = JSON.parse(cached);
+  if (!state.verified || state.fingerprint !== registrationFingerprint(user) || Date.now() > Number(state.expiresAt || 0)) {
+    return { success: false, message: 'Email verification is required before creating the account.' };
+  }
+  var validation = validateRegistrationUser(spreadsheet, user);
+  if (!validation.success) return validation;
+  cache.remove(key);
+  return handleAuthRegister(spreadsheet, { user: user });
 }
 
 function getUserMobile(user) {

@@ -5,6 +5,9 @@ import { getUploadStoragePath } from '@/utils/uploadImage';
 export type AuthRequest =
   | { type: 'login'; username: string; password: string }
   | { type: 'register'; user: { Name: string; Username?: string; Mobile?: string; Password: string; Role?: string } }
+  | { type: 'sendRegistrationOTP'; user: { Name: string; Username: string; Mobile: string; Password: string; Role?: string } }
+  | { type: 'verifyRegistrationOTP'; otp: string; user: { Name: string; Username: string; Mobile: string; Password: string; Role?: string } }
+  | { type: 'createVerifiedUser'; user: { Name: string; Username: string; Mobile: string; Password: string; Role?: string } }
   | { type: 'googleSignIn'; email: string; name: string; role?: string }
   | { type: 'requestOTP'; email: string }
   | { type: 'resetPassword'; email: string; otp: string; newPassword: string }
@@ -230,7 +233,7 @@ export const sendRequest = async (payload: AuthRequest): Promise<AuthResponse> =
       };
     }
 
-    if (data.success && (payload.type === 'login' || payload.type === 'googleSignIn' || payload.type === 'register') && !data.user) {
+    if (data.success && (payload.type === 'login' || payload.type === 'googleSignIn' || payload.type === 'register' || payload.type === 'createVerifiedUser') && !data.user) {
       return { success: false, message: 'Authentication succeeded but no user session was returned.' };
     }
 
