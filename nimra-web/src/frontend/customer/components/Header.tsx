@@ -21,6 +21,33 @@ interface HeaderProps {
 const NAVBAR_SKELETON_ITEMS = [64, 82, 58, 62, 74];
 const getUserRole = (user: { Role?: string; role?: string } | null) => user?.Role || user?.role;
 
+function ProfileThemeToggle({ theme, onToggle }: { theme: AppTheme; onToggle: () => void }) {
+  const isDark = theme === 'dark';
+  const label = isDark ? 'Enable Light Mode' : 'Enable Dark Mode';
+
+  return (
+    <button
+      type="button"
+      className="profile-theme-toggle"
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onToggle();
+      }}
+      aria-label={label}
+      title={label}
+    >
+      <span key={theme} className="profile-theme-toggle-icon" aria-hidden="true">
+        {isDark ? (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        ) : (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        )}
+      </span>
+    </button>
+  );
+}
+
 export default React.memo(function Header({ companyInfo }: HeaderProps) {
   const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState<AppTheme>('light');
@@ -430,17 +457,20 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
 
                 {profileDropdownOpen && (
                   <div className="profile-dropdown animate-fade-in-up">
-                    <Link href="/customer-portal?tab=profile" className="dropdown-header-link" onClick={() => setProfileDropdownOpen(false)}>
-                      <div className="dropdown-header">
-                        <div className="dropdown-avatar-large">
-                          {activeUser.Name ? activeUser.Name.charAt(0).toUpperCase() : (activeUser.Username ? activeUser.Username.charAt(0).toUpperCase() : 'U')}
+                    <div className="dropdown-header-shell">
+                      <Link href="/customer-portal?tab=profile" className="dropdown-header-link" onClick={() => setProfileDropdownOpen(false)}>
+                        <div className="dropdown-header">
+                          <div className="dropdown-avatar-large">
+                            {activeUser.Name ? activeUser.Name.charAt(0).toUpperCase() : (activeUser.Username ? activeUser.Username.charAt(0).toUpperCase() : 'U')}
+                          </div>
+                          <div className="dropdown-user-info">
+                            <strong>{activeUser.Name || 'User'}</strong>
+                            <span>{activeUser.Username}</span>
+                          </div>
                         </div>
-                        <div className="dropdown-user-info">
-                          <strong>{activeUser.Name || 'User'}</strong>
-                          <span>{activeUser.Username}</span>
-                        </div>
-                      </div>
-                    </Link>
+                      </Link>
+                      <ProfileThemeToggle theme={theme} onToggle={toggleTheme} />
+                    </div>
                     <div className="dropdown-divider"></div>
                     
                     <div className="dropdown-menu-group">
@@ -468,6 +498,18 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                             </div>
                             <span className="menu-item-text">Notifications</span>
+                          </Link>
+                        </li>
+                        <li>
+                          <Link 
+                            href="/settings" 
+                            className={`dropdown-item ${pathname === '/settings' ? 'active' : ''}`} 
+                            onClick={() => setProfileDropdownOpen(false)}
+                          >
+                            <div className="menu-icon-container">
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                            </div>
+                            <span className="menu-item-text">Settings</span>
                           </Link>
                         </li>
                       </ul>
@@ -501,35 +543,6 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                             </div>
                             <span className="menu-item-text">FAQs</span>
                           </Link>
-                        </li>
-                        <li>
-                          <Link 
-                            href="/settings" 
-                            className={`dropdown-item ${pathname === '/settings' ? 'active' : ''}`} 
-                            onClick={() => setProfileDropdownOpen(false)}
-                          >
-                            <div className="menu-icon-container">
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                            </div>
-                            <span className="menu-item-text">Settings</span>
-                          </Link>
-                        </li>
-                        <li className="dropdown-item-toggle">
-                          <button onClick={(e) => { e.preventDefault(); toggleTheme(); }} className="dropdown-item theme-toggle-btn">
-                            <div className="theme-toggle-label-wrap">
-                              <div className="menu-icon-container">
-                                {theme === 'light' ? (
-                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-                                ) : (
-                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-                                )}
-                              </div>
-                              <span className="menu-item-text">{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
-                            </div>
-                            <div className={`theme-switch ${theme === 'dark' ? 'active' : ''}`}>
-                              <div className="theme-switch-handle"></div>
-                            </div>
-                          </button>
                         </li>
                       </ul>
                     </div>
@@ -568,17 +581,20 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
 
                 {profileDropdownOpen && (
                   <div className="profile-dropdown animate-fade-in-up">
-                    <Link href="/login" className="dropdown-header-link" onClick={() => setProfileDropdownOpen(false)}>
-                      <div className="dropdown-header">
-                        <div className="dropdown-avatar-large dropdown-avatar-guest">
-                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <div className="dropdown-header-shell">
+                      <Link href="/login" className="dropdown-header-link" onClick={() => setProfileDropdownOpen(false)}>
+                        <div className="dropdown-header">
+                          <div className="dropdown-avatar-large dropdown-avatar-guest">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                          </div>
+                          <div className="dropdown-user-info">
+                            <strong>Guest</strong>
+                            <span className="dropdown-login-link">Login or Register</span>
+                          </div>
                         </div>
-                        <div className="dropdown-user-info">
-                          <strong>Guest</strong>
-                          <span className="dropdown-login-link">Login or Register</span>
-                        </div>
-                      </div>
-                    </Link>
+                      </Link>
+                      <ProfileThemeToggle theme={theme} onToggle={toggleTheme} />
+                    </div>
                     <div className="dropdown-divider"></div>
                     
                     <div className="dropdown-menu-group">
@@ -594,23 +610,6 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                             </div>
                             <span className="menu-item-text">Login / Register</span>
                           </Link>
-                        </li>
-                        <li className="dropdown-item-toggle">
-                          <button onClick={(e) => { e.preventDefault(); toggleTheme(); }} className="dropdown-item theme-toggle-btn">
-                            <div className="theme-toggle-label-wrap">
-                              <div className="menu-icon-container">
-                                {theme === 'light' ? (
-                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-                                ) : (
-                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-                                )}
-                              </div>
-                              <span className="menu-item-text">{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
-                            </div>
-                            <div className={`theme-switch ${theme === 'dark' ? 'active' : ''}`}>
-                              <div className="theme-switch-handle"></div>
-                            </div>
-                          </button>
                         </li>
                       </ul>
                     </div>
