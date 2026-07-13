@@ -1,26 +1,22 @@
 'use client';
 
-import React, { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { Product } from '@/types/cms';
 import { useCMSData } from '@/frontend/customer/hooks/useCMSData';
 import { useCart } from '@/frontend/customer/hooks/useCart';
 import { ProductCard } from './portal/Products';
 import { normalizeCategory } from '../utils/commerce';
 import { UpcomingProducts } from './UpcomingProducts';
-import ProductDetailModal from './portal/ProductDetailModal';
 import CustomerPageHeader from './CustomerPageHeader';
+import ProductsFilters, { ProductSizeFilter, ProductStatusFilter } from './ProductsFilters';
+import ProductsSearchBar from './ProductsSearchBar';
+
+const ProductDetailModal = dynamic(() => import('./portal/ProductDetailModal'), { ssr: false });
 
 interface ProductsClientProps {
   products: Product[];
 }
-
-const categoriesData = [
-  { id: 'All', name: 'All Products' },
-  { id: 'Packaged Drinking Water', name: 'Packaged Drinking Water' },
-  { id: 'Mineral Water', name: 'Mineral Water' },
-  { id: 'Bulk Water', name: 'Bulk Water' },
-  { id: 'Upcoming RUSH Soda', name: 'RUSH Soda' },
-];
 
 const isUpcomingProduct = (product: Product) => {
   const stockStatus = String(product.StockStatus || '');
@@ -35,7 +31,7 @@ const isActiveProduct = (product: Product) => {
 };
 
 export default function ProductsClient({ products: initialProducts }: ProductsClientProps) {
-  const { products: dynamicProducts, error: fetchError, loading: isFetching } = useCMSData();
+  const { products: dynamicProducts, error: fetchError } = useCMSData({ products: initialProducts });
   const products = dynamicProducts && dynamicProducts.length > 0 ? dynamicProducts : initialProducts;
 
   useEffect(() => {
@@ -57,12 +53,16 @@ export default function ProductsClient({ products: initialProducts }: ProductsCl
       return stock.includes('coming') || stock.includes('upcoming') || cat.includes('upcoming');
     });
   }, [products]);
-  const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'upcoming'>('all');
-  const [sizeFilter, setSizeFilter] = useState<'all' | 'jar' | 'bottle'>('all');
+  const [statusFilter, setStatusFilter] = useState<ProductStatusFilter>('all');
+  const [sizeFilter, setSizeFilter] = useState<ProductSizeFilter>('all');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const { addProduct } = useCart();
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const processedAddIdRef = useRef<string | null>(null);
+  const handleCategoryChange = useCallback((value: string) => setActiveTab(value), []);
+  const handleStatusChange = useCallback((value: ProductStatusFilter) => setStatusFilter(value), []);
+  const handleSizeChange = useCallback((value: ProductSizeFilter) => setSizeFilter(value), []);
+  const handleSearchChange = useCallback((value: string) => setSearchQuery(value), []);
 
   const filteredProducts = useMemo(() => products.filter((product) => {
     // Hide inactive products from customer view
@@ -116,105 +116,32 @@ export default function ProductsClient({ products: initialProducts }: ProductsCl
         subtitle="Premium packaged drinking water for every need."
       />
 
-      <div className="products-layout-grid animate-fade-in">
-        {/* Sidebar Filters */}
-        <aside className="products-sidebar card">
-          <div className="sidebar-section">
-            <h3>Categories</h3>
-            <div className="filter-options">
-              {categoriesData.map((cat) => (
-                <label key={cat.id} className="filter-label">
-                  <input
-                    type="radio"
-                    name="category-filter"
-                    checked={activeTab === cat.id}
-                    onChange={() => setActiveTab(cat.id)}
-                    className="filter-radio"
-                  />
-                  <span className="filter-radio-control" aria-hidden="true" />
-                  <span>{cat.name}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div className="sidebar-section">
-            <h3>Availability</h3>
-            <div className="filter-options">
-              {(
-                [
-                  { id: 'all', label: 'All Products' },
-                  { id: 'available', label: 'Available Now' },
-                  { id: 'upcoming', label: 'Upcoming' },
-                ] as const
-              ).map((opt) => (
-                <label key={opt.id} className="filter-label">
-                  <input
-                    type="radio"
-                    name="status-filter"
-                    checked={statusFilter === opt.id}
-                    onChange={() => setStatusFilter(opt.id)}
-                    className="filter-radio"
-                  />
-                  <span className="filter-radio-control" aria-hidden="true" />
-                  <span>{opt.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div className="sidebar-section">
-            <h3>Size / Capacity</h3>
-            <div className="filter-options">
-              {(
-                [
-                  { id: 'all', label: 'All Sizes' },
-                  { id: 'jar', label: 'Bulk Jars (20L)' },
-                  { id: 'bottle', label: 'Bottles (250ml - 2L)' },
-                ] as const
-              ).map((opt) => (
-                <label key={opt.id} className="filter-label">
-                  <input
-                    type="radio"
-                    name="size-filter"
-                    checked={sizeFilter === opt.id}
-                    onChange={() => setSizeFilter(opt.id)}
-                    className="filter-radio"
-                  />
-                  <span className="filter-radio-control" aria-hidden="true" />
-                  <span>{opt.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        </aside>
+      <div className="products-layout-grid">
+        <ProductsFilters
+          category={activeTab}
+          status={statusFilter}
+          size={sizeFilter}
+          onCategoryChange={handleCategoryChange}
+          onStatusChange={handleStatusChange}
+          onSizeChange={handleSizeChange}
+        />
 
         {/* Main Products List */}
         <main className="products-main-content">
           {/* Top Search Bar */}
-          <div className="search-bar-wrapper card">
-            <svg className="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-            <input
-              type="text"
-              placeholder="Search products by name, category or size..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="search-input"
-            />
-            {searchQuery && (
-              <button className="search-clear-btn" onClick={() => setSearchQuery('')}>✕</button>
-            )}
-          </div>
+          <ProductsSearchBar value={searchQuery} onChange={handleSearchChange} />
 
           {activeTab === 'Upcoming RUSH Soda' ? (
             <UpcomingProducts upcomingProducts={upcomingProductsList} />
           ) : filteredProducts.length > 0 ? (
-            <div className="catalog-grid products-catalog-grid animate-fade-in">
+            <div className="catalog-grid products-catalog-grid">
               {filteredProducts.map((product, index) => (
                 <ProductCard 
                   key={String(product.ID || product.Name)} 
                   product={product} 
                   index={index}
+                  disableAnimation
+                  onAdd={addProduct}
                   onViewMore={setSelectedProduct}
                 />
               ))}

@@ -58,6 +58,9 @@ export default async function RootLayout({
             __html: `
               (function() {
                 try {
+                  if ('scrollRestoration' in window.history) {
+                    window.history.scrollRestoration = 'manual';
+                  }
                   var savedTheme = localStorage.getItem('nimra_theme') || localStorage.getItem('theme');
                   var activeTheme = savedTheme === 'dark' || savedTheme === 'light' ? savedTheme : 'light';
                   localStorage.setItem('nimra_theme', activeTheme);

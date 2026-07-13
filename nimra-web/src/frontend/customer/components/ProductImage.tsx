@@ -59,6 +59,8 @@ export default function ProductImage({
       <img
         src={src}
         alt={alt}
+        width={600}
+        height={800}
         className={`product-img ${className}`}
         style={defaultImgStyle}
         loading="lazy"

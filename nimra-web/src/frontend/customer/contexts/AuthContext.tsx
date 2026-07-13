@@ -7,6 +7,7 @@ import { discardLegacyRecentlyViewed, notifyRecentlyViewedChanged, recentlyViewe
 import { isAdminRole } from '@/frontend/admin/utils/accessControl';
 import type { CartItem } from '@/types/cms';
 import { mergeCartItems, mergeCartSnapshots, normalizeCartItem } from '../utils/commerce';
+import { resetNavigationHistory } from '../navigation/navigationHistory';
 
 export interface User {
   ID: number;
@@ -77,6 +78,7 @@ export const clearBrowserSession = () => {
   window.localStorage.removeItem('nimra_admin_user');
   window.localStorage.removeItem('nimra_admin_active_tab');
   window.sessionStorage.removeItem(TAB_SESSION_KEY);
+  resetNavigationHistory();
 };
 
 const readStoredUser = (): User | null => {
@@ -167,6 +169,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     Cookies.set(SESSION_COOKIE, JSON.stringify(session), { path: '/', sameSite: 'lax' });
 
     if (typeof window !== 'undefined') {
+      resetNavigationHistory(userData.Role);
       discardLegacyRecentlyViewed();
       window.sessionStorage.setItem(TAB_SESSION_KEY, session.token);
       notifyRecentlyViewedChanged();
@@ -219,6 +222,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const clearSession = useCallback(() => {
     setUser(null);
     clearBrowserSession();
+    resetNavigationHistory();
     notifyRecentlyViewedChanged();
   }, []);
 
@@ -266,6 +270,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = useCallback(() => {
     setUser(null);
     clearBrowserSession();
+    resetNavigationHistory();
     notifyRecentlyViewedChanged();
     // Use hard navigation so all React state is fully reset and the
     // guest navbar renders correctly on the home page.

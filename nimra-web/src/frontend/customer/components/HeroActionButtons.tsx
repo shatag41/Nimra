@@ -1,53 +1,20 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { useAuth } from '@/frontend/customer/hooks/useAuth';
 import { useCart } from '@/frontend/customer/hooks/useCart';
+import { useAuth } from '@/frontend/customer/contexts/AuthContext';
+import { consumeBackDestination, meaningfulPath, useNavigationHistory } from '@/frontend/customer/navigation/navigationHistory';
 
 export default function HeroActionButtons({ hideBackButton }: { hideBackButton?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { isAuthenticated } = useAuth();
   const { items } = useCart();
-  const [prevPath, setPrevPath] = useState<string | null>(null);
+  const { user } = useAuth();
+  const navigation = useNavigationHistory(user?.Role);
   
   const tab = searchParams.get('tab');
-
-  useEffect(() => {
-    // Track full history stack for multi-level back navigation
-    const fullPath = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '');
-    const historyStackStr = sessionStorage.getItem('nimra_history_stack');
-    let stack: string[] = [];
-    
-    try {
-      stack = historyStackStr ? JSON.parse(historyStackStr) : [];
-      if (!Array.isArray(stack)) stack = [];
-    } catch {
-      stack = [];
-    }
-
-    // Only update stack if path actually changed
-    if (stack[stack.length - 1] !== fullPath) {
-      // Check if user is navigating "Back" (i.e. to the page right before the current one)
-      if (stack.length > 1 && stack[stack.length - 2] === fullPath) {
-        stack.pop(); // Pop current page off stack
-      } else {
-        stack.push(fullPath); // Push new page
-        // Limit stack size to prevent storage bloat
-        if (stack.length > 50) stack.shift();
-      }
-      sessionStorage.setItem('nimra_history_stack', JSON.stringify(stack));
-    }
-    
-    // Set label based on actual previous page
-    if (stack.length > 1) {
-      setPrevPath(stack[stack.length - 2]);
-    } else {
-      setPrevPath(null);
-    }
-  }, [pathname, searchParams]);
 
   // Back Button Visibility Logic
   let showBackButton = true;
@@ -63,55 +30,20 @@ export default function HeroActionButtons({ hideBackButton }: { hideBackButton?:
 
   if (!showBackButton && !showFinishOrderButton) return null;
 
-  const getPathName = (path: string | null) => {
-    if (!path) return 'Back';
-    if (path === '/') return 'Home';
-    if (path.startsWith('/customer-portal')) {
-      if (path.includes('tab=orders')) return 'Orders';
-      if (path.includes('tab=addresses')) return 'Addresses';
-      if (path.includes('tab=profile')) return 'Profile';
-      if (path.includes('tab=wishlist')) return 'Wishlist';
-      if (path.includes('tab=payment')) return 'Payment Methods';
-      if (path.includes('tab=notifications')) return 'Notifications';
-      if (path.includes('tab=faqs')) return 'FAQs';
-      if (path.includes('tab=settings')) return 'Settings';
-      return 'Portal';
+  const currentPath = meaningfulPath(pathname, searchParams.toString());
+  let currentIndex = -1;
+  for (let index = navigation.stack.length - 1; index >= 0; index -= 1) {
+    if (navigation.stack[index].path === currentPath) {
+      currentIndex = index;
+      break;
     }
-    if (path.match(/^\/products\/[^\/]+$/)) return 'Product Details';
-    if (path.startsWith('/products')) return 'Products';
-    if (path.startsWith('/cart')) return 'Cart';
-    if (path.startsWith('/checkout')) return 'Checkout';
-    if (path.startsWith('/orders')) return 'Orders';
-    if (path.startsWith('/track')) return 'Track Order';
-    if (path.startsWith('/contact')) return 'Contact';
-    if (path.startsWith('/about')) return 'About';
-    if (path.startsWith('/settings')) return 'Settings';
-    
-    return 'Back';
-  };
-
-  const getFallbackPath = () => {
-    if (pathname.startsWith('/products/')) return '/products';
-    if (isCartPage) return '/products';
-    if (isCheckoutPage) return '/cart';
-    if (pathname === '/track') return '/customer-portal?tab=orders';
-    if (pathname.startsWith('/customer-portal') && tab) return '/customer-portal';
-    return '/';
-  };
-
-  const backText = isCartPage ? 'Continue Shopping' : (prevPath ? `Back to ${getPathName(prevPath)}` : `Back to ${getPathName(getFallbackPath())}`);
+  }
+  const backDestination = currentIndex > 0 ? navigation.stack[currentIndex - 1] : navigation.root;
+  const backText = `Back to ${backDestination.label}`;
 
   const handleBack = () => {
-    if (isCartPage) {
-      router.push('/products');
-      return;
-    }
-    
-    if (prevPath && typeof window !== 'undefined' && window.history.length > 1) {
-      router.back();
-    } else {
-      router.push(getFallbackPath());
-    }
+    const destination = consumeBackDestination(currentPath, user?.Role);
+    router.push(destination.path);
   };
 
   const handleFinishOrder = () => {

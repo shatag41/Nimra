@@ -2,9 +2,19 @@
 
 import useSWR from 'swr';
 import { fetchCMSData, clearCMSDataCache } from '@/utils/api';
+import type { CMSData } from '@/types/cms';
 
-export function useCMSData() {
+export function useCMSData(initialData?: Partial<CMSData>) {
+  const fallbackData = initialData ? {
+    banners: initialData.banners || [],
+    products: initialData.products || [],
+    faqs: initialData.faqs || [],
+    companyInfo: initialData.companyInfo || {},
+  } : undefined;
+
   const { data, error, isLoading, mutate } = useSWR('cmsData', fetchCMSData, {
+    fallbackData,
+    revalidateOnMount: !fallbackData,
     revalidateOnFocus: false,
     dedupingInterval: 60000,
   });

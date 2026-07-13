@@ -8,6 +8,7 @@ import BackToTop from './BackToTop';
 import { CompanyInfo } from '@/types/cms';
 import { useAuth } from '../contexts/AuthContext';
 import { isAdminRole } from '@/frontend/admin/utils/accessControl';
+import { meaningfulPath, recordNavigation } from '../navigation/navigationHistory';
 
 interface LayoutWrapperProps {
   children: React.ReactNode;
@@ -22,6 +23,12 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
 
     queueMicrotask(() => {
@@ -34,6 +41,11 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (isLoading) return;
+    recordNavigation(meaningfulPath(pathname, searchParams.toString()), user?.Role);
+  }, [isLoading, pathname, searchParams, user?.Role]);
 
   const isAdmin = pathname?.startsWith('/admin');
   const isAdminLogin = pathname === '/admin/login';

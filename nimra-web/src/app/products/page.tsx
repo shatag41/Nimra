@@ -1,11 +1,6 @@
 import React from 'react';
-import dynamicImport from 'next/dynamic';
 import { fetchCMSData } from '@/utils/api';
-import LoadingState from '@/frontend/customer/components/LoadingState';
-
-const ProductsClient = dynamicImport(() => import('@/frontend/customer/components/ProductsClient'), {
-  loading: () => <LoadingState label="Loading products" />
-});
+import ProductsClient from '@/frontend/customer/components/ProductsClient';
 
 export const metadata = {
   title: 'Our Products | Packs & Capacities',
