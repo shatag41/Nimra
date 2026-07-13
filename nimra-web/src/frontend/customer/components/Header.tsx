@@ -460,18 +460,6 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                         </li>
                         <li>
                           <Link 
-                            href="/customer-portal?tab=payments" 
-                            className={`dropdown-item ${pathname === '/customer-portal' && currentTab === 'payments' ? 'active' : ''}`} 
-                            onClick={() => setProfileDropdownOpen(false)}
-                          >
-                            <div className="menu-icon-container">
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-                            </div>
-                            <span className="menu-item-text">Saved Payments</span>
-                          </Link>
-                        </li>
-                        <li>
-                          <Link 
                             href="/customer-portal?tab=notifications" 
                             className={`dropdown-item ${pathname === '/customer-portal' && currentTab === 'notifications' ? 'active' : ''}`} 
                             onClick={() => setProfileDropdownOpen(false)}

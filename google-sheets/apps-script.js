@@ -1981,6 +1981,10 @@ function handleUserCRUD(spreadsheet, params) {
   Logger.log('handleUserCRUD called with params: ' + JSON.stringify(params));
   var action = params.action;
   var user = params.user;
+  var suppliedMobile = getUserMobile(user);
+  if ((action === 'create' || action === 'update') && suppliedMobile && !/^[0-9]{10}$/.test(suppliedMobile)) {
+    return { success: false, message: 'Mobile Number must be exactly 10 digits.' };
+  }
   var sheet = SpreadsheetService.getInstance().getSheet('Users');
   if (!sheet) return { success: false, message: 'Users sheet not found.' };
   ensureUsersSheetColumns(sheet);

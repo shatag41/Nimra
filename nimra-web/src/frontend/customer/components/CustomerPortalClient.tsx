@@ -1173,7 +1173,7 @@ const portalStyles = `
 
 function EditProfileForm({ user, onUpdate }: { user: any; onUpdate: (user: any) => void }) {
   const [name, setName] = React.useState(String(user?.Name || ''));
-  const [mobile, setMobile] = React.useState(String(user?.Mobile || ''));
+  const [mobile, setMobile] = React.useState(String(user?.Mobile || '').replace(/\D/g, '').slice(-10));
   const [email, setEmail] = React.useState(String(user?.Username || ''));
   const [isVerifying, setIsVerifying] = React.useState(false);
   const [otp, setOtp] = React.useState('');
@@ -1182,6 +1182,12 @@ function EditProfileForm({ user, onUpdate }: { user: any; onUpdate: (user: any) 
   
   // Validation errors state
   const [errors, setErrors] = React.useState<{ name?: string; mobile?: string; email?: string; otp?: string }>({});
+
+  const handleMobileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const digitsOnly = event.target.value.replace(/\D/g, '').slice(0, 10);
+    setMobile(digitsOnly);
+    if (errors.mobile) setErrors(prev => ({ ...prev, mobile: undefined }));
+  };
 
   const validateFields = (): boolean => {
     const newErrors: typeof errors = {};
@@ -1322,12 +1328,14 @@ function EditProfileForm({ user, onUpdate }: { user: any; onUpdate: (user: any) 
             <input 
               type="tel" 
               value={mobile} 
-              onChange={e => {
-                setMobile(e.target.value);
-                if (errors.mobile) setErrors(prev => ({ ...prev, mobile: undefined }));
-              }} 
+              onChange={handleMobileChange}
               className={`form-input ${errors.mobile ? 'error-state' : ''}`} 
               placeholder="e.g. 9876543210"
+              inputMode="numeric"
+              pattern="[0-9]{10}"
+              minLength={10}
+              maxLength={10}
+              autoComplete="tel"
               required 
             />
             {errors.mobile && <span className="error-message">{errors.mobile}</span>}
