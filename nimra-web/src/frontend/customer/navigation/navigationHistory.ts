@@ -38,6 +38,7 @@ const labelForPath = (path: string) => {
   if (path.startsWith('/contact')) return 'Contact';
   if (path.startsWith('/about')) return 'About';
   if (path.startsWith('/settings')) return 'Settings';
+  if (path.startsWith('/profile-settings')) return 'Profile Settings';
   if (path.startsWith('/login')) return 'Login';
   return 'Back';
 };

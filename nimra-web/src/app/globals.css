@@ -7989,7 +7989,7 @@ select {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .profile-theme-toggle {
-  width: 32px; height: 32px; flex: 0 0 32px;
+  width: 42px; height: 42px; flex: 0 0 42px;
   display: inline-flex; align-items: center; justify-content: center;
   border-radius: 50%; border: 1px solid rgba(96, 165, 250, 0.45);
   background: #fff; color: #2563eb; cursor: pointer;
@@ -8012,7 +8012,7 @@ select {
   display: inline-flex; align-items: center; justify-content: center;
   animation: profileThemeIconSwap 0.24s ease;
 }
-.profile-theme-toggle-icon svg { width: 16px; height: 16px; }
+.profile-theme-toggle-icon svg { width: 18px; height: 18px; }
 @keyframes profileThemeIconSwap {
   from { opacity: 0; transform: rotate(-55deg) scale(0.72); }
   to { opacity: 1; transform: rotate(0) scale(1); }
@@ -8064,6 +8064,220 @@ select {
 [data-theme="dark"] .header .profile-dropdown .dropdown-item.text-danger:hover .menu-icon-container { background: rgba(239,68,68,0.15); color: #fca5a5; }
 
 .logout-group { margin-top: 0.1rem; }
+
+/* Premium customer profile menu */
+.header .profile-dropdown.profile-menu-dropdown {
+  width: 318px;
+  max-width: calc(100vw - 24px);
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(37, 99, 235, 0.1);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transform-origin: top right;
+}
+[data-theme="dark"] .header .profile-dropdown.profile-menu-dropdown {
+  background: rgba(15, 23, 42, 0.95);
+  border-color: rgba(96, 165, 250, 0.16);
+  box-shadow: 0 18px 45px rgba(2, 6, 23, 0.38);
+}
+.header .profile-dropdown.profile-menu-dropdown::before { display: none; }
+.header .profile-dropdown.profile-menu-dropdown .dropdown-header-shell {
+  margin: 0;
+  padding: 10px 14px;
+  gap: 8px;
+}
+.header .profile-dropdown.profile-menu-dropdown .dropdown-header-link {
+  min-width: 0;
+  background: transparent;
+}
+.header .profile-dropdown.profile-menu-dropdown .dropdown-header-link:hover {
+  background: transparent;
+}
+.header .profile-dropdown.profile-menu-dropdown .dropdown-header {
+  padding: 0;
+  gap: 8px;
+}
+.header .profile-dropdown.profile-menu-dropdown .dropdown-avatar-large {
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(96, 165, 250, 0.28);
+  background: linear-gradient(145deg, #eff6ff 0%, #dbeafe 55%, #bfdbfe 100%);
+  color: #2563eb;
+  font-size: 0.9rem;
+  font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+[data-theme="dark"] .header .profile-dropdown.profile-menu-dropdown .dropdown-avatar-large {
+  background: linear-gradient(145deg, rgba(59, 130, 246, 0.28), rgba(37, 99, 235, 0.15));
+  color: #93c5fd;
+  border-color: rgba(147, 197, 253, 0.28);
+}
+.header .profile-dropdown.profile-menu-dropdown .dropdown-user-info {
+  justify-content: center;
+}
+.header .profile-dropdown.profile-menu-dropdown .dropdown-user-info strong {
+  color: #1e293b;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.header .profile-dropdown.profile-menu-dropdown .dropdown-user-info span {
+  margin-top: 1px;
+  color: #718096;
+  font-size: 11.5px;
+  line-height: 1.25;
+}
+[data-theme="dark"] .header .profile-dropdown.profile-menu-dropdown .dropdown-user-info strong { color: #f8fafc; }
+[data-theme="dark"] .header .profile-dropdown.profile-menu-dropdown .dropdown-user-info span { color: #94a3b8; }
+.header .profile-dropdown.profile-menu-dropdown .profile-theme-toggle {
+  width: 32px;
+  height: 32px;
+  flex-basis: 32px;
+  align-self: center;
+  border: 1px solid #bfdbfe;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12);
+  transform: translateY(-5px);
+}
+.header .profile-dropdown.profile-menu-dropdown .profile-theme-toggle:hover {
+  background: #f3f8ff;
+  transform: translateY(-5px) scale(1.05);
+}
+.header .profile-dropdown.profile-menu-dropdown .profile-theme-toggle:active { transform: translateY(-5px) scale(0.96); }
+.header .profile-dropdown.profile-menu-dropdown .profile-theme-toggle-icon svg {
+  width: 16px;
+  height: 16px;
+}
+.header .profile-dropdown.profile-menu-dropdown .dropdown-divider {
+  height: 1px;
+  margin: 5px 0;
+  background: rgba(37, 99, 235, 0.08);
+  opacity: 1;
+}
+.header .profile-dropdown.profile-menu-dropdown .dropdown-menu-group {
+  padding: 0 8px;
+}
+.header .profile-dropdown.profile-menu-dropdown .dropdown-group-label {
+  padding: 1px 2px 3px;
+  color: #94a3b8;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  opacity: 1;
+}
+.header .profile-dropdown.profile-menu-dropdown .dropdown-menu-items {
+  gap: 1px;
+  padding: 0;
+}
+.header .profile-dropdown.profile-menu-dropdown .dropdown-item {
+  position: relative;
+  box-sizing: border-box;
+  min-height: 40px;
+  padding: 4px 9px;
+  gap: 8px;
+  border-radius: 9px;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+.header .profile-dropdown.profile-menu-dropdown .menu-item-text {
+  margin-left: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+.header .profile-dropdown.profile-menu-dropdown .menu-icon-container {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #e6eef9;
+  border-radius: 7px;
+  background: #f8faff;
+  color: #64748b;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+.header .profile-dropdown.profile-menu-dropdown .menu-icon-container svg {
+  width: 15px;
+  height: 15px;
+}
+.header .profile-dropdown.profile-menu-dropdown .dropdown-item:hover {
+  background: #f6faff;
+  color: #2563eb;
+  transform: translateX(2px);
+}
+.header .profile-dropdown.profile-menu-dropdown .dropdown-item:hover .menu-icon-container {
+  border-color: #bfdbfe;
+  background: #eaf3ff;
+  color: #2563eb;
+}
+.header .profile-dropdown.profile-menu-dropdown .dropdown-item.active {
+  background: #eff6ff;
+  color: #2563eb;
+}
+.header .profile-dropdown.profile-menu-dropdown .dropdown-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: #2563eb;
+}
+.header .profile-dropdown.profile-menu-dropdown .dropdown-item.active .menu-icon-container {
+  border-color: #bfdbfe;
+  background: #dbeafe;
+  color: #2563eb;
+}
+[data-theme="dark"] .header .profile-dropdown.profile-menu-dropdown .dropdown-item {
+  color: #cbd5e1;
+}
+[data-theme="dark"] .header .profile-dropdown.profile-menu-dropdown .menu-icon-container {
+  border-color: rgba(96, 165, 250, 0.14);
+  background: rgba(30, 41, 59, 0.8);
+  color: #94a3b8;
+}
+[data-theme="dark"] .header .profile-dropdown.profile-menu-dropdown .dropdown-item:hover,
+[data-theme="dark"] .header .profile-dropdown.profile-menu-dropdown .dropdown-item.active {
+  background: rgba(37, 99, 235, 0.14);
+  color: #93c5fd;
+}
+[data-theme="dark"] .header .profile-dropdown.profile-menu-dropdown .dropdown-item:hover .menu-icon-container,
+[data-theme="dark"] .header .profile-dropdown.profile-menu-dropdown .dropdown-item.active .menu-icon-container {
+  border-color: rgba(96, 165, 250, 0.28);
+  background: rgba(37, 99, 235, 0.2);
+  color: #93c5fd;
+}
+.header .profile-dropdown.profile-menu-dropdown .logout-group {
+  margin: 0;
+  padding-bottom: 6px;
+}
+.header .profile-dropdown.profile-menu-dropdown .dropdown-item.text-danger {
+  color: #dc2626;
+  background: transparent;
+}
+.header .profile-dropdown.profile-menu-dropdown .dropdown-item.text-danger .menu-icon-container {
+  border-color: transparent;
+  background: transparent;
+  color: #dc2626;
+}
+.header .profile-dropdown.profile-menu-dropdown .dropdown-item.text-danger:hover {
+  color: #dc2626;
+  background: #fff1f2;
+}
+.header .profile-dropdown.profile-menu-dropdown .dropdown-item.text-danger:hover .menu-icon-container {
+  color: #dc2626;
+  background: transparent;
+  transform: translateX(2px);
+}
+[data-theme="dark"] .header .profile-dropdown.profile-menu-dropdown .dropdown-item.text-danger:hover {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.1);
+}
 
 /* Mobile Menu Button */
 .mobile-menu-btn {

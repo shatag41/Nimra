@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { CompanyInfo, Notification } from '@/types/cms';
 import { useCart } from '../contexts/CartProvider';
@@ -78,6 +78,11 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
   }, [notifications]);
   const dashboardHref = isAdminRole(activeRoleValue) ? '/admin' : '/customer-portal';
   const logoHref = activeUser ? dashboardHref : '/';
+  const prefetchProfileSettings = useCallback(() => {
+    if (activeUser && activeRole === 'CUSTOMER') {
+      router.prefetch('/profile-settings');
+    }
+  }, [activeRole, activeUser, router]);
 
   useEffect(() => {
     setMounted(true);
@@ -109,6 +114,13 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
       clearTimeout(transitionTimeout);
     };
   }, []);
+
+  useEffect(() => {
+    // AuthContext has already restored the user's profile by this point, so
+    // warming the route here prepares both the destination and its form data
+    // before the user can request navigation.
+    prefetchProfileSettings();
+  }, [prefetchProfileSettings]);
 
   useEffect(() => {
     const notificationRole = activeUser ? normalizeRole(getUserRole(activeUser)) : null;
@@ -455,10 +467,24 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                   </div>
                 </button>
 
-                {profileDropdownOpen && (
-                  <div className="profile-dropdown animate-fade-in-up">
+                <AnimatePresence>
+                  {profileDropdownOpen && (
+                  <motion.div
+                    className="profile-dropdown profile-menu-dropdown"
+                    initial={reduceMotion ? false : { opacity: 0, y: -8, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.98 }}
+                    transition={{ duration: reduceMotion ? 0 : 0.22, ease: 'easeOut' }}
+                  >
                     <div className="dropdown-header-shell">
-                      <Link href="/customer-portal?tab=profile" className="dropdown-header-link" onClick={() => setProfileDropdownOpen(false)}>
+                      <Link
+                        href="/profile-settings"
+                        prefetch={true}
+                        className="dropdown-header-link"
+                        onMouseEnter={prefetchProfileSettings}
+                        onTouchStart={prefetchProfileSettings}
+                        onClick={() => setProfileDropdownOpen(false)}
+                      >
                         <div className="dropdown-header">
                           <div className="dropdown-avatar-large">
                             {activeUser.Name ? activeUser.Name.charAt(0).toUpperCase() : (activeUser.Username ? activeUser.Username.charAt(0).toUpperCase() : 'U')}
@@ -564,8 +590,9 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                         </li>
                       </ul>
                     </div>
-                  </div>
-                )}
+                  </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             ) : (
               <div className="profile-menu-container">
@@ -579,8 +606,15 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                   </div>
                 </button>
 
-                {profileDropdownOpen && (
-                  <div className="profile-dropdown animate-fade-in-up">
+                <AnimatePresence>
+                  {profileDropdownOpen && (
+                  <motion.div
+                    className="profile-dropdown profile-menu-dropdown"
+                    initial={reduceMotion ? false : { opacity: 0, y: -8, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.98 }}
+                    transition={{ duration: reduceMotion ? 0 : 0.22, ease: 'easeOut' }}
+                  >
                     <div className="dropdown-header-shell">
                       <Link href="/login" className="dropdown-header-link" onClick={() => setProfileDropdownOpen(false)}>
                         <div className="dropdown-header">
@@ -613,8 +647,9 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                         </li>
                       </ul>
                     </div>
-                  </div>
-                )}
+                  </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             )}
             </div>

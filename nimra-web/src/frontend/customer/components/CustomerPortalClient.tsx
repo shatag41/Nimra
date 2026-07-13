@@ -43,14 +43,20 @@ const FAQs = dynamic(
   { ssr: false, loading: () => <div className="loading-state">Loading FAQs...</div> }
 );
 
-export default function CustomerPortalClient() {
-  const { user, isAuthenticated, isLoading, login } = useAuth();
+interface CustomerPortalClientProps {
+  initialTab?: 'profile' | 'addresses' | 'notifications';
+}
+
+function CustomerPortalClient({ initialTab }: CustomerPortalClientProps) {
+  const { user, isAuthenticated, isLoading, updateUserSession } = useAuth();
   const { products, faqs } = useCMSData();
   const { orders, loadingOrders, metrics, refreshOrders } = useCustomerOrders();
   const cart = useCart();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const tab = searchParams.get('tab');
+  // Dedicated routes can lock the initial view so the portal dashboard never
+  // paints while a query string is still being resolved on the client.
+  const tab = initialTab ?? searchParams.get('tab');
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
@@ -154,6 +160,29 @@ export default function CustomerPortalClient() {
   }, [tab, user?.Name]);
 
   if (!mounted || isLoading) {
+    if (tab === 'profile') {
+      return (
+        <div className="portal-page profile-settings-page">
+          <CustomerPageHeader
+            badge="PROFILE"
+            title="Profile Settings"
+            subtitle="Update your personal details and keep your NIMRA account information current."
+          />
+          <section className="portal-centered-content portal-tab-section" aria-busy="true" aria-label="Loading profile settings">
+            <div className="panel profile-edit-panel profile-settings-skeleton">
+              <div className="skeleton-heading" />
+              <div className="skeleton-copy" />
+              <div className="skeleton-field" />
+              <div className="skeleton-field" />
+              <div className="skeleton-field" />
+              <div className="skeleton-button" />
+            </div>
+          </section>
+          <style jsx global>{portalStyles}</style>
+        </div>
+      );
+    }
+
     return (
       <div className="portal-page">
         <CustomerPageHeader badge="CUSTOMER PORTAL" title="Loading your portal" subtitle="Preparing your NIMRA workspace…" />
@@ -183,7 +212,7 @@ export default function CustomerPortalClient() {
         </section>
       ) : tab === 'profile' ? (
         <section className="portal-centered-content portal-tab-section" style={{ maxWidth: '640px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <EditProfileForm user={user} onUpdate={(updatedUser) => login(updatedUser)} />
+          <EditProfileForm user={user} onUpdate={updateUserSession} />
         </section>
       ) : tab === 'notifications' ? (
         <section className="portal-centered-content portal-tab-section" style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -363,8 +392,42 @@ export default function CustomerPortalClient() {
   );
 }
 
+export default React.memo(CustomerPortalClient);
+
 const portalStyles = `
   .portal-page { min-height: 100vh; background: var(--bg-primary); padding-bottom: 1rem; }
+
+  .profile-settings-page .portal-centered-content {
+    max-width: 640px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+  .profile-settings-skeleton {
+    display: grid;
+    gap: 1rem;
+    padding: 2.5rem;
+    border-radius: var(--radius-2xl);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+  }
+  .profile-settings-skeleton > div {
+    border-radius: var(--radius-md);
+    background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-secondary) 50%, var(--bg-tertiary) 75%);
+    background-size: 200% 100%;
+    animation: profileSkeletonShimmer 1.35s ease-in-out infinite;
+  }
+  .profile-settings-skeleton .skeleton-heading { width: 38%; height: 28px; }
+  .profile-settings-skeleton .skeleton-copy { width: 62%; height: 14px; margin-bottom: .5rem; }
+  .profile-settings-skeleton .skeleton-field { width: 100%; height: 66px; }
+  .profile-settings-skeleton .skeleton-button { width: 100%; height: 44px; margin-top: .5rem; }
+  @keyframes profileSkeletonShimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .profile-settings-skeleton > div { animation: none; }
+  }
 
   /* ── Cart Toast Banner ── */
   .cart-toast-banner {
