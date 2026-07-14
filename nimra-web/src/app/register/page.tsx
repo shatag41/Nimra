@@ -8,6 +8,12 @@ import { sendRequest } from '@/utils/api';
 import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
 import { recentlyViewedKey } from '@/frontend/customer/utils/recentlyViewed';
 import LogoutConfirmationModal from '@/frontend/customer/components/LogoutConfirmationModal';
+import {
+  hasGuestCartItems,
+  mergeGuestCartIntoNewCustomer,
+  REGISTRATION_CONTEXT_KEY,
+  registrationSourceFromSearch,
+} from '@/frontend/customer/utils/registrationCart';
 
 const REGISTRATION_DRAFT_KEY = 'nimra_registration_otp_draft';
 
@@ -37,19 +43,32 @@ export default function RegisterPage() {
   const [resendSeconds, setResendSeconds] = useState(0);
   const [expiresAt, setExpiresAt] = useState(0);
   const [createdUser, setCreatedUser] = useState<NonNullable<Awaited<ReturnType<typeof sendRequest>>['user']> | null>(null);
+  const registrationSourceRef = useRef(registrationSourceFromSearch(''));
   const otpRefs = useRef<Array<HTMLInputElement | null>>([]);
 
   useEffect(() => {
+    let cancelled = false;
+    const source = registrationSourceFromSearch(window.location.search);
+    registrationSourceRef.current = source;
+    sessionStorage.setItem(REGISTRATION_CONTEXT_KEY, JSON.stringify({ source, redirectTo: source === 'cart' ? '/checkout' : '/customer-portal' }));
+    if (source === 'cart' && new URLSearchParams(window.location.search).get('next') !== '/checkout') {
+      window.history.replaceState(null, '', '/register?next=%2Fcheckout');
+    }
+
     const raw = sessionStorage.getItem(REGISTRATION_DRAFT_KEY);
     if (!raw) return;
     try {
       const draft = JSON.parse(raw);
-      setName(draft.name || ''); setEmail(draft.email || ''); setMobile(draft.mobile || '');
-      setPassword(draft.password || ''); setConfirmPassword(draft.confirmPassword || ''); setRole(draft.role || 'Customer');
-      setExpiresAt(Number(draft.expiresAt || 0)); setOtpOpen(true);
-      setOtpExpired(Date.now() >= Number(draft.expiresAt || 0));
-      setResendSeconds(Math.max(0, Math.ceil((Number(draft.resendAt || 0) - Date.now()) / 1000)));
+      queueMicrotask(() => {
+        if (cancelled) return;
+        setName(draft.name || ''); setEmail(draft.email || ''); setMobile(draft.mobile || '');
+        setPassword(draft.password || ''); setConfirmPassword(draft.confirmPassword || ''); setRole(draft.role || 'Customer');
+        setExpiresAt(Number(draft.expiresAt || 0)); setOtpOpen(true);
+        setOtpExpired(Date.now() >= Number(draft.expiresAt || 0));
+        setResendSeconds(Math.max(0, Math.ceil((Number(draft.resendAt || 0) - Date.now()) / 1000)));
+      });
     } catch { sessionStorage.removeItem(REGISTRATION_DRAFT_KEY); }
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
@@ -183,10 +202,27 @@ export default function RegisterPage() {
     setIsLoading(false);
   };
 
-  const continueAfterSuccess = () => {
+  const continueAfterSuccess = async () => {
     if (!createdUser) return;
+    setIsLoading(true);
+    const shouldReturnToCart = registrationSourceRef.current === 'cart' && hasGuestCartItems();
+
+    if (shouldReturnToCart) {
+      const cartResult = await mergeGuestCartIntoNewCustomer(createdUser.ID);
+      if (!cartResult.success) {
+        setOtpError(cartResult.message || 'Your account was created, but we could not attach your cart. Please try again.');
+        notify.error('Cart Merge Failed', 'Your account is safe and your guest cart has not been cleared. Please try again.');
+        setIsLoading(false);
+        return;
+      }
+    }
+
     localStorage.setItem(recentlyViewedKey(createdUser.ID), '[]');
     localStorage.removeItem('nimra_location'); localStorage.removeItem('nimra_location_denied'); localStorage.removeItem('nimra_read_notifs_guest');
+    sessionStorage.removeItem(REGISTRATION_CONTEXT_KEY);
+    if (!shouldReturnToCart && registrationSourceRef.current === 'cart') {
+      window.history.replaceState(null, '', '/register');
+    }
     login(createdUser);
   };
 
@@ -218,6 +254,20 @@ export default function RegisterPage() {
             localStorage.removeItem('nimra_location_denied');
             localStorage.removeItem('nimra_read_notifs_guest');
           }
+        }
+        const isNewAccount = res.message === 'Registration successful';
+        const shouldReturnToCart = isNewAccount && registrationSourceRef.current === 'cart' && hasGuestCartItems();
+        if (shouldReturnToCart) {
+          const cartResult = await mergeGuestCartIntoNewCustomer(res.user.ID);
+          if (!cartResult.success) {
+            setError(cartResult.message || 'Your account was created, but we could not attach your cart. Please try again.');
+            notify.error('Cart Merge Failed', 'Your account is safe and your guest cart has not been cleared. Please try again.');
+            return;
+          }
+        }
+        sessionStorage.removeItem(REGISTRATION_CONTEXT_KEY);
+        if (!shouldReturnToCart && registrationSourceRef.current === 'cart') {
+          window.history.replaceState(null, '', '/register');
         }
         login(res.user);
         if (res.emailError) {

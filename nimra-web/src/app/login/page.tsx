@@ -1,15 +1,17 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { useAuth } from '@/frontend/customer/contexts/AuthContext';
 import { useGoogleLogin } from '@react-oauth/google';
 import Link from 'next/link';
 import { sendRequest } from '@/utils/api';
 import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
+import { useSearchParams } from 'next/navigation';
 
-export default function LoginPage() {
+function LoginPageContent() {
   const { login } = useAuth();
   const { notify } = useNotification();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<'mobile' | 'email'>('mobile');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -17,6 +19,11 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const nextPath = searchParams.get('next');
+  const registrationSource = searchParams.get('source');
+  const registerHref = registrationSource === 'cart' || nextPath === '/cart' || nextPath === '/checkout' || nextPath?.startsWith('/checkout?')
+    ? '/register?next=%2Fcheckout'
+    : '/register';
 
   const validate = () => {
     if (activeTab === 'mobile') {
@@ -443,12 +450,20 @@ export default function LoginPage() {
           </div>
 
           <div className="auth-footer-link" style={{ textAlign: 'center', marginTop: '0.8vh', fontSize: 'clamp(0.75rem, 1.6vh, 0.85rem)', color: 'var(--text-secondary)' }}>
-            Don&apos;t have an account? <Link href="/register" style={{ color: 'var(--primary-color)', fontWeight: 'bold', textDecoration: 'none' }}>Create account →</Link>
+            Don&apos;t have an account? <Link href={registerHref} style={{ color: 'var(--primary-color)', fontWeight: 'bold', textDecoration: 'none' }}>Create account →</Link>
           </div>
         </form>
         </div>
       </div>
     </div>
     </section>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="loading-state">Loading login...</div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }
