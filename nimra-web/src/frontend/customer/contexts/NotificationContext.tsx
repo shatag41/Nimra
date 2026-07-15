@@ -20,6 +20,7 @@ export interface NotificationPayload {
   productName?: string;
   primaryAction?: NotificationAction;
   secondaryAction?: NotificationAction;
+  durationMs?: number;
 }
 
 interface NotificationContextValue {
@@ -44,7 +45,7 @@ interface NotificationContextValue {
 
 const NotificationContext = createContext<NotificationContextValue | null>(null);
 
-const DURATION = 4000;
+const DEFAULT_DURATION = 4000;
 const TICK_RATE = 10;
 
 // Returns the accent color for the progress bar based on notification type
@@ -73,7 +74,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const timeRemainingRef = useRef(DURATION);
+  const timeRemainingRef = useRef(DEFAULT_DURATION);
+  const totalDurationRef = useRef(DEFAULT_DURATION);
   const isPausedRef = useRef(false);
   const lastTickTimeRef = useRef(Date.now());
 
@@ -100,6 +102,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     if (timerRef.current) clearInterval(timerRef.current);
     
     timeRemainingRef.current = durationMs;
+    totalDurationRef.current = durationMs;
     isPausedRef.current = false;
     lastTickTimeRef.current = Date.now();
     setProgress(100);
@@ -121,7 +124,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         setProgress(0);
         dismiss();
       } else {
-        setProgress(Math.max(0, (timeRemainingRef.current / DURATION) * 100));
+        setProgress(Math.max(0, (timeRemainingRef.current / totalDurationRef.current) * 100));
       }
     }, TICK_RATE);
   }, [dismiss]);
@@ -137,7 +140,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     
     setNotification(newPayload);
     setIsVisible(true);
-    startTimer(DURATION);
+    startTimer(payload.durationMs ?? DEFAULT_DURATION);
   }, [startTimer]);
 
   const pauseTimer = useCallback(() => {

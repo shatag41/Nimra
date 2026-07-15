@@ -48,7 +48,7 @@ interface CustomerPortalClientProps {
 }
 
 function CustomerPortalClient({ initialTab }: CustomerPortalClientProps) {
-  const { user, isAuthenticated, isLoading, updateUserSession } = useAuth();
+  const { user, isAuthenticated, isLoading, isNewAccountSession, updateUserSession } = useAuth();
   const { products, faqs } = useCMSData();
   const { orders, loadingOrders, metrics, refreshOrders } = useCustomerOrders();
   const cart = useCart();
@@ -154,10 +154,10 @@ function CustomerPortalClient({ initialTab }: CustomerPortalClientProps) {
     }
     return {
       badge: 'CUSTOMER PORTAL',
-      title: `Welcome back, ${user?.Name ? (String(user.Name).length > 25 ? `${String(user.Name).slice(0, 25)}...` : user.Name) : 'Customer'}`,
+      title: `${isNewAccountSession ? 'Welcome' : 'Welcome back'}, ${user?.Name ? (String(user.Name).length > 25 ? `${String(user.Name).slice(0, 25)}...` : user.Name) : 'Customer'}`,
       subtitle: 'Manage orders, track deliveries, and reach NIMRA support from one clean workspace.',
     };
-  }, [tab, user?.Name]);
+  }, [isNewAccountSession, tab, user]);
 
   if (!mounted || isLoading) {
     if (tab === 'profile') {

@@ -42,7 +42,6 @@ export default function RegisterPage() {
   const [otpExpired, setOtpExpired] = useState(false);
   const [resendSeconds, setResendSeconds] = useState(0);
   const [expiresAt, setExpiresAt] = useState(0);
-  const [createdUser, setCreatedUser] = useState<NonNullable<Awaited<ReturnType<typeof sendRequest>>['user']> | null>(null);
   const registrationSourceRef = useRef(registrationSourceFromSearch(''));
   const otpRefs = useRef<Array<HTMLInputElement | null>>([]);
 
@@ -72,13 +71,13 @@ export default function RegisterPage() {
   }, []);
 
   useEffect(() => {
-    if (!otpOpen || createdUser) return;
+    if (!otpOpen) return;
     const timer = window.setInterval(() => {
       setResendSeconds((value) => Math.max(0, value - 1));
       if (expiresAt && Date.now() >= expiresAt) setOtpExpired(true);
     }, 1000);
     return () => window.clearInterval(timer);
-  }, [otpOpen, expiresAt, createdUser]);
+  }, [otpOpen, expiresAt]);
 
   const validate = () => {
     const newErrors = { name: '', email: '', mobile: '', password: '', confirmPassword: '' };
@@ -186,24 +185,7 @@ export default function RegisterPage() {
     setIsLoading(false);
   };
 
-  const handleVerify = async () => {
-    if (otpExpired) { setOtpError('OTP expired. Please request a new one.'); return; }
-    if (!/^\d{6}$/.test(otp)) { setOtpError('Invalid OTP. Please try again.'); return; }
-    setIsLoading(true); setOtpError('');
-    const user = registrationUser();
-    const verified = await sendRequest({ type: 'verifyRegistrationOTP', otp, user });
-    if (!verified.success) {
-      setOtpExpired(Boolean(verified.expired)); setOtpError(verified.expired ? 'OTP expired. Please request a new one.' : 'Invalid OTP. Please try again.'); setIsLoading(false); return;
-    }
-    const created = await sendRequest({ type: 'createVerifiedUser', user });
-    if (created.success && created.user) {
-      sessionStorage.removeItem(REGISTRATION_DRAFT_KEY); setCreatedUser(created.user);
-    } else setOtpError(created.message || 'Account creation failed. Please try again.');
-    setIsLoading(false);
-  };
-
-  const continueAfterSuccess = async () => {
-    if (!createdUser) return;
+  const continueAfterSuccess = async (createdUser: NonNullable<Awaited<ReturnType<typeof sendRequest>>['user']>) => {
     setIsLoading(true);
     const shouldReturnToCart = registrationSourceRef.current === 'cart' && hasGuestCartItems();
 
@@ -223,7 +205,26 @@ export default function RegisterPage() {
     if (!shouldReturnToCart && registrationSourceRef.current === 'cart') {
       window.history.replaceState(null, '', '/register');
     }
-    login(createdUser);
+    login(createdUser, { isNewAccount: true });
+  };
+
+  const handleVerify = async () => {
+    if (otpExpired) { setOtpError('OTP expired. Please request a new one.'); return; }
+    if (!/^\d{6}$/.test(otp)) { setOtpError('Invalid OTP. Please try again.'); return; }
+    setIsLoading(true); setOtpError('');
+    const user = registrationUser();
+    const verified = await sendRequest({ type: 'verifyRegistrationOTP', otp, user });
+    if (!verified.success) {
+      setOtpExpired(Boolean(verified.expired)); setOtpError(verified.expired ? 'OTP expired. Please request a new one.' : 'Invalid OTP. Please try again.'); setIsLoading(false); return;
+    }
+    const created = await sendRequest({ type: 'createVerifiedUser', user });
+    if (created.success && created.user) {
+      sessionStorage.removeItem(REGISTRATION_DRAFT_KEY);
+      setOtpOpen(false);
+      notify.custom({ type: 'success', title: 'Account created successfully', durationMs: 3000 });
+      await continueAfterSuccess(created.user);
+    } else setOtpError(created.message || 'Account creation failed. Please try again.');
+    setIsLoading(false);
   };
 
   const handleGoogleSuccess = async (accessToken: string) => {
@@ -269,7 +270,7 @@ export default function RegisterPage() {
         if (!shouldReturnToCart && registrationSourceRef.current === 'cart') {
           window.history.replaceState(null, '', '/register');
         }
-        login(res.user);
+        login(res.user, { isNewAccount });
         if (res.emailError) {
           notify.warning('Email Failed', `Account created, but welcome email failed: ${res.emailError}`);
         } else {
@@ -538,19 +539,19 @@ export default function RegisterPage() {
       </div>
       <LogoutConfirmationModal
         isOpen={otpOpen}
-        onClose={() => { if (!isLoading && !createdUser) setOtpOpen(false); }}
-        onConfirm={createdUser ? continueAfterSuccess : handleVerify}
-        title={createdUser ? 'Account Created Successfully' : 'Verify Your Email'}
-        description={createdUser ? 'Welcome to NIMRA. Your account has been verified and created successfully.' : `We have sent a verification code to ${email}`}
-        confirmText={createdUser ? 'Continue' : 'Verify OTP'}
+        onClose={() => { if (!isLoading) setOtpOpen(false); }}
+        onConfirm={handleVerify}
+        title="Verify Your Email"
+        description={`We have sent a verification code to ${email}`}
+        confirmText="Verify OTP"
         confirmButtonClass="btn btn-primary"
         isProcessing={isLoading}
-        confirmDisabled={!createdUser && (otp.length !== 6 || otpExpired)}
+        confirmDisabled={otp.length !== 6 || otpExpired}
         showCancelButton={false}
         stableFlowLayout
-        contentKey={createdUser ? 'success' : 'otp'}
+        contentKey="otp"
       >
-        {!createdUser && <div className="registration-otp-content">
+        <div className="registration-otp-content">
           <div className="registration-otp-boxes" aria-label="Six digit verification code">
             {Array.from({ length: 6 }).map((_, index) => <input
               key={index}
@@ -572,7 +573,7 @@ export default function RegisterPage() {
           {otpError && <p className="registration-otp-error">{otpError}</p>}
           <p className="registration-countdown">{resendSeconds > 0 ? `Resend available in ${resendSeconds} seconds` : otpExpired ? 'OTP expired.' : 'You can request a new code.'}</p>
           <button type="button" className="registration-resend" onClick={handleResend} disabled={resendSeconds > 0 || isLoading}>Resend OTP</button>
-        </div>}
+        </div>
       </LogoutConfirmationModal>
       <style jsx>{`
         .registration-otp-content { display:grid; justify-items:center; gap:1rem; text-align:center; }

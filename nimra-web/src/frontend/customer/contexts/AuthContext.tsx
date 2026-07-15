@@ -29,13 +29,19 @@ type StoredSession = {
   userId?: number | string;
   role?: string;
   expiresAt: number;
+  isNewAccount?: boolean;
+};
+
+type LoginOptions = {
+  isNewAccount?: boolean;
 };
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (userData: User) => void;
+  isNewAccountSession: boolean;
+  login: (userData: User, options?: LoginOptions) => void;
   logout: () => void;
   clearSession: () => void;
   updateUserSession: (userData: User) => void;
@@ -45,6 +51,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   isAuthenticated: false,
   isLoading: true,
+  isNewAccountSession: false,
   login: () => {},
   logout: () => {},
   clearSession: () => {},
@@ -129,9 +136,24 @@ const readStoredUser = (): User | null => {
   }
 };
 
+const readNewAccountSessionFlag = (): boolean => {
+  if (typeof window === 'undefined') return false;
+
+  try {
+    const storedSession = Cookies.get(SESSION_COOKIE);
+    const liveTabSession = window.sessionStorage.getItem(TAB_SESSION_KEY);
+    if (!storedSession || !liveTabSession) return false;
+    const parsedSession = JSON.parse(storedSession) as StoredSession;
+    return parsedSession.token === liveTabSession && parsedSession.isNewAccount === true;
+  } catch {
+    return false;
+  }
+};
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isNewAccountSession, setIsNewAccountSession] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -139,7 +161,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     queueMicrotask(() => {
       if (cancelled) return;
-      setUser(readStoredUser());
+      const storedUser = readStoredUser();
+      setUser(storedUser);
+      setIsNewAccountSession(Boolean(storedUser) && readNewAccountSessionFlag());
       setIsLoading(false);
     });
 
@@ -148,7 +172,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  const login = useCallback((userData: User) => {
+  const login = useCallback((userData: User, options?: LoginOptions) => {
     if (!userData || !userData.Username || !userData.Role) {
       throw new Error('Invalid login response. Missing user identity.');
     }
@@ -162,9 +186,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       userId: userData.ID,
       role: userData.Role,
       expiresAt,
+      isNewAccount: options?.isNewAccount === true,
     };
 
     setUser(userData);
+    setIsNewAccountSession(session.isNewAccount === true);
     Cookies.set(USER_COOKIE, JSON.stringify(userData), { path: '/', sameSite: 'lax' });
     Cookies.set(SESSION_COOKIE, JSON.stringify(session), { path: '/', sameSite: 'lax' });
 
@@ -221,6 +247,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const clearSession = useCallback(() => {
     setUser(null);
+    setIsNewAccountSession(false);
     clearBrowserSession();
     resetNavigationHistory();
     notifyRecentlyViewedChanged();
@@ -238,6 +265,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const currentUser = readStoredUser();
       if (!currentUser) {
         setUser(null);
+        setIsNewAccountSession(false);
         router.replace('/');
       }
     };
@@ -269,6 +297,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = useCallback(() => {
     setUser(null);
+    setIsNewAccountSession(false);
     clearBrowserSession();
     resetNavigationHistory();
     notifyRecentlyViewedChanged();
@@ -347,7 +376,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [user, updateUserSession]);
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout, clearSession, updateUserSession }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, isNewAccountSession, login, logout, clearSession, updateUserSession }}>
       {children}
     </AuthContext.Provider>
   );

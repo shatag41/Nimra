@@ -18,7 +18,7 @@ import type { EmailPreferences } from '@/types/cms';
 import CustomerPageHeader from './CustomerPageHeader';
 import LogoutConfirmationModal from './LogoutConfirmationModal';
 
-type DeleteStep = 'closed' | 'confirm' | 'active' | 'verify' | 'success';
+type DeleteStep = 'closed' | 'confirm' | 'active' | 'verify';
 
 const preferenceOptions: Array<{
   key: keyof EmailPreferences;
@@ -144,7 +144,8 @@ export default function SettingsClient() {
     const result = await deleteCustomerAccount(user.ID);
     setDeletingAccount(false);
     if (!result.success) return notify.error('Delete Failed', result.message);
-    setDeleteStep('success');
+    setDeleteStep('closed');
+    closeAfterDeletion();
   };
 
   const checkDeletionStatus = async () => {
@@ -183,32 +184,25 @@ export default function SettingsClient() {
 
   const closeAfterDeletion = () => {
     if (user?.ID) localStorage.removeItem(`nimra-cart-${user.ID}`);
-    notify.success('Account Deleted', 'Your account has been permanently deleted. Goodbye!');
+    notify.custom({ type: 'success', title: 'Account deleted successfully', durationMs: 3000 });
     clearSession();
-    // Brief delay so the success toast is visible before navigation
-    setTimeout(() => window.location.replace('/'), 200);
+    router.replace('/');
   };
 
   const deletionModalTitle = deleteStep === 'confirm' ? 'Delete Your Account?'
     : deleteStep === 'active' ? 'Active Order Detected'
-    : deleteStep === 'success' ? 'Account Deleted Successfully'
     : 'Verify Your Email';
   const deletionModalDescription = deleteStep === 'confirm'
     ? "You're about to permanently delete your NIMRA account. Before proceeding, we'll check if you have any active orders."
     : deleteStep === 'active'
       ? 'You currently have one or more active orders. Your account cannot be deleted until your active orders are cancelled and the cancellation request has been reviewed by an administrator.'
-      : deleteStep === 'success'
-        ? 'Your account has been permanently deleted. A confirmation email has been sent to your registered email address.'
-        : 'Confirm your registered email address and enter the verification code to securely delete your account.';
+      : 'Confirm your registered email address and enter the verification code to securely delete your account.';
   const deletionModalConfirmText = deleteStep === 'confirm' ? 'Continue'
     : deleteStep === 'active' ? 'Cancel Active Order(s)'
-    : deleteStep === 'success' ? 'Close'
     : otpSent ? 'Delete Permanently' : 'Send OTP';
   const handleDeletionModalConfirm = deleteStep === 'confirm' ? checkDeletionStatus
     : deleteStep === 'active' ? () => { sessionStorage.setItem('nimra-delete-account-cancellation-flow', '1'); router.push('/orders'); }
-    : deleteStep === 'success' ? closeAfterDeletion
     : otpSent ? handleAccountDelete : sendDeletionOtp;
-  const handleDeletionModalClose = deleteStep === 'success' ? closeAfterDeletion : () => setDeleteStep('closed');
 
   if (!mounted || isLoading || (!isAuthenticated && !user)) {
     return <main className="settings-loading">Loading account settings…</main>;
@@ -281,16 +275,16 @@ export default function SettingsClient() {
 
       <LogoutConfirmationModal
         isOpen={deleteStep !== 'closed'}
-        onClose={handleDeletionModalClose}
+        onClose={() => setDeleteStep('closed')}
         onConfirm={handleDeletionModalConfirm}
         title={deletionModalTitle}
         description={deletionModalDescription}
         confirmText={deletionModalConfirmText}
         cancelText={deleteStep === 'active' ? 'Keep My Account' : 'Cancel'}
-        confirmButtonClass={deleteStep === 'success' ? 'btn btn-primary' : 'btn btn-error'}
+        confirmButtonClass="btn btn-error"
         isProcessing={checkingDeletion || sendingOtp || deletingAccount}
         confirmDisabled={deleteStep === 'verify' && otpSent && !otpVerified}
-        showCancelButton={deleteStep !== 'success'}
+        showCancelButton
         contentKey={`${deleteStep}-${otpSent ? 'otp' : 'email'}`}
         stableFlowLayout
       >
