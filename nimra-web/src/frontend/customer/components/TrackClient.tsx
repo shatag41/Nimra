@@ -111,7 +111,7 @@ export default function TrackClient() {
   const params = useSearchParams();
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
-  const { orders: customerOrders } = useCustomerOrders();
+  const { orders: customerOrders, loadingOrders } = useCustomerOrders();
   const [orderId, setOrderId] = useState(params.get('orderId') || '');
   const [mobile, setMobile] = useState(params.get('mobile') || user?.Mobile || '');
   const [order, setOrder] = useState<OrderRecord | null>(null);
@@ -151,6 +151,14 @@ export default function TrackClient() {
     setLoading(true);
     setMessage('');
     setOrder(null);
+
+    const cachedOrder = customerOrders.find((item) => item.orderId === orderId.trim());
+    if (cachedOrder) {
+      setOrder(cachedOrder);
+      setLoading(false);
+      return;
+    }
+
     const result = await trackOrder(orderId.trim(), '', {
       userId: user?.ID,
       email: user?.Username,
@@ -159,12 +167,12 @@ export default function TrackClient() {
     setLoading(false);
     if (result.success && result.order) setOrder(result.order);
     else setMessage(result.message || 'Order not found.');
-  }, [user, orderId, mobileValue, router]);
+  }, [user, orderId, mobileValue, router, customerOrders]);
 
   const hasAutoSubmitted = useRef(false);
 
   useEffect(() => {
-    if (params.get('autoSubmit') === 'true' && user && !hasAutoSubmitted.current) {
+    if (params.get('autoSubmit') === 'true' && user && !loadingOrders && !hasAutoSubmitted.current) {
       hasAutoSubmitted.current = true;
       submit();
 
@@ -172,7 +180,7 @@ export default function TrackClient() {
       url.searchParams.delete('autoSubmit');
       window.history.replaceState({}, '', url.toString());
     }
-  }, [user, params, submit]);
+  }, [user, loadingOrders, params, submit]);
 
   const items = order?.items || [];
   const productCount = items.reduce((count, item) => count + Number(item.quantity || 0), 0);
@@ -190,7 +198,8 @@ export default function TrackClient() {
   // Keep the first server/client render identical, then hydrate with user/order data.
   const displayedOrderId = mounted ? (order?.orderId || orderId) : '';
   const displayedMobile = mounted ? (order?.customer?.mobile || mobileValue) : '';
-  const inputsDisabled = mounted ? (loading || authLoading) : true;
+  const inputsDisabled = mounted ? (loading || authLoading || (Boolean(user) && loadingOrders)) : true;
+  const showingSkeleton = loading || authLoading || (Boolean(user) && loadingOrders);
 
   return (
     <section className="track-page">
@@ -209,7 +218,7 @@ export default function TrackClient() {
           subtitle="Enter your Order ID and registered mobile number to track your order in real time."
         />
 
-        <div className={`tracking-flow ${order ? 'has-result' : ''} ${loading ? 'is-searching' : ''}`}>
+        <div className={`tracking-flow ${order ? 'has-result' : ''} ${showingSkeleton ? 'is-searching' : ''}`}>
           <form className="track-form premium-card search-card" onSubmit={submit}>
             <label className="field-group">
               <span>Order ID</span>
@@ -248,13 +257,13 @@ export default function TrackClient() {
               </div>
             </label>
 
-            <button className="track-button" disabled={loading}>
-              {loading ? <span className="spinner" /> : <Icon name="search" />}
-              <span>{loading ? 'Searching...' : 'Track Order'}</span>
+            <button className="track-button" disabled={loading || (Boolean(user) && loadingOrders)}>
+              {loading || (Boolean(user) && loadingOrders) ? <span className="spinner" /> : <Icon name="search" />}
+              <span>{loading ? 'Searching...' : loadingOrders && user ? 'Loading orders...' : 'Track Order'}</span>
             </button>
           </form>
 
-          {loading && (
+          {showingSkeleton && (
             <div className="loading-dashboard premium-card" aria-live="polite">
               <div className="skeleton-card wide" />
               <div className="skeleton-row">
@@ -265,7 +274,7 @@ export default function TrackClient() {
             </div>
           )}
 
-          {!loading && message && (
+          {!showingSkeleton && message && (
             <div className="notice-card premium-card error-card animate-slide-up" role="alert">
               <div className="notice-icon"><Icon name="alert" /></div>
               <div>
@@ -278,7 +287,7 @@ export default function TrackClient() {
             </div>
           )}
 
-          {!loading && !order && !message && (
+          {!showingSkeleton && !order && !message && (
             <div className="empty-card premium-card animate-slide-up">
               <div className="empty-orbit">
                 <span><Icon name="package" /></span>
@@ -288,7 +297,7 @@ export default function TrackClient() {
             </div>
           )}
 
-          {!loading && order && (
+          {!showingSkeleton && order && (
             <div className="results-dashboard animate-slide-up">
               <section className="premium-card order-info-card">
                 <div className="card-heading">

@@ -23,7 +23,12 @@ interface HomeClientProps {
 }
 
 export default function HomeClient({ banners: initialBanners, products: initialProducts, faqs: initialFaqs, companyInfo: initialCompanyInfo }: HomeClientProps) {
-  const { banners: dynamicBanners, products: dynamicProducts, faqs: dynamicFaqs, companyInfo: dynamicCompanyInfo } = useCMSData();
+  const { banners: dynamicBanners, products: dynamicProducts, faqs: dynamicFaqs, companyInfo: dynamicCompanyInfo } = useCMSData({
+    banners: initialBanners,
+    products: initialProducts,
+    faqs: initialFaqs,
+    companyInfo: initialCompanyInfo,
+  });
   
   const banners = dynamicBanners && dynamicBanners.length > 0 ? dynamicBanners : initialBanners;
   const products = dynamicProducts && dynamicProducts.length > 0 ? dynamicProducts : initialProducts;

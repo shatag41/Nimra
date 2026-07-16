@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocation } from '@/frontend/customer/contexts/LocationContext';
 import { useAuth } from '@/frontend/customer/hooks/useAuth';
 import { WORLD_DATA } from './Checkout';
-import { migrateLegacyLocalAddresses, normalizeSavedAddresses, persistUserSavedAddresses } from '@/frontend/customer/utils/userAddresses';
+import { getUserSavedAddresses, migrateLegacyLocalAddresses, normalizeSavedAddresses, persistUserSavedAddresses } from '@/frontend/customer/utils/userAddresses';
 import { CompactKpiCard } from '../CompactKpiCard';
 
 interface Address {
@@ -37,7 +37,9 @@ export function Addresses() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [addresses, setAddresses] = useState<Address[]>(() => getUserSavedAddresses(user) as Address[]);
+  const [addressesLoading, setAddressesLoading] = useState(true);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -107,6 +109,7 @@ export function Addresses() {
   useEffect(() => {
     if (!user) {
       setAddresses([]);
+      setAddressesLoading(false);
       return;
     }
 
@@ -115,6 +118,7 @@ export function Addresses() {
       const migrated = await migrateLegacyLocalAddresses(user);
       if (cancelled) return;
       setAddresses(migrated.addresses as Address[]);
+      setAddressesLoading(false);
       if (migrated.migrated) {
         updateUserSession({ ...user, SavedAddresses: JSON.stringify(migrated.addresses) });
       }
@@ -215,10 +219,16 @@ export function Addresses() {
 
   const saveAddressList = async (nextAddresses: Address[]) => {
     if (!user) return false;
+    const previousAddresses = addresses;
+    const optimisticAddresses = normalizeSavedAddresses(nextAddresses) as Address[];
+    setAddresses(optimisticAddresses);
+    updateUserSession({ ...user, SavedAddresses: JSON.stringify(optimisticAddresses) });
     setSaving(true);
     try {
-      const { result, addresses: normalized } = await persistUserSavedAddresses(user, nextAddresses);
+      const { result, addresses: normalized } = await persistUserSavedAddresses(user, optimisticAddresses);
       if (!result.success) {
+        setAddresses(previousAddresses);
+        updateUserSession({ ...user, SavedAddresses: JSON.stringify(previousAddresses) });
         setErrors({ form: result.message || 'Failed to save address.' });
         return false;
       }
@@ -299,11 +309,15 @@ export function Addresses() {
     const saved = await saveAddressList(updatedList);
     if (!saved) return;
     setDuplicateAddress(null);
-    setIsAdding(false);
-    setEditId(null);
 
     const redirectPath = searchParams ? searchParams.get('redirect') : null;
-    if (redirectPath) router.push(redirectPath);
+    if (redirectPath) {
+      setIsRedirecting(true);
+      router.replace(redirectPath);
+      return;
+    }
+    setIsAdding(false);
+    setEditId(null);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -337,7 +351,8 @@ export function Addresses() {
     const redirectPath = searchParams ? searchParams.get('redirect') : null;
     if (redirectPath) {
       const separator = redirectPath.includes('?') ? '&' : '?';
-      router.push(`${redirectPath}${separator}addressId=${encodeURIComponent(address.id)}`);
+      setIsRedirecting(true);
+      router.replace(`${redirectPath}${separator}addressId=${encodeURIComponent(address.id)}`);
       return;
     }
 
@@ -447,6 +462,39 @@ export function Addresses() {
   const countries = Object.keys(WORLD_DATA);
   const states = formData.country ? Object.keys(WORLD_DATA[formData.country] || {}) : [];
   const cities = formData.country && formData.state ? (WORLD_DATA[formData.country][formData.state] || []) : [];
+
+  if (isRedirecting) {
+    return (
+      <div className="address-route-skeleton" aria-live="polite" aria-busy="true">
+        <div className="address-route-skeleton-line wide" />
+        <div className="address-route-skeleton-line" />
+        <div className="address-route-skeleton-card" />
+        <span>Preparing checkout…</span>
+        <style jsx>{`
+          .address-route-skeleton { min-height: 420px; display: grid; align-content: start; gap: .8rem; padding: 1rem; color: var(--text-secondary); }
+          .address-route-skeleton-line, .address-route-skeleton-card { border-radius: 14px; background: linear-gradient(90deg, var(--bg-secondary), color-mix(in srgb, var(--primary-color) 10%, var(--bg-secondary)), var(--bg-secondary)); background-size: 200% 100%; animation: address-shimmer 1.2s infinite linear; }
+          .address-route-skeleton-line { width: 48%; height: 18px; } .address-route-skeleton-line.wide { width: 72%; height: 28px; }
+          .address-route-skeleton-card { height: 230px; margin-top: .4rem; }
+          .address-route-skeleton span { font-size: .82rem; }
+          @keyframes address-shimmer { to { background-position: -200% 0; } }
+        `}</style>
+      </div>
+    );
+  }
+
+  if (addressesLoading) {
+    return (
+      <div className="addresses-loading-grid" aria-label="Loading saved addresses" aria-busy="true">
+        {Array.from({ length: 4 }, (_, index) => <div className="addresses-loading-card" key={index} />)}
+        <style jsx>{`
+          .addresses-loading-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; padding:1rem; }
+          .addresses-loading-card { min-height:150px; border-radius:18px; background:linear-gradient(90deg,var(--bg-secondary),color-mix(in srgb,var(--primary-color) 8%,var(--bg-secondary)),var(--bg-secondary)); background-size:200% 100%; animation:addresses-shimmer 1.2s infinite linear; }
+          @keyframes addresses-shimmer { to { background-position:-200% 0; } }
+          @media(max-width:700px){.addresses-loading-grid{grid-template-columns:1fr}}
+        `}</style>
+      </div>
+    );
+  }
 
   return (
     <div className="addresses-container">

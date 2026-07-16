@@ -22,11 +22,11 @@ import {
   fetchAdminUpdates,
   fetchCustomerNotificationLog,
   saveNotification,
-  fetchProducts,
+  fetchCMSData,
+  clearAdminDataCache,
+  clearCMSDataCache,
   saveProduct,
-  fetchBanners,
   saveBanner,
-  fetchFAQs,
   saveFAQ,
   saveCompanyInfo,
   fetchCancellationRequests,
@@ -131,9 +131,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
         fetchedNotifs,
         fetchedAdminUpdates,
         fetchedCancellationRequests,
-        fetchedProducts,
-        fetchedBanners,
-        fetchedFaqs,
+        fetchedCMSData,
     ] = await Promise.all([
         fetchOrders(),
         fetchInquiries(),
@@ -141,9 +139,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
         fetchCustomerNotificationLog(),
         fetchAdminUpdates(),
         fetchCancellationRequests(),
-        fetchProducts(),
-        fetchBanners(),
-        fetchFAQs(),
+        fetchCMSData(),
     ]);
     return {
         fetchedOrders,
@@ -152,13 +148,18 @@ export const useAdminData = (initialCMSData: CMSData) => {
         fetchedNotifs,
         fetchedAdminUpdates,
         fetchedCancellationRequests,
-        fetchedProducts,
-        fetchedBanners,
-        fetchedFaqs,
+        fetchedProducts: fetchedCMSData.products,
+        fetchedBanners: fetchedCMSData.banners,
+        fetchedFaqs: fetchedCMSData.faqs,
     };
   };
 
-  const { data: swrData, error: swrError, mutate: refreshDataSWR } = useSWR(authChecked ? 'adminData' : null, fetcher, { refreshInterval: 30000, revalidateOnFocus: true });
+  const { data: swrData, error: swrError, mutate: refreshDataSWR } = useSWR(authChecked ? 'adminData' : null, fetcher, {
+    refreshInterval: 30000,
+    revalidateOnFocus: true,
+    dedupingInterval: 15000,
+    keepPreviousData: true,
+  });
 
   useEffect(() => {
     if (swrData) {
@@ -182,6 +183,8 @@ export const useAdminData = (initialCMSData: CMSData) => {
 
   const refreshData = async () => {
     setLoading(true);
+    clearAdminDataCache();
+    clearCMSDataCache();
     await refreshDataSWR();
   };
 
@@ -357,9 +360,16 @@ export const useAdminData = (initialCMSData: CMSData) => {
       const res = await saveBanner(editingBanner, action, oldImagePath);
       if (res.success) {
         showAlert(res.message);
-        const updatedBanners = await fetchBanners();
-        setBanners(updatedBanners);
-        router.refresh();
+        const savedBanner: Banner = {
+          ...(oldBanner || {}),
+          ...editingBanner,
+          ID: res.ID || editingBanner.ID || oldBanner?.ID || Date.now(),
+          ImageUrl: getUploadImageUrl(editingBanner.ImageUrl) || editingBanner.ImageUrl || oldBanner?.ImageUrl || '',
+          Active: editingBanner.Active !== undefined ? editingBanner.Active : oldBanner?.Active ?? true,
+        } as Banner;
+        setBanners(prev => action === 'update'
+          ? prev.map(item => String(item.ID) === String(savedBanner.ID) ? savedBanner : item)
+          : [savedBanner, ...prev]);
         return true;
       } else {
         showAlert(res.message, 'error');
@@ -405,9 +415,16 @@ export const useAdminData = (initialCMSData: CMSData) => {
       const res = await saveFAQ(editingFAQ, action);
       if (res.success) {
         showAlert(res.message);
-        const updatedFaqs = await fetchFAQs();
-        setFaqs(updatedFaqs);
-        router.refresh();
+        const oldFAQ = faqs.find(item => String(item.ID) === String(editingFAQ.ID));
+        const savedFAQ = {
+          ...(oldFAQ || {}),
+          ...editingFAQ,
+          ID: res.ID || editingFAQ.ID || Date.now(),
+          Active: editingFAQ.Active !== undefined ? editingFAQ.Active : oldFAQ?.Active ?? true,
+        } as FAQ;
+        setFaqs(prev => action === 'update'
+          ? prev.map(item => String(item.ID) === String(savedFAQ.ID) ? savedFAQ : item)
+          : [savedFAQ, ...prev]);
         return true;
       } else {
         showAlert(res.message, 'error');
@@ -428,9 +445,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
       const res = await saveFAQ({ ID: id }, 'delete');
       if (res.success) {
         showAlert(res.message);
-        const updatedFaqs = await fetchFAQs();
-        setFaqs(updatedFaqs);
-        router.refresh();
+        setFaqs(prev => prev.filter(item => String(item.ID) !== String(id)));
         return true;
       } else {
         showAlert(res.message, 'error');

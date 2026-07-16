@@ -17,6 +17,7 @@ const orderTime = (order: OrderRecord) => {
 let ordersCache: { [key: string]: OrderRecord[] } = {};
 let cacheTimes: { [key: string]: number } = {};
 const activeFetches: { [key: string]: Promise<OrderRecord[]> | null } = {};
+const cacheGenerations: { [key: string]: number } = {};
 const CACHE_TTL = 2 * 60 * 1000;
 const ORDERS_CACHE_VERSION = 'v2';
 const storageKey = (key: string) => `nimra-orders:${ORDERS_CACHE_VERSION}:${key}`;
@@ -122,10 +123,17 @@ export const replaceCustomerOrdersCache = (orders: OrderRecord[], keys: Array<st
 
 export const clearCustomerOrdersCache = (userId?: string | number) => {
   if (userId) {
-    delete ordersCache[String(userId)];
-    delete cacheTimes[String(userId)];
-    if (typeof window !== 'undefined') sessionStorage.removeItem(storageKey(String(userId)));
+    const key = String(userId);
+    delete ordersCache[key];
+    delete cacheTimes[key];
+    activeFetches[key] = null;
+    cacheGenerations[key] = (cacheGenerations[key] || 0) + 1;
+    if (typeof window !== 'undefined') sessionStorage.removeItem(storageKey(key));
   } else {
+    Object.keys(activeFetches).forEach((key) => {
+      activeFetches[key] = null;
+      cacheGenerations[key] = (cacheGenerations[key] || 0) + 1;
+    });
     ordersCache = {};
     cacheTimes = {};
   }
@@ -168,9 +176,7 @@ export function useCustomerOrders() {
     const key = cacheKey;
     if (!key) return;
 
-    const cacheIsFresh = Boolean(
-      ordersCache[key]?.length && Date.now() - (cacheTimes[key] || 0) < CACHE_TTL
-    );
+    const cacheIsFresh = Boolean(cacheTimes[key] && Date.now() - cacheTimes[key] < CACHE_TTL);
     if (!forceRefetch && cacheIsFresh) {
       setOrders(ordersCache[key]);
       setLoadingOrders(false);
@@ -178,8 +184,10 @@ export function useCustomerOrders() {
     }
 
     if (!ordersCache[key]) setLoadingOrders(true);
+    const cacheGeneration = cacheGenerations[key] || 0;
+    let fetchPromise: Promise<OrderRecord[]> | null = null;
     try {
-      let fetchPromise = activeFetches[key];
+      fetchPromise = activeFetches[key];
       if (forceRefetch || !fetchPromise) {
         fetchPromise = fetchCustomerOrders(userId || '', userEmail || '', userMobile || '').then(async (customerOrders) => {
           const needsCatalog = customerOrders.some((order) => (order.items || []).some((item) =>
@@ -197,13 +205,14 @@ export function useCustomerOrders() {
         activeFetches[key] = fetchPromise;
       }
       const data = await fetchPromise;
+      if ((cacheGenerations[key] || 0) !== cacheGeneration) return;
       const sortedData = sortOrders(enrichOrdersForUser(data));
       writeOrdersCache(key, sortedData);
       setOrders(sortedData);
     } catch (err) {
       console.error('Failed to load orders', err);
     } finally {
-      activeFetches[key] = null;
+      if (activeFetches[key] === fetchPromise) activeFetches[key] = null;
       setLoadingOrders(false);
     }
   }, [isAuthenticated, userId, userEmail, userMobile, cacheKey, enrichOrdersForUser]);

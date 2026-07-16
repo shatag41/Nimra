@@ -20,6 +20,7 @@ import {
 import Sidebar from './Sidebar';
 import Header from './Header';
 import LogoutConfirmationModal from '@/frontend/customer/components/LogoutConfirmationModal';
+import LoadingState from '@/frontend/customer/components/LoadingState';
 import { isSuperAdmin, normalizeRole } from '../utils/accessControl';
 const AdminManagementTab = dynamic(() => import('./EnterpriseTabs').then((mod) => mod.AdminManagementTab), { ssr: false });
 const LogsTab = dynamic(() => import('./EnterpriseTabs').then((mod) => mod.LogsTab), { ssr: false });
@@ -38,39 +39,39 @@ const UserModal = dynamic(() => import('./UserModal'), { ssr: false });
 // Lazy-loaded Tab components
 const DashboardTab = dynamic(() => import('./DashboardTab'), {
   ssr: false,
-  loading: () => null,
+  loading: () => <LoadingState label="Loading dashboard" compact />,
 });
 const OrdersTab = dynamic(() => import('./OrdersTab'), {
   ssr: false,
-  loading: () => null,
+  loading: () => <LoadingState label="Loading orders" compact />,
 });
 const ProductsTab = dynamic(() => import('./ProductsTab'), {
   ssr: false,
-  loading: () => null,
+  loading: () => <LoadingState label="Loading products" compact />,
 });
 const BannersTab = dynamic(() => import('./BannersTab'), {
   ssr: false,
-  loading: () => null,
+  loading: () => <LoadingState label="Loading banners" compact />,
 });
 const FAQsTab = dynamic(() => import('./FAQsTab'), {
   ssr: false,
-  loading: () => null,
+  loading: () => <LoadingState label="Loading FAQs" compact />,
 });
 const InquiriesTab = dynamic(() => import('./InquiriesTab'), {
   ssr: false,
-  loading: () => null,
+  loading: () => <LoadingState label="Loading inquiries" compact />,
 });
 const UsersTab = dynamic(() => import('./UsersTab'), {
   ssr: false,
-  loading: () => null,
+  loading: () => <LoadingState label="Loading users" compact />,
 });
 const NotificationsTab = dynamic(() => import('./NotificationsTab'), {
   ssr: false,
-  loading: () => null,
+  loading: () => <LoadingState label="Loading notifications" compact />,
 });
 const SettingsTab = dynamic(() => import('./SettingsTab'), {
   ssr: false,
-  loading: () => null,
+  loading: () => <LoadingState label="Loading settings" compact />,
 });
 
 interface AdminPortalClientProps {
@@ -261,7 +262,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
     }
   };
 
-  if (!currentUser) return null;
+  if (!currentUser) return <LoadingState label="Verifying admin session" />;
 
   return (
     <>

@@ -249,8 +249,11 @@ export const sendRequest = async (payload: AuthRequest): Promise<AuthResponse> =
 
 export const clearCMSDataCache = () => {
   clientCMSCache = null;
+  clientCMSCacheTime = 0;
+  clientCMSRequest = null;
   serverCMSCache = null;
   serverCMSRequest = null;
+  invalidateReadCache(['products', 'banners', 'faqs']);
 };
 
 /**
@@ -274,9 +277,47 @@ export const deleteUploadedImage = async (storagePath: string): Promise<void> =>
 };
 
 let clientCMSCache: CMSData | null = null;
+let clientCMSCacheTime = 0;
+let clientCMSRequest: Promise<CMSData> | null = null;
 let serverCMSCache: { data: CMSData; expiresAt: number } | null = null;
 let serverCMSRequest: Promise<CMSData> | null = null;
 const SERVER_CMS_CACHE_TTL_MS = 5 * 60 * 1000;
+const CLIENT_CMS_CACHE_TTL_MS = 5 * 60 * 1000;
+const READ_CACHE_TTL_MS = 15 * 1000;
+
+const readCache = new Map<string, { value: unknown; expiresAt: number }>();
+const pendingReads = new Map<string, Promise<unknown>>();
+
+const cachedRead = async <T>(key: string, loader: () => Promise<T>, ttl = READ_CACHE_TTL_MS): Promise<T> => {
+  // Server-side request caching is handled by Next.js and the dedicated CMS
+  // cache below. Keeping user-scoped data here would leak it across requests.
+  if (typeof window === 'undefined') return loader();
+
+  const cached = readCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) return cached.value as T;
+
+  const pending = pendingReads.get(key);
+  if (pending) return pending as Promise<T>;
+
+  const request = loader()
+    .then((value) => {
+      readCache.set(key, { value, expiresAt: Date.now() + ttl });
+      return value;
+    })
+    .finally(() => pendingReads.delete(key));
+  pendingReads.set(key, request);
+  return request;
+};
+
+const invalidateReadCache = (prefixes: string[]) => {
+  for (const key of readCache.keys()) {
+    if (prefixes.some((prefix) => key === prefix || key.startsWith(`${prefix}:`))) readCache.delete(key);
+  }
+};
+
+export const clearAdminDataCache = () => {
+  invalidateReadCache(['orders', 'cancellations', 'inquiries', 'users', 'admin-updates', 'customer-notification-log']);
+};
 
 const normalizeImageUrl = (url: unknown): string => {
   const value = String(url || '').trim();
@@ -334,7 +375,13 @@ const getLocalFallbackCMSData = async (): Promise<CMSData> => {
 
 // Fetch CMS Data via internal proxy
 export const fetchCMSData = async (): Promise<CMSData> => {
-  // Let SWR handle client-side caching. Do not block fetching with clientCMSCache.
+  if (typeof window !== 'undefined') {
+    if (clientCMSCache && Date.now() - clientCMSCacheTime < CLIENT_CMS_CACHE_TTL_MS) {
+      return clientCMSCache;
+    }
+    if (clientCMSRequest) return clientCMSRequest;
+  }
+
   if (typeof window === 'undefined') {
     const now = Date.now();
     if (serverCMSCache && serverCMSCache.expiresAt > now) {
@@ -378,6 +425,7 @@ export const fetchCMSData = async (): Promise<CMSData> => {
 
     if (typeof window !== 'undefined') {
       clientCMSCache = cmsData;
+      clientCMSCacheTime = Date.now();
     } else {
       serverCMSCache = {
         data: cmsData,
@@ -414,7 +462,10 @@ export const fetchCMSData = async (): Promise<CMSData> => {
     return serverCMSRequest;
   }
 
-  return requestCMSData();
+  clientCMSRequest = requestCMSData().finally(() => {
+    clientCMSRequest = null;
+  });
+  return clientCMSRequest;
 };
 
 // Submit Inquiry via internal proxy to Google Sheets
@@ -511,6 +562,7 @@ export const submitOrder = async (order: OrderSubmission): Promise<SubmitOrderRe
     // Clear client-side CMS cache so the next page load fetches fresh
     // product/banner data rather than serving a stale snapshot.
     clearCMSDataCache();
+    invalidateReadCache(['orders', 'customer-orders']);
 
     return {
       success: true,
@@ -554,7 +606,8 @@ export const trackOrder = async (
 // Admin Portal API Methods
 
 export const fetchOrders = async (): Promise<OrderRecord[]> => {
-  const res = await fetch(`/api/cms?action=getOrders&_t=${Date.now()}`, { 
+  return cachedRead('orders', async () => {
+  const res = await fetch(`/api/cms?action=getOrders`, {
     method: 'GET', 
     cache: 'no-store',
     headers: {
@@ -563,6 +616,7 @@ export const fetchOrders = async (): Promise<OrderRecord[]> => {
   });
   const data = await readJsonResponse<{ orders?: OrderRecord[] } | OrderRecord[]>(res, []);
   return Array.isArray(data) ? data : (data.orders || []);
+  });
 };
 
 export const fetchCustomerOrders = async (userId: string | number, email: string, mobile = ''): Promise<OrderRecord[]> => {
@@ -570,9 +624,7 @@ export const fetchCustomerOrders = async (userId: string | number, email: string
   if (userId) params.set('userId', String(userId));
   if (email) params.set('email', email);
   if (mobile) params.set('mobile', mobile);
-  params.set('_t', String(Date.now()));
-
-  const res = await fetch(`/api/cms?${params.toString()}`, { 
+  const res = await fetch(`/api/cms?${params.toString()}`, {
     method: 'GET', 
     cache: 'no-store',
     headers: {
@@ -591,6 +643,7 @@ export const updateOrderStatus = async (orderId: string, status: string): Promis
       body: JSON.stringify({ type: 'updateOrderStatus', orderId, status }),
     });
     const data = await res.json();
+    if (data.success) invalidateReadCache(['orders', 'customer-orders']);
     return { success: data.success, message: data.message || 'Updated status successfully' };
   } catch (err) {
     console.error('Error updating order status:', err);
@@ -609,6 +662,7 @@ export const requestOrderCancellation = async (
       body: JSON.stringify({ type: 'requestOrderCancellation', orderId, reason }),
     });
     const data = await res.json();
+    if (data.success) invalidateReadCache(['orders', 'customer-orders', 'cancellations']);
     return { success: data.success, message: data.message || 'Cancellation request submitted' };
   } catch (err) {
     console.error('Error requesting cancellation:', err);
@@ -617,13 +671,15 @@ export const requestOrderCancellation = async (
 };
 
 export const fetchCancellationRequests = async (): Promise<import('@/types/cms').CancellationRequest[]> => {
-  const res = await fetch(`/api/cms?action=getCancellationRequests&_t=${Date.now()}`, {
+  return cachedRead('cancellations', async () => {
+  const res = await fetch(`/api/cms?action=getCancellationRequests`, {
     method: 'GET',
     cache: 'no-store',
     headers: { 'Accept': 'application/json' },
   });
   const data = await readJsonResponse<{ requests?: import('@/types/cms').CancellationRequest[] } | import('@/types/cms').CancellationRequest[]>(res, []);
   return Array.isArray(data) ? data : (data.requests || []);
+  });
 };
 
 export const reviewCancellationRequest = async (
@@ -639,6 +695,7 @@ export const reviewCancellationRequest = async (
       body: JSON.stringify({ type: 'reviewCancellationRequest', requestId, decision, adminName, adminRemarks }),
     });
     const data = await res.json();
+    if (data.success) invalidateReadCache(['orders', 'customer-orders', 'cancellations']);
     return { success: data.success, message: data.message || 'Cancellation request updated' };
   } catch (err) {
     console.error('Error reviewing cancellation request:', err);
@@ -647,7 +704,8 @@ export const reviewCancellationRequest = async (
 };
 
 export const fetchInquiries = async (): Promise<Inquiry[]> => {
-  const res = await fetch(`/api/cms?action=getInquiries&_t=${Date.now()}`, { 
+  return cachedRead('inquiries', async () => {
+  const res = await fetch(`/api/cms?action=getInquiries`, {
     method: 'GET', 
     cache: 'no-store',
     headers: {
@@ -656,6 +714,7 @@ export const fetchInquiries = async (): Promise<Inquiry[]> => {
   });
   const data = await readJsonResponse<{ inquiries?: Inquiry[] } | Inquiry[]>(res, []);
   return Array.isArray(data) ? data : (data.inquiries || []);
+  });
 };
 
 export const markInquiryReviewed = async (
@@ -674,6 +733,7 @@ export const markInquiryReviewed = async (
       }),
     });
     const data = await res.json();
+    if (data.success) invalidateReadCache(['inquiries', 'admin-updates']);
     return { success: data.success, message: data.message || 'Inquiry updated' };
   } catch (err) {
     console.error('Error marking inquiry reviewed:', err);
@@ -682,7 +742,8 @@ export const markInquiryReviewed = async (
 };
 
 export const fetchUsers = async (): Promise<AdminUser[]> => {
-  const res = await fetch(`/api/cms?action=getUsers&_t=${Date.now()}`, { 
+  return cachedRead('users', async () => {
+  const res = await fetch(`/api/cms?action=getUsers`, {
     method: 'GET', 
     cache: 'no-store',
     headers: {
@@ -691,6 +752,7 @@ export const fetchUsers = async (): Promise<AdminUser[]> => {
   });
   const data = await readJsonResponse<{ users?: AdminUser[] } | AdminUser[]>(res, []);
   return Array.isArray(data) ? data : (data.users || []);
+  });
 };
 
 export const saveUser = async (user: Partial<AdminUser>, action: 'create' | 'update' | 'delete'): Promise<{ success: boolean; message: string; ID?: string | number }> => {
@@ -701,6 +763,7 @@ export const saveUser = async (user: Partial<AdminUser>, action: 'create' | 'upd
       body: JSON.stringify({ type: 'userCRUD', action, user }),
     });
     const data = await res.json();
+    if (data.success) invalidateReadCache(['users']);
     return { success: data.success, message: data.message || 'User saved successfully', ID: data.ID };
   } catch (err) {
     console.error('Error saving user:', err);
@@ -734,17 +797,20 @@ const normalizeNotifications = (notifications: Notification[]) => notifications.
 }));
 
 export const fetchAdminUpdates = async (): Promise<Notification[]> => {
-  const res = await fetch(`/api/cms?action=getAdminUpdates&_t=${Date.now()}`, {
+  return cachedRead('admin-updates', async () => {
+  const res = await fetch(`/api/cms?action=getAdminUpdates`, {
     method: 'GET',
     cache: 'no-store',
     headers: { Accept: 'application/json' },
   });
   const data = await readJsonResponse<{ events?: Notification[] } | Notification[]>(res, []);
   return normalizeNotifications(Array.isArray(data) ? data : (data.events || []));
+  });
 };
 
 export const fetchCustomerNotificationLog = async (): Promise<Notification[]> => {
-  const res = await fetch(`/api/cms?action=getCustomerNotificationLog&_t=${Date.now()}`, {
+  return cachedRead('customer-notification-log', async () => {
+  const res = await fetch(`/api/cms?action=getCustomerNotificationLog`, {
     method: 'GET',
     cache: 'no-store',
     headers: { Accept: 'application/json' },
@@ -752,12 +818,14 @@ export const fetchCustomerNotificationLog = async (): Promise<Notification[]> =>
   const data = await readJsonResponse<{ events?: Notification[] } | Notification[]>(res, []);
   return normalizeNotifications(Array.isArray(data) ? data : (data.events || []))
     .filter((notification) => notification.EventType === 'ADMIN_BROADCAST');
+  });
 };
 
 export const fetchNotifications = async (userId?: string | number, email?: string): Promise<Notification[]> => {
-  const params = new URLSearchParams({ action: 'getCustomerNotifications', _t: String(Date.now()) });
+  const params = new URLSearchParams({ action: 'getCustomerNotifications' });
   if (userId !== undefined && userId !== null) params.set('userId', String(userId));
   if (email) params.set('email', email);
+  return cachedRead(`notifications:${userId || email || 'guest'}`, async () => {
   const res = await fetch(`/api/cms?${params.toString()}`, {
     method: 'GET', 
     cache: 'no-store',
@@ -768,6 +836,7 @@ export const fetchNotifications = async (userId?: string | number, email?: strin
   const data = await readJsonResponse<{ notifications?: Notification[] } | Notification[]>(res, []);
   const notifications = Array.isArray(data) ? data : (data.notifications || []);
   return normalizeNotifications(notifications);
+  });
 };
 
 export const saveUserAddresses = async <T>(customerId: string | number, addresses: T[]): Promise<{ success: boolean; message: string; addresses?: T[] }> => {
@@ -790,7 +859,8 @@ export const saveUserAddresses = async <T>(customerId: string | number, addresse
 };
 
 export const fetchProducts = async (): Promise<Product[]> => {
-  const res = await fetch(`/api/cms?action=getProducts&_t=${Date.now()}`, {
+  return cachedRead('products', async () => {
+  const res = await fetch(`/api/cms?action=getProducts`, {
     method: 'GET',
     cache: 'no-store',
     headers: { Accept: 'application/json' },
@@ -798,10 +868,12 @@ export const fetchProducts = async (): Promise<Product[]> => {
   const data = await readJsonResponse<{ products?: Product[] } | Product[]>(res, []);
   const products = Array.isArray(data) ? data : (data.products || []);
   return products.map((product) => ({ ...product, ImageUrl: normalizeImageUrl(product.ImageUrl) }));
+  }, CLIENT_CMS_CACHE_TTL_MS);
 };
 
 export const fetchBanners = async (): Promise<Banner[]> => {
-  const res = await fetch(`/api/cms?action=getBanners&_t=${Date.now()}`, {
+  return cachedRead('banners', async () => {
+  const res = await fetch(`/api/cms?action=getBanners`, {
     method: 'GET',
     cache: 'no-store',
     headers: { Accept: 'application/json' },
@@ -809,16 +881,19 @@ export const fetchBanners = async (): Promise<Banner[]> => {
   const data = await readJsonResponse<{ banners?: Banner[] } | Banner[]>(res, []);
   const banners = Array.isArray(data) ? data : (data.banners || []);
   return banners.map((banner) => ({ ...banner, ImageUrl: normalizeImageUrl(banner.ImageUrl) }));
+  }, CLIENT_CMS_CACHE_TTL_MS);
 };
 
 export const fetchFAQs = async (): Promise<FAQ[]> => {
-  const res = await fetch(`/api/cms?action=getFAQs&_t=${Date.now()}`, {
+  return cachedRead('faqs', async () => {
+  const res = await fetch(`/api/cms?action=getFAQs`, {
     method: 'GET',
     cache: 'no-store',
     headers: { Accept: 'application/json' },
   });
   const data = await readJsonResponse<{ faqs?: FAQ[] } | FAQ[]>(res, []);
   return Array.isArray(data) ? data : (data.faqs || []);
+  }, CLIENT_CMS_CACHE_TTL_MS);
 };
 
 export const saveNotification = async (notification: Partial<Notification>, action: 'create' | 'update' | 'delete'): Promise<{ success: boolean; message: string; ID?: string | number }> => {
@@ -844,6 +919,7 @@ export const saveNotification = async (notification: Partial<Notification>, acti
       }),
     });
     const data = await res.json();
+    if (data.success) invalidateReadCache(['notifications', 'customer-notification-log', 'admin-updates']);
     return { success: data.success, message: data.message || 'Notification saved successfully', ID: data.ID };
   } catch (err) {
     console.error('Error saving notification:', err);
@@ -935,6 +1011,7 @@ export const saveCompanyInfo = async (companyInfo: CompanyInfo): Promise<{ succe
       body: JSON.stringify({ type: 'companyInfoUpdate', companyInfo }),
     });
     const data = await res.json();
+    if (data.success) clearCMSDataCache();
     return { success: data.success, message: data.message || 'Company info saved successfully' };
   } catch (err) {
     console.error('Error saving company info:', err);
@@ -1003,10 +1080,13 @@ const accountSettingsRequest = async (payload: Record<string, unknown>): Promise
 };
 
 export const fetchEmailPreferences = (userId: string | number) =>
-  accountSettingsRequest({ action: 'getPreferences', userId });
+  cachedRead(`email-preferences:${userId}`, () => accountSettingsRequest({ action: 'getPreferences', userId }), 60 * 1000);
 
-export const saveEmailPreferences = (userId: string | number, preferences: EmailPreferences) =>
-  accountSettingsRequest({ action: 'updatePreferences', userId, preferences });
+export const saveEmailPreferences = async (userId: string | number, preferences: EmailPreferences) => {
+  const result = await accountSettingsRequest({ action: 'updatePreferences', userId, preferences });
+  if (result.success) invalidateReadCache([`email-preferences:${userId}`]);
+  return result;
+};
 
 export const changeAccountPassword = (
   userId: string | number,
@@ -1014,8 +1094,11 @@ export const changeAccountPassword = (
   newPassword: string
 ) => accountSettingsRequest({ action: 'changePassword', userId, currentPassword, newPassword });
 
-export const deleteCustomerAccount = (userId: string | number) =>
-  accountSettingsRequest({ action: 'deleteAccount', userId });
+export const deleteCustomerAccount = async (userId: string | number) => {
+  const result = await accountSettingsRequest({ action: 'deleteAccount', userId });
+  if (result.success) invalidateReadCache(['users', 'orders', 'customer-orders', `email-preferences:${userId}`]);
+  return result;
+};
 
 export const fetchAccountDeletionStatus = (userId: string | number) =>
   accountSettingsRequest({ action: 'getDeletionStatus', userId });

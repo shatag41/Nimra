@@ -103,6 +103,7 @@ let localDBLoaded = false;
 async function syncLocalDB(action: 'load' | 'save') {
   try {
     if (action === 'load') {
+      if (localDBLoaded) return;
       const fileContent = await fs.readFile(DB_PATH, 'utf-8');
       const data = JSON.parse(fileContent);
       if (data.banners) fallbackData.banners = data.banners;

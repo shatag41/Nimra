@@ -15,6 +15,7 @@ import {
   verifyAccountDeletionOTP,
 } from '@/utils/api';
 import type { EmailPreferences } from '@/types/cms';
+import { clearCustomerOrdersCache } from '@/frontend/customer/hooks/useCustomerOrders';
 import CustomerPageHeader from './CustomerPageHeader';
 import LogoutConfirmationModal from './LogoutConfirmationModal';
 
@@ -59,6 +60,7 @@ export default function SettingsClient() {
   const [otpMessage, setOtpMessage] = useState('');
   const [resendSeconds, setResendSeconds] = useState(0);
   const [deletingAccount, setDeletingAccount] = useState(false);
+  const [accountDeleted, setAccountDeleted] = useState(false);
   const [checkingDeletion, setCheckingDeletion] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
   const verifyingOtpRef = useRef('');
@@ -142,9 +144,11 @@ export default function SettingsClient() {
     if (!user?.ID || !otpVerified) return;
     setDeletingAccount(true);
     const result = await deleteCustomerAccount(user.ID);
-    setDeletingAccount(false);
-    if (!result.success) return notify.error('Delete Failed', result.message);
-    setDeleteStep('closed');
+    if (!result.success) {
+      setDeletingAccount(false);
+      return notify.error('Delete Failed', result.message);
+    }
+    setAccountDeleted(true);
     closeAfterDeletion();
   };
 
@@ -183,7 +187,10 @@ export default function SettingsClient() {
   };
 
   const closeAfterDeletion = () => {
-    if (user?.ID) localStorage.removeItem(`nimra-cart-${user.ID}`);
+    if (user?.ID) {
+      localStorage.removeItem(`nimra-cart-${user.ID}`);
+      clearCustomerOrdersCache(user.ID);
+    }
     notify.custom({ type: 'success', title: 'Account deleted successfully', durationMs: 3000 });
     clearSession();
     router.replace('/');
@@ -204,8 +211,21 @@ export default function SettingsClient() {
     : deleteStep === 'active' ? () => { sessionStorage.setItem('nimra-delete-account-cancellation-flow', '1'); router.push('/orders'); }
     : otpSent ? handleAccountDelete : sendDeletionOtp;
 
-  if (!mounted || isLoading || (!isAuthenticated && !user)) {
-    return <main className="settings-loading">Loading account settings…</main>;
+  if (!mounted || isLoading || accountDeleted || (!isAuthenticated && !user)) {
+    return (
+      <main className="settings-loading" aria-live="polite" aria-busy="true">
+        <span className="settings-loading-bar" />
+        <span className="settings-loading-bar short" />
+        <span className="settings-loading-card" />
+        <p>{accountDeleted ? 'Account deleted. Redirecting…' : 'Loading account settings…'}</p>
+        <style jsx>{`
+          .settings-loading { min-height:70vh; display:grid; align-content:center; gap:.8rem; width:min(760px,calc(100% - 2rem)); margin:auto; color:var(--text-secondary); }
+          .settings-loading-bar,.settings-loading-card { border-radius:14px; background:linear-gradient(90deg,var(--bg-secondary),color-mix(in srgb,var(--primary-color) 10%,var(--bg-secondary)),var(--bg-secondary)); background-size:200% 100%; animation:settings-shimmer 1.2s infinite linear; }
+          .settings-loading-bar { width:62%; height:24px; }.settings-loading-bar.short { width:38%; height:14px; }.settings-loading-card { height:220px; }
+          .settings-loading p { margin:0; font-size:.85rem; } @keyframes settings-shimmer { to { background-position:-200% 0; } }
+        `}</style>
+      </main>
+    );
   }
 
   return (
