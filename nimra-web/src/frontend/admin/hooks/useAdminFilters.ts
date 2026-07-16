@@ -11,8 +11,7 @@ export const useAdminFilters = () => {
   const [productStatusFilter, setProductStatusFilter] = useState('All');
   const [bannerStatusFilter, setBannerStatusFilter] = useState('All');
   const [faqStatusFilter, setFaqStatusFilter] = useState('All');
-  const [userRoleFilter, setUserRoleFilter] = useState('All');
-  const [userStatusFilter, setUserStatusFilter] = useState('All');
+  const [customerStatusFilter, setCustomerStatusFilter] = useState('All');
 
   // Date sorting and Date range Filter States
   const [orderSort, setOrderSort] = useState('latest');
@@ -53,11 +52,6 @@ export const useAdminFilters = () => {
     setInquiryEndDate('');
   };
 
-  const handleClearUserFilters = () => {
-    setUserRoleFilter('All');
-    setUserStatusFilter('All');
-  };
-
   return {
     globalSearch,
     setGlobalSearch,
@@ -75,10 +69,8 @@ export const useAdminFilters = () => {
     setBannerStatusFilter,
     faqStatusFilter,
     setFaqStatusFilter,
-    userRoleFilter,
-    setUserRoleFilter,
-    userStatusFilter,
-    setUserStatusFilter,
+    customerStatusFilter,
+    setCustomerStatusFilter,
     orderSort,
     setOrderSort,
     orderStartDate,
@@ -98,7 +90,6 @@ export const useAdminFilters = () => {
     handleClearBannerFilters,
     handleClearFaqFilters,
     handleClearInquiryFilters,
-    handleClearUserFilters,
   };
 };
 

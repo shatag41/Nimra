@@ -148,7 +148,6 @@ export const filterInquiries = (
 export const filterUsers = (
   users: AdminUser[],
   searchLower: string,
-  roleFilter: string,
   statusFilter: string
 ): AdminUser[] => {
   return users.filter(u => {
@@ -156,12 +155,12 @@ export const filterUsers = (
       String(u.Username || '').toLowerCase().includes(searchLower) || 
       String(u.Role || '').toLowerCase().includes(searchLower);
       
-    const matchesRole = roleFilter === 'All' || u.Role === roleFilter;
-    const matchesStatus = statusFilter === 'All' || 
-      (statusFilter === 'Active' && u.Active !== false) ||
-      (statusFilter === 'Inactive' && u.Active === false);
-      
-    return matchesSearch && matchesRole && matchesStatus;
+    const isActive = String(u.Active ?? true).toLowerCase() !== 'false';
+    const matchesStatus = statusFilter === 'All' ||
+      (statusFilter === 'Active' && isActive) ||
+      (statusFilter === 'Inactive' && !isActive);
+
+    return matchesSearch && matchesStatus;
   });
 };
 

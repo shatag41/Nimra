@@ -896,7 +896,7 @@ const DashboardTab = React.memo(function DashboardTab({
                 onClick={() => setActiveTab && setActiveTab('users')}
                 style={{ background: 'none', border: 'none', color: 'var(--primary-color)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
               >
-                View Users →
+                View Customers →
               </button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>

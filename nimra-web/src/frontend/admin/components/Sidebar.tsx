@@ -10,7 +10,7 @@ export default function Sidebar({ currentUser, activeTab, setActiveTab, isProfil
     { id: 'dashboard', name: 'Overview', icon: '◫', module: 'analytics' },
     { id: 'orders', name: 'Orders', icon: '◉', module: 'orders' },
     { id: 'products', name: 'Products', icon: '◇', module: 'products' },
-    { id: 'users', name: superAdmin ? 'Customers' : 'Users', icon: '♙', module: 'customers' },
+    { id: 'users', name: 'Customers', icon: '♙', module: 'customers' },
     { id: 'admins', name: 'Admin Management', icon: '♛', module: 'admins', superOnly: true },
     { id: 'roles', name: 'Roles & Permissions', icon: '◆', module: 'admins', superOnly: true },
     { id: 'banners', name: 'Homepage Banners', icon: '▣', module: 'banners' },

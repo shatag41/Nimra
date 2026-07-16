@@ -850,8 +850,9 @@ function getAllOrders(spreadsheet, userId, mobile, email) {
   var hasScope = Boolean(String(userId || '').trim() || normalizeDigits(mobile) || normalizeEmail(email));
   if (hasScope) {
     var scopedOrders = [];
+    var addressOwnerById = buildAddressOwnerLookupFast(spreadsheet);
     for (var s = 1; s < data.length; s++) {
-      if (orderRowMatchesScopeFast(headers, data[s], userId, mobile, email)) {
+      if (orderRowMatchesScopeFast(headers, data[s], userId, mobile, email, addressOwnerById)) {
         scopedOrders.push(rowToOrderFast(headers, data[s]));
       }
     }
@@ -897,7 +898,7 @@ function buildAddressOwnerLookupFast(spreadsheet) {
   return lookup;
 }
 
-function orderRowMatchesScopeFast(headers, row, userId, mobile, email) {
+function orderRowMatchesScopeFast(headers, row, userId, mobile, email, addressOwnerById) {
   var requestedUserId = String(userId || '').trim();
   var requestedMobile = normalizeDigits(mobile);
   var requestedEmail = normalizeEmail(email);
@@ -1773,7 +1774,6 @@ function getUsersData(spreadsheet) {
   
   for (var i = 1; i < data.length; i++) {
     var row = {};
-    var active = true;
     for (var j = 0; j < headers.length; j++) {
       var key = headers[j].toString().trim();
       var val = data[i][j];
@@ -1789,7 +1789,6 @@ function getUsersData(spreadsheet) {
       else if (key === 'Status' || key === 'Active') {
         var isActive = (val === 'Active' || val === true || val === 'TRUE');
         row['Active'] = isActive;
-        active = isActive;
       }
       else if (key === 'Alternate Mobile Number') row['AlternateMobile'] = normalizeDigits(val);
       else if (key === 'Email Preferences') row['EmailPreferences'] = val;
@@ -1802,7 +1801,7 @@ function getUsersData(spreadsheet) {
     // If Active property wasn't set by mapping, assume true unless specified
     if (row['Active'] === undefined) row['Active'] = true;
     
-    if (active || row['Active']) {
+    if (String(row.ID || row.Username || '').trim()) {
       rows.push(row);
     }
   }

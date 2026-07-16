@@ -55,6 +55,7 @@ export default function OrderModal({
             <CustomSelect
               value={orderStatusVal}
               onChange={setOrderStatusVal}
+              portalMenu
               options={[
                 { value: 'Pending', label: 'Pending' },
                 { value: 'Confirmed', label: 'Confirmed' },

@@ -63,7 +63,7 @@ const InquiriesTab = dynamic(() => import('./InquiriesTab'), {
 });
 const UsersTab = dynamic(() => import('./UsersTab'), {
   ssr: false,
-  loading: () => <LoadingState label="Loading users" compact />,
+  loading: () => <LoadingState label="Loading customers" compact />,
 });
 const NotificationsTab = dynamic(() => import('./NotificationsTab'), {
   ssr: false,
@@ -202,12 +202,13 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
     filters.inquiryEndDate
   );
 
-  const customerUsers = users.filter((user) => normalizeRole(user.Role) === 'CUSTOMER');
-  const filteredUsers = filterUsers(
+  const customerUsers = users.filter(
+    (user) => !['ADMIN', 'SUPER_ADMIN'].includes(normalizeRole(user.Role))
+  );
+  const filteredCustomers = filterUsers(
     customerUsers,
     searchLower,
-    filters.userRoleFilter,
-    filters.userStatusFilter
+    filters.customerStatusFilter
   );
 
   const filteredNotifications = filterNotifications(
@@ -256,7 +257,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
   const onUserSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingUser) return;
-    const success = await handleUserSubmit(editingUser);
+    const success = await handleUserSubmit({ ...editingUser, Role: 'Customer' });
     if (success) {
       setUserFormOpen(false);
     }
@@ -398,12 +399,10 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
               {activeTab === 'users' && (
                 <UsersTab
                   currentUser={currentUser}
-                  filteredUsers={filteredUsers}
+                  customers={filteredCustomers}
                   showFilters={filters.showFilters}
-                  userRoleFilter={filters.userRoleFilter}
-                  setUserRoleFilter={filters.setUserRoleFilter}
-                  userStatusFilter={filters.userStatusFilter}
-                  setUserStatusFilter={filters.setUserStatusFilter}
+                  customerStatusFilter={filters.customerStatusFilter}
+                  setCustomerStatusFilter={filters.setCustomerStatusFilter}
                   setEditingUser={setEditingUser}
                   setUserFormOpen={setUserFormOpen}
                   handleUserDelete={handleUserDelete}

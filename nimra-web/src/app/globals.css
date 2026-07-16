@@ -5700,6 +5700,11 @@ td {
     box-sizing: border-box;
 }
 
+.custom-select-options-list-portal {
+    position: absolute;
+    z-index: 10000;
+}
+
 [data-theme="dark"] .custom-select-options-list {
     background: #1e293b;
     border-color: rgba(255, 255, 255, 0.1);
@@ -7953,6 +7958,7 @@ select {
   transition: background 0.15s ease;
   border-radius: var(--radius-md);
 }
+
 .dropdown-header-shell {
   display: flex; align-items: center; gap: 0.4rem;
   margin: 0.15rem 0.35rem 0; padding-right: 0.25rem;

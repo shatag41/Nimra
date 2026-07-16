@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 
 export interface CustomSelectOption {
   value: string;
@@ -12,6 +13,14 @@ export interface CustomSelectProps {
   placeholder?: string;
   clearable?: boolean;
   onClear?: () => void;
+  portalMenu?: boolean;
+}
+
+interface PortalMenuPosition {
+  top: number;
+  left: number;
+  width: number;
+  maxHeight: number;
 }
 
 export default function CustomSelect({
@@ -20,10 +29,39 @@ export default function CustomSelect({
   options,
   placeholder = 'Select...',
   clearable = false,
-  onClear
+  onClear,
+  portalMenu = false,
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [portalPosition, setPortalPosition] = useState<PortalMenuPosition | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+
+  const updatePortalPosition = useCallback(() => {
+    if (!portalMenu || !triggerRef.current) return;
+
+    const rect = triggerRef.current.getBoundingClientRect();
+    const viewportPadding = 8;
+    const menuGap = 6;
+    const desiredHeight = Math.min(148, options.length * 34 + 8);
+    const spaceBelow = window.innerHeight - rect.bottom - menuGap - viewportPadding;
+    const spaceAbove = rect.top - menuGap - viewportPadding;
+    const openAbove = spaceBelow < desiredHeight && spaceAbove > spaceBelow;
+    const availableHeight = openAbove ? spaceAbove : spaceBelow;
+    const maxHeight = Math.max(48, Math.min(desiredHeight, availableHeight));
+    const width = Math.min(rect.width, window.innerWidth - viewportPadding * 2);
+    const viewportLeft = Math.min(
+      Math.max(rect.left, viewportPadding),
+      window.innerWidth - width - viewportPadding
+    );
+
+    setPortalPosition({
+      top: (openAbove ? rect.top - maxHeight - menuGap : rect.bottom + menuGap) + window.scrollY,
+      left: viewportLeft + window.scrollX,
+      width,
+      maxHeight,
+    });
+  }, [options.length, portalMenu]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -40,12 +78,58 @@ export default function CustomSelect({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (!isOpen || !portalMenu) return;
+
+    updatePortalPosition();
+    const handleViewportChange = () => updatePortalPosition();
+    window.addEventListener('resize', handleViewportChange);
+    window.addEventListener('scroll', handleViewportChange, true);
+    const resizeObserver = new ResizeObserver(handleViewportChange);
+    if (triggerRef.current) resizeObserver.observe(triggerRef.current);
+
+    return () => {
+      window.removeEventListener('resize', handleViewportChange);
+      window.removeEventListener('scroll', handleViewportChange, true);
+      resizeObserver.disconnect();
+    };
+  }, [isOpen, portalMenu, updatePortalPosition]);
+
   const selectedOpt = options.find(o => o.value === value);
+
+  const optionsMenu = (
+    <div
+      className={`custom-select-options-list ${portalMenu ? 'custom-select-options-list-portal' : ''}`}
+      style={portalMenu && portalPosition ? {
+        top: portalPosition.top,
+        left: portalPosition.left,
+        width: portalPosition.width,
+        maxHeight: portalPosition.maxHeight,
+      } : undefined}
+    >
+      {options.map((opt) => (
+        <div
+          key={opt.value}
+          onClick={() => {
+            onChange(opt.value);
+            setIsOpen(false);
+          }}
+          className={`custom-select-option ${opt.value === value ? 'selected' : ''}`}
+        >
+          {opt.label}
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <div ref={containerRef} className="custom-select-container">
-      <div 
-        onClick={() => setIsOpen(!isOpen)} 
+      <div
+        ref={triggerRef}
+        onClick={() => {
+          if (!isOpen && portalMenu) updatePortalPosition();
+          setIsOpen(!isOpen);
+        }}
         className={`custom-select-trigger ${isOpen ? 'open' : ''}`}
       >
         <span className="custom-select-text">{selectedOpt ? selectedOpt.label : placeholder}</span>
@@ -69,22 +153,7 @@ export default function CustomSelect({
           </span>
         </div>
       </div>
-      {isOpen && (
-        <div className="custom-select-options-list">
-          {options.map((opt) => (
-            <div 
-              key={opt.value} 
-              onClick={() => {
-                onChange(opt.value);
-                setIsOpen(false);
-              }}
-              className={`custom-select-option ${opt.value === value ? 'selected' : ''}`}
-            >
-              {opt.label}
-            </div>
-          ))}
-        </div>
-      )}
+      {isOpen && (!portalMenu ? optionsMenu : portalPosition && createPortal(optionsMenu, document.body))}
     </div>
   );
 }

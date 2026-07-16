@@ -50,13 +50,13 @@ export default function UserModal({
 
           <div className="form-row">
             <div className="form-group">
-              <label>Portal Login Username</label>
+              <label>Portal Login Mail</label>
               <input
                 required
-                type="text"
+                type="email"
                 value={editingUser.Username || ''}
                 onChange={(e) => setEditingUser(prev => prev ? ({ ...prev, Username: e.target.value }) : null)}
-                placeholder="e.g. johndoe"
+                placeholder="e.g. customer@example.com"
               />
             </div>
             <div className="form-group">
@@ -74,19 +74,17 @@ export default function UserModal({
           <div className="form-row form-row-relative">
             <div className="form-group">
               <label>Access Role Authority</label>
-              <CustomSelect
-                value={editingUser.Role || 'Customer'}
-                onChange={(val) => setEditingUser(prev => prev ? ({ ...prev, Role: val as any }) : null)}
-                options={[
-                  { value: 'Admin', label: 'Admin (Full Control)' },
-                  { value: 'Customer', label: 'Customer (Portal Access)' },
-                ]}
+              <input
+                type="text"
+                value="Customer (Portal Access)"
+                disabled
+                aria-label="Access Role Authority"
               />
             </div>
             <div className="form-group">
               <label>Account Status</label>
               <CustomSelect
-                value={editingUser.Active !== false ? 'true' : 'false'}
+                value={String(editingUser.Active ?? true).toLowerCase() !== 'false' ? 'true' : 'false'}
                 onChange={(val) => setEditingUser(prev => prev ? ({ ...prev, Active: val === 'true' }) : null)}
                 options={[
                   { value: 'true', label: 'Enabled (Access Allowed)' },

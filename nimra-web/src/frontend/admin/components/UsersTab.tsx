@@ -5,12 +5,10 @@ import CustomSelect from './CustomSelect';
 
 interface UsersTabProps {
   currentUser: CurrentUser;
-  filteredUsers: AdminUser[];
+  customers: AdminUser[];
   showFilters: boolean;
-  userRoleFilter: string;
-  setUserRoleFilter: (val: string) => void;
-  userStatusFilter: string;
-  setUserStatusFilter: (val: string) => void;
+  customerStatusFilter: string;
+  setCustomerStatusFilter: (value: string) => void;
   setEditingUser: (u: Partial<AdminUser> | null) => void;
   setUserFormOpen: (open: boolean) => void;
   handleUserDelete: (id: string | number) => Promise<boolean>;
@@ -18,12 +16,10 @@ interface UsersTabProps {
 
 export default React.memo(function UsersTab({
   currentUser,
-  filteredUsers,
+  customers,
   showFilters,
-  userRoleFilter,
-  setUserRoleFilter,
-  userStatusFilter,
-  setUserStatusFilter,
+  customerStatusFilter,
+  setCustomerStatusFilter,
   setEditingUser,
   setUserFormOpen,
   handleUserDelete,
@@ -33,7 +29,7 @@ export default React.memo(function UsersTab({
       <div className="users-tab card glass">
         <div className="access-denied-block">
           <h2>🚫 Administrative Privileges Required</h2>
-          <p>Only full administrators can view, register, or delete system user accounts.</p>
+          <p>Only full administrators can view, edit, or delete customer accounts.</p>
         </div>
       </div>
     );
@@ -42,41 +38,18 @@ export default React.memo(function UsersTab({
   return (
     <div className="users-tab card glass">
       <div className="section-head-btn">
-        <h3>Portal User Accounts</h3>
-        <button 
-          className="btn btn-primary btn-add" 
-          onClick={() => {
-            setEditingUser({ Username: '', Password: '', Role: 'Customer', Name: '', Active: true });
-            setUserFormOpen(true);
-          }}
-        >
-          ➕ Create User
-        </button>
+        <h3>Customer Accounts</h3>
       </div>
 
       {showFilters && (
         <div className="filter-bar animate-fade-in">
           <div className="filter-group">
-            <label>Role:</label>
-            <CustomSelect
-              value={userRoleFilter}
-              onChange={setUserRoleFilter}
-              clearable={true}
-              onClear={() => setUserRoleFilter('All')}
-              options={[
-                { value: 'All', label: 'All Roles' },
-                { value: 'Admin', label: 'Admin' },
-                { value: 'Customer', label: 'Customer' },
-              ]}
-            />
-          </div>
-          <div className="filter-group">
             <label>Status:</label>
             <CustomSelect
-              value={userStatusFilter}
-              onChange={setUserStatusFilter}
+              value={customerStatusFilter}
+              onChange={setCustomerStatusFilter}
               clearable={true}
-              onClear={() => setUserStatusFilter('All')}
+              onClear={() => setCustomerStatusFilter('All')}
               options={[
                 { value: 'All', label: 'All Statuses' },
                 { value: 'Active', label: 'Active' },
@@ -93,14 +66,14 @@ export default React.memo(function UsersTab({
             <tr>
               <th>ID</th>
               <th>Name</th>
-              <th>Username</th>
+              <th>Portal Login Mail</th>
               <th>Role</th>
               <th>Status</th>
               <th className="sticky-action-col">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filteredUsers.map((u) => (
+            {customers.map((u) => (
               <tr key={u.ID}>
                 <td>{u.ID}</td>
                 <td><strong>{u.Name}</strong></td>
@@ -111,8 +84,8 @@ export default React.memo(function UsersTab({
                   </span>
                 </td>
                 <td>
-                  <span className={`badge ${u.Active !== false ? 'badge-primary' : 'badge-cancelled'}`}>
-                    {u.Active !== false ? 'Active' : 'Disabled'}
+                  <span className={`badge ${String(u.Active ?? true).toLowerCase() !== 'false' ? 'badge-primary' : 'badge-cancelled'}`}>
+                    {String(u.Active ?? true).toLowerCase() !== 'false' ? 'Active' : 'Disabled'}
                   </span>
                 </td>
                 <td className="sticky-action-col">
@@ -120,7 +93,7 @@ export default React.memo(function UsersTab({
                     <button 
                       className="btn-table btn-edit" 
                       onClick={() => {
-                        setEditingUser(u);
+                        setEditingUser({ ...u, Role: 'Customer' });
                         setUserFormOpen(true);
                       }}
                     >
@@ -136,9 +109,9 @@ export default React.memo(function UsersTab({
                 </td>
               </tr>
             ))}
-            {filteredUsers.length === 0 && (
+            {customers.length === 0 && (
               <tr>
-                <td colSpan={6} className="empty-td">No users found.</td>
+                <td colSpan={6} className="empty-td">No customers found.</td>
               </tr>
             )}
           </tbody>
