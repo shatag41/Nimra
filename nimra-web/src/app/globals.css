@@ -12453,3 +12453,257 @@ body:has(.products-page-skeleton) {
   .command-center .kpi-card { height:104px; min-height:104px; }
   .insight-card { height:auto; min-height:160px; }
 }
+
+/* Super Admin: use the same compact density and content width as the Admin portal. */
+.admin-container .tab-viewport:has(> .enterprise-section) {
+  width:min(100%, 88rem) !important;
+  max-width:88rem !important;
+}
+
+.admin-container .enterprise-section {
+  width:100%;
+  min-width:0;
+  margin:0 auto;
+  padding:var(--admin-restored-gap) 0 var(--admin-restored-pad);
+  gap:var(--admin-restored-gap);
+}
+
+.admin-container .enterprise-section > section {
+  gap:clamp(.35rem, .55vw, .55rem);
+  margin:0;
+}
+
+.admin-container .enterprise-heading,
+.admin-container .command-heading {
+  min-height:0;
+  margin:0;
+  padding:0;
+  gap:var(--admin-restored-gap);
+}
+
+.admin-container .enterprise-heading h2,
+.admin-container .command-heading h2 {
+  margin:0;
+  font-size:clamp(1.05rem, .95rem + .45vw, 1.35rem);
+  line-height:1.2;
+  letter-spacing:-.02em;
+}
+
+.admin-container .enterprise-heading p,
+.admin-container .command-heading p {
+  margin:.1rem 0 0;
+  font-size:.72rem;
+  line-height:1.3;
+}
+
+.admin-container .enterprise-section .section-heading {
+  min-height:0;
+  gap:.5rem;
+}
+
+.admin-container .enterprise-section .section-heading h3 {
+  font-size:.9rem;
+  line-height:1.2;
+}
+
+.admin-container .enterprise-section :is(.eyebrow, .section-kicker) {
+  font-size:.58rem;
+  line-height:1.1;
+}
+
+.admin-container .enterprise-section .section-heading > span {
+  font-size:.65rem;
+}
+
+.admin-container .command-status {
+  padding:.3rem .55rem;
+  font-size:.62rem;
+}
+
+.admin-container .command-center .enterprise-kpi-grid {
+  grid-template-columns:repeat(5, minmax(0, 1fr));
+  gap:var(--admin-restored-gap);
+}
+
+.admin-container .command-center .kpi-card {
+  height:auto;
+  min-height:5.25rem;
+  padding:.6rem .7rem;
+  grid-template-columns:1.75rem minmax(0, 1fr);
+  gap:.55rem;
+  border-radius:var(--admin-radius, .75rem);
+}
+
+.admin-container .command-center .kpi-card::before { inset:.65rem auto; }
+.admin-container .command-center .kpi-icon { width:1.75rem; height:1.75rem; border-radius:.5rem; font-size:.78rem; }
+.admin-container .command-center .kpi-copy > span { font-size:.64rem; }
+.admin-container .command-center .kpi-copy strong { margin:.12rem 0; font-size:clamp(1.15rem, 1.65vw, 1.55rem); letter-spacing:-.035em; }
+.admin-container .command-center .kpi-copy small { margin:0; font-size:.57rem; }
+
+.admin-container .quick-action-grid {
+  grid-template-columns:repeat(4, minmax(0, 1fr));
+  gap:var(--admin-restored-gap);
+}
+
+.admin-container .quick-action {
+  height:auto;
+  min-height:3.25rem;
+  padding:.5rem .65rem;
+  gap:.5rem;
+  border-radius:var(--admin-radius, .75rem);
+}
+
+.admin-container .quick-action .quick-icon { width:1.75rem; height:1.75rem; border-radius:.5rem; font-size:.78rem; }
+.admin-container .quick-action strong { font-size:.7rem; }
+.admin-container .quick-action small { font-size:.58rem; }
+
+.admin-container .insights-grid {
+  grid-template-columns:repeat(4, minmax(0, 1fr));
+  gap:var(--admin-restored-gap);
+}
+
+.admin-container .insight-card,
+.admin-container .admin-performance-card {
+  height:auto;
+  min-height:8.5rem;
+  padding:.7rem;
+  border-radius:var(--admin-radius, .75rem);
+}
+
+.admin-container .card-title h4 { font-size:.75rem; }
+.admin-container .card-title > span { padding:.2rem .4rem; font-size:.55rem; }
+.admin-container .insight-value { margin-top:.4rem; font-size:1.65rem; }
+.admin-container .insight-card > p { margin:.1rem 0; font-size:.58rem; }
+.admin-container .mini-bars { height:2.8rem; gap:.3rem; margin-top:.35rem; }
+.admin-container .rank-list,
+.admin-container .people-list { margin-top:.3rem; }
+.admin-container .rank-row { padding:.25rem 0; }
+.admin-container .rank-row span { font-size:.6rem; }
+.admin-container .rank-row span b { width:1rem; height:1rem; border-radius:.25rem; }
+.admin-container .people-list > div { padding:.18rem 0; }
+.admin-container .pulse-stat { padding:.4rem 0; }
+
+.admin-container .admin-card-grid {
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:var(--admin-restored-gap);
+}
+
+.admin-container .admin-performance-card { min-height:7.25rem; }
+.admin-container .admin-avatar { width:1.8rem; height:1.8rem; border-radius:.55rem; font-size:.7rem; }
+.admin-container .admin-card-head h4 { font-size:.7rem; }
+.admin-container .admin-metrics { margin:.45rem 0 .3rem; }
+
+.admin-container .enterprise-section .table-card,
+.admin-container .enterprise-section .activity-card {
+  min-width:0;
+  margin:0;
+  padding:var(--admin-restored-pad);
+  border-radius:var(--admin-radius, .75rem);
+}
+
+.admin-container .enterprise-section .table-responsive {
+  max-height:calc(100svh - 11rem);
+  overflow:auto;
+  scrollbar-gutter:stable;
+}
+
+.admin-container .enterprise-section .admin-table {
+  min-width:max(44rem, 100%) !important;
+  font-size:.7rem;
+  line-height:1.2;
+}
+
+.admin-container .enterprise-section .admin-table thead th {
+  position:sticky;
+  top:0;
+  z-index:2;
+  padding:.45rem .55rem !important;
+  white-space:nowrap;
+  background:var(--bg-secondary);
+}
+
+.admin-container .enterprise-section .admin-table td {
+  height:2.25rem;
+  padding:.35rem .55rem !important;
+  vertical-align:middle;
+  white-space:nowrap;
+}
+
+.admin-container .enterprise-section .actions-flex { gap:.3rem; flex-wrap:nowrap; }
+.admin-container .enterprise-section .btn-table { min-height:1.7rem; padding:.25rem .45rem; font-size:.62rem; white-space:nowrap; }
+.admin-container .enterprise-section .user-avatar { width:1.75rem; height:1.75rem; font-size:.65rem; }
+.admin-container .enterprise-section .permission-table input { width:.9rem; height:.9rem; }
+
+@media (max-width:70rem) {
+  .admin-container .command-center .enterprise-kpi-grid { grid-template-columns:repeat(3, minmax(0, 1fr)); }
+  .admin-container .insights-grid,
+  .admin-container .admin-card-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width:42rem) {
+  .admin-container .enterprise-heading,
+  .admin-container .command-heading { align-items:flex-start !important; }
+  .admin-container .command-center .enterprise-kpi-grid,
+  .admin-container .quick-action-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  .admin-container .insights-grid,
+  .admin-container .admin-card-grid { grid-template-columns:minmax(0, 1fr); }
+}
+
+@media (max-width:28rem) {
+  .admin-container .command-center .enterprise-kpi-grid,
+  .admin-container .quick-action-grid { grid-template-columns:minmax(0, 1fr); }
+}
+
+/* Super Admin section rhythm: normal document flow with no reserved vertical space. */
+.admin-container .command-center {
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  row-gap:clamp(1rem, 1.35vw, 1.5rem);
+}
+
+.admin-container .command-center > .command-heading,
+.admin-container .command-center > section {
+  flex:0 0 auto;
+  height:auto;
+  min-height:0;
+  margin:0;
+  padding:0;
+  justify-content:flex-start;
+}
+
+.admin-container .command-center > section {
+  display:flex;
+  flex-direction:column;
+  row-gap:.5rem;
+}
+
+.admin-container .command-center :is(
+  .enterprise-kpi-grid,
+  .quick-action-grid,
+  .insights-grid,
+  .admin-card-grid
+) {
+  margin:0;
+  padding:0;
+}
+
+.admin-container .command-center :is(
+  .kpi-card,
+  .quick-action,
+  .insight-card,
+  .admin-performance-card
+) {
+  height:auto;
+  min-height:0;
+}
+
+.admin-container .command-center .command-heading,
+.admin-container .command-center .section-heading {
+  justify-content:flex-start;
+}
+
+.admin-container .command-center .command-status,
+.admin-container .command-center .section-heading > span {
+  margin-left:auto;
+}

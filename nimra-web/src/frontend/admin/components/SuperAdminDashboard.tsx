@@ -22,7 +22,7 @@ export default function SuperAdminDashboard({ orders, users, products, inquiries
     ['Cancelled Orders',cancelled,`${orders.length ? Math.round(cancelled/orders.length*100) : 0}% cancellation rate`,'×','danger'], ['Total Customers',customers.length,'Registered accounts','◉','customers'],
     ['Total Admins',admins.length,'Privileged team members','◆','customers'], ['Products',products.length,'Catalogue inventory','◇','products'], ['Pending Inquiries',pendingInquiries,'Awaiting response','?','inquiries'],
   ];
-  const actions = [['＋','Add Product','Create a catalogue item','products'],['▣','Manage Orders','Review fulfilment','orders'],['◉','Manage Users','Customer accounts','users'],['◆','Manage Admins','Team and access','admins'],['?','View Inquiries','Resolve requests','inquiries'],['⚙','System Settings','Platform controls','settings'],['♢','Notifications','Message centre','notifications'],['⌁','Analytics','Business reporting','dashboard']];
+  const actions = [['＋','Add Product','Create a catalogue item','products'],['▣','Manage Orders','Review fulfilment','orders'],['◉','Manage Users','Customer accounts','users'],['◆','Manage Admins','Team and access','admins'],['?','View Inquiries','Resolve requests','inquiries'],['⚙','System Settings','Platform controls','settings'],['♢','Notifications','Message centre','notifications']];
   const productCounts = new Map<string,number>();
   orders.forEach(o => o.items?.forEach(item => productCounts.set(item.name,(productCounts.get(item.name)||0)+Number(item.quantity||0))));
   const topProducts = [...productCounts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,4);
