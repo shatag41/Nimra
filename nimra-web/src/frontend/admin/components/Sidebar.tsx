@@ -12,7 +12,6 @@ export default function Sidebar({ currentUser, activeTab, setActiveTab, isProfil
     { id: 'products', name: 'Products', icon: '◇', module: 'products' },
     { id: 'users', name: 'Customers', icon: '♙', module: 'customers' },
     { id: 'admins', name: 'Admin Management', icon: '♛', module: 'admins', superOnly: true },
-    { id: 'roles', name: 'Roles & Permissions', icon: '◆', module: 'admins', superOnly: true },
     { id: 'banners', name: 'Homepage Banners', icon: '▣', module: 'banners' },
     { id: 'faqs', name: 'Store FAQs', icon: '?', module: 'faqs' },
     { id: 'inquiries', name: 'Inquiries', icon: '✉', module: 'inquiries' },

@@ -12258,7 +12258,6 @@ body:has(.products-page-skeleton) {
 .form-grid label { display:flex; flex-direction:column; gap:.4rem; color:var(--text-secondary); font-weight:700; font-size:.82rem; }
 .form-grid .full-field { grid-column:1/-1; }
 .admin-form-modal { width:min(720px,calc(100vw - 2rem)); max-height:90vh; overflow:auto; padding:1.5rem; }
-.permission-table input { width:18px; height:18px; accent-color:var(--primary-color); }
 .metric-bar { height:5px; border-radius:5px; overflow:hidden; background:var(--border-color); }
 .metric-bar i { display:block; height:100%; background:var(--primary-color); }
 .chart-placeholder { min-height:190px; display:grid; place-items:center; border:1px dashed var(--border-color); border-radius:12px; color:var(--text-secondary); margin-top:1rem; }
@@ -12632,7 +12631,6 @@ body:has(.products-page-skeleton) {
 .admin-container .enterprise-section .actions-flex { gap:.3rem; flex-wrap:nowrap; }
 .admin-container .enterprise-section .btn-table { min-height:1.7rem; padding:.25rem .45rem; font-size:.62rem; white-space:nowrap; }
 .admin-container .enterprise-section .user-avatar { width:1.75rem; height:1.75rem; font-size:.65rem; }
-.admin-container .enterprise-section .permission-table input { width:.9rem; height:.9rem; }
 
 @media (max-width:70rem) {
   .admin-container .command-center .enterprise-kpi-grid { grid-template-columns:repeat(3, minmax(0, 1fr)); }
@@ -12706,4 +12704,79 @@ body:has(.products-page-skeleton) {
 .admin-container .command-center .command-status,
 .admin-container .command-center .section-heading > span {
   margin-left:auto;
+}
+
+/* Admin Management add/edit dialog. */
+.admin-editor-overlay {
+  position:fixed;
+  inset:0;
+  z-index:10000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100vw;
+  height:100svh;
+  margin:0;
+  padding:clamp(.75rem, 2vw, 1.5rem);
+  overflow:hidden;
+  background:rgba(0, 0, 0, .6);
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+}
+
+.admin-editor-overlay > .admin-form-modal {
+  position:relative;
+  width:min(92vw, 38rem);
+  max-height:calc(100svh - 2rem);
+  margin:0;
+  padding:clamp(.75rem, 1.25vw, 1rem);
+  overflow:hidden;
+  border:1px solid var(--border-color);
+  border-radius:var(--admin-radius, .75rem);
+  background:var(--bg-primary);
+  box-shadow:0 24px 70px rgba(15, 23, 42, .28);
+}
+
+.admin-editor-overlay > .admin-form-modal .enterprise-heading {
+  margin:0 0 .6rem;
+}
+
+.admin-editor-overlay > .admin-form-modal .form-grid {
+  gap:.55rem .7rem;
+}
+
+.admin-editor-overlay > .admin-form-modal .form-grid label {
+  gap:.2rem;
+  font-size:.68rem;
+}
+
+.admin-editor-overlay > .admin-form-modal :is(.form-input, select.form-input) {
+  min-height:2rem;
+  padding:.35rem .55rem;
+  font-size:.72rem;
+}
+
+.admin-editor-overlay > .admin-form-modal textarea.form-input {
+  min-height:3.25rem;
+  resize:none;
+}
+
+.admin-editor-overlay > .admin-form-modal .modal-actions {
+  margin-top:.65rem;
+  padding-top:.65rem;
+}
+
+@media (max-width:42rem) {
+  .admin-editor-overlay > .admin-form-modal .form-grid {
+    grid-template-columns:minmax(0, 1fr);
+    gap:.35rem;
+  }
+
+  .admin-editor-overlay > .admin-form-modal .full-field {
+    grid-column:auto;
+  }
+
+  .admin-editor-overlay > .admin-form-modal {
+    padding:.7rem;
+  }
 }

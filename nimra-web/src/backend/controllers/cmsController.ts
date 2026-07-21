@@ -1014,9 +1014,11 @@ export async function handlePost(req: Request) {
       }
 
       if (action === 'create') {
+        const password = String(incomingUser.Password || '');
         const newUser = {
           ID: incomingUser.ID || Date.now(),
           ...incomingUser,
+          Password: password ? hashLocalPassword(password) : '',
           SavedAddresses: incomingUser.SavedAddresses || '[]',
           RecentlyViewed: incomingUser.RecentlyViewed || '[]',
           EmailPreferences: incomingUser.EmailPreferences || JSON.stringify(EMAIL_PREFERENCE_DEFAULTS)
@@ -1024,6 +1026,15 @@ export async function handlePost(req: Request) {
         fallbackData.users.push(newUser);
         await syncLocalDB('save');
         return NextResponse.json({ success: true, message: 'User created successfully', ID: newUser.ID });
+      }
+
+      if (action === 'delete') {
+        if (userIndex < 0) {
+          return NextResponse.json({ success: false, message: 'User record not found for deletion.' }, { status: 404 });
+        }
+        const [deletedUser] = fallbackData.users.splice(userIndex, 1);
+        await syncLocalDB('save');
+        return NextResponse.json({ success: true, message: 'User deleted successfully', ID: deletedUser.ID });
       }
 
       return NextResponse.json({ success: false, message: 'Unsupported user action.' }, { status: 400 });

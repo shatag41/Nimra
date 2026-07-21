@@ -24,7 +24,6 @@ import LoadingState from '@/frontend/customer/components/LoadingState';
 import { isSuperAdmin, normalizeRole } from '../utils/accessControl';
 const AdminManagementTab = dynamic(() => import('./EnterpriseTabs').then((mod) => mod.AdminManagementTab), { ssr: false });
 const LogsTab = dynamic(() => import('./EnterpriseTabs').then((mod) => mod.LogsTab), { ssr: false });
-const RolesPermissionsTab = dynamic(() => import('./EnterpriseTabs').then((mod) => mod.RolesPermissionsTab), { ssr: false });
 const SuperAdminOverview = dynamic(() => import('./SuperAdminDashboard'), { ssr: false });
 
 
@@ -412,8 +411,6 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
               {isSuperAdmin(currentUser.role) && activeTab === 'admins' && (
                 <AdminManagementTab users={users} onSave={handleUserSubmit} onDelete={handleUserDelete} />
               )}
-
-              {isSuperAdmin(currentUser.role) && activeTab === 'roles' && <RolesPermissionsTab />}
 
               {isSuperAdmin(currentUser.role) && activeTab === 'logs' && <LogsTab />}
 

@@ -124,15 +124,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
   
   // SWR fetching
   const fetcher = async () => {
-    const [
-        fetchedOrders,
-        fetchedInquiries,
-        fetchedUsers,
-        fetchedNotifs,
-        fetchedAdminUpdates,
-        fetchedCancellationRequests,
-        fetchedCMSData,
-    ] = await Promise.all([
+    const results = await Promise.allSettled([
         fetchOrders(),
         fetchInquiries(),
         fetchUsers(),
@@ -141,13 +133,28 @@ export const useAdminData = (initialCMSData: CMSData) => {
         fetchCancellationRequests(),
         fetchCMSData(),
     ]);
+
+    const valueOr = <T,>(index: number, fallback: T): T => {
+      const result = results[index];
+      if (result.status === 'fulfilled') return result.value as T;
+      console.warn(`Admin data request ${index + 1} failed; retaining the last available data.`, result.reason);
+      return fallback;
+    };
+
+    const fetchedCMSData = valueOr(6, {
+      products,
+      banners,
+      faqs,
+      companyInfo,
+    });
+
     return {
-        fetchedOrders,
-        fetchedInquiries,
-        fetchedUsers,
-        fetchedNotifs,
-        fetchedAdminUpdates,
-        fetchedCancellationRequests,
+        fetchedOrders: valueOr(0, orders),
+        fetchedInquiries: valueOr(1, inquiries),
+        fetchedUsers: valueOr(2, users),
+        fetchedNotifs: valueOr(3, notifications),
+        fetchedAdminUpdates: valueOr(4, adminUpdates),
+        fetchedCancellationRequests: valueOr(5, cancellationRequests),
         fetchedProducts: fetchedCMSData.products,
         fetchedBanners: fetchedCMSData.banners,
         fetchedFaqs: fetchedCMSData.faqs,
@@ -467,11 +474,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
       const res = await saveUser(editingUser, action);
       if (res.success) {
         showAlert(res.message);
-        if (action === 'create') {
-          setUsers(prev => [...prev, { ...editingUser, ID: res.ID, Active: true } as AdminUser]);
-        } else {
-          setUsers(prev => prev.map(u => u.ID === editingUser.ID ? editingUser as AdminUser : u));
-        }
+        setUsers(await fetchUsers());
         return true;
       } else {
         showAlert(res.message, 'error');
@@ -496,7 +499,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
       const res = await saveUser({ ID: id }, 'delete');
       if (res.success) {
         showAlert(res.message);
-        setUsers(prev => prev.filter(u => u.ID !== id));
+        setUsers(await fetchUsers());
         return true;
       } else {
         showAlert(res.message, 'error');
