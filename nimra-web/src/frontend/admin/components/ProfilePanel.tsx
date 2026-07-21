@@ -23,6 +23,9 @@ interface ProfilePanelProps {
   profileValidationErrors: { [key: string]: string };
   setProfileValidationErrors: React.Dispatch<React.SetStateAction<{ [key: string]: string }>>;
   isProfileSaving: boolean;
+  isEmailVerificationPending: boolean;
+  emailChangeOtp: string;
+  setEmailChangeOtp: (otp: string) => void;
   handleProfileSave: () => Promise<void>;
   onAccountDeleted: () => void;
 }
@@ -30,7 +33,8 @@ interface ProfilePanelProps {
 export default function ProfilePanel({
   currentUser, isProfilePanelOpen, setIsProfilePanelOpen, profileForm, setProfileForm,
   profileFeedback, setProfileFeedback, profileValidationErrors, setProfileValidationErrors,
-  isProfileSaving, handleProfileSave, onAccountDeleted,
+  isProfileSaving, isEmailVerificationPending, emailChangeOtp, setEmailChangeOtp,
+  handleProfileSave, onAccountDeleted,
 }: ProfilePanelProps) {
   const [deleteStep, setDeleteStep] = useState<DeleteStep>('closed');
   const [deletionEmail, setDeletionEmail] = useState('');
@@ -151,8 +155,9 @@ export default function ProfilePanel({
             <div className="form-group"><label htmlFor="profile-name">Full Name</label><input id="profile-name" type="text" value={profileForm.name} onChange={(event) => { setProfileForm((previous) => ({ ...previous, name: event.target.value })); if (profileValidationErrors.name) setProfileValidationErrors((previous) => ({ ...previous, name: '' })); }} className={`form-input ${profileValidationErrors.name ? 'form-input-error' : ''}`}/>{profileValidationErrors.name && <div className="form-input-error-message">{profileValidationErrors.name}</div>}</div>
             <div className="form-group"><label htmlFor="profile-email">Email Address</label><input id="profile-email" type="email" required autoComplete="email" title="Enter a valid email address" value={profileForm.email} onChange={(event) => { setProfileForm((previous) => ({ ...previous, email: event.target.value })); if (profileValidationErrors.email) setProfileValidationErrors((previous) => ({ ...previous, email: '' })); }} className={`form-input ${profileValidationErrors.email ? 'form-input-error' : ''}`} placeholder="your@email.com"/>{profileValidationErrors.email && <div className="form-input-error-message">{profileValidationErrors.email}</div>}</div>
             <div className="form-group"><label htmlFor="profile-phone">Phone Number</label><input id="profile-phone" type="tel" inputMode="numeric" pattern="[0-9]{10}" maxLength={10} autoComplete="tel" title="Enter a valid 10-digit phone number" value={profileForm.phone} onChange={(event) => { const phone = event.target.value.replace(/\D/g, '').slice(0, 10); setProfileForm((previous) => ({ ...previous, phone })); if (profileValidationErrors.phone) setProfileValidationErrors((previous) => ({ ...previous, phone: '' })); }} className={`form-input ${profileValidationErrors.phone ? 'form-input-error' : ''}`} placeholder="9999999999"/>{profileValidationErrors.phone && <div className="form-input-error-message">{profileValidationErrors.phone}</div>}</div>
+            {isEmailVerificationPending && <div className="form-group"><label htmlFor="profile-email-otp">Email Verification Code</label><input id="profile-email-otp" type="text" inputMode="numeric" maxLength={6} required autoComplete="one-time-code" value={emailChangeOtp} onChange={(event) => { setEmailChangeOtp(event.target.value.replace(/\D/g, '').slice(0, 6)); if (profileValidationErrors.otp) setProfileValidationErrors((previous) => ({ ...previous, otp: '' })); }} className={`form-input ${profileValidationErrors.otp ? 'form-input-error' : ''}`} placeholder="Enter 6-digit OTP"/>{profileValidationErrors.otp && <div className="form-input-error-message">{profileValidationErrors.otp}</div>}</div>}
             {profileFeedback && <div className={`profile-feedback ${profileFeedback.type}`}>{profileFeedback.text}</div>}
-            <div className="profile-actions"><button onClick={() => { setProfileFeedback(null); setIsProfilePanelOpen(false); }} className="btn btn-secondary" type="button">Cancel</button><button className="btn btn-primary" type="submit" disabled={isProfileSaving}>{isProfileSaving ? 'Saving...' : 'Save Changes'}</button></div>
+            <div className="profile-actions"><button onClick={() => { setProfileFeedback(null); setIsProfilePanelOpen(false); }} className="btn btn-secondary" type="button">Cancel</button><button className="btn btn-primary" type="submit" disabled={isProfileSaving}>{isProfileSaving ? 'Saving...' : isEmailVerificationPending ? 'Verify & Save' : 'Save Changes'}</button></div>
           </form>
         </div>
       </div>

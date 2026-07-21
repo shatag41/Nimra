@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AdminUser } from '@/types/cms';
+import LogoutConfirmationModal from '@/frontend/customer/components/LogoutConfirmationModal';
 import { CurrentUser } from '../hooks/useAdminData';
 import CustomSelect from './CustomSelect';
 
@@ -24,6 +25,17 @@ export default React.memo(function UsersTab({
   setUserFormOpen,
   handleUserDelete,
 }: UsersTabProps) {
+  const [customerToDelete, setCustomerToDelete] = useState<AdminUser | null>(null);
+  const [deletePending, setDeletePending] = useState(false);
+
+  const confirmCustomerDelete = async () => {
+    if (!customerToDelete) return;
+    setDeletePending(true);
+    const deleted = await handleUserDelete(customerToDelete.ID);
+    setDeletePending(false);
+    if (deleted) setCustomerToDelete(null);
+  };
+
   if (currentUser.role !== 'ADMIN' && currentUser.role !== 'SUPER_ADMIN') {
     return (
       <div className="users-tab card glass">
@@ -101,7 +113,7 @@ export default React.memo(function UsersTab({
                     </button>
                     <button 
                       className="btn-table btn-delete" 
-                      onClick={() => void handleUserDelete(u.ID)}
+                      onClick={() => setCustomerToDelete(u)}
                     >
                       Delete
                     </button>
@@ -117,6 +129,17 @@ export default React.memo(function UsersTab({
           </tbody>
         </table>
       </div>
+      <LogoutConfirmationModal
+        isOpen={Boolean(customerToDelete)}
+        onClose={() => !deletePending && setCustomerToDelete(null)}
+        onConfirm={confirmCustomerDelete}
+        title="Delete customer account?"
+        description={`This will permanently delete ${customerToDelete?.Name || 'this customer'} and cannot be undone.`}
+        confirmText="Delete Customer"
+        confirmButtonClass="btn btn-error"
+        isProcessing={deletePending}
+        stableFlowLayout
+      />
     </div>
   );
 });

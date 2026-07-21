@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Cookies from 'js-cookie';
-import { fetchUsers, saveUser } from '@/utils/api';
+import { fetchUsers, requestEmailChangeOTP, saveUser } from '@/utils/api';
 import type { CurrentUser } from './useAdminData';
 
 export const useProfile = (
@@ -17,6 +17,8 @@ export const useProfile = (
   const [profileFeedback, setProfileFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [profileValidationErrors, setProfileValidationErrors] = useState<{ [key: string]: string }>({});
   const [isProfileSaving, setIsProfileSaving] = useState(false);
+  const [isEmailVerificationPending, setIsEmailVerificationPending] = useState(false);
+  const [emailChangeOtp, setEmailChangeOtp] = useState('');
 
   // Sync profileForm when currentUser changes
   useEffect(() => {
@@ -36,6 +38,8 @@ export const useProfile = (
       document.body.style.overflow = 'hidden';
       setProfileValidationErrors({});
       setProfileFeedback(null);
+      setIsEmailVerificationPending(false);
+      setEmailChangeOtp('');
 
       if (currentUser?.id) {
         let active = true;
@@ -94,6 +98,32 @@ export const useProfile = (
     }
 
     setProfileValidationErrors({});
+    const storedEmail = String(currentUser?.email || currentUser?.username || '').trim().toLowerCase();
+    const emailChanged = trimmedEmail.toLowerCase() !== storedEmail;
+
+    if (emailChanged && !isEmailVerificationPending) {
+      if (!currentUser?.id) {
+        setProfileFeedback({ type: 'error', text: 'Unable to identify the current admin account.' });
+        return;
+      }
+      setIsProfileSaving(true);
+      const otpResult = await requestEmailChangeOTP(currentUser.id, trimmedEmail);
+      setIsProfileSaving(false);
+      if (!otpResult.success) {
+        setProfileFeedback({ type: 'error', text: otpResult.message || 'Unable to send the verification code.' });
+        return;
+      }
+      setIsEmailVerificationPending(true);
+      setEmailChangeOtp('');
+      setProfileFeedback({ type: 'success', text: 'A verification code was sent to your new email address.' });
+      return;
+    }
+
+    if (emailChanged && !/^\d{6}$/.test(emailChangeOtp)) {
+      setProfileValidationErrors((previous) => ({ ...previous, otp: 'Enter the 6-digit verification code.' }));
+      return;
+    }
+
     setIsProfileSaving(true);
     setProfileFeedback(null);
 
@@ -116,12 +146,16 @@ export const useProfile = (
           Name: trimmedName,
           Username: trimmedEmail,
           Mobile: cleanedPhone,
+          ...(emailChanged ? { otp: emailChangeOtp } : {}),
         },
         'update'
       );
 
       if (!saveResult.success) {
-        throw new Error(saveResult.message || 'Unable to update profile');
+        const message = saveResult.message || 'Unable to update profile';
+        if (emailChanged) setProfileValidationErrors((previous) => ({ ...previous, otp: message }));
+        setProfileFeedback({ type: 'error', text: message });
+        return;
       }
 
       Cookies.set('nimra_user', JSON.stringify(updatedSession), { path: '/', sameSite: 'lax' });
@@ -137,6 +171,8 @@ export const useProfile = (
 
       localStorage.setItem('nimra_admin_user', JSON.stringify(updatedAdminSession));
       setCurrentUser(updatedAdminSession);
+      setIsEmailVerificationPending(false);
+      setEmailChangeOtp('');
       setProfileFeedback({ type: 'success', text: 'Profile updated successfully. Your admin details are now saved.' });
       showAlert('Profile updated successfully!', 'success');
       window.setTimeout(() => {
@@ -161,6 +197,9 @@ export const useProfile = (
     profileValidationErrors,
     setProfileValidationErrors,
     isProfileSaving,
+    isEmailVerificationPending,
+    emailChangeOtp,
+    setEmailChangeOtp,
     handleProfileSave,
   };
 };
