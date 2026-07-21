@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AdminUser, Inquiry, Notification, OrderRecord, Product } from '@/types/cms';
 import LogoutConfirmationModal from '@/frontend/customer/components/LogoutConfirmationModal';
@@ -30,8 +30,11 @@ export function SuperAdminOverview({ orders, users, products, inquiries, notific
   return <div className="enterprise-section"><div className="enterprise-heading"><div><span className="eyebrow">Enterprise overview</span><h2>Super Admin Command Center</h2></div><span className="badge badge-success">All systems operational</span></div><div className="enterprise-kpi-grid">{cards.map(([label, value]) => <div className="kpi-card glass" key={label}><span>{label}</span><strong>{value}</strong></div>)}</div></div>;
 }
 
-export function AdminManagementTab({ users, onSave, onDelete }: { users: AdminUser[]; onSave: (user: Partial<AdminUser>) => Promise<boolean>; onDelete: (id: string | number) => Promise<boolean> }) {
-  const admins = users.filter((user) => ['ADMIN', 'SUPER_ADMIN'].includes(normalizeRole(user.Role)));
+export function AdminManagementTab({ users, currentUserId, onSave, onDelete }: { users: AdminUser[]; currentUserId?: string | number; onSave: (user: Partial<AdminUser>) => Promise<boolean>; onDelete: (id: string | number) => Promise<boolean> }) {
+  const admins = users.filter((user) =>
+    ['ADMIN', 'SUPER_ADMIN'].includes(normalizeRole(user.Role)) &&
+    String(user.ID) !== String(currentUserId)
+  );
   const [editing, setEditing] = useState<Partial<AdminUser> | null>(null);
   const [deleting, setDeleting] = useState<AdminUser | null>(null);
   const [deletePending, setDeletePending] = useState(false);
@@ -70,9 +73,9 @@ export function AdminManagementTab({ users, onSave, onDelete }: { users: AdminUs
 
   return <div className="enterprise-section">
     <div className="enterprise-heading"><div><span className="eyebrow">Access control</span><h2>Admin Management</h2><p>Manage administrative identities and access.</p></div><button className="btn btn-primary" onClick={() => { setConfirmPassword(''); setEditing({ Role: 'ADMIN', Active: true, Permissions: 'orders:view,products:view,customers:view,inquiries:view' }); }}>+ Add Admin</button></div>
-    <div className="table-card glass table-responsive"><table className="admin-table"><thead><tr><th>Profile</th><th>Admin</th><th>Email</th><th>Mobile</th><th>Role</th><th>Status</th><th>Last Login</th><th>Orders Managed</th><th>Inquiries Resolved</th><th>Joined</th><th>Actions</th></tr></thead><tbody>
-      {admins.map((admin) => <tr key={admin.ID}><td><span className="user-avatar">{admin.Name?.[0] || 'A'}</span></td><td className="admin-name-cell">{admin.Name}</td><td>{admin.Email || admin.Username}</td><td>{admin.Mobile || '—'}</td><td><span className="badge badge-primary">{normalizeRole(admin.Role).replace('_', ' ')}</span></td><td>{String(admin.Active).toLowerCase() === 'false' ? 'Suspended' : 'Active'}</td><td>{admin.LastLogin ? formatAdminDate(admin.LastLogin) : 'Never'}</td><td>{Number(admin.OrdersManaged) || 0}</td><td>{Number(admin.InquiriesResolved) || 0}</td><td>{formatAdminDate(admin.CreatedAt)}</td><td><div className="actions-flex admin-actions"><button className="btn-table admin-action-edit" onClick={() => setEditing(admin)}>View / Edit</button><button className="btn-table admin-action-delete" onClick={() => setDeleting(admin)}>Delete</button></div></td></tr>)}
-      {!admins.length && <tr><td colSpan={11}>No admins found. Create the first admin account.</td></tr>}
+    <div className="table-card glass table-responsive"><table className="admin-table"><thead><tr><th>Profile</th><th>Admin</th><th>Email</th><th>Mobile</th><th>Role</th><th>Status</th><th>Last Login</th><th>Joined</th><th>Actions</th></tr></thead><tbody>
+      {admins.map((admin) => <tr key={admin.ID}><td><span className="user-avatar">{admin.Name?.[0] || 'A'}</span></td><td className="admin-name-cell">{admin.Name}</td><td>{admin.Email || admin.Username}</td><td>{admin.Mobile || '—'}</td><td><span className="badge badge-primary">{normalizeRole(admin.Role).replace('_', ' ')}</span></td><td>{String(admin.Active).toLowerCase() === 'false' ? 'Suspended' : 'Active'}</td><td>{admin.LastLogin ? formatAdminDate(admin.LastLogin) : 'Never'}</td><td>{formatAdminDate(admin.CreatedAt)}</td><td><div className="actions-flex admin-actions"><button className="btn-table admin-action-edit" onClick={() => setEditing(admin)}>View / Edit</button><button className="btn-table admin-action-delete" onClick={() => setDeleting(admin)}>Delete</button></div></td></tr>)}
+      {!admins.length && <tr><td colSpan={9}>No admins found. Create the first admin account.</td></tr>}
     </tbody></table></div>
     {editing && createPortal(
       <div className="modal-overlay admin-editor-overlay">
@@ -97,9 +100,4 @@ export function AdminManagementTab({ users, onSave, onDelete }: { users: AdminUs
     )}
     <LogoutConfirmationModal isOpen={Boolean(deleting)} onClose={() => !deletePending && setDeleting(null)} onConfirm={confirmDelete} title="Delete admin account?" description={`This will permanently delete ${deleting?.Name || 'this admin'} and cannot be undone.`} confirmText="Delete Admin" confirmButtonClass="btn admin-confirm-delete" isProcessing={deletePending} stableFlowLayout />
   </div>;
-}
-
-export function LogsTab() {
-  const logs = useMemo(() => { try { return JSON.parse(localStorage.getItem('nimra_admin_activity_logs') || '[]'); } catch { return []; } }, []);
-  return <div className="enterprise-section"><div className="enterprise-heading"><div><span className="eyebrow">Immutable audit trail</span><h2>System Logs</h2></div></div><div className="table-card glass table-responsive"><table className="admin-table"><thead><tr><th>Admin</th><th>Action</th><th>Module</th><th>Time</th><th>IP</th><th>Result</th></tr></thead><tbody>{logs.map((log: any, index: number) => <tr key={index}><td>{log.admin}</td><td>{log.action}</td><td>{log.module}</td><td>{log.time}</td><td>{log.ip || 'Server recorded'}</td><td><span className="badge badge-success">{log.result || 'Success'}</span></td></tr>)}{!logs.length && <tr><td colSpan={6}>No administrative events recorded in this session.</td></tr>}</tbody></table></div></div>;
 }
