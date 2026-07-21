@@ -1014,6 +1014,9 @@ export async function handlePost(req: Request) {
       }
 
       if (action === 'create') {
+        if (userIndex >= 0) {
+          return NextResponse.json({ success: false, message: 'An account with this email already exists.' }, { status: 409 });
+        }
         const password = String(incomingUser.Password || '');
         const newUser = {
           ID: incomingUser.ID || Date.now(),

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AdminUser, Inquiry, Notification, OrderRecord, Product } from '@/types/cms';
 import LogoutConfirmationModal from '@/frontend/customer/components/LogoutConfirmationModal';
@@ -39,6 +39,8 @@ export function AdminManagementTab({ users, currentUserId, onSave, onDelete }: {
   const [deleting, setDeleting] = useState<AdminUser | null>(null);
   const [deletePending, setDeletePending] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submitLockRef = useRef(false);
 
   useEffect(() => {
     if (!editing) return;
@@ -60,8 +62,18 @@ export function AdminManagementTab({ users, currentUserId, onSave, onDelete }: {
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!editing || (!editing.ID && editing.Password !== confirmPassword)) return;
-    if (await onSave({ ...editing, Role: editing.Role || 'ADMIN', Active: editing.Active ?? true })) setEditing(null);
+    if (submitLockRef.current || !editing || (!editing.ID && editing.Password !== confirmPassword)) return;
+    submitLockRef.current = true;
+    setIsSubmitting(true);
+    try {
+      if (await onSave({ ...editing, Role: editing.Role || 'ADMIN', Active: editing.Active ?? true })) {
+        setEditing(null);
+        setConfirmPassword('');
+      }
+    } finally {
+      submitLockRef.current = false;
+      setIsSubmitting(false);
+    }
   };
   const confirmDelete = async () => {
     if (!deleting) return;
@@ -93,7 +105,7 @@ export function AdminManagementTab({ users, currentUserId, onSave, onDelete }: {
             {!editing.ID && <><label><span>Password <i className="required-mark" aria-hidden="true">*</i></span><input className="form-input" required minLength={6} type="password" title="Password must contain at least 6 characters" onChange={(event) => setEditing({ ...editing, Password: event.target.value })}/></label><label><span>Confirm Password <i className="required-mark" aria-hidden="true">*</i></span><input className="form-input" required minLength={6} type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)}/></label></>}
           </div>
           {!editing.ID && editing.Password !== confirmPassword && confirmPassword && <p className="error-box">Passwords do not match.</p>}
-          <div className="modal-actions"><button className="btn btn-primary">{editing.ID ? 'Save Changes' : 'Create Admin'}</button></div>
+          <div className="modal-actions"><button className="btn btn-primary" type="submit" disabled={isSubmitting}>{isSubmitting ? 'Saving...' : editing.ID ? 'Save Changes' : 'Create Admin'}</button></div>
         </form>
       </div>,
       document.body

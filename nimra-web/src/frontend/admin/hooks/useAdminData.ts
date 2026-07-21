@@ -36,7 +36,7 @@ import {
 import { clearBrowserSession, useAuth } from '@/frontend/customer/contexts/AuthContext';
 import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
 import { getUploadImageUrl } from '@/utils/uploadImage';
-import { isAdminRole, normalizeRole } from '../utils/accessControl';
+import { isAdminRole, isSuperAdmin, normalizeRole } from '../utils/accessControl';
 
 export interface CurrentUser {
   id?: string | number;
@@ -496,8 +496,8 @@ export const useAdminData = (initialCMSData: CMSData) => {
       showAlert("You cannot delete your own logged-in user account!", 'error');
       return false;
     }
-    if (normalizeRole(selectedUser?.Role) === 'SUPER_ADMIN') {
-      showAlert('Another Super Admin account cannot be deleted.', 'error');
+    if (normalizeRole(selectedUser?.Role) === 'SUPER_ADMIN' && !isSuperAdmin(currentUser?.role)) {
+      showAlert('Only a Super Admin can delete another Super Admin account.', 'error');
       return false;
     }
     setSaveLoading(true);

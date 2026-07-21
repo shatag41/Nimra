@@ -2032,16 +2032,36 @@ function handleUserCRUD(spreadsheet, params) {
   Logger.log('handleUserCRUD - rowValues: ' + JSON.stringify(rowValues));
 
   if (action === 'create') {
-    if (!user.ID) {
-      // User IDs are permanent ownership keys. UUIDs cannot be recycled when
-      // the highest/last user row is deleted, unlike max(existing ID) + 1.
-      user.ID = Utilities.getUuid();
-      rowValues[idIndex] = user.ID;
+    var createLock = LockService.getScriptLock();
+    createLock.waitLock(10000);
+    try {
+      var latestData = sheet.getDataRange().getValues();
+      var emailIndex = findHeaderIndex(headers, ['Email', 'Username']);
+      var mobileIndex = findHeaderIndex(headers, ['Mobile', 'Mobile Number', 'Phone']);
+      var requestedEmail = normalizeEmail(user.Username || user.Email);
+      for (var existingIndex = 1; existingIndex < latestData.length; existingIndex++) {
+        var existingEmail = emailIndex >= 0 ? normalizeEmail(latestData[existingIndex][emailIndex]) : '';
+        var existingMobile = mobileIndex >= 0 ? normalizeDigits(latestData[existingIndex][mobileIndex]) : '';
+        if (requestedEmail && existingEmail === requestedEmail) {
+          return { success: false, message: 'An account with this email already exists.' };
+        }
+        if (suppliedMobile && existingMobile === suppliedMobile) {
+          return { success: false, message: 'An account with this mobile number already exists.' };
+        }
+      }
+      if (!user.ID) {
+        // User IDs are permanent ownership keys. UUIDs cannot be recycled when
+        // the highest/last user row is deleted, unlike max(existing ID) + 1.
+        user.ID = Utilities.getUuid();
+        rowValues[idIndex] = user.ID;
+      }
+      Logger.log('handleUserCRUD - appending row: ' + JSON.stringify(rowValues));
+      sheet.appendRow(rowValues);
+      if (suppliedAddresses) replaceUserAddresses(spreadsheet, user.ID, parseUserSavedAddresses(user.SavedAddresses));
+      return { success: true, message: 'User created successfully', ID: user.ID };
+    } finally {
+      createLock.releaseLock();
     }
-    Logger.log('handleUserCRUD - appending row: ' + JSON.stringify(rowValues));
-    sheet.appendRow(rowValues);
-    if (suppliedAddresses) replaceUserAddresses(spreadsheet, user.ID, parseUserSavedAddresses(user.SavedAddresses));
-    return { success: true, message: 'User created successfully', ID: user.ID };
   }
 
   for (var i = 1; i < data.length; i++) {
