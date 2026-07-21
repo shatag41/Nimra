@@ -635,15 +635,15 @@ export const fetchCustomerOrders = async (userId: string | number, email: string
   return Array.isArray(data) ? data : (data.orders || []);
 };
 
-export const updateOrderStatus = async (orderId: string, status: string): Promise<{ success: boolean; message: string }> => {
+export const updateOrderStatus = async (orderId: string, status: string, adminId?: string | number): Promise<{ success: boolean; message: string }> => {
   try {
     const res = await fetch('/api/cms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'updateOrderStatus', orderId, status }),
+      body: JSON.stringify({ type: 'updateOrderStatus', orderId, status, adminId }),
     });
     const data = await res.json();
-    if (data.success) invalidateReadCache(['orders', 'customer-orders']);
+    if (data.success) invalidateReadCache(['orders', 'customer-orders', 'users']);
     return { success: data.success, message: data.message || 'Updated status successfully' };
   } catch (err) {
     console.error('Error updating order status:', err);
@@ -719,7 +719,8 @@ export const fetchInquiries = async (): Promise<Inquiry[]> => {
 
 export const markInquiryReviewed = async (
   inquiryId: string | number,
-  reviewedBy = 'Admin'
+  reviewedBy = 'Admin',
+  adminId?: string | number
 ): Promise<{ success: boolean; message: string }> => {
   try {
     const res = await fetch('/api/cms', {
@@ -730,10 +731,11 @@ export const markInquiryReviewed = async (
         action: 'review',
         inquiryId,
         reviewedBy,
+        adminId,
       }),
     });
     const data = await res.json();
-    if (data.success) invalidateReadCache(['inquiries', 'admin-updates']);
+    if (data.success) invalidateReadCache(['inquiries', 'admin-updates', 'users']);
     return { success: data.success, message: data.message || 'Inquiry updated' };
   } catch (err) {
     console.error('Error marking inquiry reviewed:', err);

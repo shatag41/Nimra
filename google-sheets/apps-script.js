@@ -586,6 +586,7 @@ function handleInquiryCRUD(spreadsheet, params) {
 
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][idIndex] || '').trim() !== inquiryId) continue;
+    var wasReviewed = String(data[i][statusIndex] || '').trim().toLowerCase() === 'reviewed';
     sheet.getRange(i + 1, statusIndex + 1).setValue('Reviewed');
     if (reviewedAtIndex >= 0) sheet.getRange(i + 1, reviewedAtIndex + 1).setValue(new Date());
     if (reviewedByIndex >= 0) sheet.getRange(i + 1, reviewedByIndex + 1).setValue(reviewedBy);
@@ -602,6 +603,7 @@ function handleInquiryCRUD(spreadsheet, params) {
       Username: headers.indexOf('Email') >= 0 ? data[i][headers.indexOf('Email')] : '',
       DeduplicationKey: 'INQUIRY_REVIEWED:' + inquiryId
     });
+    if (!wasReviewed) incrementAdminMetric(spreadsheet, params.adminId, 'Inquiries Resolved');
     return { success: true, message: 'Inquiry marked as reviewed.', inquiryId: inquiryId, status: 'Reviewed' };
   }
 
@@ -1069,6 +1071,7 @@ function updateOrderStatus(spreadsheet, params) {
     if (String(data[i][orderIdIndex]).trim() === String(orderId).trim()) {
       if (statusIndex  >= 0) sheet.getRange(i + 1, statusIndex  + 1).setValue(status);
       if (updatedAtIndex >= 0) sheet.getRange(i + 1, updatedAtIndex + 1).setValue(new Date());
+      incrementAdminMetric(spreadsheet, params.adminId, 'Orders Managed');
 
       users = users || getUsersData(spreadsheet);
       var order = rowToOrder(headers, data[i], spreadsheet, users);
@@ -1793,6 +1796,10 @@ function getUsersData(spreadsheet) {
       else if (key === 'Alternate Mobile Number') row['AlternateMobile'] = normalizeDigits(val);
       else if (key === 'Email Preferences') row['EmailPreferences'] = val;
       else if (key === 'SavedAddresses' || key === 'Saved Addresses') row['SavedAddresses'] = val;
+      else if (key === 'Created At' || key === 'Registration Date') row['CreatedAt'] = val ? toISOString(val) : '';
+      else if (key === 'Last Login') row['LastLogin'] = val ? toISOString(val) : '';
+      else if (key === 'Orders Managed') row['OrdersManaged'] = Number(val) || 0;
+      else if (key === 'Inquiries Resolved') row['InquiriesResolved'] = Number(val) || 0;
       else {
         row[key] = val;
       }
@@ -2824,6 +2831,7 @@ function handleAuthLogin(spreadsheet, params) {
       
       // Remove password from response
       var safeUser = Object.assign({}, user);
+      safeUser.LastLogin = new Date().toISOString();
       delete safeUser.Password;
       
       return { success: true, message: 'Login successful', user: safeUser };
@@ -3032,6 +3040,8 @@ function getRequiredUserHeaders() {
     'Created At',
     'Updated At',
     'Last Login',
+    'Orders Managed',
+    'Inquiries Resolved',
     'Alternate Mobile Number',
     'RecentlyViewed',
     'Email Preferences'
@@ -3992,6 +4002,30 @@ function updateUserLastLogin(spreadsheet, userId) {
       sheet.getRange(i + 1, lastLoginIndex + 1).setValue(new Date().toISOString());
       break;
     }
+  }
+}
+
+function incrementAdminMetric(spreadsheet, userId, headerName) {
+  if (!String(userId || '').trim()) return;
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var sheet = SpreadsheetService.getInstance().getSheet('Users');
+    if (!sheet) return;
+    ensureUsersSheetColumns(sheet);
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0] || [];
+    var idIndex = headers.indexOf('User ID') !== -1 ? headers.indexOf('User ID') : headers.indexOf('ID');
+    var metricIndex = headers.indexOf(headerName);
+    if (idIndex < 0 || metricIndex < 0) return;
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][idIndex]).trim() === String(userId).trim()) {
+        sheet.getRange(i + 1, metricIndex + 1).setValue((Number(data[i][metricIndex]) || 0) + 1);
+        return;
+      }
+    }
+  } finally {
+    lock.releaseLock();
   }
 }
 

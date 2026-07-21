@@ -206,10 +206,11 @@ export const useAdminData = (initialCMSData: CMSData) => {
   const handleUpdateStatusSubmit = async (orderId: string, status: string) => {
     setSaveLoading(true);
     try {
-      const res = await updateOrderStatus(orderId, status);
+      const res = await updateOrderStatus(orderId, status, currentUser?.id);
       if (res.success) {
         showAlert(res.message);
         setOrders(prev => prev.map(o => o.orderId === orderId ? { ...o, status: status as any, updatedAt: new Date().toISOString() } : o));
+        setUsers(await fetchUsers());
         return true;
       } else {
         showAlert(res.message, 'error');
@@ -261,7 +262,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
 
     setSaveLoading(true);
     try {
-      const res = await markInquiryReviewed(inquiryId, currentUser?.name || 'Admin');
+      const res = await markInquiryReviewed(inquiryId, currentUser?.name || 'Admin', currentUser?.id);
       if (res.success) {
         showAlert(res.message || 'Inquiry marked as reviewed.');
         setInquiries(prev => prev.map(item => {
@@ -270,6 +271,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
             ? { ...item, Status: 'Reviewed', 'Reviewed At': new Date().toISOString(), 'Reviewed By': currentUser?.name || 'Admin' }
             : item;
         }));
+        setUsers(await fetchUsers());
         return true;
       }
       showAlert(res.message, 'error');
@@ -493,7 +495,6 @@ export const useAdminData = (initialCMSData: CMSData) => {
       showAlert("You cannot delete your own logged-in user account!", 'error');
       return false;
     }
-    if (!confirm('Are you sure you want to delete this admin account?')) return false;
     setSaveLoading(true);
     try {
       const res = await saveUser({ ID: id }, 'delete');
