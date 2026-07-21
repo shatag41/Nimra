@@ -568,7 +568,7 @@ export async function handlePost(req: Request) {
             const newImagePath = cmsCrudType === 'productCRUD'
               ? (localProductImagePath || (payload.product ? getUploadStoragePath(payload.product.ImageUrl) : ''))
               : (localBannerImagePath || (payload.banner ? getUploadStoragePath(payload.banner.ImageUrl) : ''));
-            const oldImagePath = String(entityBody.oldImagePath || '').trim();
+            const oldImagePath = getUploadStoragePath(entityBody.oldImagePath);
 
             // Delete old image from disk when replacing on update
             if (cmsCrudAction === 'update' && oldImagePath && newImagePath && oldImagePath !== newImagePath) {

@@ -42,7 +42,7 @@
       "Name": "NIMRA 500ml Bottle",
       "Category": "Packaged Drinking Water",
       "Volume": "500ml",
-      "Price": 10,
+      "Price": "20",
       "Description": "Your convenient hydration companion for daily commutes, gyms, and office desks.",
       "ImageUrl": "products/1784657998723-401b9c59-7760-4b25-bceb-48ba9152d288.png",
       "Active": true,
@@ -50,7 +50,7 @@
       "StockStatus": "In Stock",
       "DiscountPercent": "",
       "ComboPack": "",
-      "oldImagePath": "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+      "oldImagePath": "/uploads/products/1784657998723-401b9c59-7760-4b25-bceb-48ba9152d288.png"
     },
     {
       "ID": 4,
