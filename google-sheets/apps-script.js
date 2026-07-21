@@ -1766,6 +1766,7 @@ function getUsersData(spreadsheet) {
     sheet.appendRow(buildSeedAdminUserRow());
   }
 
+  removeUnusedNIMRARuntimeStructures(spreadsheet, sheet);
   ensureUsersSheetColumns(sheet);
   ensureUserAddressesSheet(spreadsheet, sheet);
   
@@ -3034,9 +3035,7 @@ function getRequiredUserHeaders() {
     'Password (hashed)',
     'Role (Admin/Customer)',
     'Status',
-    'Department',
     'Permissions',
-    'Created By',
     'Created At',
     'Updated At',
     'Last Login',
@@ -4002,6 +4001,19 @@ function updateUserLastLogin(spreadsheet, userId) {
       sheet.getRange(i + 1, lastLoginIndex + 1).setValue(new Date().toISOString());
       break;
     }
+  }
+}
+
+function removeUnusedNIMRARuntimeStructures(spreadsheet, usersSheet) {
+  var rolesPermissionsSheet = spreadsheet.getSheetByName('RolesPermissions');
+  if (rolesPermissionsSheet) spreadsheet.deleteSheet(rolesPermissionsSheet);
+
+  usersSheet = usersSheet || SpreadsheetService.getInstance().getSheet('Users');
+  if (!usersSheet || usersSheet.getLastColumn() === 0) return;
+  var headers = usersSheet.getRange(1, 1, 1, usersSheet.getLastColumn()).getValues()[0] || [];
+  var unusedHeaders = ['Department', 'Created By'];
+  for (var i = headers.length - 1; i >= 0; i--) {
+    if (unusedHeaders.indexOf(String(headers[i] || '').trim()) >= 0) usersSheet.deleteColumn(i + 1);
   }
 }
 

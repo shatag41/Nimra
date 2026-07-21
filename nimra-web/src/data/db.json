@@ -4,20 +4,20 @@
       "ID": 1,
       "Title": "Pure Hydration. Healthy Living.",
       "Subtitle": "NIMRA Packaged Drinking Water keeps you fresh and energized through every moment of the day.",
-      "ImageUrl": "banners/1783766709895-e573cd57-6e50-40ce-b85e-b58258f3392c.jpg",
+      "ImageUrl": "banners/1784657671576-39dfa798-2518-48ec-821d-4575880b3f83.jpg",
       "ButtonText": "Explore Products",
       "ButtonLink": "/products",
       "Active": true,
-      "oldImagePath": "/uploads/banners/1783698908683-0fb4dfee-908f-4469-9f61-1a1d6bd1f2c4.jpg"
+      "oldImagePath": "/uploads/banners/1783766709895-e573cd57-6e50-40ce-b85e-b58258f3392c.jpg"
     },
     {
       "Title": "Mineral Balanced Purity",
       "Subtitle": "Sourced responsibly and purified through a rigorous 10-step process for absolute safety.",
-      "ImageUrl": "banners/1783766758360-e748d64e-2405-463b-9ec2-ace35c4ddb57.jpg",
+      "ImageUrl": "banners/1784657707638-2973d54b-d497-44ec-965b-31620ee37631.jpg",
       "ButtonText": "Order Now",
       "ButtonLink": "/products",
       "Active": true,
-      "oldImagePath": "/uploads/banners/1783699438243-85a55fec-ba73-41c6-8350-9794b26181d8.jpg",
+      "oldImagePath": "/uploads/banners/1783766758360-e748d64e-2405-463b-9ec2-ace35c4ddb57.jpg",
       "ID": 2
     }
   ],
@@ -27,15 +27,15 @@
       "Name": "NIMRA 250ml Bottle",
       "Category": "Packaged Drinking Water",
       "Volume": "250ml",
-      "Price": 6,
+      "Price": "10",
       "Description": "Perfect pocket-sized pure drinking water for short trips, conferences, and quick refreshments.",
-      "ImageUrl": "products/1783766431059-767aad83-1a86-4546-a0a1-411a370aed80.png",
+      "ImageUrl": "products/1784657878717-33e2913b-8110-4f1c-866a-49251b56e71b.png",
       "Active": true,
       "Specifications": "RO purified, mineral balanced, food-grade PET bottle",
       "StockStatus": "In Stock",
       "DiscountPercent": "",
       "ComboPack": "",
-      "oldImagePath": "/uploads/products/1783700162950-2f7dde5e-d5ea-40ae-b2be-99cab14f9b4c.png"
+      "oldImagePath": "/uploads/products/1784657750490-cd467464-75f5-4d73-97a8-dce8b7d6e71a.png"
     },
     {
       "ID": 2,
@@ -44,13 +44,13 @@
       "Volume": "500ml",
       "Price": 10,
       "Description": "Your convenient hydration companion for daily commutes, gyms, and office desks.",
-      "ImageUrl": "products/1783766467481-ede8cb69-25b6-47f6-af5b-414e0527488d.png",
+      "ImageUrl": "products/1784657998723-401b9c59-7760-4b25-bceb-48ba9152d288.png",
       "Active": true,
       "Specifications": "RO purified, mineral balanced, food-grade PET bottle",
       "StockStatus": "In Stock",
       "DiscountPercent": "",
       "ComboPack": "",
-      "oldImagePath": "/uploads/products/1783700855386-8073e7dd-b08a-4581-afda-99eb08190bab.png"
+      "oldImagePath": "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
     },
     {
       "ID": 4,
@@ -59,13 +59,13 @@
       "Volume": "2L",
       "Price": 30,
       "Description": "Bigger size for family picnics and long journeys. Keep clean water accessible for all.",
-      "ImageUrl": "products/1783766600646-69ca189e-5371-4a15-9da3-10f48f35ffe9.png",
+      "ImageUrl": "products/1784658073705-4f91bd5b-88c5-48cd-9151-f4fcf7f745b4.png",
       "Active": true,
       "Specifications": "Family bottle, tamper-evident cap, recyclable pack",
       "StockStatus": "In Stock",
       "DiscountPercent": "",
       "ComboPack": "",
-      "oldImagePath": "/uploads/products/1783707603130-b71e0816-5ffc-4036-93f2-891351d38feb.png"
+      "oldImagePath": "/uploads/products/1783766600646-69ca189e-5371-4a15-9da3-10f48f35ffe9.png"
     },
     {
       "ID": 5,
@@ -74,10 +74,10 @@
       "Volume": "5L",
       "Price": 55,
       "Description": "Family-sized purified water can for home kitchens, travel groups, and small gatherings.",
-      "ImageUrl": "products/1783766629971-ab3f5d7a-b207-4153-a999-d968365ddfe2.png",
+      "ImageUrl": "products/1784658029611-4f9903eb-3ef1-43dd-9dd7-10f7afc2c514.png",
       "Specifications": "RO purified, mineral balanced, recyclable food-grade pack",
       "Active": true,
-      "oldImagePath": "/uploads/products/1783706835522-20d7cc9e-3914-4a15-9ad2-f8fe3ff224e4.png",
+      "oldImagePath": "/uploads/products/1783766629971-ab3f5d7a-b207-4153-a999-d968365ddfe2.png",
       "StockStatus": "In Stock",
       "DiscountPercent": "",
       "ComboPack": ""
@@ -89,10 +89,10 @@
       "Volume": "20L Jar",
       "Price": 80,
       "Description": "Eco-friendly bulk jar for continuous hydration at office spaces and household kitchen units.",
-      "ImageUrl": "products/1783766650201-c4aee9c8-766b-40c1-8233-4b12672de937.png",
+      "ImageUrl": "products/1784658092525-42540e5c-67d2-44a3-9df0-beaaf8f21773.png",
       "Specifications": "Returnable jar, dispenser compatible, scheduled delivery available",
       "Active": true,
-      "oldImagePath": "/uploads/products/1783706923921-1efeb977-fb50-459b-8c60-4dba040004f1.png",
+      "oldImagePath": "/uploads/products/1783766650201-c4aee9c8-766b-40c1-8233-4b12672de937.png",
       "StockStatus": "In Stock",
       "DiscountPercent": "",
       "ComboPack": ""
@@ -104,11 +104,11 @@
       "Volume": "500ml",
       "Price": 25,
       "Description": "Upcoming extra-fizzy RUSH soda made on the NIMRA purified water base.",
-      "ImageUrl": "products/1783766679223-ec5c2cfa-2bef-40d0-8501-3d693b8d3ec6.png",
+      "ImageUrl": "products/1784658112808-d0d7df28-0f56-48b6-9edb-b70c81ef5454.png",
       "Specifications": "Coming soon, carbonated beverage, launch stock managed from Sheets",
       "StockStatus": "Coming Soon",
       "Active": true,
-      "oldImagePath": "/uploads/products/1783707474718-66f25248-85ed-4771-a948-b10cf84df4f6.png",
+      "oldImagePath": "/uploads/products/1783766679223-ec5c2cfa-2bef-40d0-8501-3d693b8d3ec6.png",
       "DiscountPercent": "",
       "ComboPack": ""
     },
@@ -119,13 +119,13 @@
       "Volume": "1L",
       "Price": 20,
       "Description": "Standard 1 Litre bottle for pure mineral-balanced hydration at home, dining, or travel.",
-      "ImageUrl": "products/1783766493172-5c008ac3-9bff-42a4-80f5-1fc0fa4909b8.png",
+      "ImageUrl": "products/1784658049524-5c966d27-2375-4424-bc0d-387364c120e8.png",
       "Specifications": "Balanced minerals, UV and ozone treated, travel pack",
       "StockStatus": "In Stock",
       "DiscountPercent": "",
       "ComboPack": "",
       "Active": true,
-      "oldImagePath": "/uploads/products/1783701637511-6c6c1eb2-a9b6-4a5b-af60-f8aaca387b59.png"
+      "oldImagePath": "/uploads/products/1783766493172-5c008ac3-9bff-42a4-80f5-1fc0fa4909b8.png"
     },
     {
       "Name": "NIMRA Elite – Premium, modern, and memorable.",

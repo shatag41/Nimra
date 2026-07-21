@@ -5,6 +5,7 @@
 
 function setupNIMRASheets() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
+  removeUnusedNIMRASetupStructures(ss);
 
   var bannersSheet = getOrCreateSheet(ss, 'Banners');
   bannersSheet.clearContents();
@@ -164,15 +165,21 @@ function setupNIMRASheets() {
     ensureUsersSetupSheet(usersSheet, userAddressesSheet);
   }
 
-  var permissionsSheet = getOrCreateSheet(ss, 'RolesPermissions');
-  if (permissionsSheet.getLastRow() === 0) {
-    var permissionHeaders = ['Role', 'Orders', 'Products', 'Customers', 'Admins', 'Reports', 'Notifications', 'Settings', 'FAQs', 'Banners', 'Analytics'];
-    permissionsSheet.getRange(1, 1, 1, permissionHeaders.length).setValues([permissionHeaders]);
-    permissionsSheet.appendRow(['SUPER_ADMIN', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*']);
-    permissionsSheet.appendRow(['ADMIN', 'view,create,edit', 'view,create,edit', 'view,edit', '', '', 'view,create', 'view', 'view,create,edit', 'view,create,edit', 'view']);
-  }
-
   notifySetupComplete('NIMRA Sheets setup complete. Role-based admin, catalog, inquiry, order, and user tabs are ready.');
+}
+
+function removeUnusedNIMRASetupStructures(ss) {
+  ss = ss || SpreadsheetApp.getActiveSpreadsheet();
+  var rolesPermissionsSheet = ss.getSheetByName('RolesPermissions');
+  if (rolesPermissionsSheet) ss.deleteSheet(rolesPermissionsSheet);
+
+  var usersSheet = ss.getSheetByName('Users');
+  if (!usersSheet || usersSheet.getLastColumn() === 0) return;
+  var headers = usersSheet.getRange(1, 1, 1, usersSheet.getLastColumn()).getValues()[0] || [];
+  var unusedHeaders = ['Department', 'Created By'];
+  for (var i = headers.length - 1; i >= 0; i--) {
+    if (unusedHeaders.indexOf(String(headers[i] || '').trim()) >= 0) usersSheet.deleteColumn(i + 1);
+  }
 }
 
 function getOrCreateSheet(ss, name) {
@@ -215,9 +222,7 @@ function getRequiredUserHeaders() {
     'Password (hashed)',
     'Role (Admin/Customer)',
     'Status',
-    'Department',
     'Permissions',
-    'Created By',
     'Created At',
     'Updated At',
     'Last Login',
