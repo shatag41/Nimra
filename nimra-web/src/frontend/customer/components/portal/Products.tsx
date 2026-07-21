@@ -222,12 +222,6 @@ export const ProductCard = React.memo(function ProductCard({
             </Link>
           )}
         </div>
-
-        {inCart && (
-          <Link href="/cart" className="view-cart-link" onClick={(event) => event.stopPropagation()}>
-            View Cart ({cartQty} item{cartQty > 1 ? 's' : ''}) →
-          </Link>
-        )}
       </div>
     </article>
   );
