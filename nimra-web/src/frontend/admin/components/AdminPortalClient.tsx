@@ -515,6 +515,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           setProfileValidationErrors={profile.setProfileValidationErrors}
           isProfileSaving={profile.isProfileSaving}
           handleProfileSave={profile.handleProfileSave}
+          onAccountDeleted={performLogout}
         />
       </div>
     </>

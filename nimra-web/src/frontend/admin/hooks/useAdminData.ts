@@ -491,8 +491,13 @@ export const useAdminData = (initialCMSData: CMSData) => {
   };
 
   const handleUserDelete = async (id: string | number) => {
-    if (currentUser?.username === users.find(u => u.ID === id)?.Username) {
+    const selectedUser = users.find(u => String(u.ID) === String(id));
+    if (currentUser?.username === selectedUser?.Username) {
       showAlert("You cannot delete your own logged-in user account!", 'error');
+      return false;
+    }
+    if (normalizeRole(selectedUser?.Role) === 'SUPER_ADMIN') {
+      showAlert('Another Super Admin account cannot be deleted.', 'error');
       return false;
     }
     setSaveLoading(true);
