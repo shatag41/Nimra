@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Cookies from 'js-cookie';
-import { saveUser } from '@/utils/api';
+import { fetchUsers, saveUser } from '@/utils/api';
 import type { CurrentUser } from './useAdminData';
 
 export const useProfile = (
@@ -36,13 +36,33 @@ export const useProfile = (
       document.body.style.overflow = 'hidden';
       setProfileValidationErrors({});
       setProfileFeedback(null);
+
+      if (currentUser?.id) {
+        let active = true;
+        fetchUsers().then((users) => {
+          if (!active) return;
+          const storedUser = users.find((user) => String(user.ID) === String(currentUser.id));
+          if (!storedUser) return;
+          setProfileForm({
+            name: storedUser.Name || currentUser.name || '',
+            email: storedUser.Email || storedUser.Username || currentUser.email || currentUser.username || '',
+            phone: storedUser.Mobile || currentUser.phone || '',
+          });
+        }).catch((error) => {
+          console.warn('Unable to refresh the stored admin profile.', error);
+        });
+        return () => {
+          active = false;
+          document.body.style.overflow = '';
+        };
+      }
     } else {
       document.body.style.overflow = '';
     }
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isProfilePanelOpen]);
+  }, [currentUser, isProfilePanelOpen]);
 
   const handleProfileSave = async () => {
     const trimmedName = (profileForm.name || '').trim();
