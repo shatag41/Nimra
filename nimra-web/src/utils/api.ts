@@ -174,10 +174,6 @@ const getProxyUrl = (): string => {
   return `${base}/api/cms`;
 };
 
-const hasAppsScriptConfigured = (): boolean => {
-  return Boolean(process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || process.env.EXPO_PUBLIC_APPS_SCRIPT_URL);
-};
-
 const readJsonResponse = async <T>(res: Response, fallback: T): Promise<T> => {
   const text = await res.text();
   const trimmed = text.trim();
@@ -190,7 +186,7 @@ const readJsonResponse = async <T>(res: Response, fallback: T): Promise<T> => {
   try {
     const parsed = JSON.parse(trimmed) as T;
     return parsed;
-  } catch (jsonErr) {
+  } catch {
     if (trimmed.startsWith('<')) {
       return fallback;
     }
@@ -248,21 +244,13 @@ export const sendRequest = async (payload: AuthRequest): Promise<AuthResponse> =
 };
 
 export const clearCMSDataCache = () => {
-  clientCMSCache = null;
-  clientCMSCacheTime = 0;
   clientCMSRequest = null;
-  serverCMSCache = null;
   serverCMSRequest = null;
   invalidateReadCache(['products', 'banners', 'faqs']);
 };
 
-let clientCMSCache: CMSData | null = null;
-let clientCMSCacheTime = 0;
 let clientCMSRequest: Promise<CMSData> | null = null;
-let serverCMSCache: { data: CMSData; expiresAt: number } | null = null;
 let serverCMSRequest: Promise<CMSData> | null = null;
-const SERVER_CMS_CACHE_TTL_MS = 5 * 60 * 1000;
-const CLIENT_CMS_CACHE_TTL_MS = 5 * 60 * 1000;
 const READ_CACHE_TTL_MS = 15 * 1000;
 
 const readCache = new Map<string, { value: unknown; expiresAt: number }>();
@@ -321,7 +309,7 @@ const normalizeImageUrl = (url: unknown): string => {
   return `/uploads/${value.replace(/^\/+/, '')}`;
 };
 
-const normalizeCMSData = (data: any): CMSData => ({
+const normalizeCMSData = (data: Partial<CMSData>): CMSData => ({
   banners: (data.banners || []).map((banner: Banner) => ({
     ...banner,
     ImageUrl: normalizeImageUrl(banner.ImageUrl),
@@ -348,23 +336,31 @@ const getLocalFallbackCMSData = async (): Promise<CMSData> => {
     return { banners: [], products: [], faqs: [], companyInfo: {} };
   }
   const { fallbackData } = await import('@/backend/models/fallbackData');
-  return normalizeCMSData(fallbackData);
+  const normalized = normalizeCMSData(fallbackData);
+  if (process.env.STORAGE_PROVIDER?.toLowerCase() !== 'blob') return normalized;
+
+  // Relative fallback paths point at .storage/uploads, which does not exist on
+  // Vercel. Never emit those local URLs when production is Blob-backed.
+  return {
+    ...normalized,
+    banners: normalized.banners.map((banner) => ({
+      ...banner,
+      ImageUrl: isAbsoluteHttpUrl(banner.ImageUrl) ? banner.ImageUrl : '',
+    })),
+    products: normalized.products.map((product) => ({
+      ...product,
+      ImageUrl: isAbsoluteHttpUrl(product.ImageUrl) ? product.ImageUrl : '',
+    })),
+  };
 };
 
 // Fetch CMS Data via internal proxy
 export const fetchCMSData = async (): Promise<CMSData> => {
   if (typeof window !== 'undefined') {
-    if (clientCMSCache && Date.now() - clientCMSCacheTime < CLIENT_CMS_CACHE_TTL_MS) {
-      return clientCMSCache;
-    }
     if (clientCMSRequest) return clientCMSRequest;
   }
 
   if (typeof window === 'undefined') {
-    const now = Date.now();
-    if (serverCMSCache && serverCMSCache.expiresAt > now) {
-      return serverCMSCache.data;
-    }
     if (serverCMSRequest) {
       return serverCMSRequest;
     }
@@ -372,9 +368,7 @@ export const fetchCMSData = async (): Promise<CMSData> => {
 
   const requestCMSData = async (): Promise<CMSData> => {
   try {
-    const fetchOptions: RequestInit = typeof window === 'undefined'
-      ? { next: { revalidate: 300, tags: ['cms-data'] } }
-      : { cache: 'no-store' };
+    const fetchOptions: RequestInit = { cache: 'no-store' };
 
     const url = typeof window === 'undefined'
       ? getProxyUrl()
@@ -396,35 +390,21 @@ export const fetchCMSData = async (): Promise<CMSData> => {
     const hasCMSShape = Array.isArray(data.banners) || Array.isArray(data.products);
     if (!hasCMSShape) {
       console.warn('[fetchCMSData] Response did not contain CMS arrays, skipping cache update.');
-      return clientCMSCache || { banners: [], products: [], faqs: [], companyInfo: {} };
+      return { banners: [], products: [], faqs: [], companyInfo: {} };
     }
 
     const cmsData = normalizeCMSData(data);
 
-    if (typeof window !== 'undefined') {
-      clientCMSCache = cmsData;
-      clientCMSCacheTime = Date.now();
-    } else {
-      serverCMSCache = {
-        data: cmsData,
-        expiresAt: Date.now() + SERVER_CMS_CACHE_TTL_MS,
-      };
-    }
     return cmsData;
   } catch (err) {
     if (isNextDynamicSignal(err)) {
       throw err;
     }
     if (typeof window === 'undefined') {
-      const fallbackCMSData = await getLocalFallbackCMSData();
-      serverCMSCache = {
-        data: fallbackCMSData,
-        expiresAt: Date.now() + SERVER_CMS_CACHE_TTL_MS,
-      };
-      return fallbackCMSData;
+      return getLocalFallbackCMSData();
     }
     console.error('Error loading CMS data.', err);
-    return clientCMSCache || {
+    return {
       banners: [],
       products: [],
       faqs: [],
@@ -848,7 +828,7 @@ export const fetchProducts = async (): Promise<Product[]> => {
   const data = await readJsonResponse<{ products?: Product[] } | Product[]>(res, []);
   const products = Array.isArray(data) ? data : (data.products || []);
   return products.map((product) => ({ ...product, ImageUrl: normalizeImageUrl(product.ImageUrl) }));
-  }, CLIENT_CMS_CACHE_TTL_MS);
+  }, 0);
 };
 
 export const fetchBanners = async (): Promise<Banner[]> => {
@@ -861,7 +841,7 @@ export const fetchBanners = async (): Promise<Banner[]> => {
   const data = await readJsonResponse<{ banners?: Banner[] } | Banner[]>(res, []);
   const banners = Array.isArray(data) ? data : (data.banners || []);
   return banners.map((banner) => ({ ...banner, ImageUrl: normalizeImageUrl(banner.ImageUrl) }));
-  }, CLIENT_CMS_CACHE_TTL_MS);
+  }, 0);
 };
 
 export const fetchFAQs = async (): Promise<FAQ[]> => {
@@ -873,7 +853,7 @@ export const fetchFAQs = async (): Promise<FAQ[]> => {
   });
   const data = await readJsonResponse<{ faqs?: FAQ[] } | FAQ[]>(res, []);
   return Array.isArray(data) ? data : (data.faqs || []);
-  }, CLIENT_CMS_CACHE_TTL_MS);
+  }, 0);
 };
 
 export const saveNotification = async (notification: Partial<Notification>, action: 'create' | 'update' | 'delete'): Promise<{ success: boolean; message: string; ID?: string | number }> => {

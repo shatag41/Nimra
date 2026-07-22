@@ -111,6 +111,10 @@ export const ProductCard = React.memo(function ProductCard({
   const categoryBadge = normalizeCategory(product.Category);
   const displayPriceLabel = priceLabel || (orderable ? 'Retail Price' : 'Expected Price');
 
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[ProductCard] product.ImageUrl before render:', product.ImageUrl);
+  }
+
   return (
     <article 
       className={`catalog-card glass ${inCart ? 'in-cart' : ''} ${disableAnimation ? 'no-auto-motion' : ''}`}

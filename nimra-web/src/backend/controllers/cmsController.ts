@@ -116,10 +116,6 @@ async function syncLocalDB(action: 'load' | 'save') {
   }
 }
 
-let cachedCMSData: any = null;
-let lastFetchTime = 0;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes for main CMS data fallback
-
 function getCacheTTL(action: string | null): number {
   if (!action || ['getBanners', 'getProducts', 'getFAQs', 'getCompanyInfo'].includes(action)) {
     return 5 * 60 * 1000; // 5 minutes for relatively static catalog/CMS data
@@ -153,8 +149,6 @@ function invalidateCMSCache(type?: string) {
   ];
 
   if (!type || cmsTypes.includes(type)) {
-    cachedCMSData = null;
-    lastFetchTime = 0;
     liveGetCache.clear();
     try {
       const { clearCMSDataCache } = require('@/utils/api');
@@ -245,11 +239,6 @@ export async function handleGet(req: Request) {
     });
   }
 
-  // Return cached CMS data if still fresh
-  if (!action && cachedCMSData && (now - lastFetchTime < CACHE_TTL)) {
-    return NextResponse.json(cachedCMSData, { headers: cacheHeaders });
-  }
-  
   const urlVal = getAppsScriptUrl();
   if (urlVal) {
     try {
@@ -316,11 +305,6 @@ export async function handleGet(req: Request) {
             data.banners = await mapUploadedImagesFromStorage(data.banners, 'banners', fallbackData.banners);
           }
 
-          // Save successfully fetched main CMS data to cache
-          if (!action) {
-            cachedCMSData = data;
-            lastFetchTime = now;
-          }
           if (liveCacheKey) {
             liveGetCache.set(liveCacheKey, { data, expiresAt: Date.now() + getCacheTTL(action) });
           }
@@ -336,11 +320,6 @@ export async function handleGet(req: Request) {
         console.error(`[CMS API Proxy] GET Request: action="${action || 'main'}" -> Google Sheets GET fetch failed:`, err);
       }
     }
-  }
-
-  // Fallback: If live fetch failed/timed out and we have stale CMS cache for main action, return it
-  if (!action && cachedCMSData) {
-    return NextResponse.json(cachedCMSData, { headers: cacheHeaders });
   }
 
   // Use fallback data

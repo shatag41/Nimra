@@ -1,4 +1,4 @@
-import { del, head, put } from '@vercel/blob';
+import { del, put } from '@vercel/blob';
 
 export async function uploadBlobFile(file: File, storagePath: string) {
   const blob = await put(storagePath, file, {
@@ -12,13 +12,4 @@ export async function uploadBlobFile(file: File, storagePath: string) {
 
 export async function deleteBlobFile(url: string) {
   await del(url);
-}
-
-export async function blobFileExists(url: string) {
-  try {
-    const blob = await head(url);
-    return blob.size > 0 && blob.contentType.startsWith('image/');
-  } catch {
-    return false;
-  }
 }

@@ -14,9 +14,9 @@ export function useCMSData(initialData?: Partial<CMSData>) {
 
   const { data, error, isLoading, mutate } = useSWR('cmsData', fetchCMSData, {
     fallbackData,
-    revalidateOnMount: !fallbackData,
-    revalidateOnFocus: false,
-    dedupingInterval: 60000,
+    revalidateOnMount: true,
+    revalidateOnFocus: true,
+    dedupingInterval: 10000,
   });
 
   const banners = data?.banners || [];
