@@ -124,7 +124,8 @@ const getBackendUrl = (): string => (process.env.EXPO_PUBLIC_BACKEND_URL || '').
 const getBackendImageUrl = (value: unknown): string => {
   const backendUrl = getBackendUrl();
   const raw = String(value || '').trim().replace(/\\/g, '/');
-  if (!backendUrl || !raw || /^(?:https?:|data:|blob:)/i.test(raw)) return '';
+  if (/^https?:\/\//i.test(raw)) return raw;
+  if (!backendUrl || !raw || /^(?:data:|blob:)/i.test(raw)) return '';
   const storagePath = raw.split(/[?#]/, 1)[0]
     .replace(/^\/+/, '')
     .replace(/^(?:api\/file|api\/uploads|uploads)\//i, '');

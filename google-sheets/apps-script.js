@@ -2535,8 +2535,8 @@ function ensureNotificationIds(sheet) {
 
 function normalizeUploadedImagePath(value, scope) {
   var path = String(value || '').trim().replace(/\\/g, '/');
+  if (/^https?:\/\//i.test(path)) return path;
   path = path.split(/[?#]/)[0]
-    .replace(/^https?:\/\/[^/]+\//i, '')
     .replace(/^\/+/, '')
     .replace(/^(?:api\/file|api\/uploads|uploads)\//i, '');
   if (path.indexOf('..') >= 0) return '';

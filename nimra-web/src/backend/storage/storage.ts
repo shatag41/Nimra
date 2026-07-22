@@ -1,6 +1,6 @@
 import { blobFileExists, deleteBlobFile, uploadBlobFile } from './blobStorage';
 import { deleteLocalFile, localFileExists, uploadLocalFile } from './localStorage';
-import { getUploadStoragePath, getVercelBlobStoragePath, isVercelBlobUrl } from '@/utils/uploadImage';
+import { getUploadStoragePath, getVercelBlobStoragePath, isAbsoluteHttpUrl, isVercelBlobUrl } from '@/utils/uploadImage';
 
 export type StorageScope = 'products' | 'banners';
 
@@ -33,6 +33,9 @@ export async function fileExists(value: string, scope: StorageScope) {
     const storagePath = getVercelBlobStoragePath(value);
     return storagePath.startsWith(`${scope}/`) && blobFileExists(value);
   }
+  // External HTTP(S) images are already remotely hosted and do not have a
+  // corresponding local file to stat. Preserve them unchanged for display.
+  if (isAbsoluteHttpUrl(value)) return true;
   const storagePath = getUploadStoragePath(value);
   return Boolean(storagePath?.startsWith(`${scope}/`) && await localFileExists(storagePath));
 }

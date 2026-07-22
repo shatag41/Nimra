@@ -1,6 +1,10 @@
 const UPLOAD_ROUTE_PREFIXES = /^(?:api\/file|api\/uploads|uploads)\//i;
 const VALID_STORAGE_PATH = /^(products|banners)\/[^/]+\.(?:jpe?g|png|webp|gif)$/i;
 
+export function isAbsoluteHttpUrl(value: unknown): boolean {
+  return /^https?:\/\//i.test(String(value || '').trim());
+}
+
 export function isVercelBlobUrl(value: unknown): boolean {
   try {
     const url = new URL(String(value || '').trim());
@@ -27,7 +31,7 @@ export function getVercelBlobStoragePath(value: unknown): string {
 /** Return the value persisted by the selected storage provider. */
 export function getStoredUploadValue(value: unknown): string {
   const raw = String(value || '').trim();
-  return isVercelBlobUrl(raw) ? raw : getUploadStoragePath(raw);
+  return isAbsoluteHttpUrl(raw) ? raw : getUploadStoragePath(raw);
 }
 
 /** Return the portable path stored in Sheets/JSON, never an external URL. */
@@ -44,7 +48,7 @@ export function getUploadStoragePath(value: unknown): string {
 /** Build the same-origin backend URL used by every web image renderer. */
 export function getUploadImageUrl(value: unknown): string {
   const raw = String(value || '').trim();
-  if (isVercelBlobUrl(raw)) return raw;
+  if (isAbsoluteHttpUrl(raw)) return raw;
   const storagePath = getUploadStoragePath(value);
   if (!storagePath) return '';
   return `/uploads/${storagePath.split('/').map(encodeURIComponent).join('/')}`;

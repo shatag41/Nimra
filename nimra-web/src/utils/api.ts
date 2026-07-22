@@ -1,6 +1,6 @@
 import { CMSData, InquirySubmission, OrderRecord, OrderSubmission, AdminUser, Notification, Inquiry, Product, Banner, FAQ, CompanyInfo, CartItem, EmailPreferences } from '@/types/cms';
 import type { User } from '@/frontend/customer/contexts/AuthContext';
-import { isVercelBlobUrl } from '@/utils/uploadImage';
+import { isAbsoluteHttpUrl } from '@/utils/uploadImage';
 
 export type AuthRequest =
   | { type: 'login'; username: string; password: string }
@@ -303,10 +303,7 @@ const normalizeImageUrl = (url: unknown): string => {
   const value = String(url || '').trim();
   const placeholder = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
   if (!value) return placeholder;
-  if (isVercelBlobUrl(value)) return value;
-  if (/^(https?:)/i.test(value) && !value.includes('localhost') && !value.includes('127.0.0.1')) {
-    return placeholder;
-  }
+  if (isAbsoluteHttpUrl(value)) return value;
   if (value.includes('photo-') || value.includes('unsplash.com')) {
     return placeholder;
   }
