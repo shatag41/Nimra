@@ -1,10 +1,13 @@
 import { randomUUID } from 'crypto';
-import { mkdir, unlink, writeFile } from 'fs/promises';
-import path from 'path';
-import { NextResponse } from 'next/server';
-import { getUploadImageUrl, getUploadStoragePath } from '@/utils/uploadImage';
+import { NextRequest, NextResponse } from 'next/server';
+import { deleteFile, isBlobStorage, uploadFile } from '@/backend/storage/storage';
+import { isAdminStorageRequest } from '@/backend/storage/storageAuth';
+import { getStoredUploadValue } from '@/utils/uploadImage';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
+// Vercel Functions reject request bodies above 4.5 MB. Multipart form data
+// adds overhead, so keep Blob-backed server uploads safely below that limit.
+const MAX_BLOB_FILE_SIZE = 4 * 1024 * 1024;
 const PRODUCT_RATIO_WIDTH = 3;
 const PRODUCT_RATIO_HEIGHT = 4;
 const ALLOWED_TYPES = new Map([
@@ -144,8 +147,12 @@ function isSquareRatio(width: number, height: number) {
   return width > 0 && height > 0 && width === height;
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    if (!isAdminStorageRequest(req)) {
+      return NextResponse.json({ success: false, message: 'Admin authentication is required.' }, { status: 401 });
+    }
+
     const formData = await req.formData();
     const file = formData.get('file');
     const scopeValue = String(formData.get('scope') || 'products').toLowerCase();
@@ -168,6 +175,13 @@ export async function POST(req: Request) {
 
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json({ success: false, message: 'Image must be 5 MB or smaller.' }, { status: 400 });
+    }
+
+    if (isBlobStorage() && file.size > MAX_BLOB_FILE_SIZE) {
+      return NextResponse.json(
+        { success: false, message: 'Images uploaded on Vercel must be 4 MB or smaller.' },
+        { status: 400 }
+      );
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -198,20 +212,13 @@ export async function POST(req: Request) {
     }
 
     const extension = ALLOWED_TYPES.get(file.type);
-    const uploadDir = path.join(process.cwd(), '.storage', 'uploads', scope);
     const fileName = `${Date.now()}-${randomUUID()}.${extension}`;
-    const diskPath = path.join(uploadDir, fileName);
-
-    await mkdir(uploadDir, { recursive: true });
-    await writeFile(diskPath, buffer, { flag: 'wx' });
-
-    const storagePath = `${scope}/${fileName}`;
-    const url = getUploadImageUrl(storagePath);
+    const storedFile = await uploadFile(file, scope as 'products' | 'banners', fileName, buffer);
 
     return NextResponse.json({
       success: true,
-      url,
-      path: storagePath,
+      url: storedFile.url,
+      path: storedFile.path,
       fileName,
       size: file.size,
       type: file.type,
@@ -225,8 +232,12 @@ export async function POST(req: Request) {
   }
 }
 
-export async function DELETE(req: Request) {
+export async function DELETE(req: NextRequest) {
   try {
+    if (!isAdminStorageRequest(req)) {
+      return NextResponse.json({ success: false, message: 'Admin authentication is required.' }, { status: 401 });
+    }
+
     const body = await req.json().catch(() => ({}));
     const rawPath = String(body.path || '').trim();
 
@@ -234,27 +245,12 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ success: false, message: 'Image path is required.' }, { status: 400 });
     }
 
-    const storagePath = getUploadStoragePath(rawPath);
-    if (!storagePath) {
+    const storedValue = getStoredUploadValue(rawPath);
+    if (!storedValue) {
       return NextResponse.json({ success: false, message: 'Invalid image path.' }, { status: 400 });
     }
 
-    const uploadRoot = path.resolve(process.cwd(), '.storage', 'uploads');
-    const filePath = path.resolve(uploadRoot, ...storagePath.split('/'));
-
-    // Prevent path traversal
-    if (!filePath.startsWith(uploadRoot + path.sep)) {
-      return NextResponse.json({ success: false, message: 'Invalid file path.' }, { status: 400 });
-    }
-
-    try {
-      await unlink(filePath);
-    } catch (err: unknown) {
-      // File already gone – treat as success (idempotent)
-      if (!(err instanceof Error && 'code' in err && (err as NodeJS.ErrnoException).code === 'ENOENT')) {
-        throw err;
-      }
-    }
+    await deleteFile(storedValue);
 
     return NextResponse.json({ success: true, message: 'Image deleted successfully.' });
   } catch (err) {

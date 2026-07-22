@@ -1,6 +1,6 @@
 import { CMSData, InquirySubmission, OrderRecord, OrderSubmission, AdminUser, Notification, Inquiry, Product, Banner, FAQ, CompanyInfo, CartItem, EmailPreferences } from '@/types/cms';
 import type { User } from '@/frontend/customer/contexts/AuthContext';
-import { getUploadStoragePath } from '@/utils/uploadImage';
+import { isVercelBlobUrl } from '@/utils/uploadImage';
 
 export type AuthRequest =
   | { type: 'login'; username: string; password: string }
@@ -256,26 +256,6 @@ export const clearCMSDataCache = () => {
   invalidateReadCache(['products', 'banners', 'faqs']);
 };
 
-/**
- * Delete an uploaded image file from .storage/uploads/ via the upload API.
- * Only callable from the browser. Errors are logged but not surfaced since
- * the server-side controller is the authoritative cleanup path.
- */
-export const deleteUploadedImage = async (storagePath: string): Promise<void> => {
-  if (!storagePath || typeof window === 'undefined') return;
-  const normalizedPath = getUploadStoragePath(storagePath);
-  if (!normalizedPath) return;
-  try {
-    await fetch('/api/upload', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path: normalizedPath }),
-    });
-  } catch (err) {
-    console.warn('[deleteUploadedImage] Failed to delete image from storage:', err);
-  }
-};
-
 let clientCMSCache: CMSData | null = null;
 let clientCMSCacheTime = 0;
 let clientCMSRequest: Promise<CMSData> | null = null;
@@ -323,6 +303,7 @@ const normalizeImageUrl = (url: unknown): string => {
   const value = String(url || '').trim();
   const placeholder = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
   if (!value) return placeholder;
+  if (isVercelBlobUrl(value)) return value;
   if (/^(https?:)/i.test(value) && !value.includes('localhost') && !value.includes('127.0.0.1')) {
     return placeholder;
   }
@@ -943,14 +924,6 @@ export const saveProduct = async (
     const data = await res.json();
     if (data.success) {
       clearCMSDataCache();
-      // Client-side cleanup: delete old image if image was replaced on update
-      if (action === 'update' && oldImagePath && product.ImageUrl && oldImagePath !== product.ImageUrl) {
-        await deleteUploadedImage(oldImagePath);
-      }
-      // Delete image on record deletion
-      if (action === 'delete' && oldImagePath) {
-        await deleteUploadedImage(oldImagePath);
-      }
     }
     return { success: data.success, message: data.message || 'Product saved successfully', ID: data.ID };
   } catch (err) {
@@ -973,14 +946,6 @@ export const saveBanner = async (
     const data = await res.json();
     if (data.success) {
       clearCMSDataCache();
-      // Client-side cleanup: delete old image if image was replaced on update
-      if (action === 'update' && oldImagePath && banner.ImageUrl && oldImagePath !== banner.ImageUrl) {
-        await deleteUploadedImage(oldImagePath);
-      }
-      // Delete image on record deletion
-      if (action === 'delete' && oldImagePath) {
-        await deleteUploadedImage(oldImagePath);
-      }
     }
     return { success: data.success, message: data.message || 'Banner saved successfully', ID: data.ID };
   } catch (err) {

@@ -1,9 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { fallbackData } from '../models/fallbackData';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { createHash } from 'crypto';
-import { getUploadImageUrl, getUploadStoragePath } from '@/utils/uploadImage';
+import { getStoredUploadValue, getUploadImageUrl } from '@/utils/uploadImage';
+import { deleteFile, fileExists } from '@/backend/storage/storage';
+import { isAdminStorageRequest } from '@/backend/storage/storageAuth';
 
 const EMAIL_PREFERENCE_DEFAULTS = {
   orderConfirmation: true,
@@ -38,19 +40,7 @@ const APPS_SCRIPT_TIMEOUT_MS = 45000;
 type UploadScope = 'products' | 'banners';
 
 const uploadFileExists = async (storagePath: string, scope: UploadScope) => {
-  const normalized = getUploadStoragePath(storagePath);
-  if (!normalized || !normalized.startsWith(`${scope}/`)) return false;
-
-  const uploadRoot = path.resolve(process.cwd(), '.storage', 'uploads');
-  const filePath = path.resolve(uploadRoot, ...normalized.split('/'));
-  if (!filePath.startsWith(uploadRoot + path.sep)) return false;
-
-  try {
-    const fileStat = await fs.stat(filePath);
-    return fileStat.isFile() && fileStat.size > 0;
-  } catch {
-    return false;
-  }
+  return fileExists(storagePath, scope);
 };
 
 /**
@@ -59,19 +49,10 @@ const uploadFileExists = async (storagePath: string, scope: UploadScope) => {
  * file was already removed or never existed.
  */
 const deleteUploadedFile = async (storagePath: string): Promise<void> => {
-  const normalized = getUploadStoragePath(storagePath);
-  if (!normalized) return;
-
-  const uploadRoot = path.resolve(process.cwd(), '.storage', 'uploads');
-  const filePath = path.resolve(uploadRoot, ...normalized.split('/'));
-  if (!filePath.startsWith(uploadRoot + path.sep)) return;
-
   try {
-    await fs.unlink(filePath);
+    await deleteFile(storagePath);
   } catch (err: unknown) {
-    if (!(err instanceof Error && 'code' in err && (err as NodeJS.ErrnoException).code === 'ENOENT')) {
-      console.error(`[CMS Controller] Failed to delete uploaded image (${normalized}):`, err);
-    }
+    console.error(`[CMS Controller] Failed to delete uploaded image (${storagePath}):`, err);
   }
 };
 
@@ -83,7 +64,7 @@ const mapUploadedImagesFromStorage = async (
   if (!Array.isArray(items)) return items;
   return Promise.all(items.map(async item => {
     const fallback = fallbackItems.find(candidate => String(candidate.ID) === String(item.ID));
-    const storagePath = getUploadStoragePath(item.ImageUrl) || getUploadStoragePath(fallback?.ImageUrl);
+    const storagePath = getStoredUploadValue(item.ImageUrl) || getStoredUploadValue(fallback?.ImageUrl);
     const imageUrl = storagePath && await uploadFileExists(storagePath, scope)
       ? getUploadImageUrl(storagePath)
       : '';
@@ -227,7 +208,7 @@ async function saveLocalImageBinding(
     ...existingItem,
     ...entity,
     ID: id,
-    ImageUrl: imagePath || getUploadStoragePath(entity.ImageUrl) || getUploadStoragePath(existingItem.ImageUrl) || '',
+    ImageUrl: imagePath || getStoredUploadValue(entity.ImageUrl) || getStoredUploadValue(existingItem.ImageUrl) || '',
   };
 
   if (index >= 0) {
@@ -426,7 +407,7 @@ export async function handleGet(req: Request) {
 }
 
 // Proxy POST requests to Google Apps Script
-export async function handlePost(req: Request) {
+export async function handlePost(req: NextRequest) {
   await syncLocalDB('load');
   try {
     const body = await req.json();
@@ -434,11 +415,17 @@ export async function handlePost(req: Request) {
     let backendError = '';
     const cmsCrudType = payload.type === 'productCRUD' || payload.type === 'bannerCRUD' ? payload.type : '';
     const cmsCrudAction = String(payload.action || 'create');
+    if (cmsCrudType && !isAdminStorageRequest(req)) {
+      return NextResponse.json(
+        { success: false, message: 'Admin authentication is required.' },
+        { status: 401 }
+      );
+    }
     const localProductImagePath = payload.type === 'productCRUD' && payload.product
-      ? getUploadStoragePath(payload.product.ImageUrl)
+      ? getStoredUploadValue(payload.product.ImageUrl)
       : '';
     const localBannerImagePath = payload.type === 'bannerCRUD' && payload.banner
-      ? getUploadStoragePath(payload.banner.ImageUrl)
+      ? getStoredUploadValue(payload.banner.ImageUrl)
       : '';
 
     if (payload.type === 'productCRUD' && cmsCrudAction !== 'delete') {
@@ -459,7 +446,7 @@ export async function handlePost(req: Request) {
       const existingProductInDB = cmsCrudAction === 'update' && payload.product?.ID
         ? (fallbackData.products || []).find((p: any) => String(p.ID) === String(payload.product.ID))
         : null;
-      const existingProductPath = existingProductInDB ? getUploadStoragePath(existingProductInDB.ImageUrl) : '';
+      const existingProductPath = existingProductInDB ? getStoredUploadValue(existingProductInDB.ImageUrl) : '';
       const productImageOmittedForUpdate = cmsCrudAction === 'update' &&
         !Object.prototype.hasOwnProperty.call(payload.product || {}, 'ImageUrl');
       const productImageUnchanged = Boolean(existingProductPath && existingProductPath === localProductImagePath);
@@ -480,7 +467,7 @@ export async function handlePost(req: Request) {
       const existingBannerInDB = cmsCrudAction === 'update' && payload.banner?.ID
         ? (fallbackData.banners || []).find((b: any) => String(b.ID) === String(payload.banner.ID))
         : null;
-      const existingBannerPath = existingBannerInDB ? getUploadStoragePath(existingBannerInDB.ImageUrl) : '';
+      const existingBannerPath = existingBannerInDB ? getStoredUploadValue(existingBannerInDB.ImageUrl) : '';
       const bannerImageUnchanged = Boolean(existingBannerPath && existingBannerPath === localBannerImagePath);
       const bannerImageOk = bannerImageUnchanged || (localBannerImagePath && await uploadFileExists(localBannerImagePath, 'banners'));
       if (!bannerImageOk) {
@@ -503,7 +490,7 @@ export async function handlePost(req: Request) {
       const productImageOmittedForUpdate = cmsCrudAction === 'update' &&
         !Object.prototype.hasOwnProperty.call(payload.product || {}, 'ImageUrl');
       const resolvedProductPath = localProductImagePath ||
-        (existingProductForPath ? getUploadStoragePath(existingProductForPath.ImageUrl) : '');
+        (existingProductForPath ? getStoredUploadValue(existingProductForPath.ImageUrl) : '');
       payload.product = productImageOmittedForUpdate
         ? productFields
         : { ...productFields, ImageUrl: resolvedProductPath };
@@ -513,7 +500,7 @@ export async function handlePost(req: Request) {
         ? (fallbackData.banners || []).find((b: any) => String(b.ID) === String(payload.banner.ID))
         : null;
       const resolvedBannerPath = localBannerImagePath ||
-        (existingBannerForPath ? getUploadStoragePath(existingBannerForPath.ImageUrl) : '');
+        (existingBannerForPath ? getStoredUploadValue(existingBannerForPath.ImageUrl) : '');
       payload.banner = { ...bannerFields, ImageUrl: resolvedBannerPath };
     }
 
@@ -562,15 +549,15 @@ export async function handlePost(req: Request) {
         const text = await res.text();
         if (!text.trim().startsWith('<')) {
           const data = JSON.parse(text);
-          if (cmsCrudType) {
+          if (cmsCrudType && data.success) {
             const entityBody = cmsCrudType === 'productCRUD' ? body.product || {} : body.banner || {};
             // Use the resolved path (may fall back to existing stored path when image wasn't changed)
             const newImagePath = cmsCrudType === 'productCRUD'
-              ? (localProductImagePath || (payload.product ? getUploadStoragePath(payload.product.ImageUrl) : ''))
-              : (localBannerImagePath || (payload.banner ? getUploadStoragePath(payload.banner.ImageUrl) : ''));
-            const oldImagePath = getUploadStoragePath(entityBody.oldImagePath);
+              ? (localProductImagePath || (payload.product ? getStoredUploadValue(payload.product.ImageUrl) : ''))
+              : (localBannerImagePath || (payload.banner ? getStoredUploadValue(payload.banner.ImageUrl) : ''));
+            const oldImagePath = getStoredUploadValue(entityBody.oldImagePath);
 
-            // Delete old image from disk when replacing on update
+            // Delete the previous stored object only after Sheets confirms the update.
             if (cmsCrudAction === 'update' && oldImagePath && newImagePath && oldImagePath !== newImagePath) {
               await deleteUploadedFile(oldImagePath);
             }
