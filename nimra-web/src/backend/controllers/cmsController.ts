@@ -6,6 +6,7 @@ import { createHash } from 'crypto';
 import { getStoredUploadValue, getUploadImageUrl } from '@/utils/uploadImage';
 import { deleteFile, fileExists } from '@/backend/storage/storage';
 import { isAdminStorageRequest } from '@/backend/storage/storageAuth';
+import { mergeCompanyInfo } from '@/utils/companyInfo';
 
 const EMAIL_PREFERENCE_DEFAULTS = {
   orderConfirmation: true,
@@ -38,6 +39,13 @@ const getAppsScriptUrl = () => {
 };
 const APPS_SCRIPT_TIMEOUT_MS = 45000;
 type UploadScope = 'products' | 'banners';
+
+const isNextDynamicSignal = (error: unknown) => Boolean(
+  error &&
+  typeof error === 'object' &&
+  'digest' in error &&
+  String((error as { digest?: unknown }).digest).includes('DYNAMIC_SERVER_USAGE')
+);
 
 const uploadFileExists = async (storagePath: string, scope: UploadScope) => {
   return fileExists(storagePath, scope);
@@ -303,6 +311,7 @@ export async function handleGet(req: Request) {
           } else {
             data.products = await mapUploadedImagesFromStorage(data.products, 'products', fallbackData.products);
             data.banners = await mapUploadedImagesFromStorage(data.banners, 'banners', fallbackData.banners);
+            data.companyInfo = mergeCompanyInfo(data.companyInfo);
           }
 
           if (liveCacheKey) {
@@ -314,6 +323,9 @@ export async function handleGet(req: Request) {
         console.warn(`[CMS API Proxy] GET Request: action="${action || 'main'}" -> Returned non-JSON/HTML error response.`);
       }
     } catch (err: any) {
+      // This is a Next.js rendering control signal, not an upstream failure.
+      // Swallowing it makes SSR incorrectly fall through to local CMS data.
+      if (isNextDynamicSignal(err)) throw err;
       if (err.name === 'AbortError') {
         console.warn(`[CMS API Proxy] GET Request: action="${action || 'main'}" -> Google Sheets fetch timed out (${APPS_SCRIPT_TIMEOUT_MS / 1000}s limit).`);
       } else {
@@ -330,7 +342,7 @@ export async function handleGet(req: Request) {
   } else if (action === 'getFAQs') {
     return NextResponse.json(fallbackData.faqs, { headers: cacheHeaders });
   } else if (action === 'getCompanyInfo') {
-    return NextResponse.json(fallbackData.companyInfo, { headers: cacheHeaders });
+    return NextResponse.json(mergeCompanyInfo(fallbackData.companyInfo), { headers: cacheHeaders });
   } else if (action === 'trackOrder') {
     return NextResponse.json({ success: false, message: 'No matching order found.' }, { headers: cacheHeaders });
   } else if (action === 'getOrders') {
@@ -380,7 +392,7 @@ export async function handleGet(req: Request) {
       banners: await mapUploadedImagesFromStorage(fallbackData.banners, 'banners', fallbackData.banners),
       products: await mapUploadedImagesFromStorage(fallbackData.products, 'products', fallbackData.products),
       faqs: fallbackData.faqs,
-      companyInfo: fallbackData.companyInfo
+      companyInfo: mergeCompanyInfo(fallbackData.companyInfo)
     }, { headers: cacheHeaders });
   }
 }

@@ -62,10 +62,11 @@ function doGet(e) {
   var publicCacheKeys = {
     getBanners: 'getBanners',
     getProducts: 'getProducts',
-    getFAQs: 'getFAQs',
-    getCompanyInfo: 'getCompanyInfo'
+    getFAQs: 'getFAQs'
   };
-  var cacheKey = publicCacheKeys[action] || (!action ? 'main_cms_data' : '');
+  // CompanyInfo can be edited directly in Sheets, so never cache responses
+  // that contain it. This prevents stale map addresses and embed URLs.
+  var cacheKey = publicCacheKeys[action] || '';
   var cached = cacheKey ? service.getCachedData(cacheKey) : null;
   if (cached) return jsonResponse(cached);
   var responseData;
@@ -1743,12 +1744,13 @@ function ensureImageUrlSheetColumn(sheet) {
 
 function getCompanyInfoData(sheet) {
   if (!sheet) return {};
-  var data = sheet.getDataRange().getValues();
+  var data = sheet.getDataRange().getDisplayValues();
   var info = {};
   for (var i = 0; i < data.length; i++) {
-    var key = data[i][0].toString().trim();
-    var val = data[i][1];
-    if (key) {
+    var key = String(data[i][0] || '').trim();
+    var val = String(data[i][1] || '').trim();
+    var isHeader = i === 0 && key.toLowerCase() === 'key' && val.toLowerCase() === 'value';
+    if (key && !isHeader) {
       info[key] = val;
     }
   }

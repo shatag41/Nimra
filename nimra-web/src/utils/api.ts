@@ -1,6 +1,7 @@
 import { CMSData, InquirySubmission, OrderRecord, OrderSubmission, AdminUser, Notification, Inquiry, Product, Banner, FAQ, CompanyInfo, CartItem, EmailPreferences } from '@/types/cms';
 import type { User } from '@/frontend/customer/contexts/AuthContext';
 import { isAbsoluteHttpUrl } from '@/utils/uploadImage';
+import { fallbackCompanyInfo, mergeCompanyInfo } from '@/utils/companyInfo';
 
 export type AuthRequest =
   | { type: 'login'; username: string; password: string }
@@ -160,18 +161,9 @@ export const mockCMSData: CMSData = {
   }
 };
 
-// Internal proxy URL - avoids CORS/redirect issues with Google Apps Script
+// Browser proxy URL. Server Components use the in-process server loader below.
 const getProxyUrl = (): string => {
-  // In browser use relative path; in SSR (server components) use absolute localhost URL
-  if (typeof window !== 'undefined') {
-    return '/api/cms';
-  }
-  // Server-side: use localhost (Next.js dev) or the VERCEL_URL in production
-  const port = process.env.PORT || 3000;
-  const base = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : `http://localhost:${port}`;
-  return `${base}/api/cms`;
+  return '/api/cms';
 };
 
 const readJsonResponse = async <T>(res: Response, fallback: T): Promise<T> => {
@@ -245,12 +237,10 @@ export const sendRequest = async (payload: AuthRequest): Promise<AuthResponse> =
 
 export const clearCMSDataCache = () => {
   clientCMSRequest = null;
-  serverCMSRequest = null;
   invalidateReadCache(['products', 'banners', 'faqs']);
 };
 
 let clientCMSRequest: Promise<CMSData> | null = null;
-let serverCMSRequest: Promise<CMSData> | null = null;
 const READ_CACHE_TTL_MS = 15 * 1000;
 
 const readCache = new Map<string, { value: unknown; expiresAt: number }>();
@@ -319,60 +309,23 @@ const normalizeCMSData = (data: Partial<CMSData>): CMSData => ({
     ImageUrl: normalizeImageUrl(product.ImageUrl),
   })),
   faqs: data.faqs || [],
-  companyInfo: data.companyInfo || {},
+  companyInfo: mergeCompanyInfo(data.companyInfo),
 });
-
-const isNextDynamicSignal = (err: unknown) => {
-  return Boolean(
-    err &&
-    typeof err === 'object' &&
-    'digest' in err &&
-    String((err as { digest?: unknown }).digest).includes('DYNAMIC_SERVER_USAGE')
-  );
-};
-
-const getLocalFallbackCMSData = async (): Promise<CMSData> => {
-  if (typeof window !== 'undefined') {
-    return { banners: [], products: [], faqs: [], companyInfo: {} };
-  }
-  const { fallbackData } = await import('@/backend/models/fallbackData');
-  const normalized = normalizeCMSData(fallbackData);
-  if (process.env.STORAGE_PROVIDER?.toLowerCase() !== 'blob') return normalized;
-
-  // Relative fallback paths point at .storage/uploads, which does not exist on
-  // Vercel. Never emit those local URLs when production is Blob-backed.
-  return {
-    ...normalized,
-    banners: normalized.banners.map((banner) => ({
-      ...banner,
-      ImageUrl: isAbsoluteHttpUrl(banner.ImageUrl) ? banner.ImageUrl : '',
-    })),
-    products: normalized.products.map((product) => ({
-      ...product,
-      ImageUrl: isAbsoluteHttpUrl(product.ImageUrl) ? product.ImageUrl : '',
-    })),
-  };
-};
 
 // Fetch CMS Data via internal proxy
 export const fetchCMSData = async (): Promise<CMSData> => {
-  if (typeof window !== 'undefined') {
-    if (clientCMSRequest) return clientCMSRequest;
+  if (typeof window === 'undefined') {
+    const { loadServerCMSData } = await import('@/backend/loaders/cmsData');
+    return loadServerCMSData();
   }
 
-  if (typeof window === 'undefined') {
-    if (serverCMSRequest) {
-      return serverCMSRequest;
-    }
-  }
+  if (clientCMSRequest) return clientCMSRequest;
 
   const requestCMSData = async (): Promise<CMSData> => {
   try {
     const fetchOptions: RequestInit = { cache: 'no-store' };
 
-    const url = typeof window === 'undefined'
-      ? getProxyUrl()
-      : getProxyUrl();
+    const url = getProxyUrl();
 
     const res = await fetch(url, {
       method: 'GET',
@@ -390,35 +343,22 @@ export const fetchCMSData = async (): Promise<CMSData> => {
     const hasCMSShape = Array.isArray(data.banners) || Array.isArray(data.products);
     if (!hasCMSShape) {
       console.warn('[fetchCMSData] Response did not contain CMS arrays, skipping cache update.');
-      return { banners: [], products: [], faqs: [], companyInfo: {} };
+      return { banners: [], products: [], faqs: [], companyInfo: fallbackCompanyInfo };
     }
 
     const cmsData = normalizeCMSData(data);
 
     return cmsData;
   } catch (err) {
-    if (isNextDynamicSignal(err)) {
-      throw err;
-    }
-    if (typeof window === 'undefined') {
-      return getLocalFallbackCMSData();
-    }
     console.error('Error loading CMS data.', err);
     return {
       banners: [],
       products: [],
       faqs: [],
-      companyInfo: {},
+      companyInfo: fallbackCompanyInfo,
     };
   }
   };
-
-  if (typeof window === 'undefined') {
-    serverCMSRequest = requestCMSData().finally(() => {
-      serverCMSRequest = null;
-    });
-    return serverCMSRequest;
-  }
 
   clientCMSRequest = requestCMSData().finally(() => {
     clientCMSRequest = null;
