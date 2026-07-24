@@ -8,7 +8,6 @@ import { useCustomerOrders } from '@/frontend/customer/hooks/useCustomerOrders';
 import { trackOrder } from '@/utils/api';
 import { formatCurrency } from '../utils/commerce';
 import CustomerPageHeader from './CustomerPageHeader';
-import LoadingButton from '@/frontend/shared/LoadingButton';
 
 const deliverySteps: Array<{ status: OrderRecord['status']; label: string; desc: string }> = [
   { status: 'Pending', label: 'Order Placed', desc: 'We received your request.' },
@@ -255,10 +254,10 @@ export default function TrackClient() {
               </div>
             </label>
 
-            <LoadingButton className="track-button" isLoading={loading || (Boolean(user) && loadingOrders)} loadingText={loading ? 'Searching...' : 'Loading orders...'}>
+            <button className="track-button" disabled={loading || (Boolean(user) && loadingOrders)}>
               {loading || (Boolean(user) && loadingOrders) ? <span className="spinner" /> : <Icon name="search" />}
               <span>{loading ? 'Searching...' : loadingOrders && user ? 'Loading orders...' : 'Track Order'}</span>
-            </LoadingButton>
+            </button>
           </form>
 
           {showingSkeleton && (

@@ -12866,6 +12866,76 @@ body:has(.products-page-skeleton) {
   margin-left:auto;
 }
 
+/* Keep the Super Admin overview within one desktop viewport. Smaller screens
+   retain natural document scrolling so dashboard content is never clipped. */
+@media (min-width:73.75rem) and (min-height:45rem) {
+  .admin-container .tab-viewport:has(> .command-center) {
+    margin-top:0 !important;
+  }
+
+  .admin-container .command-center {
+    padding:.25rem 0 .4rem;
+    row-gap:.55rem;
+  }
+
+  .admin-container .command-center > section {
+    row-gap:.25rem;
+  }
+
+  .admin-container .command-center .section-heading {
+    min-height:1.7rem;
+  }
+
+  .admin-container .command-center .section-heading h3 {
+    font-size:.82rem;
+  }
+
+  .admin-container .command-center .enterprise-kpi-grid,
+  .admin-container .command-center .quick-action-grid,
+  .admin-container .command-center .insights-grid {
+    gap:.5rem;
+  }
+
+  .admin-container .command-center .kpi-card {
+    min-height:4.1rem;
+    padding:.38rem .55rem;
+    grid-template-columns:1.55rem minmax(0,1fr);
+    gap:.42rem;
+  }
+
+  .admin-container .command-center .kpi-icon {
+    width:1.55rem;
+    height:1.55rem;
+    font-size:.68rem;
+  }
+
+  .admin-container .command-center .kpi-copy > strong {
+    margin:.05rem 0;
+    font-size:1.2rem;
+  }
+
+  .admin-container .command-center .quick-action {
+    min-height:2.55rem;
+    padding:.34rem .52rem;
+  }
+
+  .admin-container .command-center .quick-action .quick-icon {
+    width:1.55rem;
+    height:1.55rem;
+  }
+
+  .admin-container .command-center .insight-card {
+    min-height:9.5rem;
+    max-height:9.5rem;
+    padding:.55rem .65rem;
+  }
+
+  .admin-container .command-center .mini-bars { height:2.1rem; }
+  .admin-container .command-center .rank-row { padding:.16rem 0; }
+  .admin-container .command-center .people-list > div { padding:.1rem 0; }
+  .admin-container .command-center .pulse-stat { padding:.25rem 0; }
+}
+
 /* Admin Management add/edit dialog. */
 .admin-name-cell {
   font-weight:600;
