@@ -389,7 +389,7 @@ export default function OrdersClient() {
                   {/* Card Body */}
                   <div className="amazon-card-body">
                     <div className="card-body-content-split">
-                      <div className="items-list-column">
+                      <div className={`items-list-column ${cartItems.length > 2 ? 'is-scrollable' : ''}`}>
                         {cartItems.map((item) => (
                           <div key={item.productId} className="amazon-item-row">
                             <div className="item-img-wrapper">
@@ -489,7 +489,7 @@ export default function OrdersClient() {
                     {/* Card Body */}
                     <div className="amazon-card-body">
                       <div className="card-body-content-split">
-                        <div className="items-list-column">
+                        <div className={`items-list-column ${order.items.length > 2 ? 'is-scrollable' : ''}`}>
                           {order.items.map((item, idx) => (
                             <div key={idx} className="amazon-item-row">
                               <div className="item-img-wrapper">
@@ -1030,8 +1030,9 @@ export default function OrdersClient() {
         .meta-value, .order-id-txt { font-size: .86rem; font-weight: 700; color: var(--text-primary); overflow-wrap: anywhere; }
         .amazon-card-body { padding: .7rem .85rem; }
         .card-body-content-split { grid-template-columns: minmax(0,1fr) 170px; gap: .85rem; align-items: stretch; }
-        .items-list-column { gap: 0; }
-        .amazon-item-row { grid-template-columns: 58px minmax(0,1.3fr) minmax(9rem,.8fr); gap: .7rem; padding: .5rem 0; }
+        .items-list-column { --order-product-row-height: 84px; gap: 0; max-height: calc(var(--order-product-row-height) * 2); overflow: hidden; }
+        .items-list-column.is-scrollable { overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; padding-right: .65rem; }
+        .amazon-item-row { box-sizing: border-box; height: var(--order-product-row-height); min-height: var(--order-product-row-height); grid-template-columns: 58px minmax(0,1.3fr) minmax(9rem,.8fr); gap: .7rem; padding: .5rem 0; }
         .amazon-item-row:first-child { padding-top: 0; } .amazon-item-row:last-child { padding-bottom: 0; }
         .amazon-item-row + .amazon-item-row { border-top: 1px solid rgba(148,163,184,.17); }
         .item-img-wrapper { width: 58px; height: 58px; padding: 4px; border: 0; border-radius: 13px; background: var(--bg-tertiary); box-shadow: inset 0 0 0 1px var(--border-color); }
@@ -1065,8 +1066,8 @@ export default function OrdersClient() {
         .skeleton-copy .short { width: 65%; } .skeleton-copy .tiny { width: 40%; } .skeleton-actions span { height: 42px; border-radius: 14px; }
         .shimmer, .skeleton-header span { background: linear-gradient(100deg,var(--bg-tertiary) 30%,var(--border-color) 50%,var(--bg-tertiary) 70%); background-size: 220% 100%; animation: shimmer 1.25s linear infinite; }
         @keyframes shimmer { to { background-position-x: -220%; } }
-        @media (max-width: 900px) { :global(.orders-layout-grid) { grid-template-columns: 1fr; } :global(.orders-sidebar) { position: static; } .card-body-content-split { grid-template-columns: 1fr; } .actions-column { border: 0; padding: 0; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); } .actions-column .amazon-action-btn { width: 100%; min-width: 0; } }
-        @media (max-width: 640px) { .amazon-card-header { flex-direction: column; padding: 1rem; } .header-meta-columns { grid-template-columns: repeat(2,minmax(0,1fr)); } .header-id-column { min-width: 0; align-self: stretch; } .amazon-card-body { padding: 1rem; } .amazon-item-row { grid-template-columns: 60px 1fr; } .item-img-wrapper { width: 60px; height: 60px; } .item-status-column { grid-column: 1 / -1; } .actions-column { grid-template-columns: 1fr; } .skeleton-header { grid-template-columns: 1fr 1fr; } .skeleton-body { grid-template-columns: 60px 1fr; } .skeleton-image { width: 60px; height: 60px; } .skeleton-actions { grid-column: 1 / -1; } }
+        @media (max-width: 900px) { :global(.orders-layout-grid) { grid-template-columns: 1fr; } :global(.orders-sidebar) { position: static; } .card-body-content-split { grid-template-columns: 1fr; } .items-list-column { --order-product-row-height: 112px; } .actions-column { border: 0; padding: 0; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); } .actions-column .amazon-action-btn { width: 100%; min-width: 0; } }
+        @media (max-width: 640px) { .amazon-card-header { flex-direction: column; padding: 1rem; } .header-meta-columns { grid-template-columns: repeat(2,minmax(0,1fr)); } .header-id-column { min-width: 0; align-self: stretch; } .amazon-card-body { padding: 1rem; } .items-list-column { --order-product-row-height: 132px; } .amazon-item-row { grid-template-columns: 60px 1fr; } .item-img-wrapper { width: 60px; height: 60px; } .item-status-column { grid-column: 1 / -1; } .actions-column { grid-template-columns: 1fr; } .skeleton-header { grid-template-columns: 1fr 1fr; } .skeleton-body { grid-template-columns: 60px 1fr; } .skeleton-image { width: 60px; height: 60px; } .skeleton-actions { grid-column: 1 / -1; } }
         @media (prefers-reduced-motion: reduce) { .amazon-order-card, .amazon-action-btn, .status-chip, .shimmer, .skeleton-header span { animation: none; transition: none; } }
 
         .modal-overlay {

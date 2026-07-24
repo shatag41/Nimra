@@ -12787,6 +12787,7 @@ body:has(.products-page-skeleton) {
   .admin-container .admin-card-grid { grid-template-columns:minmax(0, 1fr); }
 }
 
+
 /* Scope the profile editor width to its outermost dialog container. */
 .profile-panel-overlay > .profile-panel {
   width:min(620px, calc(100vw - 24px)) !important;

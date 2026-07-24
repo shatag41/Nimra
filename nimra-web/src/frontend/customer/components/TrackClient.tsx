@@ -7,7 +7,6 @@ import { useAuth } from '@/frontend/customer/hooks/useAuth';
 import { useCustomerOrders } from '@/frontend/customer/hooks/useCustomerOrders';
 import { trackOrder } from '@/utils/api';
 import { formatCurrency } from '../utils/commerce';
-import ProductImage from './ProductImage';
 import CustomerPageHeader from './CustomerPageHeader';
 
 const deliverySteps: Array<{ status: OrderRecord['status']; label: string; desc: string }> = [
@@ -191,10 +190,7 @@ export default function TrackClient() {
     : deliverySteps;
   const timelineIndex = isCancelled ? timelineSteps.length - 1 : currentIndex;
   const progress = timelineIndex <= 0 ? 0 : (timelineIndex / (timelineSteps.length - 1)) * 100;
-  const subtotal = Number(order?.subtotal || 0);
-  const deliveryCharge = Number(order?.deliveryCharge || 0);
   const total = Number(order?.total || 0);
-  const discount = Math.max(0, subtotal + deliveryCharge - total);
   // Keep the first server/client render identical, then hydrate with user/order data.
   const displayedOrderId = mounted ? (order?.orderId || orderId) : '';
   const displayedMobile = mounted ? (order?.customer?.mobile || mobileValue) : '';
@@ -309,7 +305,7 @@ export default function TrackClient() {
                 </div>
 
                 <div className="info-grid">
-                  <div>
+                  <div className="order-id-field">
                     <span>Order ID</span>
                     <strong>{order.orderId}</strong>
                   </div>
@@ -324,10 +320,6 @@ export default function TrackClient() {
                   <div>
                     <span>Payment Status</span>
                     <strong>{order.paymentMethod || 'Payment Successful'}</strong>
-                  </div>
-                  <div>
-                    <span>Delivery Type</span>
-                    <strong>{deliveryCharge > 0 ? 'Standard Delivery' : 'Complimentary Delivery'}</strong>
                   </div>
                   <div>
                     <span>Total</span>
@@ -368,64 +360,6 @@ export default function TrackClient() {
                   })}
                 </div>
               </section>
-
-              <div className="detail-grid">
-                <section className="premium-card products-card">
-                  <div className="card-heading">
-                    <div>
-                      <span className="eyebrow">Products</span>
-                      <h2>Ordered Items</h2>
-                    </div>
-                    <span className="item-count">{items.length}</span>
-                  </div>
-
-                  <div className="product-grid">
-                    {items.map((item, index) => {
-                      const quantity = Number(item.quantity || 1);
-                      const price = Number(item.price || 0);
-                      return (
-                        <article key={`${item.productId || item.name || 'item'}-${index}`} className="product-track-card">
-                          <div className="product-thumb">
-                            <ProductImage src={item.imageUrl} alt={item.name || 'Order item'} />
-                          </div>
-                          <div className="product-copy">
-                            <h3>{item.name || 'NIMRA Product'}</h3>
-                            <p>{[item.category, item.volume].filter(Boolean).join(' | ') || 'Packaged water'}</p>
-                            <div className="product-meta">
-                              <span>Qty {quantity}</span>
-                              <span>{formatCurrency(price)}</span>
-                            </div>
-                          </div>
-                          <strong>{formatCurrency(price * quantity)}</strong>
-                        </article>
-                      );
-                    })}
-                  </div>
-                </section>
-
-                <aside className="premium-card pricing-card">
-                  <div className="card-heading compact">
-                    <div>
-                      <span className="eyebrow">Billing</span>
-                      <h2>Order Summary</h2>
-                    </div>
-                    <Icon name="receipt" />
-                  </div>
-
-                  <div className="price-list">
-                    <div><span>Subtotal</span><strong>{formatCurrency(subtotal)}</strong></div>
-                    <div><span>Delivery</span><strong>{deliveryCharge ? formatCurrency(deliveryCharge) : 'Free'}</strong></div>
-                    <div><span>Tax</span><strong>Included</strong></div>
-                    <div><span>Discount</span><strong>{discount ? `-${formatCurrency(discount)}` : formatCurrency(0)}</strong></div>
-                    <div className="grand-total"><span>Grand Total</span><strong>{formatCurrency(total)}</strong></div>
-                  </div>
-
-                  <div className="status-notifications">
-                    <span><Icon name="check" /> Payment Successful</span>
-                    <span><Icon name="spark" /> {statusCopy[order.status].title}</span>
-                  </div>
-                </aside>
-              </div>
 
             </div>
           )}
@@ -981,6 +915,15 @@ export default function TrackClient() {
 
         .info-grid strong.amount {
           color: var(--track-accent);
+        }
+
+        .info-grid .order-id-field {
+          grid-column: span 2;
+          padding: 1rem;
+        }
+
+        .info-grid .order-id-field strong {
+          font-size: clamp(1rem, 0.92rem + 0.35vw, 1.15rem);
         }
 
         .timeline {

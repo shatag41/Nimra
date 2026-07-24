@@ -87,15 +87,21 @@ export default function OrderDetailsModal({
         aria-label={`Order details for ${selectedOrder.orderId}`}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="modal-header summary-card">
+        <div className="modal-title-header">
           <button type="button" className="close-modal-btn top-right" onClick={() => setSelectedOrder(null)} aria-label="Close order details">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
-          
+
+          <span className="order-modal-label">Order Details</span>
+          <div className="order-modal-title-row">
+            <h2>#{selectedOrder.orderId || 'N/A'}</h2>
+            <span className={`order-header-status status-${status.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}>{status}</span>
+          </div>
+        </div>
+
+        <div className="summary-card">
           <div className="summary-card-details">
             {([
-              ['package', 'Order ID', `#${selectedOrder.orderId || 'N/A'}`, ''],
-              ['status', 'Status', status, `status-badge compact-badge ${status.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`],
               ['calendar', 'Date & Time', formatDate(selectedOrder.createdAt), ''],
               ['payment', 'Payment Method', selectedOrder.paymentMethod || 'COD', ''],
               ['user', 'Customer', customer.name || 'N/A', ''],
@@ -103,7 +109,7 @@ export default function OrderDetailsModal({
             ] as const).map(([icon, label, value, valueClass]) => (
               <div className="summary-item" key={label}>
                 <span className="summary-icon"><ModalIcon name={icon} /></span>
-                <div><span className="meta-label">{label}</span><span className={`${valueClass || 'meta-value'} ${label === 'Order ID' ? 'order-id-value' : ''}`}>{value}</span></div>
+                <div><span className="meta-label">{label}</span><span className={valueClass || 'meta-value'}>{value}</span></div>
               </div>
             ))}
           </div>
@@ -179,7 +185,7 @@ export default function OrderDetailsModal({
               Reorder
             </button>
             <button type="button" onClick={() => { setSelectedOrder(null); router.push(`/track?orderId=${encodeURIComponent(selectedOrder.orderId)}`); }} className="btn btn-track">
-              <ModalIcon name="track" /> Track Order <span aria-hidden="true">→</span>
+              Track Order <span aria-hidden="true">→</span>
             </button>
           </div>
         </div>
@@ -219,11 +225,24 @@ export default function OrderDetailsModal({
         }
 
         .summary-card {
-          padding: 1rem 2.5rem 1rem 1.25rem;
+          padding: 0.75rem 1rem;
           border-bottom: 1px solid var(--border-color);
           background: var(--bg-secondary);
-          position: relative;
         }
+
+        .modal-title-header { position:relative;width:100%;box-sizing:border-box;padding:1rem 3rem .85rem 1.25rem;border-bottom:1px solid var(--border-color);background:color-mix(in srgb,var(--bg-secondary) 84%,var(--primary-color) 6%); }
+        .order-modal-label { display:block;margin-bottom:.3rem;color:var(--text-muted);font-size:.62rem;font-weight:800;line-height:1;text-transform:uppercase;letter-spacing:.08em; }
+
+        .order-modal-title-row { display:flex;align-items:center;gap:.65rem;min-width:0;margin:0; }
+        .order-modal-title-row h2 { min-width:0;margin:0;color:var(--text-primary);font-size:clamp(.9rem,2.2vw,1.15rem);font-weight:800;line-height:1.2;white-space:nowrap; }
+        .order-header-status { flex:0 0 auto;display:inline-flex;align-items:center;min-height:24px;padding:.22rem .55rem;border:1px solid currentColor;border-radius:999px;font-size:.65rem;font-weight:800;line-height:1;text-transform:uppercase;letter-spacing:.04em; }
+        .order-header-status.status-pending,
+        .order-header-status.status-confirmed { color:#c2410c;background:#fff7ed;border-color:#fdba74; }
+        .order-header-status.status-processing { color:#1d4ed8;background:#eff6ff;border-color:#93c5fd; }
+        .order-header-status.status-dispatched { color:#7e22ce;background:#faf5ff;border-color:#d8b4fe; }
+        .order-header-status.status-out-for-delivery { color:#0e7490;background:#ecfeff;border-color:#67e8f9; }
+        .order-header-status.status-delivered { color:#047857;background:#ecfdf5;border-color:#6ee7b7; }
+        .order-header-status.status-cancelled { color:#b91c1c;background:#fef2f2;border-color:#fca5a5; }
 
         .close-modal-btn {
           display: flex;
@@ -531,14 +550,13 @@ export default function OrderDetailsModal({
         /* Premium modal refinement */
         .order-details-overlay { background: rgba(15, 23, 42, .62); backdrop-filter: blur(12px); }
         .order-details-modal { width: min(820px, 100%); max-height: min(90vh, 640px); border: 1px solid var(--border-color); border-radius: 24px; background: var(--bg-secondary); color: var(--text-primary); box-shadow: 0 32px 90px rgba(15,23,42,.24), 0 4px 18px rgba(15,23,42,.1); }
-        .summary-card { padding: 1rem 2.5rem 1rem 1rem; border-bottom: 1px solid var(--border-color); background: color-mix(in srgb, var(--bg-secondary) 84%, var(--primary-color) 6%); backdrop-filter: blur(18px); }
-        .summary-card-details { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .5rem; }
+        .summary-card { padding:.75rem 1rem;border-bottom:1px solid var(--border-color);background:var(--bg-secondary);backdrop-filter:blur(18px); }
+        .summary-card-details { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: .5rem; }
         .summary-item { min-width: 0; display: flex; flex-direction: row; align-items: center; gap: .5rem; padding: .5rem .6rem; border: 1px solid var(--border-color); border-radius: 10px; background: color-mix(in srgb, var(--bg-secondary) 94%, transparent); box-shadow: 0 3px 12px rgba(15,23,42,.035); }
         .summary-item > div { min-width: 0; display: flex; flex-direction: column; gap: .12rem; }
         .summary-icon { width: 26px; height: 26px; flex: 0 0 26px; display: grid; place-items: center; border-radius: 6px; color: var(--primary-color); background: color-mix(in srgb, var(--primary-color) 12%, transparent); }
         .meta-label { letter-spacing: .06em; color: var(--text-muted); font-size: .6rem; }
-        .meta-value, .meta-value-price { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-primary); font-size: .78rem; }
-        .order-id-value { overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; font-size: .75rem; }
+        .meta-value, .meta-value-price { display:block;overflow:visible;text-overflow:clip;white-space:normal;overflow-wrap:anywhere;color:var(--text-primary);font-size:.78rem;line-height:1.25; }
         .meta-value-price { color: #1d4ed8; }
         .close-modal-btn.top-right { top: .75rem; right: .75rem; width: 28px; height: 28px; background: var(--bg-tertiary); }
         .modal-scroll-area { overflow-y: auto; overflow-x: hidden; padding: .85rem 1rem 1rem; gap: 1rem; background: var(--bg-secondary); }
@@ -579,7 +597,10 @@ export default function OrderDetailsModal({
         @media (max-width: 540px) {
           .order-details-overlay { padding: .5rem; }
           .order-details-modal { border-radius: 20px; max-height: 94vh; }
-          .summary-card { padding: 1rem 2.5rem .75rem .75rem; }
+          .modal-title-header { padding:.85rem 2.75rem .75rem .75rem; }
+          .summary-card { padding:.65rem .75rem; }
+          .order-modal-title-row { gap:.4rem; }
+          .order-modal-title-row h2 { font-size:.82rem; }
           .summary-card-details { grid-template-columns: 1fr; gap: .4rem; }
           .summary-item { padding: .4rem .5rem; }
           .summary-card-details.single-row {
