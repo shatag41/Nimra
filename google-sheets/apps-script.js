@@ -2903,6 +2903,7 @@ function handleAuthRegister(spreadsheet, params) {
     Password: hashPassword(password),
     Role: role,
     Active: true,
+    CreatedAt: new Date().toISOString(),
     SavedAddresses: '[]',
     RecentlyViewed: '[]',
     EmailPreferences: JSON.stringify(getDefaultEmailPreferences())
@@ -3617,6 +3618,7 @@ function handleAuthGoogleSignIn(spreadsheet, params) {
     Password: hashPassword(randomPass),
     Role: role,
     Active: true,
+    CreatedAt: new Date().toISOString(),
     SavedAddresses: '[]',
     RecentlyViewed: '[]',
     EmailPreferences: JSON.stringify(getDefaultEmailPreferences())

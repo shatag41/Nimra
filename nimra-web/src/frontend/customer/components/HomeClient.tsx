@@ -341,6 +341,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
             actionLink="/products"
             actionText="View More"
             descriptionOnly={true}
+            showCartBadge={false}
             compact={true}
           />
         </div>

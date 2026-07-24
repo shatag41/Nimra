@@ -20,6 +20,7 @@ export interface ProductCardProps {
   actionLink?: string;
   actionText?: string;
   descriptionOnly?: boolean;
+  showCartBadge?: boolean;
   cartQty?: number;
   onUpdateQuantity?: (productId: string, quantity: number) => void;
 }
@@ -37,6 +38,7 @@ export const ProductCard = React.memo(function ProductCard({
   actionLink,
   actionText = 'View More',
   descriptionOnly = false,
+  showCartBadge = true,
   cartQty = 0,
   onUpdateQuantity
 }: ProductCardProps) {
@@ -128,7 +130,7 @@ export const ProductCard = React.memo(function ProductCard({
     >
       <div className="product-img-wrap">
         <ProductImage src={product.ImageUrl} alt={product.Name} />
-        {inCart && (
+        {showCartBadge && inCart && (
           <div className="cart-count-badge">{cartQty}</div>
         )}
       </div>
@@ -251,6 +253,7 @@ export interface ProductSectionProps {
   actionLink?: string;
   actionText?: string;
   descriptionOnly?: boolean;
+  showCartBadge?: boolean;
 }
 
 export function ProductSection({
@@ -273,6 +276,7 @@ export function ProductSection({
   actionLink,
   actionText,
   descriptionOnly,
+  showCartBadge = true,
 }: ProductSectionProps) {
   const displayProducts = limit ? products.slice(0, limit) : products;
   const { addProduct, updateQuantity, items } = useCart();
@@ -327,6 +331,7 @@ export function ProductSection({
                 actionLink={actionLink}
                 actionText={actionText}
                 descriptionOnly={descriptionOnly}
+                showCartBadge={showCartBadge}
               />
             );
           })}

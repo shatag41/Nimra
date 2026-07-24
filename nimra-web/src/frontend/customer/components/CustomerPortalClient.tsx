@@ -58,6 +58,7 @@ function CustomerPortalClient({ initialTab }: CustomerPortalClientProps) {
   // paints while a query string is still being resolved on the client.
   const tab = initialTab ?? searchParams.get('tab');
   const [mounted, setMounted] = React.useState(false);
+  const [portalLoadedAt] = React.useState(() => Date.now());
 
   React.useEffect(() => {
     setMounted(true);
@@ -112,6 +113,12 @@ function CustomerPortalClient({ initialTab }: CustomerPortalClientProps) {
   }, [orders]);
 
   const accountAgeDays = user?.CreatedAt ? Math.max(0, Math.floor((Date.now() - new Date(user.CreatedAt).getTime()) / (1000 * 3600 * 24))) : 0;
+  const isRecentlyCreatedAccount = React.useMemo(() => {
+    const createdAt = user?.CreatedAt || user?.createdAt;
+    if (!createdAt) return false;
+    const createdAtMs = new Date(createdAt).getTime();
+    return Number.isFinite(createdAtMs) && createdAtMs <= portalLoadedAt && portalLoadedAt - createdAtMs < 15 * 60 * 1000;
+  }, [portalLoadedAt, user?.CreatedAt, user?.createdAt]);
   
   const formatDate = React.useCallback((dateStr?: string) => {
     if (!dateStr) return '';
@@ -154,10 +161,10 @@ function CustomerPortalClient({ initialTab }: CustomerPortalClientProps) {
     }
     return {
       badge: 'CUSTOMER PORTAL',
-      title: `${isNewAccountSession ? 'Welcome' : 'Welcome back'}, ${user?.Name ? (String(user.Name).length > 25 ? `${String(user.Name).slice(0, 25)}...` : user.Name) : 'Customer'}`,
+      title: `${isNewAccountSession || isRecentlyCreatedAccount ? 'Welcome' : 'Welcome back'}, ${user?.Name ? (String(user.Name).length > 25 ? `${String(user.Name).slice(0, 25)}...` : user.Name) : 'Customer'}`,
       subtitle: 'Manage orders, track deliveries, and reach NIMRA support from one clean workspace.',
     };
-  }, [isNewAccountSession, tab, user]);
+  }, [isNewAccountSession, isRecentlyCreatedAccount, tab, user]);
 
   if (!mounted || isLoading) {
     if (tab === 'profile') {
