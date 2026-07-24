@@ -7,6 +7,7 @@ import { getStoredUploadValue, getUploadImageUrl } from '@/utils/uploadImage';
 import { deleteFile, fileExists } from '@/backend/storage/storage';
 import { isAdminStorageRequest } from '@/backend/storage/storageAuth';
 import { mergeCompanyInfo } from '@/utils/companyInfo';
+import { getCustomerDeletionEligibility } from '@/utils/customerDeletion';
 
 const EMAIL_PREFERENCE_DEFAULTS = {
   orderConfirmation: true,
@@ -50,6 +51,24 @@ const isNextDynamicSignal = (error: unknown) => Boolean(
 const uploadFileExists = async (storagePath: string, scope: UploadScope) => {
   return fileExists(storagePath, scope);
 };
+
+async function fetchAppsScriptData(action: string, params: Record<string, string> = {}) {
+  const baseUrl = getAppsScriptUrl();
+  if (!baseUrl) return null;
+  const url = new URL(baseUrl);
+  url.searchParams.set('action', action);
+  Object.entries(params).forEach(([key, value]) => { if (value) url.searchParams.set(key, value); });
+  const response = await fetch(url.toString(), {
+    method: 'GET',
+    redirect: 'follow',
+    cache: 'no-store',
+    headers: { Accept: 'application/json' },
+    signal: AbortSignal.timeout(APPS_SCRIPT_TIMEOUT_MS),
+  });
+  const text = await response.text();
+  if (!response.ok || text.trim().startsWith('<')) throw new Error(`Unable to validate ${action}.`);
+  return JSON.parse(text);
+}
 
 /**
  * Safely delete an uploaded image file from .storage/uploads/.
@@ -100,6 +119,7 @@ async function syncLocalDB(action: 'load' | 'save') {
       if (data.faqs) fallbackData.faqs = data.faqs;
       if (data.companyInfo) fallbackData.companyInfo = data.companyInfo;
       if (data.orders) fallbackData.orders = data.orders;
+      if (data.cancellationRequests) fallbackData.cancellationRequests = data.cancellationRequests;
       if (data.inquiries) fallbackData.inquiries = data.inquiries;
       if (data.users) fallbackData.users = data.users;
       if (data.notifications) fallbackData.notifications = data.notifications;
@@ -112,6 +132,7 @@ async function syncLocalDB(action: 'load' | 'save') {
         faqs: fallbackData.faqs,
         companyInfo: fallbackData.companyInfo,
         orders: fallbackData.orders,
+        cancellationRequests: fallbackData.cancellationRequests || [],
         inquiries: fallbackData.inquiries,
         users: fallbackData.users,
         notifications: fallbackData.notifications,
@@ -511,6 +532,44 @@ export async function handlePost(req: NextRequest) {
 
       if (!isValidIdentifier) {
         return NextResponse.json({ success: false, message: 'Enter a valid mobile number or email address.' }, { status: 400 });
+      }
+    }
+
+    if (payload.type === 'userCRUD' && payload.action === 'delete') {
+      try {
+        const requestedId = String(payload.user?.ID ?? '').trim();
+        if (!requestedId) {
+          return NextResponse.json({ success: false, message: 'Customer ID is required for deletion.' }, { status: 400 });
+        }
+
+        let users = fallbackData.users || [];
+        let orders = fallbackData.orders || [];
+        let cancellationRequests = fallbackData.cancellationRequests || [];
+        if (getAppsScriptUrl()) {
+          const [liveUsers, liveOrders, liveRequests] = await Promise.all([
+            fetchAppsScriptData('getUsers'),
+            fetchAppsScriptData('getOrders'),
+            fetchAppsScriptData('getCancellationRequests'),
+          ]);
+          users = Array.isArray(liveUsers) ? liveUsers : [];
+          orders = Array.isArray(liveOrders) ? liveOrders : [];
+          cancellationRequests = Array.isArray(liveRequests) ? liveRequests : [];
+        }
+
+        const customer = users.find((user: any) => String(user.ID) === requestedId);
+        if (!customer) {
+          return NextResponse.json({ success: false, message: 'Customer record not found for deletion.' }, { status: 404 });
+        }
+        const eligibility = getCustomerDeletionEligibility(customer, orders, cancellationRequests);
+        if (!eligibility.eligible) {
+          return NextResponse.json({ success: false, ...eligibility }, { status: 409 });
+        }
+      } catch (error) {
+        console.error('[Customer deletion] Eligibility validation failed:', error);
+        return NextResponse.json(
+          { success: false, message: 'Customer deletion could not be validated. Please retry.' },
+          { status: 503 }
+        );
       }
     }
 

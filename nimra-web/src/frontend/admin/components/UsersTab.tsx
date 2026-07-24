@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { AdminUser } from '@/types/cms';
+import { AdminUser, CancellationRequest, OrderRecord } from '@/types/cms';
 import LogoutConfirmationModal from '@/frontend/customer/components/LogoutConfirmationModal';
 import { CurrentUser } from '../hooks/useAdminData';
 import CustomSelect from './CustomSelect';
+import { getCustomerDeletionEligibility } from '@/utils/customerDeletion';
 
 interface UsersTabProps {
   currentUser: CurrentUser;
   customers: AdminUser[];
+  orders: OrderRecord[];
+  cancellationRequests: CancellationRequest[];
   showFilters: boolean;
   customerStatusFilter: string;
   setCustomerStatusFilter: (value: string) => void;
@@ -18,6 +21,8 @@ interface UsersTabProps {
 export default React.memo(function UsersTab({
   currentUser,
   customers,
+  orders,
+  cancellationRequests,
   showFilters,
   customerStatusFilter,
   setCustomerStatusFilter,
@@ -85,8 +90,9 @@ export default React.memo(function UsersTab({
             </tr>
           </thead>
           <tbody>
-            {customers.map((u) => (
-              <tr key={u.ID}>
+            {customers.map((u) => {
+              const deletion = getCustomerDeletionEligibility(u, orders, cancellationRequests);
+              return <tr key={u.ID}>
                 <td>{u.ID}</td>
                 <td><strong>{u.Name}</strong></td>
                 <td><code>{u.Username}</code></td>
@@ -114,13 +120,16 @@ export default React.memo(function UsersTab({
                     <button 
                       className="btn-table btn-delete" 
                       onClick={() => setCustomerToDelete(u)}
+                      disabled={!deletion.eligible}
+                      title={deletion.eligible ? 'Delete customer' : deletion.message}
                     >
                       Delete
                     </button>
+                    {!deletion.eligible && <span className="customer-delete-blocker">Order {deletion.orderId}: {deletion.status}</span>}
                   </div>
                 </td>
-              </tr>
-            ))}
+              </tr>;
+            })}
             {customers.length === 0 && (
               <tr>
                 <td colSpan={6} className="empty-td">No customers found.</td>

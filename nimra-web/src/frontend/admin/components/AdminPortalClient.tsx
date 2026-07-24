@@ -398,6 +398,8 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                 <UsersTab
                   currentUser={currentUser}
                   customers={filteredCustomers}
+                  orders={orders}
+                  cancellationRequests={cancellationRequests}
                   showFilters={filters.showFilters}
                   customerStatusFilter={filters.customerStatusFilter}
                   setCustomerStatusFilter={filters.setCustomerStatusFilter}
