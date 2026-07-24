@@ -178,7 +178,9 @@ export function useCustomerOrders() {
 
     const cacheIsFresh = Boolean(cacheTimes[key] && Date.now() - cacheTimes[key] < CACHE_TTL);
     if (!forceRefetch && cacheIsFresh) {
-      setOrders(ordersCache[key]);
+      // Cached/backend orders intentionally contain only user/address references.
+      // Always resolve those references against the current profile before display.
+      setOrders(enrichOrdersForUser(ordersCache[key]));
       setLoadingOrders(false);
       return;
     }

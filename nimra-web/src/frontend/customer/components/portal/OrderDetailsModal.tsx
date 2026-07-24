@@ -67,16 +67,39 @@ export default function OrderDetailsModal({
   if (!selectedOrder) return null;
   if (typeof document === 'undefined') return null;
 
+  const rawOrder = selectedOrder as unknown as Record<string, unknown>;
   const customer = selectedOrder.customer || {};
+  const firstText = (...values: unknown[]) =>
+    values.map((value) => String(value ?? '').trim()).find(Boolean) || '';
+  const customerName = firstText(
+    customer.name,
+    rawOrder.customerName,
+    rawOrder.CustomerName,
+    rawOrder.name,
+    rawOrder.Name,
+  );
+  const customerMobile = firstText(
+    customer.mobile,
+    rawOrder.customerMobile,
+    rawOrder.CustomerMobile,
+    rawOrder.mobile,
+    rawOrder.Mobile,
+    rawOrder.phone,
+    rawOrder.Phone,
+  );
   const items = Array.isArray(selectedOrder.items) ? selectedOrder.items : [];
   const status = String(selectedOrder.status || 'Pending');
   const addressParts = [
-    customer.flatNo,
-    customer.buildingName,
-    customer.locality,
-    customer.city,
-    customer.state,
+    firstText(customer.flatNo, rawOrder.flatNo, rawOrder.FlatNo),
+    firstText(customer.buildingName, rawOrder.buildingName, rawOrder.BuildingName),
+    firstText(customer.locality, rawOrder.locality, rawOrder.Locality),
+    firstText(customer.city, rawOrder.city, rawOrder.City),
+    firstText(customer.state, rawOrder.state, rawOrder.State),
   ].filter(Boolean);
+  const completeAddress = addressParts.length
+    ? addressParts.join(', ')
+    : firstText(customer.address, rawOrder.deliveryAddress, rawOrder.DeliveryAddress, rawOrder.address, rawOrder.Address);
+  const customerPincode = firstText(customer.pincode, rawOrder.pincode, rawOrder.Pincode, rawOrder.PinCode);
 
   return createPortal(
     <div className="order-details-overlay" onClick={() => setSelectedOrder(null)}>
@@ -104,7 +127,7 @@ export default function OrderDetailsModal({
             {([
               ['calendar', 'Date & Time', formatDate(selectedOrder.createdAt), ''],
               ['payment', 'Payment Method', selectedOrder.paymentMethod || 'COD', ''],
-              ['user', 'Customer', customer.name || 'N/A', ''],
+              ['user', 'Customer', customerName || 'N/A', ''],
               ['total', 'Order Total', formatCurrency(Number(selectedOrder.total || 0)), 'meta-value-price'],
             ] as const).map(([icon, label, value, valueClass]) => (
               <div className="summary-item" key={label}>
@@ -156,12 +179,12 @@ export default function OrderDetailsModal({
                 <ModalIcon name="location" />
               </div>
               <div className="address-text-wrap">
-                <strong>{customer.name || 'Customer'}</strong>
+                <strong>{customerName || 'Customer'}</strong>
                 <p>
-                  {addressParts.length ? addressParts.join(', ') : 'Address not available'}
-                  {customer.pincode ? ` - ${customer.pincode}` : ''}
+                  {completeAddress || 'Address not available'}
+                  {customerPincode ? ` - ${customerPincode}` : ''}
                 </p>
-                <p className="delivery-phone"><ModalIcon name="phone" /> {customer.mobile || 'Not available'}</p>
+                <p className="delivery-phone"><ModalIcon name="phone" /> {customerMobile || 'Not available'}</p>
               </div>
             </div>
           </div>

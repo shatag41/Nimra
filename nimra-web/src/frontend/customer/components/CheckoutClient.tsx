@@ -35,6 +35,7 @@ const initialForm = {
 };
 
 type FormState = typeof initialForm;
+const formText = (value: unknown) => String(value ?? '').trim();
 
 export default function CheckoutClient() {
   const cart = useCart();
@@ -87,18 +88,18 @@ export default function CheckoutClient() {
         setSelectedAddressId(defaultAddr.id);
         setIsEditingAddress(false);
         setForm({
-          name: user?.Name || defaultAddr.name || '',
-          mobile: user?.Mobile || defaultAddr.mobile || '',
-          altMobile: user.AlternateMobile || defaultAddr.altMobile || '',
-          email: user?.Username || defaultAddr.email || '',
-          flatNo: defaultAddr.flatNo,
-          buildingName: defaultAddr.buildingName || '',
-          locality: defaultAddr.locality,
-          landmark: defaultAddr.landmark || '',
-          pincode: defaultAddr.pincode,
-          state: defaultAddr.state,
-          city: defaultAddr.city,
-          country: defaultAddr.country || 'India',
+          name: formText(user?.Name || defaultAddr.name),
+          mobile: formText(user?.Mobile || defaultAddr.mobile),
+          altMobile: formText(user.AlternateMobile || defaultAddr.altMobile),
+          email: formText(user?.Username || defaultAddr.email),
+          flatNo: formText(defaultAddr.flatNo),
+          buildingName: formText(defaultAddr.buildingName),
+          locality: formText(defaultAddr.locality),
+          landmark: formText(defaultAddr.landmark),
+          pincode: formText(defaultAddr.pincode),
+          state: formText(defaultAddr.state),
+          city: formText(defaultAddr.city),
+          country: formText(defaultAddr.country) || 'India',
           addressType: defaultAddr.type,
           instructions: defaultAddr.instructions || '',
           saveAddress: false,
@@ -202,13 +203,20 @@ export default function CheckoutClient() {
   // Validate all fields
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
-    if (!form.name.trim()) newErrors.name = 'Full name is required.';
-    if (!/^\d{10}$/.test(form.mobile.trim())) newErrors.mobile = 'Enter a valid 10-digit mobile number.';
-    if (form.altMobile.trim() && !/^\d{10}$/.test(form.altMobile.trim())) newErrors.altMobile = 'Enter a valid 10-digit alternate number.';
-    if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) newErrors.email = 'Enter a valid email address.';
-    if (!form.flatNo.trim()) newErrors.flatNo = 'Flat or house number is required.';
-    if (!form.locality.trim()) newErrors.locality = 'Area or locality is required.';
-    if (!/^\d{6}$/.test(form.pincode.trim())) newErrors.pincode = 'Enter a valid 6-digit pincode.';
+    const name = formText(form.name);
+    const mobile = formText(form.mobile);
+    const altMobile = formText(form.altMobile);
+    const email = formText(form.email);
+    const flatNo = formText(form.flatNo);
+    const locality = formText(form.locality);
+    const pincode = formText(form.pincode);
+    if (!name) newErrors.name = 'Full name is required.';
+    if (!/^\d{10}$/.test(mobile)) newErrors.mobile = 'Enter a valid 10-digit mobile number.';
+    if (altMobile && !/^\d{10}$/.test(altMobile)) newErrors.altMobile = 'Enter a valid 10-digit alternate number.';
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) newErrors.email = 'Enter a valid email address.';
+    if (!flatNo) newErrors.flatNo = 'Flat or house number is required.';
+    if (!locality) newErrors.locality = 'Area or locality is required.';
+    if (!/^\d{6}$/.test(pincode)) newErrors.pincode = 'Enter a valid 6-digit pincode.';
     if (!form.state) newErrors.state = 'Please select a state.';
     if (!form.city) newErrors.city = 'Please select a city.';
     setErrors(newErrors);
@@ -228,18 +236,18 @@ export default function CheckoutClient() {
       setSelectedAddressId(id);
       setIsEditingAddress(false);
       setForm({
-        name: user?.Name || addr.name || '',
-        mobile: user?.Mobile || addr.mobile || '',
-        altMobile: user?.AlternateMobile || addr.altMobile || '',
-        email: user?.Username || addr.email || '',
-        flatNo: addr.flatNo,
-        buildingName: addr.buildingName || '',
-        locality: addr.locality,
-        landmark: addr.landmark || '',
-        pincode: addr.pincode,
-        state: addr.state,
-        city: addr.city,
-        country: addr.country || 'India',
+        name: formText(user?.Name || addr.name),
+        mobile: formText(user?.Mobile || addr.mobile),
+        altMobile: formText(user?.AlternateMobile || addr.altMobile),
+        email: formText(user?.Username || addr.email),
+        flatNo: formText(addr.flatNo),
+        buildingName: formText(addr.buildingName),
+        locality: formText(addr.locality),
+        landmark: formText(addr.landmark),
+        pincode: formText(addr.pincode),
+        state: formText(addr.state),
+        city: formText(addr.city),
+        country: formText(addr.country) || 'India',
         addressType: addr.type,
         instructions: addr.instructions || '',
         saveAddress: false,
