@@ -70,6 +70,22 @@ async function fetchAppsScriptData(action: string, params: Record<string, string
   return JSON.parse(text);
 }
 
+async function postAppsScriptData(payload: Record<string, unknown>) {
+  const baseUrl = getAppsScriptUrl();
+  if (!baseUrl) return null;
+  const response = await fetch(baseUrl, {
+    method: 'POST',
+    redirect: 'follow',
+    cache: 'no-store',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(APPS_SCRIPT_TIMEOUT_MS),
+  });
+  const text = await response.text();
+  if (!response.ok || text.trim().startsWith('<')) throw new Error('Unable to persist the password update.');
+  return JSON.parse(text);
+}
+
 /**
  * Safely delete an uploaded image file from .storage/uploads/.
  * Silently ignores ENOENT so callers can safely call this even if the
@@ -424,6 +440,13 @@ export async function handlePost(req: NextRequest) {
   try {
     const body = await req.json();
     const payload = { ...body };
+    if (['googleSignIn', 'requestOTP', 'resetPassword'].includes(String(payload.type || '')) && payload.email) {
+      payload.email = String(payload.email).trim().toLowerCase();
+    }
+    if (payload.type === 'login' && payload.username) {
+      const identifier = String(payload.username).trim();
+      payload.username = identifier.includes('@') ? identifier.toLowerCase() : identifier;
+    }
     let backendError = '';
     const cmsCrudType = payload.type === 'productCRUD' || payload.type === 'bannerCRUD' ? payload.type : '';
     const cmsCrudAction = String(payload.action || 'create');
@@ -573,6 +596,32 @@ export async function handlePost(req: NextRequest) {
       }
     }
 
+    if (payload.type === 'googleSignIn' && payload.intent === 'register') {
+      try {
+        const googleEmail = String(payload.email || '').trim().toLowerCase();
+        const users = getAppsScriptUrl()
+          ? await fetchAppsScriptData('getUsers')
+          : (fallbackData.users || []);
+        const existingUser = (Array.isArray(users) ? users : []).find(
+          (user: any) => String(user.Username || user.Email || '').trim().toLowerCase() === googleEmail
+        );
+        if (existingUser) {
+          return NextResponse.json({
+            success: false,
+            code: 'ACCOUNT_ALREADY_REGISTERED',
+            registeredEmail: googleEmail,
+            message: 'Account already registered. Want to log in?',
+          });
+        }
+      } catch (error) {
+        console.error('[Google registration] Existing-account check failed:', error);
+        return NextResponse.json(
+          { success: false, message: 'Unable to verify this Google account. Please try again.' },
+          { status: 503 }
+        );
+      }
+    }
+
     const urlValPost = getAppsScriptUrl();
     if (urlValPost) {
       try {
@@ -601,6 +650,41 @@ export async function handlePost(req: NextRequest) {
         const text = await res.text();
         if (!text.trim().startsWith('<')) {
           const data = JSON.parse(text);
+          if (payload.type === 'resetPassword' && data.success) {
+            const normalizedEmail = String(payload.email || '').trim().toLowerCase();
+            const expectedHash = hashLocalPassword(String(payload.newPassword || ''));
+            let liveUsers = await fetchAppsScriptData('getUsers');
+            let savedUser = (Array.isArray(liveUsers) ? liveUsers : []).find(
+              (user: any) => String(user.Username || user.Email || '').trim().toLowerCase() === normalizedEmail
+            );
+
+            if (!savedUser) {
+              return NextResponse.json({ success: false, message: 'Password reset failed because the account could not be confirmed.' }, { status: 409 });
+            }
+
+            if (String(savedUser.Password || '') !== expectedHash) {
+              const update = await postAppsScriptData({
+                type: 'userCRUD',
+                action: 'update',
+                user: { ID: savedUser.ID, Password: expectedHash },
+              });
+              if (!update?.success) {
+                return NextResponse.json({ success: false, message: update?.message || 'The new password could not be saved.' }, { status: 409 });
+              }
+              liveUsers = await fetchAppsScriptData('getUsers');
+              savedUser = (Array.isArray(liveUsers) ? liveUsers : []).find(
+                (user: any) => String(user.Username || user.Email || '').trim().toLowerCase() === normalizedEmail
+              );
+            }
+
+            if (String(savedUser?.Password || '') !== expectedHash) {
+              return NextResponse.json({ success: false, message: 'The backend could not confirm the new password was saved.' }, { status: 409 });
+            }
+
+            localOTPCache.delete(normalizedEmail);
+            liveGetCache.clear();
+            invalidateCMSCache('resetPassword');
+          }
           if (cmsCrudType && data.success) {
             const entityBody = cmsCrudType === 'productCRUD' ? body.product || {} : body.banner || {};
             // Use the resolved path (may fall back to existing stored path when image wasn't changed)

@@ -9,7 +9,7 @@ export type AuthRequest =
   | { type: 'sendRegistrationOTP'; user: { Name: string; Username: string; Mobile: string; Password: string; Role?: string } }
   | { type: 'verifyRegistrationOTP'; otp: string; user: { Name: string; Username: string; Mobile: string; Password: string; Role?: string } }
   | { type: 'createVerifiedUser'; user: { Name: string; Username: string; Mobile: string; Password: string; Role?: string } }
-  | { type: 'googleSignIn'; email: string; name: string; role?: string }
+  | { type: 'googleSignIn'; email: string; name: string; role?: string; intent?: 'login' | 'register' }
   | { type: 'requestOTP'; email: string }
   | { type: 'resetPassword'; email: string; otp: string; newPassword: string }
   | { type: 'requestEmailChangeOTP'; userId: string | number; newEmail: string };
@@ -216,6 +216,7 @@ export const sendRequest = async (payload: AuthRequest): Promise<AuthResponse> =
 
     if (!res.ok) {
       return {
+        ...data,
         success: false,
         message: data.message || String(data.error || '') || 'Request failed.',
       };

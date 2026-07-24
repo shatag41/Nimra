@@ -26,6 +26,13 @@ function LoginPageContent() {
     ? '/register?next=%2Fcheckout'
     : '/register';
 
+  React.useEffect(() => {
+    const prefilledEmail = searchParams.get('email')?.trim();
+    if (!prefilledEmail) return;
+    setActiveTab('email');
+    setEmail(prefilledEmail);
+  }, [searchParams]);
+
   const validate = () => {
     if (activeTab === 'mobile') {
       const trimmedUsername = username.trim();

@@ -30,6 +30,8 @@ export default function RegisterPage() {
   const [role, setRole] = useState('Customer');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [registrationComplete, setRegistrationComplete] = useState(false);
+  const [registeredGoogleEmail, setRegisteredGoogleEmail] = useState('');
   const [errors, setErrors] = useState({
     name: '',
     email: '',
@@ -137,7 +139,7 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLoading) return;
+    if (isLoading || registrationComplete) return;
     setError('');
     setErrors({ name: '', email: '', mobile: '', password: '', confirmPassword: '' });
 
@@ -176,15 +178,20 @@ export default function RegisterPage() {
   const registrationUser = () => ({ Name: name.trim(), Username: email.trim().toLowerCase(), Mobile: mobile.trim(), Password: password, Role: role });
 
   const handleResend = async () => {
-    if (resendSeconds > 0 || isLoading) return;
+    if (resendSeconds > 0 || isLoading || registrationComplete) return;
     setIsLoading(true); setOtpError('');
-    const res = await sendRequest({ type: 'sendRegistrationOTP', user: registrationUser() });
-    if (res.success) {
-      const nextExpiry = Number(res.expiresAt || Date.now() + 10 * 60 * 1000); const resendAt = Date.now() + 30000;
-      setExpiresAt(nextExpiry); setResendSeconds(30); setOtp(''); setOtpExpired(false);
-      sessionStorage.setItem(REGISTRATION_DRAFT_KEY, JSON.stringify({ name, email, mobile, password, confirmPassword, role, expiresAt: nextExpiry, resendAt }));
-    } else setOtpError(res.message || 'Unable to resend OTP.');
-    setIsLoading(false);
+    try {
+      const res = await sendRequest({ type: 'sendRegistrationOTP', user: registrationUser() });
+      if (res.success) {
+        const nextExpiry = Number(res.expiresAt || Date.now() + 10 * 60 * 1000); const resendAt = Date.now() + 30000;
+        setExpiresAt(nextExpiry); setResendSeconds(30); setOtp(''); setOtpExpired(false);
+        sessionStorage.setItem(REGISTRATION_DRAFT_KEY, JSON.stringify({ name, email, mobile, password, confirmPassword, role, expiresAt: nextExpiry, resendAt }));
+      } else setOtpError(res.message || 'Unable to resend OTP.');
+    } catch {
+      setOtpError('Unable to resend OTP. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const continueAfterSuccess = async (createdUser: NonNullable<Awaited<ReturnType<typeof sendRequest>>['user']>) => {
@@ -211,6 +218,7 @@ export default function RegisterPage() {
   };
 
   const handleVerify = async () => {
+    if (isLoading || registrationComplete) return;
     if (otpExpired) { setOtpError('OTP expired. Please request a new one.'); return; }
     if (!/^\d{6}$/.test(otp)) { setOtpError('Invalid OTP. Please try again.'); return; }
     setIsLoading(true); setOtpError('');
@@ -221,6 +229,7 @@ export default function RegisterPage() {
     }
     const created = await sendRequest({ type: 'createVerifiedUser', user });
     if (created.success && created.user) {
+      setRegistrationComplete(true);
       sessionStorage.removeItem(REGISTRATION_DRAFT_KEY);
       setOtpOpen(false);
       notify.custom({ type: 'success', title: 'Account created successfully', durationMs: 3000 });
@@ -230,8 +239,11 @@ export default function RegisterPage() {
   };
 
   const handleGoogleSuccess = async (accessToken: string) => {
+    if (isLoading || registrationComplete) return;
+    setIsLoading(true);
     try {
       setError('');
+      setRegisteredGoogleEmail('');
       const profileRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -246,10 +258,18 @@ export default function RegisterPage() {
         type: 'googleSignIn',
         email: payload.email,
         name: payload.name,
-        role: role
+        role: role,
+        intent: 'register'
       });
 
       if (res.success && res.user) {
+        if (res.message !== 'Registration successful') {
+          const selectedEmail = String(payload.email || '').trim().toLowerCase();
+          setRegisteredGoogleEmail(selectedEmail);
+          setError('');
+          return;
+        }
+        setRegistrationComplete(true);
         if (res.message === 'Registration successful') {
           if (typeof window !== 'undefined') {
             localStorage.setItem(recentlyViewedKey(res.user.ID), '[]');
@@ -279,12 +299,20 @@ export default function RegisterPage() {
           notify.success('Registration Successful', 'Registration successful! Welcome to NIMRA.');
         }
       } else {
-        setError(res.message ?? 'Google Sign-In failed.');
-        notify.error('Registration Failed', res.message ?? 'Google Sign-In failed.');
+        if (res.code === 'ACCOUNT_ALREADY_REGISTERED') {
+          const selectedEmail = String(res.registeredEmail || payload.email || '').trim().toLowerCase();
+          setRegisteredGoogleEmail(selectedEmail);
+          setError('');
+        } else {
+          setError(res.message ?? 'Google Sign-In failed.');
+          notify.error('Registration Failed', res.message ?? 'Google Sign-In failed.');
+        }
       }
     } catch {
       setError('Google Sign-In failed.');
       notify.error('Registration Error', 'Google Sign-In failed.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -500,7 +528,7 @@ export default function RegisterPage() {
           </div>
 
           <div style={{ marginTop: '0.8vh' }}>
-            <LoadingButton className="btn btn-primary auth-submit" type="submit" isLoading={isLoading} loadingText="Sending OTP...">
+            <LoadingButton className="btn btn-primary auth-submit" type="submit" disabled={registrationComplete} isLoading={isLoading} loadingText="Sending OTP...">
                 <>
                   Send OTP
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -532,6 +560,18 @@ export default function RegisterPage() {
         </form>
       </div>
       </div>
+      <LogoutConfirmationModal
+        isOpen={Boolean(registeredGoogleEmail)}
+        onClose={() => setRegisteredGoogleEmail('')}
+        onConfirm={() => window.location.assign(`/login?email=${encodeURIComponent(registeredGoogleEmail)}`)}
+        title="Account already registered"
+        description="Want to log in?"
+        confirmText="Log In"
+        cancelText="Stay on Sign Up"
+        confirmButtonClass="btn btn-primary"
+        stableFlowLayout
+        centerContent
+      />
       <LogoutConfirmationModal
         isOpen={otpOpen}
         onClose={() => { if (!isLoading) setOtpOpen(false); }}
@@ -567,7 +607,7 @@ export default function RegisterPage() {
           </div>
           {otpError && <p className="registration-otp-error">{otpError}</p>}
           <p className="registration-countdown">{resendSeconds > 0 ? `Resend available in ${resendSeconds} seconds` : otpExpired ? 'OTP expired.' : 'You can request a new code.'}</p>
-          <LoadingButton type="button" className="registration-resend" onClick={handleResend} disabled={resendSeconds > 0} isLoading={isLoading} loadingText="Sending OTP...">Resend OTP</LoadingButton>
+          <LoadingButton type="button" className="registration-resend" onClick={handleResend} disabled={resendSeconds > 0 || registrationComplete} isLoading={isLoading} loadingText="Sending OTP...">Resend OTP</LoadingButton>
         </div>
       </LogoutConfirmationModal>
       <style jsx>{`

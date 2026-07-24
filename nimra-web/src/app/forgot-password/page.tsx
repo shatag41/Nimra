@@ -19,6 +19,7 @@ export default function ForgotPasswordPage() {
 
   const handleRequestOTP = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
     setIsLoading(true);
 
     try {
@@ -38,6 +39,7 @@ export default function ForgotPasswordPage() {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
     setIsLoading(true);
 
     try {
@@ -56,12 +58,26 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <section className="auth-page">
+    <section className="auth-page forgot-password-page">
       <style dangerouslySetInnerHTML={{__html: `
         .auth-shell.glass {
           width: clamp(300px, 60vw, 720px) !important;
           grid-template-columns: 42% 58% !important;
         }
+        .forgot-password-page .auth-logo span { font-size: clamp(.88rem, 1.6vw, 1.05rem) !important; }
+        .forgot-password-page .auth-brand-panel h1 { font-size: clamp(1.28rem, 2.25vw, 1.65rem) !important; }
+        .forgot-password-page .auth-brand-panel p { font-size: clamp(.7rem, 1.25vw, .8rem) !important; }
+        .forgot-password-page .auth-highlight strong { font-size: clamp(.72rem, 1.25vw, .82rem) !important; }
+        .forgot-password-page .auth-highlight span { font-size: clamp(.58rem, 1vw, .67rem) !important; }
+        .forgot-password-page .auth-brand-footer { font-size: clamp(.58rem, 1vw, .68rem) !important; }
+        .forgot-password-page .auth-kicker { font-size: clamp(.58rem, 1vw, .66rem) !important; }
+        .forgot-password-page .auth-card-header h2 { font-size: clamp(1.08rem, 2vw, 1.3rem) !important; }
+        .forgot-password-page .auth-card-header p { font-size: clamp(.68rem, 1.2vw, .78rem) !important; }
+        .forgot-password-page .auth-field label { font-size: clamp(.65rem, 1.1vw, .74rem) !important; }
+        .forgot-password-page .auth-input { font-size: clamp(.72rem, 1.2vw, .82rem) !important; }
+        .forgot-password-page .auth-submit { font-size: clamp(.7rem, 1.2vw, .8rem) !important; }
+        .forgot-password-page .auth-footer-link,
+        .forgot-password-page .auth-footer-link a { font-size: clamp(.66rem, 1.15vw, .76rem) !important; }
       `}} />
       <div className="auth-shell glass">
         <aside className="auth-brand-panel">
@@ -174,7 +190,7 @@ export default function ForgotPasswordPage() {
             </form>
           )}
 
-          <div className="auth-footer-link" style={{ textAlign: 'center', marginTop: '0.8vh', fontSize: 'clamp(0.75rem, 1.6vh, 0.85rem)', color: 'var(--text-secondary)' }}>
+          <div className="auth-footer-link" style={{ textAlign: 'center', marginTop: '0.8vh', color: 'var(--text-secondary)' }}>
             Remember your password? <Link href="/login" style={{ color: 'var(--primary-color)', fontWeight: 'bold', textDecoration: 'none' }}>Login</Link>
           </div>
           </div>

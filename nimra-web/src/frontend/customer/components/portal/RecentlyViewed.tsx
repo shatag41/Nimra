@@ -8,6 +8,7 @@ import { ProductCard } from './Products';
 import { productId } from '../../utils/commerce';
 import { useAuth } from '../../contexts/AuthContext';
 import { readRecentlyViewed, RECENTLY_VIEWED_EVENT } from '../../utils/recentlyViewed';
+import { useCart } from '@/frontend/customer/hooks/useCart';
 
 const ProductDetailModal = dynamic(() => import('./ProductDetailModal'), { ssr: false });
 
@@ -20,6 +21,7 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
   const [viewedProducts, setViewedProducts] = React.useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
   const { user, isLoading } = useAuth();
+  const { addProduct, updateQuantity, items } = useCart();
 
   const loadViewedProducts = React.useCallback(() => {
     try {
@@ -90,6 +92,9 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
               onViewMore={setSelectedProduct}
               disableViewTracking={true}
               index={index}
+              onAdd={addProduct}
+              cartQty={items.find((item) => String(item.productId) === productId(product))?.quantity || 0}
+              onUpdateQuantity={updateQuantity}
             />
           ))}
         </div>

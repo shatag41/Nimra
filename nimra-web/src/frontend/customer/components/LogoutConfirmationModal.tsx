@@ -20,6 +20,7 @@ interface LogoutConfirmationModalProps {
   children?: React.ReactNode;
   contentKey?: React.Key;
   stableFlowLayout?: boolean;
+  centerContent?: boolean;
 }
 
 const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
@@ -38,6 +39,7 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
   children,
   contentKey,
   stableFlowLayout = false,
+  centerContent = false,
 }: LogoutConfirmationModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -149,7 +151,7 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
           aria-modal="true"
           aria-labelledby="modal-title"
           aria-describedby="modal-description"
-          className="modal-content"
+          className={`modal-content ${centerContent ? 'centered-copy' : ''}`}
           onClick={(e) => e.stopPropagation()}
         >
           <div key={contentKey} className="modal-step">
@@ -218,6 +220,31 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
             min-height: 0;
             flex-direction: column;
             animation: stepIn 0.2s ease-out;
+          }
+
+          .modal-content.centered-copy .modal-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            transform: translateY(0.45rem);
+          }
+
+          .modal-content.centered-copy .modal-title,
+          .modal-content.centered-copy .modal-description {
+            width: 100%;
+            text-align: center;
+          }
+
+          .modal-content.centered-copy .modal-title {
+            margin: 0 0 0.25rem;
+          }
+
+          .modal-content.centered-copy .modal-description {
+            margin: 0;
           }
 
           .modal-title {
