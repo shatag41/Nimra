@@ -2,6 +2,7 @@ import React from 'react';
 import { Banner } from '@/types/cms';
 import CustomSelect from './CustomSelect';
 import ImageUploadField from './ImageUploadField';
+import LoadingButton from '@/frontend/shared/LoadingButton';
 
 interface BannerModalProps {
   editingBanner: Partial<Banner>;
@@ -98,9 +99,7 @@ export default function BannerModal({
 
           <div className="modal-footer">
             <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={saveLoading}>
-              Save Banner
-            </button>
+            <LoadingButton type="submit" className="btn btn-primary" isLoading={saveLoading} loadingText="Saving...">Save Banner</LoadingButton>
           </div>
         </form>
       </div>

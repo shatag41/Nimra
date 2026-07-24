@@ -7,6 +7,7 @@ import { useLocation } from '@/frontend/customer/contexts/LocationContext';
 import { formatCurrency } from '../../utils/commerce';
 import type { CartItem } from '@/types/cms';
 import type { User } from '@/frontend/customer/contexts/AuthContext';
+import LoadingButton from '@/frontend/shared/LoadingButton';
 
 export interface SavedAddress {
   id: string;
@@ -1224,11 +1225,13 @@ export function CheckoutSummary({ status, items, subtotal, deliveryCharge, grand
         </p>
       )}
 
-      <button
+      <LoadingButton
         type="submit"
         id="place-order-btn"
         className="btn-place-order"
         disabled={status.kind === 'loading' || !hasSavedAddress}
+        isLoading={status.kind === 'loading'}
+        loadingText="Placing order..."
       >
         {status.kind === 'loading' ? (
           <span className="btn-spinner-wrapper">
@@ -1238,7 +1241,7 @@ export function CheckoutSummary({ status, items, subtotal, deliveryCharge, grand
         ) : (
           <span>Place Order →</span>
         )}
-      </button>
+      </LoadingButton>
       
       <p className="co-secure-note">🔒 Secure checkout. Your data is safe.</p>
       

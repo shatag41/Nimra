@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import LoadingButton from '@/frontend/shared/LoadingButton';
 
 interface LogoutConfirmationModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface LogoutConfirmationModalProps {
   cancelText?: string;
   confirmButtonClass?: string;
   isProcessing?: boolean;
+  processingText?: string;
   confirmDisabled?: boolean;
   showCancelButton?: boolean;
   children?: React.ReactNode;
@@ -30,6 +32,7 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
   cancelText = 'Cancel',
   confirmButtonClass = 'btn btn-error',
   isProcessing = false,
+  processingText = 'Processing...',
   confirmDisabled = false,
   showCancelButton = true,
   children,
@@ -115,7 +118,7 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
           <p id="modal-description" className="legacy-modal-description">{description}</p>
           <div className="legacy-modal-actions">
             {showCancelButton && <button ref={cancelButtonRef} className="btn btn-secondary" onClick={onClose} aria-label={cancelText} disabled={isProcessing}>{cancelText}</button>}
-            <button ref={confirmButtonRef} className={confirmButtonClass} onClick={onConfirm} aria-label={confirmText} disabled={isProcessing || confirmDisabled}>{isProcessing ? 'Processing...' : confirmText}</button>
+            <LoadingButton ref={confirmButtonRef} className={confirmButtonClass} onClick={onConfirm} aria-label={confirmText} disabled={confirmDisabled} isLoading={isProcessing} loadingText={processingText}>{confirmText}</LoadingButton>
           </div>
         </div>
         <style jsx>{`
@@ -164,15 +167,17 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
             >
               {cancelText}
             </button>}
-            <button
+            <LoadingButton
               ref={confirmButtonRef}
               className={confirmButtonClass}
               onClick={onConfirm}
               aria-label={confirmText}
-              disabled={isProcessing || confirmDisabled}
+              disabled={confirmDisabled}
+              isLoading={isProcessing}
+              loadingText={processingText}
             >
-              {isProcessing ? 'Processing...' : confirmText}
-            </button>
+              {confirmText}
+            </LoadingButton>
           </div>
         </div>
         <style jsx>{`

@@ -2,6 +2,7 @@ import React from 'react';
 import { Product } from '@/types/cms';
 import CustomSelect from './CustomSelect';
 import ImageUploadField from './ImageUploadField';
+import LoadingButton from '@/frontend/shared/LoadingButton';
 
 interface ProductModalProps {
   editingProduct: Partial<Product>;
@@ -138,9 +139,7 @@ export default function ProductModal({
 
           <div className="modal-footer">
             <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={saveLoading}>
-              {saveLoading ? 'Writing catalog...' : 'Save Product'}
-            </button>
+            <LoadingButton type="submit" className="btn btn-primary" isLoading={saveLoading} loadingText="Saving...">Save Product</LoadingButton>
           </div>
         </form>
       </div>

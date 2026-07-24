@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { createPortal } from 'react-dom';
+import LoadingButton from '@/frontend/shared/LoadingButton';
 
 interface AddressDeleteConfirmationProps {
   addressType: string;
@@ -27,7 +28,7 @@ export default function AddressDeleteConfirmation({ addressType, isDeleting, onC
         <p>This saved address will be permanently removed from your account.</p>
         <div className="delete-modal-actions">
           <button type="button" className="btn-cancel-delete" disabled={isDeleting} onClick={onCancel}>No, keep it</button>
-          <button type="button" className="btn-confirm-delete" disabled={isDeleting} onClick={onConfirm}>{isDeleting ? 'Deleting...' : 'Yes, delete'}</button>
+          <LoadingButton type="button" className="btn-confirm-delete" isLoading={isDeleting} loadingText="Deleting..." onClick={onConfirm}>Yes, delete</LoadingButton>
         </div>
       </div>
       <style jsx>{`

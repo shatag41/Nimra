@@ -9,6 +9,7 @@ import { WORLD_DATA } from './Checkout';
 import { getUserSavedAddresses, migrateLegacyLocalAddresses, normalizeSavedAddresses, persistUserSavedAddresses } from '@/frontend/customer/utils/userAddresses';
 import { CompactKpiCard } from '../CompactKpiCard';
 import AddressDeleteConfirmation from '../AddressDeleteConfirmation';
+import LoadingButton from '@/frontend/shared/LoadingButton';
 
 interface Address {
   id: string;
@@ -688,9 +689,7 @@ export function Addresses() {
               <button type="button" onClick={() => setIsAdding(false)} className="btn-cancel">
                 Cancel
               </button>
-              <button type="submit" className="btn-submit" disabled={saving}>
-                <span>{saving ? 'Saving...' : 'Save Address'}</span>
-              </button>
+              <LoadingButton type="submit" className="btn-submit" isLoading={saving} loadingText="Saving...">Save Address</LoadingButton>
             </div>
           </form>
         </div>
@@ -793,7 +792,7 @@ export function Addresses() {
             </label>
             <div className="duplicate-modal-actions">
               <button type="button" className="duplicate-use-button" onClick={handleUseDuplicate}>Continue Using This Address</button>
-              <button type="button" className="duplicate-save-button" disabled={saving} onClick={duplicateSource === 'gps' ? handleUseGpsAnyway : () => void persistCurrentAddress()}>{duplicateSource === 'gps' ? 'Use GPS Anyway' : (saving ? 'Saving...' : 'Save Anyway')}</button>
+              <LoadingButton type="button" className="duplicate-save-button" isLoading={saving} loadingText="Saving..." onClick={duplicateSource === 'gps' ? handleUseGpsAnyway : () => void persistCurrentAddress()}>{duplicateSource === 'gps' ? 'Use GPS Anyway' : 'Save Anyway'}</LoadingButton>
               <button type="button" className="duplicate-cancel-button" disabled={saving} onClick={handleCancelDuplicate}>Cancel</button>
             </div>
           </div>

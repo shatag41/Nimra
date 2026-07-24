@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { sendRequest } from '@/utils/api';
 import { useRouter } from 'next/navigation';
 import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
+import LoadingButton from '@/frontend/shared/LoadingButton';
 
 export default function ForgotPasswordPage() {
   const { notify } = useNotification();
@@ -112,9 +113,7 @@ export default function ForgotPasswordPage() {
                 />
               </div>
               <div>
-                <button className="btn btn-primary auth-submit" type="submit" disabled={isLoading}>
-                  {isLoading ? 'Sending OTP...' : 'Send OTP'}
-                </button>
+                <LoadingButton className="btn btn-primary auth-submit" type="submit" isLoading={isLoading} loadingText="Sending OTP...">Send OTP</LoadingButton>
               </div>
             </form>
           ) : (
@@ -170,9 +169,7 @@ export default function ForgotPasswordPage() {
                 </div>
               </div>
               <div>
-                <button className="btn btn-primary auth-submit" type="submit" disabled={isLoading}>
-                  {isLoading ? 'Resetting...' : 'Reset Password'}
-                </button>
+                <LoadingButton className="btn btn-primary auth-submit" type="submit" isLoading={isLoading} loadingText="Saving...">Reset Password</LoadingButton>
               </div>
             </form>
           )}

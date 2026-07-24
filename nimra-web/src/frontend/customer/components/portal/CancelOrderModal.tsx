@@ -3,6 +3,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { OrderRecord } from '@/types/cms';
+import LoadingButton from '@/frontend/shared/LoadingButton';
 
 interface CancelOrderModalProps {
   orderToCancel: OrderRecord;
@@ -30,9 +31,7 @@ export default function CancelOrderModal({
           <button className="cancel-modal-button cancel-modal-button-secondary" onClick={() => setOrderToCancel(null)} disabled={cancelling}>
             No, Keep Order
           </button>
-          <button className="cancel-modal-button cancel-modal-button-danger" onClick={(e) => { e.stopPropagation(); handleCancelOrder(); }} disabled={cancelling}>
-            {cancelling ? 'Submitting...' : 'Submit Request'}
-          </button>
+          <LoadingButton className="cancel-modal-button cancel-modal-button-danger" onClick={(e) => { e.stopPropagation(); handleCancelOrder(); }} isLoading={cancelling} loadingText="Submitting...">Submit Request</LoadingButton>
         </div>
       </div>
       <style jsx>{`

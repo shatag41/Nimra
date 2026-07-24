@@ -6,6 +6,7 @@ import { CompanyInfo } from '@/types/cms';
 import { submitInquiry } from '@/utils/api';
 import { useAuth } from '@/frontend/customer/contexts/AuthContext';
 import CustomerPageHeader from './CustomerPageHeader';
+import LoadingButton from '@/frontend/shared/LoadingButton';
 
 interface ContactClientProps {
   companyInfo: CompanyInfo;
@@ -79,6 +80,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
 
     // Basic Validation
     if (!isFormValid) {
@@ -321,19 +323,12 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
               ></textarea>
             </div>
 
-            <button type="submit" className="btn btn-primary inquiry-submit" disabled={loading || !isFormValid} style={{ width: '100%', marginTop: '1rem' }}>
-              {loading ? (
-                <>
-                  <div className="spinner"></div>
-                  Submitting...
-                </>
-              ) : (
+            <LoadingButton type="submit" className="btn btn-primary inquiry-submit" disabled={!isFormValid} isLoading={loading} loadingText="Submitting..." style={{ width: '100%', marginTop: '1rem' }}>
                 <>
                   Send Inquiry
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
                 </>
-              )}
-            </button>
+            </LoadingButton>
             {!isFormValid && !loading && (
               <p className="validation-message">
                 Please fill in all required fields correctly before submitting.

@@ -8,6 +8,7 @@ import { useCustomerOrders } from '@/frontend/customer/hooks/useCustomerOrders';
 import { trackOrder } from '@/utils/api';
 import { formatCurrency } from '../utils/commerce';
 import CustomerPageHeader from './CustomerPageHeader';
+import LoadingButton from '@/frontend/shared/LoadingButton';
 
 const deliverySteps: Array<{ status: OrderRecord['status']; label: string; desc: string }> = [
   { status: 'Pending', label: 'Order Placed', desc: 'We received your request.' },
@@ -138,6 +139,7 @@ export default function TrackClient() {
 
   const submit = useCallback(async (event?: FormEvent) => {
     if (event) event.preventDefault();
+    if (loading || (Boolean(user) && loadingOrders)) return;
     if (!user) {
       let queryParams = new URLSearchParams();
       if (orderId.trim()) queryParams.set('orderId', orderId.trim());
@@ -166,7 +168,7 @@ export default function TrackClient() {
     setLoading(false);
     if (result.success && result.order) setOrder(result.order);
     else setMessage(result.message || 'Order not found.');
-  }, [user, orderId, mobileValue, router, customerOrders]);
+  }, [user, orderId, mobileValue, router, customerOrders, loading, loadingOrders]);
 
   const hasAutoSubmitted = useRef(false);
 
@@ -253,10 +255,10 @@ export default function TrackClient() {
               </div>
             </label>
 
-            <button className="track-button" disabled={loading || (Boolean(user) && loadingOrders)}>
+            <LoadingButton className="track-button" isLoading={loading || (Boolean(user) && loadingOrders)} loadingText={loading ? 'Searching...' : 'Loading orders...'}>
               {loading || (Boolean(user) && loadingOrders) ? <span className="spinner" /> : <Icon name="search" />}
               <span>{loading ? 'Searching...' : loadingOrders && user ? 'Loading orders...' : 'Track Order'}</span>
-            </button>
+            </LoadingButton>
           </form>
 
           {showingSkeleton && (

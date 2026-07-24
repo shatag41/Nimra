@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { sendRequest } from '@/utils/api';
 import { useAuth } from '@/frontend/customer/contexts/AuthContext';
 import { isAdminRole } from '@/frontend/admin/utils/accessControl';
+import LoadingButton from '@/frontend/shared/LoadingButton';
 
 export default function LoginClient() {
   const router = useRouter();
@@ -111,13 +112,7 @@ export default function LoginClient() {
 
           {error && <div className="error-box">{error}</div>}
 
-          <button type="submit" className="btn btn-primary login-btn" disabled={loading}>
-            {loading ? (
-              <span className="spinner"></span>
-            ) : (
-              'Access Dashboard'
-            )}
-          </button>
+          <LoadingButton type="submit" className="btn btn-primary login-btn" isLoading={loading} loadingText="Logging in...">Access Dashboard</LoadingButton>
         </form>
 
         <div className="login-footer">

@@ -8,6 +8,7 @@ import { sendRequest } from '@/utils/api';
 import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
 import { recentlyViewedKey } from '@/frontend/customer/utils/recentlyViewed';
 import LogoutConfirmationModal from '@/frontend/customer/components/LogoutConfirmationModal';
+import LoadingButton from '@/frontend/shared/LoadingButton';
 import {
   hasGuestCartItems,
   mergeGuestCartIntoNewCustomer,
@@ -136,6 +137,7 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
     setError('');
     setErrors({ name: '', email: '', mobile: '', password: '', confirmPassword: '' });
 
@@ -498,19 +500,12 @@ export default function RegisterPage() {
           </div>
 
           <div style={{ marginTop: '0.8vh' }}>
-            <button className="btn btn-primary auth-submit" type="submit" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-                  Sending OTP...
-                </>
-              ) : (
+            <LoadingButton className="btn btn-primary auth-submit" type="submit" isLoading={isLoading} loadingText="Sending OTP...">
                 <>
                   Send OTP
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </>
-              )}
-            </button>
+            </LoadingButton>
           </div>
 
           <div className="auth-divider" style={{ display: 'flex', alignItems: 'center', textAlign: 'center', color: 'var(--text-muted)', fontSize: 'clamp(0.6rem, 1.4vh, 0.7rem)', fontWeight: 'bold', margin: '0.8vh 0' }}>
@@ -572,7 +567,7 @@ export default function RegisterPage() {
           </div>
           {otpError && <p className="registration-otp-error">{otpError}</p>}
           <p className="registration-countdown">{resendSeconds > 0 ? `Resend available in ${resendSeconds} seconds` : otpExpired ? 'OTP expired.' : 'You can request a new code.'}</p>
-          <button type="button" className="registration-resend" onClick={handleResend} disabled={resendSeconds > 0 || isLoading}>Resend OTP</button>
+          <LoadingButton type="button" className="registration-resend" onClick={handleResend} disabled={resendSeconds > 0} isLoading={isLoading} loadingText="Sending OTP...">Resend OTP</LoadingButton>
         </div>
       </LogoutConfirmationModal>
       <style jsx>{`

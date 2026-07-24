@@ -1,6 +1,7 @@
 import React from 'react';
 import { AdminUser } from '@/types/cms';
 import CustomSelect from './CustomSelect';
+import LoadingButton from '@/frontend/shared/LoadingButton';
 
 interface UserModalProps {
   editingUser: Partial<AdminUser>;
@@ -96,9 +97,7 @@ export default function UserModal({
 
           <div className="modal-footer">
             <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={saveLoading}>
-              Save User Account
-            </button>
+            <LoadingButton type="submit" className="btn btn-primary" isLoading={saveLoading} loadingText="Saving...">Save User Account</LoadingButton>
           </div>
         </form>
       </div>

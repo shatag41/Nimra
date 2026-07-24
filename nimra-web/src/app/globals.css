@@ -536,6 +536,11 @@ section {
 .section-sm { padding: 1.5rem 0; }
 .section-lg { padding: 4rem 0; }
 
+.shared-loading-button-content { display:inline-flex;align-items:center;justify-content:center;gap:.45rem;line-height:inherit; }
+.shared-loading-button-spinner { width:.9em;height:.9em;flex:0 0 .9em;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:shared-button-spin .7s linear infinite; }
+@keyframes shared-button-spin { to { transform:rotate(360deg); } }
+@media (prefers-reduced-motion:reduce) { .shared-loading-button-spinner { animation-duration:1.4s; } }
+
 /* ── Custom Scrollbar ──────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 7px; height: 7px; }
 ::-webkit-scrollbar-track { background: var(--bg-primary); }

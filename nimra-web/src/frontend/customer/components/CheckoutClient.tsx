@@ -301,6 +301,7 @@ export default function CheckoutClient() {
   };
 
   const executeOrderPlacement = async () => {
+    if (status.kind === 'loading') return;
     setStatus({ kind: 'loading', message: 'Placing your order…' });
 
     let selectedSavedAddressId = selectedAddressId || undefined;

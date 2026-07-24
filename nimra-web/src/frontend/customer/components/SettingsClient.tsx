@@ -18,6 +18,7 @@ import type { EmailPreferences } from '@/types/cms';
 import { clearCustomerOrdersCache } from '@/frontend/customer/hooks/useCustomerOrders';
 import CustomerPageHeader from './CustomerPageHeader';
 import LogoutConfirmationModal from './LogoutConfirmationModal';
+import LoadingButton from '@/frontend/shared/LoadingButton';
 
 type DeleteStep = 'closed' | 'confirm' | 'active' | 'verify';
 
@@ -107,6 +108,7 @@ export default function SettingsClient() {
   }, [deletionEmail, deletionOtp, otpSent, user?.ID]);
 
   const handlePreferenceSave = async () => {
+    if (savingPreferences) return;
     if (!user?.ID || !preferences) return;
     setSavingPreferences(true);
     const result = await saveEmailPreferences(user.ID, preferences);
@@ -122,6 +124,7 @@ export default function SettingsClient() {
 
   const handlePasswordChange = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (changingPassword) return;
     if (!user?.ID) return;
     if (newPassword.length < 6) return notify.error('Invalid Password', 'New password must be at least 6 characters.');
     if (newPassword !== confirmPassword) return notify.error('Mismatch', 'New passwords do not match.');
@@ -164,6 +167,7 @@ export default function SettingsClient() {
   };
 
   const sendDeletionOtp = async () => {
+    if (sendingOtp) return;
     if (!user?.ID) return;
     if (deletionEmail.trim().toLowerCase() !== String(user.Username || '').trim().toLowerCase()) {
       setOtpMessage('The email address must match your registered email.');

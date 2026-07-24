@@ -15,6 +15,7 @@ import CustomerPageHeader from './CustomerPageHeader';
 import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
 import { saveUser, requestEmailChangeOTP } from '@/utils/api';
 import { CompactKpiCard } from './CompactKpiCard';
+import LoadingButton from '@/frontend/shared/LoadingButton';
 
 // Lazy-loaded heavy sections for faster page loads
 
@@ -1294,6 +1295,7 @@ function EditProfileForm({ user, onUpdate }: { user: any; onUpdate: (user: any) 
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     if (!validateFields()) return;
 
     if (email !== user?.Username) {
@@ -1318,6 +1320,7 @@ function EditProfileForm({ user, onUpdate }: { user: any; onUpdate: (user: any) 
   };
 
   const handleResend = async () => {
+    if (loading) return;
     setLoading(true);
     try {
       const res = await requestEmailChangeOTP(user?.ID, email);
@@ -1337,6 +1340,7 @@ function EditProfileForm({ user, onUpdate }: { user: any; onUpdate: (user: any) 
 
   const verifyOtp = (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     performUpdate(otp);
   };
 
@@ -1463,14 +1467,14 @@ function EditProfileForm({ user, onUpdate }: { user: any; onUpdate: (user: any) 
             )}
           </div>
 
-          <button type="submit" className="btn-save-profile" disabled={loading}>
+          <LoadingButton type="submit" className="btn-save-profile" isLoading={loading} loadingText="Saving...">
             {loading ? (
               <span className="spinner-wrapper">
                 <svg className="spin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><circle cx="12" cy="12" r="10" strokeOpacity="0.25"/><path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                 Saving changes...
               </span>
             ) : 'Save Changes'}
-          </button>
+          </LoadingButton>
         </form>
       ) : (
         <form onSubmit={verifyOtp} className="otp-verification-wrapper animate-fade-in-up">
@@ -1526,9 +1530,9 @@ function EditProfileForm({ user, onUpdate }: { user: any; onUpdate: (user: any) 
             <button type="button" className="btn-otp-cancel" onClick={() => setIsVerifying(false)}>
               Cancel
             </button>
-            <button type="submit" className="btn-otp-verify" disabled={loading}>
+            <LoadingButton type="submit" className="btn-otp-verify" isLoading={loading} loadingText="Verifying...">
               {loading ? 'Verifying...' : 'Confirm & Save'}
-            </button>
+            </LoadingButton>
           </div>
         </form>
       )}

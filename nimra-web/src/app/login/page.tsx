@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { sendRequest } from '@/utils/api';
 import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
 import { useSearchParams } from 'next/navigation';
+import LoadingButton from '@/frontend/shared/LoadingButton';
 
 function LoginPageContent() {
   const { login } = useAuth();
@@ -58,6 +59,7 @@ function LoginPageContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
     setError('');
 
     if (!validate()) {
@@ -86,6 +88,7 @@ function LoginPageContent() {
   };
 
   const handleGoogleSuccess = async (accessToken: string) => {
+    if (!isLoading) setIsLoading(true);
     try {
       setError('');
       const profileRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
@@ -97,6 +100,14 @@ function LoginPageContent() {
       }
 
       const payload = await profileRes.json();
+
+      // Reflect the account selected in Google's consent window in the login
+      // form. Google never exposes the account password, so only the verified
+      // email can be filled safely.
+      if (typeof payload.email === 'string' && payload.email.trim()) {
+        setActiveTab('email');
+        setEmail(payload.email.trim());
+      }
 
       const res = await sendRequest({ 
         type: 'googleSignIn', 
@@ -114,13 +125,30 @@ function LoginPageContent() {
     } catch {
       setError('Google Sign-In failed.');
       notify.error('Login Error', 'Google Sign-In failed.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const googleLogin = useGoogleLogin({
     onSuccess: (tokenResponse) => handleGoogleSuccess(tokenResponse.access_token),
-    onError: () => setError('Google Sign-In failed'),
+    onError: () => {
+      setIsLoading(false);
+      setError('Google Sign-In failed');
+    },
   });
+
+  const handleGoogleLogin = () => {
+    if (isLoading) return;
+    setError('');
+    setIsLoading(true);
+    try {
+      googleLogin();
+    } catch {
+      setIsLoading(false);
+      setError('Google Sign-In failed');
+    }
+  };
 
   return (
     <section className="auth-page">
@@ -314,7 +342,7 @@ function LoginPageContent() {
             </p>
           </div>
 
-          <form className="auth-form" onSubmit={handleSubmit}>
+          <form className="auth-form" onSubmit={handleSubmit} autoComplete="on">
             <div style={{ display: 'flex', gap: '1vw', marginBottom: '0.8vh', background: 'var(--bg-secondary)', padding: '0.5vh', borderRadius: 'var(--radius-lg)' }}>
               <button
                 type="button"
@@ -345,7 +373,9 @@ function LoginPageContent() {
                 </span>
                 <input 
                   id="username"
+                  name="username"
                   type="text" 
+                  autoComplete="username"
                   inputMode="numeric"
                   pattern="[0-9]*"
                   maxLength={10}
@@ -367,7 +397,9 @@ function LoginPageContent() {
                 </span>
                 <input 
                   id="email"
+                  name="username"
                   type="email" 
+                  autoComplete="username"
                   placeholder="your.email@example.com" 
                   className="auth-input" 
                   value={email}
@@ -390,7 +422,9 @@ function LoginPageContent() {
               </span>
               <input 
                 id="password"
+                name="password"
                 type={showPassword ? "text" : "password"} 
+                autoComplete="current-password"
                 placeholder="Enter your password" 
                 className="auth-input" 
                 value={password}
@@ -415,19 +449,12 @@ function LoginPageContent() {
           </div>
           
           <div style={{ marginTop: '0.8vh' }}>
-            <button className="btn btn-primary auth-submit" type="submit" disabled={isLoading} style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1vw', padding: '0.8vh', fontSize: 'clamp(0.8rem, 1.8vh, 0.95rem)' }}>
-              {isLoading ? (
-                <>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-                  Logging in...
-                </>
-              ) : (
+            <LoadingButton className="btn btn-primary auth-submit" type="submit" isLoading={isLoading} loadingText="Logging in..." style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1vw', padding: '0.8vh', fontSize: 'clamp(0.8rem, 1.8vh, 0.95rem)' }}>
                 <>
                   Login to Account
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </>
-              )}
-            </button>
+            </LoadingButton>
           </div>
 
           <div className="auth-divider" style={{ display: 'flex', alignItems: 'center', textAlign: 'center', color: 'var(--text-muted)', fontSize: 'clamp(0.6rem, 1.4vh, 0.75rem)', fontWeight: 'bold', margin: '0.8vh 0' }}>
@@ -440,8 +467,7 @@ function LoginPageContent() {
              <button
                 type="button"
                 className="auth-google-button"
-                onClick={() => googleLogin()}
-                disabled={isLoading}
+                onClick={handleGoogleLogin}
                 style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.75rem', padding: '0.65rem', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', color: 'var(--text-primary)', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s ease', boxShadow: 'var(--shadow-sm)' }}
              >
                 <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>

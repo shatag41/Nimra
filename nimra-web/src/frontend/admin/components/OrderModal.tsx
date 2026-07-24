@@ -2,6 +2,7 @@ import React from 'react';
 import { OrderRecord } from '@/types/cms';
 import { formatCurrency } from '@/frontend/customer/utils/commerce';
 import CustomSelect from './CustomSelect';
+import LoadingButton from '@/frontend/shared/LoadingButton';
 
 interface OrderModalProps {
   selectedOrder: OrderRecord;
@@ -69,9 +70,7 @@ export default function OrderModal({
 
           <div className="modal-footer">
             <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={saveLoading}>
-              {saveLoading ? 'Updating Status...' : 'Apply Status Update'}
-            </button>
+            <LoadingButton type="submit" className="btn btn-primary" isLoading={saveLoading} loadingText="Saving...">Apply Status Update</LoadingButton>
           </div>
         </form>
       </div>
