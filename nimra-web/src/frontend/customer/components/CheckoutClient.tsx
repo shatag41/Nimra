@@ -56,6 +56,10 @@ export default function CheckoutClient() {
   const isReorderCheckout = Boolean(reorderDraft);
   const checkoutItems: CartItem[] = reorderDraft?.items || cart.items;
   const checkoutTotals = totalsForCheckoutItems(checkoutItems);
+  const checkoutReturnPath = React.useMemo(() => {
+    const query = searchParams.toString();
+    return query ? `/checkout?${query}` : '/checkout';
+  }, [searchParams]);
 
   useEffect(() => {
     if (searchParams.get('reorder') === '1') {
@@ -83,10 +87,10 @@ export default function CheckoutClient() {
         setSelectedAddressId(defaultAddr.id);
         setIsEditingAddress(false);
         setForm({
-          name: defaultAddr.name || user?.Name || '',
-          mobile: defaultAddr.mobile || user?.Mobile || '',
-          altMobile: defaultAddr.altMobile || user.AlternateMobile || '',
-          email: defaultAddr.email || user?.Username || '',
+          name: user?.Name || defaultAddr.name || '',
+          mobile: user?.Mobile || defaultAddr.mobile || '',
+          altMobile: user.AlternateMobile || defaultAddr.altMobile || '',
+          email: user?.Username || defaultAddr.email || '',
           flatNo: defaultAddr.flatNo,
           buildingName: defaultAddr.buildingName || '',
           locality: defaultAddr.locality,
@@ -204,10 +208,17 @@ export default function CheckoutClient() {
     if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) newErrors.email = 'Enter a valid email address.';
     if (!form.flatNo.trim()) newErrors.flatNo = 'Flat or house number is required.';
     if (!form.locality.trim()) newErrors.locality = 'Area or locality is required.';
-    if (!form.pincode.trim()) newErrors.pincode = 'Pincode is required.';
+    if (!/^\d{6}$/.test(form.pincode.trim())) newErrors.pincode = 'Enter a valid 6-digit pincode.';
     if (!form.state) newErrors.state = 'Please select a state.';
     if (!form.city) newErrors.city = 'Please select a city.';
     setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      const firstInvalidField = Object.keys(newErrors)[0];
+      window.requestAnimationFrame(() => {
+        document.querySelector<HTMLElement>(`[data-checkout-field="${firstInvalidField}"]`)?.focus();
+        document.querySelector<HTMLElement>(`[data-checkout-section="${['name', 'mobile', 'altMobile', 'email'].includes(firstInvalidField) ? 'receiver' : 'address'}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    }
     return Object.keys(newErrors).length === 0;
   };
 
@@ -217,10 +228,10 @@ export default function CheckoutClient() {
       setSelectedAddressId(id);
       setIsEditingAddress(false);
       setForm({
-        name: addr.name || user?.Name || '',
-        mobile: addr.mobile || user?.Mobile || '',
-        altMobile: addr.altMobile || user?.AlternateMobile || '',
-        email: addr.email || user?.Username || '',
+        name: user?.Name || addr.name || '',
+        mobile: user?.Mobile || addr.mobile || '',
+        altMobile: user?.AlternateMobile || addr.altMobile || '',
+        email: user?.Username || addr.email || '',
         flatNo: addr.flatNo,
         buildingName: addr.buildingName || '',
         locality: addr.locality,
@@ -264,10 +275,6 @@ export default function CheckoutClient() {
     });
   };
 
-  const handleEditClick = () => {
-    setIsEditingAddress(true);
-  };
-
   const handleCancelEditClick = () => {
     if (selectedAddressId) {
       handleSelectAddress(selectedAddressId);
@@ -285,9 +292,8 @@ export default function CheckoutClient() {
       return;
     }
 
-    // If they are in edit mode, validate the fields.
-    if (isEditingAddress && !validate()) {
-      notify.error('Form Errors', 'Please fix the errors in the form.');
+    if (!validate()) {
+      notify.error('Missing Delivery Details', 'Please correct the highlighted receiver or address fields.');
       return;
     }
 
@@ -505,10 +511,10 @@ export default function CheckoutClient() {
                 onSelectAddress={handleSelectAddress}
                 onSetDefaultAddress={handleSetDefaultAddress}
                 onAddNewClick={handleAddNewClick}
-                onEditClick={handleEditClick}
                 onCancelEditClick={handleCancelEditClick}
                 locationLoading={location.loading}
                 onDetectLocation={handleDetectLocation}
+                checkoutReturnPath={checkoutReturnPath}
               />
               <CheckoutSummary
                 status={status}

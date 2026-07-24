@@ -3600,7 +3600,8 @@ td {
 }
 
 .co-items {
-  max-height: 12rem !important;
+  max-height: none !important;
+  overflow: visible !important;
   gap: 0.5rem !important;
 }
 
@@ -10306,6 +10307,57 @@ table {
 .cart-page .summary {
   min-width: 0 !important;
   max-width: 100% !important;
+}
+
+.checkout-page .checkout-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.38rem;
+  min-height: 32px;
+  padding: 0.36rem 0.68rem;
+  border: 1.5px solid rgba(37, 99, 235, 0.38);
+  border-radius: 9px;
+  background: rgba(37, 99, 235, 0.045);
+  color: var(--primary-color);
+  font-size: 0.76rem;
+  font-weight: 750;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.checkout-page .checkout-action-button svg {
+  display: block;
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px;
+  flex: 0 0 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.checkout-page .checkout-action-button:hover {
+  background: rgba(37, 99, 235, 0.12);
+  border-color: var(--primary-color);
+  box-shadow: 0 5px 14px rgba(37, 99, 235, 0.15);
+  color: var(--primary-color);
+  transform: translateY(-1px);
+}
+
+.checkout-page .checkout-action-button:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.2);
+  outline-offset: 2px;
+}
+
+.checkout-page .checkout-action-add > span {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 0.8;
 }
 
 .checkout-page .form-grid-three {

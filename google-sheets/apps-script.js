@@ -682,10 +682,10 @@ function saveOrder(spreadsheet, params) {
   }
 
   if (profileForOrder) {
-    name = String(name || profileForOrder.Name || '').trim();
-    mobile = String(mobile || profileForOrder.Mobile || '').trim();
-    altMobile = String(altMobile || profileForOrder.AlternateMobile || '').trim();
-    email = normalizeEmail(email || profileForOrder.Username);
+    name = String(profileForOrder.Name || name || '').trim();
+    mobile = String(profileForOrder.Mobile || mobile || '').trim();
+    altMobile = String(profileForOrder.AlternateMobile || altMobile || '').trim();
+    email = normalizeEmail(profileForOrder.Username || email);
   }
 
   // Build composite Full Address from granular fields (also accept legacy address field)
@@ -709,9 +709,23 @@ function saveOrder(spreadsheet, params) {
   // ── Validation: required fields ──────────────────────────────────────────
   // Accept either new granular fields (flatNo + locality) or legacy address
   var hasAddress = (flatNo && locality) || fullAddress;
-  if (!name || !/^[0-9]{10}$/.test(mobile) || !hasAddress || !city || !state || !/^[0-9]{6}$/.test(pincode) || !items.length || totalAmount <= 0) {
+  var orderFieldErrors = {};
+  if (!name) orderFieldErrors.name = 'Full name is required.';
+  if (!/^[0-9]{10}$/.test(mobile)) orderFieldErrors.mobile = 'A valid 10-digit mobile number is required.';
+  if (!hasAddress) orderFieldErrors.address = 'A complete delivery address is required.';
+  if (!city) orderFieldErrors.city = 'City is required.';
+  if (!state) orderFieldErrors.state = 'State is required.';
+  if (!/^[0-9]{6}$/.test(pincode)) orderFieldErrors.pincode = 'A valid 6-digit pincode is required.';
+  if (!items.length) orderFieldErrors.items = 'Your cart must contain at least one item.';
+  if (totalAmount <= 0) orderFieldErrors.total = 'Order total must be greater than zero.';
+  var invalidOrderFields = Object.keys(orderFieldErrors);
+  if (invalidOrderFields.length) {
     Logger.log("saveOrder Validation Failure. Name=" + name + ", Mobile=" + mobile + ", FlatNo=" + flatNo + ", Locality=" + locality + ", City=" + city + ", State=" + state + ", Pincode=" + pincode + ", ItemsCount=" + items.length + ", Total=" + totalAmount);
-    return { success: false, message: 'Invalid order payload. Required fields (name, mobile, address, city, state, pincode, items) are missing or invalid.' };
+    return {
+      success: false,
+      message: invalidOrderFields.map(function(field) { return orderFieldErrors[field]; }).join(' '),
+      fieldErrors: orderFieldErrors
+    };
   }
 
   if (!userId) {

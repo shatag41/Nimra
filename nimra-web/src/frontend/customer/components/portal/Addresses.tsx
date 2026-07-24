@@ -8,6 +8,7 @@ import { useAuth } from '@/frontend/customer/hooks/useAuth';
 import { WORLD_DATA } from './Checkout';
 import { getUserSavedAddresses, migrateLegacyLocalAddresses, normalizeSavedAddresses, persistUserSavedAddresses } from '@/frontend/customer/utils/userAddresses';
 import { CompactKpiCard } from '../CompactKpiCard';
+import AddressDeleteConfirmation from '../AddressDeleteConfirmation';
 
 interface Address {
   id: string;
@@ -70,7 +71,7 @@ export function Addresses() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const hasBlockingModal = Boolean(duplicateAddress || addressPendingDelete);
+  const hasBlockingModal = Boolean(duplicateAddress);
 
   useEffect(() => {
     if (!hasBlockingModal || typeof document === 'undefined') return;
@@ -799,19 +800,7 @@ export function Addresses() {
         </div>
       ), document.body)}
 
-      {addressPendingDelete && typeof document !== 'undefined' && createPortal((
-        <div className="delete-modal-overlay" role="presentation" onClick={() => !saving && setAddressPendingDelete(null)}>
-          <div className="delete-modal" role="dialog" aria-modal="true" aria-labelledby="delete-address-title" onClick={(event) => event.stopPropagation()}>
-            <div className="delete-modal-icon" aria-hidden="true">!</div>
-            <h3 id="delete-address-title">Delete {addressPendingDelete.type} address?</h3>
-            <p>This saved address will be permanently removed from your account.</p>
-            <div className="delete-modal-actions">
-              <button type="button" className="btn-cancel-delete" disabled={saving} onClick={() => setAddressPendingDelete(null)}>No, keep it</button>
-              <button type="button" className="btn-confirm-delete" disabled={saving} onClick={() => void confirmDelete()}>{saving ? 'Deleting...' : 'Yes, delete'}</button>
-            </div>
-          </div>
-        </div>
-      ), document.body)}
+      {addressPendingDelete && <AddressDeleteConfirmation addressType={addressPendingDelete.type} isDeleting={saving} onCancel={() => setAddressPendingDelete(null)} onConfirm={() => void confirmDelete()} />}
 
       <style jsx>{`
         .addresses-container {

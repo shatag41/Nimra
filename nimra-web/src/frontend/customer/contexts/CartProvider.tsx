@@ -158,8 +158,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           setActiveStorageKey(storageKey);
           setHydrated(true);
         }
-      } catch (err) {
-        console.error("Cart hydration error:", err);
+      } catch {
+        // A temporary cloud-cart failure is recoverable: retain the local cart
+        // and keep backend syncing disabled so it cannot overwrite cloud data.
+        console.warn('Cloud cart unavailable; retained the locally saved cart.');
         if (!cancelled) {
           const safeItems = mergeCartSnapshots(readStoredCartItems(storageKey));
           itemsRef.current = safeItems;

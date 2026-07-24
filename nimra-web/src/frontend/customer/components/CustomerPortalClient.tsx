@@ -1244,14 +1244,17 @@ const portalStyles = `
 function EditProfileForm({ user, onUpdate }: { user: any; onUpdate: (user: any) => void }) {
   const [name, setName] = React.useState(String(user?.Name || ''));
   const [mobile, setMobile] = React.useState(String(user?.Mobile || '').replace(/\D/g, '').slice(-10));
+  const [alternateMobile, setAlternateMobile] = React.useState(String(user?.AlternateMobile || '').replace(/\D/g, '').slice(-10));
   const [email, setEmail] = React.useState(String(user?.Username || ''));
   const [isVerifying, setIsVerifying] = React.useState(false);
   const [otp, setOtp] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const { notify } = useNotification();
+  const profileRouter = useRouter();
+  const profileSearchParams = useSearchParams();
   
   // Validation errors state
-  const [errors, setErrors] = React.useState<{ name?: string; mobile?: string; email?: string; otp?: string }>({});
+  const [errors, setErrors] = React.useState<{ name?: string; mobile?: string; alternateMobile?: string; email?: string; otp?: string }>({});
 
   const handleMobileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const digitsOnly = event.target.value.replace(/\D/g, '').slice(0, 10);
@@ -1275,6 +1278,9 @@ function EditProfileForm({ user, onUpdate }: { user: any; onUpdate: (user: any) 
     // Mobile validation
     if (!/^[0-9]{10}$/.test(mobileStr)) {
       newErrors.mobile = 'Mobile Number must be exactly 10 digits.';
+    }
+    if (alternateMobile && !/^[0-9]{10}$/.test(alternateMobile)) {
+      newErrors.alternateMobile = 'Alternate Mobile must be exactly 10 digits.';
     }
 
     // Email validation
@@ -1341,6 +1347,7 @@ function EditProfileForm({ user, onUpdate }: { user: any; onUpdate: (user: any) 
         ID: user?.ID,
         Name: name,
         Mobile: mobile,
+        AlternateMobile: alternateMobile,
         Username: email
       };
 
@@ -1350,9 +1357,11 @@ function EditProfileForm({ user, onUpdate }: { user: any; onUpdate: (user: any) 
       
       const res = await saveUser(updatePayload, 'update');
       if (res.success) {
-        onUpdate({ ...user, Name: name, Mobile: mobile, Username: email });
+        onUpdate({ ...user, Name: name, Mobile: mobile, AlternateMobile: alternateMobile, Username: email });
         setIsVerifying(false);
         notify.success('Profile Updated', 'Profile updated successfully!');
+        const redirectPath = profileSearchParams.get('redirect');
+        if (redirectPath?.startsWith('/') && !redirectPath.startsWith('//')) profileRouter.replace(redirectPath);
       } else {
         if (verificationOtp) {
           setErrors(prev => ({ ...prev, otp: res.message || 'Invalid or expired OTP.' }));
@@ -1409,6 +1418,24 @@ function EditProfileForm({ user, onUpdate }: { user: any; onUpdate: (user: any) 
               required 
             />
             {errors.mobile && <span className="error-message">{errors.mobile}</span>}
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Alternate Mobile <span style={{ fontWeight: 400 }}>(Optional)</span></label>
+            <input
+              type="tel"
+              value={alternateMobile}
+              onChange={event => {
+                setAlternateMobile(event.target.value.replace(/\D/g, '').slice(0, 10));
+                if (errors.alternateMobile) setErrors(prev => ({ ...prev, alternateMobile: undefined }));
+              }}
+              className={`form-input ${errors.alternateMobile ? 'error-state' : ''}`}
+              placeholder="e.g. 9876543210"
+              inputMode="numeric"
+              maxLength={10}
+              autoComplete="tel"
+            />
+            {errors.alternateMobile && <span className="error-message">{errors.alternateMobile}</span>}
           </div>
 
           <div className="form-group">

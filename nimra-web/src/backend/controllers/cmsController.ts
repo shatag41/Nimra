@@ -526,8 +526,10 @@ export async function handlePost(req: NextRequest) {
             },
             body: JSON.stringify(payload),
           });
-        const retryableAccountRead = payload.type === 'accountSettings' &&
-          ['getPreferences', 'getDeletionStatus'].includes(String(payload.action || ''));
+        const retryableAccountRead = payload.type === 'getCart' || (
+          payload.type === 'accountSettings' &&
+          ['getPreferences', 'getDeletionStatus'].includes(String(payload.action || ''))
+        );
         let res: Response;
         try {
           res = await postToAppsScript();

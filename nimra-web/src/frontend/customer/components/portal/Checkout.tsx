@@ -79,10 +79,10 @@ interface CheckoutFormProps {
   onSelectAddress: (id: string) => void;
   onSetDefaultAddress: (id: string) => void;
   onAddNewClick: () => void;
-  onEditClick: () => void;
   onCancelEditClick: () => void;
   locationLoading?: boolean;
   onDetectLocation: () => void;
+  checkoutReturnPath: string;
 }
 
 export function CheckoutForm({
@@ -98,10 +98,10 @@ export function CheckoutForm({
   onSelectAddress,
   onSetDefaultAddress,
   onAddNewClick,
-  onEditClick,
   onCancelEditClick,
   locationLoading,
-  onDetectLocation
+  onDetectLocation,
+  checkoutReturnPath
 }: CheckoutFormProps) {
 
   const selectedAddress = savedAddresses.find(a => a.id === selectedAddressId);
@@ -145,82 +145,32 @@ export function CheckoutForm({
           <div className="compact-card-header">
             <div className="header-title-box">
               <h3>Delivery Details</h3>
-              <span className={`type-badge type-${selectedAddress.type.toLowerCase()}`}>
-                {selectedAddress.type}
-              </span>
-              {selectedAddress.isDefault && <span className="default-badge">Default</span>}
-            </div>
-            
-            <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
-              <Link
-                href="/customer-portal?tab=addresses&redirect=/checkout"
-                aria-label="Edit address details"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  padding: '0.45rem 1.1rem',
-                  borderRadius: '999px',
-                  border: '1.5px solid rgba(37,99,235,0.35)',
-                  background: 'rgba(37,99,235,0.08)',
-                  color: '#2563eb',
-                  fontWeight: 700,
-                  fontSize: '0.8rem',
-                  letterSpacing: '0.02em',
-                  textDecoration: 'none',
-                  whiteSpace: 'nowrap',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
-                Edit Address
-              </Link>
-              <Link
-                href="/customer-portal?tab=addresses&add=true&redirect=/checkout"
-                aria-label="Add a new address"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  padding: '0.45rem 1.1rem',
-                  borderRadius: '999px',
-                  border: '1.5px solid transparent',
-                  background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                  color: '#fff',
-                  fontWeight: 700,
-                  fontSize: '0.8rem',
-                  letterSpacing: '0.02em',
-                  textDecoration: 'none',
-                  whiteSpace: 'nowrap',
-                  boxShadow: '0 2px 12px rgba(239,68,68,0.35)',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19"/>
-                  <line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
-                Add New Address
-              </Link>
             </div>
           </div>
 
-          <div className="compact-card-body">
+          <section className={`checkout-detail-section ${errors.name || errors.mobile || errors.email || errors.altMobile ? 'section-error' : ''}`} data-checkout-section="receiver">
+            <div className="detail-section-heading">
+              <h4>Receiver&apos;s Details</h4>
+              <Link className="checkout-action-button checkout-action-edit" href={`/profile-settings?redirect=${encodeURIComponent(checkoutReturnPath)}`}>
+                <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                Edit Profile
+              </Link>
+            </div>
             <div className="info-grid-2x2">
-              <div className="info-block">
+              <div className={`info-block ${errors.name ? 'info-error' : ''}`} data-checkout-field="name" tabIndex={-1}>
                 <span className="info-label">Full Name</span>
-                <strong className="info-val">{selectedAddress.name || user?.Name || 'Not provided'}</strong>
+                <strong className="info-val">{user?.Name || selectedAddress.name || 'Not provided'}</strong>
+                {errors.name && <span className="error-hint">{errors.name}</span>}
               </div>
-              <div className="info-block">
+              <div className={`info-block ${errors.mobile ? 'info-error' : ''}`} data-checkout-field="mobile" tabIndex={-1}>
                 <span className="info-label">Mobile Number</span>
-                <span className="info-sub">{selectedAddress.mobile || user?.Mobile || 'Not provided'}</span>
+                <span className="info-sub">{user?.Mobile || selectedAddress.mobile || 'Not provided'}</span>
+                {errors.mobile && <span className="error-hint">{errors.mobile}</span>}
               </div>
-              <div className="info-block">
+              <div className={`info-block ${errors.email ? 'info-error' : ''}`} data-checkout-field="email" tabIndex={-1}>
                 <span className="info-label">Email Address</span>
-                <span className="info-email">{selectedAddress.email || user?.Username || 'Not provided'}</span>
+                <span className="info-email">{user?.Username || selectedAddress.email || 'Not provided'}</span>
+                {errors.email && <span className="error-hint">{errors.email}</span>}
               </div>
               <div className="checkout-alt-mobile-section" style={{ borderTop: 'none', paddingTop: 0, marginTop: 0 }}>
                 <label className="info-label" style={{ marginBottom: '0.15rem', display: 'block' }}>Alt. Mobile <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(Optional)</span></label>
@@ -231,13 +181,23 @@ export function CheckoutForm({
                   maxLength={10}
                   placeholder="10-digit number"
                   value={form.altMobile}
+                  data-checkout-field="altMobile"
                   onChange={(e) => { update('altMobile', e.target.value.replace(/\D/g, '')); clearError('altMobile'); }}
                 />
                 {errors.altMobile && <span className="error-hint">{errors.altMobile}</span>}
               </div>
             </div>
+          </section>
 
-            <div className="info-block" style={{ marginTop: '0.15rem' }}>
+          <section className={`checkout-detail-section ${errors.flatNo || errors.locality || errors.city || errors.state || errors.pincode ? 'section-error' : ''}`} data-checkout-section="address">
+            <div className="detail-section-heading address-heading">
+              <div className="address-heading-title"><h4>Address Details</h4><div className="address-badges"><span className={`type-badge type-${selectedAddress.type.toLowerCase()}`}>{selectedAddress.type}</span>{selectedAddress.isDefault && <span className="default-badge">Default</span>}</div></div>
+              <div className="address-header-actions">
+                <Link className="checkout-action-button checkout-action-edit" href={`/customer-portal?tab=addresses&redirect=${encodeURIComponent(checkoutReturnPath)}`} aria-label="Edit address details"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Edit Address</Link>
+                <Link className="checkout-action-button checkout-action-add" href={`/customer-portal?tab=addresses&add=true&redirect=${encodeURIComponent(checkoutReturnPath)}`} aria-label="Add a new address"><span aria-hidden="true">+</span>Add New Address</Link>
+              </div>
+            </div>
+            <div className={`info-block ${errors.flatNo || errors.locality || errors.city || errors.state || errors.pincode ? 'info-error' : ''}`} data-checkout-field="flatNo" tabIndex={-1}>
               <span className="info-label">Address</span>
               <p className="address-text-display">
                 {selectedAddress.flatNo ? (
@@ -250,8 +210,12 @@ export function CheckoutForm({
                   </>
                 )}
               </p>
+              {errors.flatNo && <span className="error-hint">{errors.flatNo}</span>}
+              {errors.locality && <span className="error-hint">{errors.locality}</span>}
+              {errors.city && <span className="error-hint">{errors.city}</span>}
+              {errors.state && <span className="error-hint">{errors.state}</span>}
+              {errors.pincode && <span className="error-hint">{errors.pincode}</span>}
             </div>
-          </div>
 
           {/* Change Address Panel */}
           {savedAddresses.length > 1 && (
@@ -285,6 +249,7 @@ export function CheckoutForm({
               onChange={(e) => update('instructions', e.target.value)}
             />
           </div>
+          </section>
         </div>
       ) : (
         /* 2. Editable Form Fields Mode */
@@ -318,6 +283,7 @@ export function CheckoutForm({
               <div className="co-field">
                 <label>Full Name <span className="req">*</span></label>
                 <input
+                  data-checkout-field="name"
                   type="text"
                   placeholder="Rahul Sharma"
                   value={form.name}
@@ -331,6 +297,7 @@ export function CheckoutForm({
               <div className="co-field">
                 <label>Mobile Number <span className="req">*</span></label>
                 <input
+                  data-checkout-field="mobile"
                   type="tel"
                   placeholder="10-digit mobile"
                   maxLength={10}
@@ -345,6 +312,7 @@ export function CheckoutForm({
               <div className="co-field">
                 <label>Alternate Mobile <span className="opt">(Optional)</span></label>
                 <input
+                  data-checkout-field="altMobile"
                   type="tel"
                   placeholder="Alt mobile number"
                   maxLength={10}
@@ -357,6 +325,7 @@ export function CheckoutForm({
             <div className="co-field">
               <label>Email Address <span className="opt">(Read-only)</span></label>
               <input
+                data-checkout-field="email"
                 type="email"
                 placeholder="name@domain.com"
                 value={form.email}
@@ -388,6 +357,7 @@ export function CheckoutForm({
               <div className="co-field">
                 <label>State / Region <span className="req">*</span></label>
                 <select
+                  data-checkout-field="state"
                   value={form.state}
                   onChange={(e) => {
                     setForm((f: any) => ({ ...f, state: e.target.value, city: '' }));
@@ -405,6 +375,7 @@ export function CheckoutForm({
               <div className="co-field">
                 <label>City <span className="req">*</span></label>
                 <select
+                  data-checkout-field="city"
                   value={form.city}
                   onChange={(e) => { update('city', e.target.value); clearError('city'); }}
                   className={`form-select ${errors.city ? 'input-error' : ''}`}
@@ -421,6 +392,7 @@ export function CheckoutForm({
               <div className="co-field">
                 <label>House/Flat/Apartment No. <span className="req">*</span></label>
                 <input
+                  data-checkout-field="flatNo"
                   type="text"
                   placeholder="e.g. Flat 104, Building A"
                   value={form.flatNo}
@@ -446,6 +418,7 @@ export function CheckoutForm({
               <div className="co-field">
                 <label>Area / Locality <span className="req">*</span></label>
                 <input
+                  data-checkout-field="locality"
                   type="text"
                   placeholder="e.g. Koregaon Park"
                   value={form.locality}
@@ -471,6 +444,7 @@ export function CheckoutForm({
               <div className="co-field">
                 <label>Pincode / Zip Code <span className="req">*</span></label>
                 <input
+                  data-checkout-field="pincode"
                   type="text"
                   placeholder="6-digit ZIP"
                   maxLength={6}
@@ -670,6 +644,39 @@ export function CheckoutForm({
           flex-direction: column;
           gap: 0.65rem;
         }
+
+        .action-link-btn.compact-action { min-height: 32px; padding: 0.34rem 0.65rem; border-radius: 9px; line-height: 1; }
+        .action-link-btn.compact-action svg { width: 16px !important; height: 16px !important; min-width: 16px; flex: 0 0 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .action-link-btn.add-outline-btn { background: rgba(37,99,235,.035); color: var(--primary-color) !important; border: 1.5px solid rgba(37,99,235,.35); }
+        .action-link-btn.add-outline-btn:hover { background: rgba(37,99,235,.12); border-color: var(--primary-color); box-shadow: 0 4px 14px rgba(37,99,235,.16); transform: translateY(-1px); }
+
+        .checkout-detail-section {
+          padding: 0.75rem;
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-lg);
+          background: rgba(148, 163, 184, 0.025);
+          transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+        }
+
+        .checkout-detail-section.section-error {
+          border-color: rgba(239, 68, 68, 0.65);
+          background: rgba(239, 68, 68, 0.035);
+          box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
+        }
+
+        .detail-section-heading {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.75rem;
+          margin-bottom: 0.65rem;
+        }
+
+        .detail-section-heading h4 { margin: 0; font-size: 0.95rem; font-weight: 800; color: var(--text-primary); }
+        .address-heading-title, .address-header-actions, .address-badges { display: flex; align-items: center; gap: 0.4rem; flex-wrap: nowrap; }
+        .address-heading-title { min-width: 0; }
+        .address-header-actions { justify-content: flex-end; }
+        .info-error { border-radius: var(--radius-sm); outline: 2px solid rgba(239, 68, 68, 0.22); outline-offset: 4px; }
 
         .info-grid-2x2 {
           display: grid;
@@ -1127,6 +1134,8 @@ export function CheckoutForm({
 
         /* Mobile Adjustments */
         @media (max-width: 640px) {
+          .detail-section-heading { align-items: center; flex-wrap: wrap; }
+          .address-header-actions { justify-content: flex-start; }
           .info-grid-2x2, .form-grid-three, .form-grid-two {
             grid-template-columns: 1fr;
             gap: 0.75rem;
@@ -1253,8 +1262,8 @@ export function CheckoutSummary({ status, items, subtotal, deliveryCharge, grand
         }
 
         .co-items {
-          max-height: 220px;
-          overflow-y: auto;
+          max-height: none;
+          overflow: visible;
           border-bottom: 1px solid var(--border-color);
           padding-bottom: 0.75rem;
           margin-bottom: 0.75rem;
