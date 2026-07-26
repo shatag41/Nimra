@@ -9,7 +9,7 @@ import { CompanyInfo } from '@/types/cms';
 import { useAuth } from '../contexts/AuthContext';
 import { isAdminRole } from '@/frontend/admin/utils/accessControl';
 import { meaningfulPath, recordNavigation } from '../navigation/navigationHistory';
-import { persistCheckoutAuthHandoff } from '../utils/checkoutAuthHandoff';
+import { persistCheckoutAuthHandoff, readCheckoutAuthReturn } from '../utils/checkoutAuthHandoff';
 
 interface LayoutWrapperProps {
   children: React.ReactNode;
@@ -59,7 +59,8 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
     if (isAuthenticated && isAuthPage) {
       const nextPath = searchParams?.get('next');
       const safeNextPath = nextPath?.startsWith('/') && !nextPath.startsWith('//') ? nextPath : null;
-      router.replace(safeNextPath || (isAdminRole(user?.Role) ? '/admin' : '/customer-portal'));
+      const customerReturnPath = readCheckoutAuthReturn();
+      router.replace(safeNextPath || (isAdminRole(user?.Role) ? '/admin' : customerReturnPath || '/customer-portal'));
     } else if (isAdmin && !isAdminLogin && !isAuthenticated) {
       router.replace('/');
     } else if (isAdmin && !isAdminLogin && !isAdminRole(user?.Role)) {

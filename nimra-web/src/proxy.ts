@@ -2,10 +2,31 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 const normalizeRole = (role?: string) => String(role || '').trim().toUpperCase().replace(/[\s-]+/g, '_');
+const AUTH_RETURN_COOKIE = 'nimra_auth_return_to';
+const customerAuthPaths = new Set(['/login', '/register', '/forgot-password']);
+
+const safeInternalReturnPath = (rawValue?: string | null) => {
+  if (!rawValue) return null;
+  let value = rawValue;
+  try {
+    value = decodeURIComponent(rawValue);
+  } catch {
+    return null;
+  }
+  if (!value.startsWith('/') || value.startsWith('//') || value.includes('\\') || /[\u0000-\u001f]/.test(value)) return null;
+  try {
+    const parsed = new URL(value, 'https://nimra.invalid');
+    if (parsed.origin !== 'https://nimra.invalid' || customerAuthPaths.has(parsed.pathname)) return null;
+    return `${parsed.pathname}${parsed.search}`;
+  } catch {
+    return null;
+  }
+};
 
 export function proxy(request: NextRequest) {
   const userCookie = request.cookies.get('nimra_user')?.value;
   const sessionCookie = request.cookies.get('nimra_session')?.value;
+  const returnTo = safeInternalReturnPath(request.cookies.get(AUTH_RETURN_COOKIE)?.value);
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith('/api/') || pathname.startsWith('/_next/')) {
@@ -56,7 +77,8 @@ export function proxy(request: NextRequest) {
   const isAdminUser = role === 'ADMIN' || role === 'SUPER_ADMIN';
 
   if (user && isAuthPath) {
-    return NextResponse.redirect(new URL(isAdminUser ? '/admin' : '/customer-portal', request.url));
+    const destination = isAdminUser ? '/admin' : (returnTo || '/customer-portal');
+    return NextResponse.redirect(new URL(destination, request.url));
   }
 
   if (isAdminPath && pathname !== '/admin/login') {
@@ -71,8 +93,19 @@ export function proxy(request: NextRequest) {
 
   if (!user && isProtectedCustomerPath) {
     const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('next', pathname);
-    return NextResponse.redirect(loginUrl);
+    const requestedPath = `${pathname}${request.nextUrl.search}`;
+    loginUrl.searchParams.set('next', requestedPath);
+    const response = NextResponse.redirect(loginUrl);
+    if (pathname === '/checkout' || pathname.startsWith('/checkout/')) {
+      response.cookies.set(AUTH_RETURN_COOKIE, requestedPath, {
+        path: '/',
+        sameSite: 'lax',
+        secure: request.nextUrl.protocol === 'https:',
+        httpOnly: false,
+        maxAge: 60 * 60,
+      });
+    }
+    return response;
   }
 
   return NextResponse.next();

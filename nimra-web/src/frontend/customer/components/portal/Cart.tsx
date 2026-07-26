@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useCart } from '@/frontend/customer/hooks/useCart';
 import { formatCurrency, FREE_DELIVERY_MINIMUM } from '../../utils/commerce';
 import ProductImage from '../ProductImage';
+import { persistCheckoutAuthHandoff } from '../../utils/checkoutAuthHandoff';
 
 const TrashIcon = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6" /></svg>
@@ -118,7 +119,15 @@ export function CartSummary() {
       </div>
 
       <div className="total"><span>Grand Total</span><strong>{formatCurrency(grandTotal)}</strong></div>
-      <Link href="/checkout" className={`checkout-button ${isCheckingOut ? 'is-loading' : ''}`} onClick={() => setIsCheckingOut(true)} aria-busy={isCheckingOut}>
+      <Link
+        href="/checkout"
+        className={`checkout-button ${isCheckingOut ? 'is-loading' : ''}`}
+        onClick={() => {
+          persistCheckoutAuthHandoff('/checkout');
+          setIsCheckingOut(true);
+        }}
+        aria-busy={isCheckingOut}
+      >
         <span>{isCheckingOut ? 'Opening checkout…' : 'Proceed to Checkout'}</span>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
       </Link>
