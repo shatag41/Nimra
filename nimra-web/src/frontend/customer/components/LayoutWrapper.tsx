@@ -9,6 +9,7 @@ import { CompanyInfo } from '@/types/cms';
 import { useAuth } from '../contexts/AuthContext';
 import { isAdminRole } from '@/frontend/admin/utils/accessControl';
 import { meaningfulPath, recordNavigation } from '../navigation/navigationHistory';
+import { persistCheckoutAuthHandoff } from '../utils/checkoutAuthHandoff';
 
 interface LayoutWrapperProps {
   children: React.ReactNode;
@@ -65,6 +66,7 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
       router.replace('/customer-portal');
     } else if (!isAuthenticated && isCheckout) {
       const fullPath = window.location.pathname + window.location.search;
+      persistCheckoutAuthHandoff(fullPath);
       router.replace(`/login?next=${encodeURIComponent(fullPath)}`);
     }
   }, [isAdmin, isAdminLogin, isAuthPage, isAuthenticated, isCheckout, isLoading, pathname, router, searchParams, user]);

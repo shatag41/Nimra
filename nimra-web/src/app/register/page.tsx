@@ -16,6 +16,11 @@ import {
   REGISTRATION_CONTEXT_KEY,
   registrationSourceFromSearch,
 } from '@/frontend/customer/utils/registrationCart';
+import {
+  persistCheckoutAuthHandoff,
+  readCheckoutAuthReturn,
+  restoreGuestCartFromAuthHandoff,
+} from '@/frontend/customer/utils/checkoutAuthHandoff';
 
 const REGISTRATION_DRAFT_KEY = 'nimra_registration_otp_draft';
 
@@ -56,14 +61,20 @@ export default function RegisterPage() {
 
   useEffect(() => {
     let cancelled = false;
+    restoreGuestCartFromAuthHandoff();
     const source = registrationSourceFromSearch(window.location.search);
     const requestedNext = new URLSearchParams(window.location.search).get('next');
     const safeNext = requestedNext?.startsWith('/') && !requestedNext.startsWith('//') ? requestedNext : null;
-    const redirectTo = source === 'cart' ? (safeNext?.startsWith('/checkout') ? safeNext : '/checkout') : '/customer-portal';
-    registrationSourceRef.current = source;
+    const storedCheckoutReturn = readCheckoutAuthReturn();
+    const isCheckoutRegistration = source === 'cart' || Boolean(storedCheckoutReturn);
+    const redirectTo = isCheckoutRegistration
+      ? (safeNext?.startsWith('/checkout') ? safeNext : storedCheckoutReturn || '/checkout')
+      : '/customer-portal';
+    registrationSourceRef.current = isCheckoutRegistration ? 'cart' : source;
     registrationRedirectRef.current = redirectTo;
-    sessionStorage.setItem(REGISTRATION_CONTEXT_KEY, JSON.stringify({ source, redirectTo }));
-    if (source === 'cart' && requestedNext !== redirectTo) {
+    sessionStorage.setItem(REGISTRATION_CONTEXT_KEY, JSON.stringify({ source: registrationSourceRef.current, redirectTo }));
+    if (isCheckoutRegistration) persistCheckoutAuthHandoff(redirectTo);
+    if (isCheckoutRegistration && requestedNext !== redirectTo) {
       window.history.replaceState(null, '', `/register?next=${encodeURIComponent(redirectTo)}`);
     }
 

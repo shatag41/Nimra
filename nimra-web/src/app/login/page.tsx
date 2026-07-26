@@ -8,6 +8,10 @@ import { sendRequest } from '@/utils/api';
 import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
 import { useSearchParams } from 'next/navigation';
 import LoadingButton from '@/frontend/shared/LoadingButton';
+import {
+  persistCheckoutAuthHandoff,
+  restoreGuestCartFromAuthHandoff,
+} from '@/frontend/customer/utils/checkoutAuthHandoff';
 
 function LoginPageContent() {
   const { login } = useAuth();
@@ -27,6 +31,11 @@ function LoginPageContent() {
   const registerHref = registrationSource === 'cart' || nextPath === '/cart' || nextPath === '/checkout' || nextPath?.startsWith('/checkout?')
     ? `/register?next=${encodeURIComponent(nextPath?.startsWith('/checkout') ? nextPath : '/checkout')}`
     : '/register';
+
+  React.useEffect(() => {
+    restoreGuestCartFromAuthHandoff();
+    if (nextPath?.startsWith('/checkout')) persistCheckoutAuthHandoff(nextPath);
+  }, [nextPath]);
 
   React.useEffect(() => {
     const prefilledEmail = searchParams.get('email')?.trim();
@@ -156,6 +165,7 @@ function LoginPageContent() {
 
   const handleGoogleLogin = () => {
     if (googleChooserOpenRef.current || isGoogleLoading) return;
+    if (nextPath?.startsWith('/checkout')) persistCheckoutAuthHandoff(nextPath);
     setError('');
     googleChooserOpenRef.current = true;
     try {

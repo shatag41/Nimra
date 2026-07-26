@@ -15,6 +15,7 @@ import { clearReorderCheckoutDraft, readReorderCheckoutDraft, ReorderCheckoutDra
 import { formatCurrency } from '@/frontend/customer/utils/commerce';
 import type { CartItem, OrderRecord } from '@/types/cms';
 import CustomerPageHeader from './CustomerPageHeader';
+import { clearCheckoutAuthHandoff } from '@/frontend/customer/utils/checkoutAuthHandoff';
 
 const initialForm = {
   name: '',
@@ -61,6 +62,11 @@ export default function CheckoutClient() {
     const query = searchParams.toString();
     return query ? `/checkout?${query}` : '/checkout';
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!user || !cart.isHydrated || checkoutItems.length === 0) return;
+    clearCheckoutAuthHandoff();
+  }, [cart.isHydrated, checkoutItems.length, user]);
 
   useEffect(() => {
     if (searchParams.get('reorder') === '1') {

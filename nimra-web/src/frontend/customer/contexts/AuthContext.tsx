@@ -8,6 +8,7 @@ import { isAdminRole } from '@/frontend/admin/utils/accessControl';
 import type { CartItem } from '@/types/cms';
 import { mergeCartItems, mergeCartSnapshots, normalizeCartItem } from '../utils/commerce';
 import { resetNavigationHistory } from '../navigation/navigationHistory';
+import { readCheckoutAuthReturn } from '../utils/checkoutAuthHandoff';
 
 export interface User {
   ID: number;
@@ -180,7 +181,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const isAdminUser = isAdminRole(userData.Role);
     const nextPath = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('next') : null;
-    const requestedRedirect = options?.redirectTo || nextPath;
+    const requestedRedirect = options?.redirectTo || nextPath || readCheckoutAuthReturn();
     const safeNextPath = requestedRedirect?.startsWith('/') && !requestedRedirect.startsWith('//') ? requestedRedirect : null;
     const expiresAt = Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000;
     const session: StoredSession = {
@@ -193,8 +194,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     setUser(userData);
     setIsNewAccountSession(session.isNewAccount === true);
-    Cookies.set(USER_COOKIE, JSON.stringify(userData), { path: '/', sameSite: 'lax' });
-    Cookies.set(SESSION_COOKIE, JSON.stringify(session), { path: '/', sameSite: 'lax' });
+    const secureCookie = typeof window !== 'undefined' && window.location.protocol === 'https:';
+    Cookies.set(USER_COOKIE, JSON.stringify(userData), { path: '/', sameSite: 'lax', secure: secureCookie });
+    Cookies.set(SESSION_COOKIE, JSON.stringify(session), { path: '/', sameSite: 'lax', secure: secureCookie });
 
     if (typeof window !== 'undefined') {
       resetNavigationHistory(userData.Role);
