@@ -130,7 +130,7 @@ export function CheckoutForm({
           <h4 style={{ fontSize: '1.15rem', margin: 0, fontWeight: 700 }}>You don't have any addresses saved</h4>
           <p style={{ color: 'var(--text-secondary)', maxWidth: '340px', margin: 0, fontSize: '0.88rem', lineHeight: '1.45' }}>Please add an address.</p>
           <Link
-            href="/customer-portal?tab=addresses&add=true&redirect=/checkout"
+            href={`/customer-portal?tab=addresses&add=true&returnContext=checkout&redirect=${encodeURIComponent(checkoutReturnPath)}`}
             style={{
               marginTop: '0.5rem',
               padding: '0.5rem 1.25rem',
@@ -193,7 +193,7 @@ export function CheckoutForm({
               <div className="address-heading-title"><h4>Address Details</h4><div className="address-badges"><span className={`type-badge type-${selectedAddress.type.toLowerCase()}`}>{selectedAddress.type}</span>{selectedAddress.isDefault && <span className="default-badge">Default</span>}</div></div>
               <div className="address-header-actions">
                 <Link className="checkout-action-button checkout-action-edit" href={`/customer-portal?tab=addresses&editAddressId=${encodeURIComponent(selectedAddress.id)}&returnContext=checkout&redirect=${encodeURIComponent(selectedAddressReturnPath)}`} aria-label="Edit address details"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Edit Address</Link>
-                <Link className="checkout-action-button checkout-action-add" href={`/customer-portal?tab=addresses&add=true&redirect=${encodeURIComponent(checkoutReturnPath)}`} aria-label="Add a new address"><span aria-hidden="true">+</span>Add New Address</Link>
+                <Link className="checkout-action-button checkout-action-add" href={`/customer-portal?tab=addresses&add=true&returnContext=checkout&redirect=${encodeURIComponent(selectedAddressReturnPath)}`} aria-label="Add a new address"><span aria-hidden="true">+</span>Add New Address</Link>
               </div>
             </div>
             <div className={`info-block ${errors.flatNo || errors.locality || errors.city || errors.state || errors.pincode ? 'info-error' : ''}`} data-checkout-field="flatNo" tabIndex={-1}>

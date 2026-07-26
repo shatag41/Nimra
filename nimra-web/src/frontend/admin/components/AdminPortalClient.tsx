@@ -134,6 +134,9 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
     if (startDate) {
       filters.setOrderStartDate(startDate);
       filters.setOrderEndDate('');
+    } else {
+      filters.setOrderStartDate('');
+      filters.setOrderEndDate('');
     }
     setActiveTab('orders');
   };

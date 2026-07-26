@@ -203,14 +203,14 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
 
       <style jsx>{`
         .premium-about {
-          --bg-main: #ffffff;
-          --bg-alt: #f8fafc;
-          --text-strong: #0f172a;
-          --text-base: #334155;
-          --text-muted: #64748b;
-          --border: #e2e8f0;
-          --brand-blue: #0284c7;
-          --brand-light: #e0f2fe;
+          --bg-main: var(--bg-secondary);
+          --bg-alt: var(--bg-primary);
+          --text-strong: var(--text-primary);
+          --text-base: var(--text-secondary);
+          --text-muted: color-mix(in srgb, var(--text-secondary) 78%, transparent);
+          --border: var(--border-color);
+          --brand-blue: var(--primary-color);
+          --brand-light: color-mix(in srgb, var(--primary-color) 11%, var(--bg-secondary));
           
           --space-1: 8px;
           --space-2: 16px;
@@ -218,9 +218,9 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
           --space-4: 32px;
           --radius: 16px;
           
-          --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
-          --shadow-md: 0 8px 30px rgba(0,0,0,0.04);
-          --shadow-hover: 0 12px 25px rgba(2, 132, 199, 0.1);
+          --about-shadow-sm: var(--shadow-sm);
+          --about-shadow-md: var(--shadow-md);
+          --about-shadow-hover: 0 12px 25px color-mix(in srgb, var(--primary-color) 13%, transparent);
           
           font-family: system-ui, -apple-system, sans-serif;
           background: var(--bg-alt);
@@ -250,6 +250,9 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
           margin: 0 auto 16px;
           max-width: 600px;
         }
+        .section-header .section-title {
+          font-size: 1.5rem !important;
+        }
         .text-center { text-align: center; }
 
         /* ── Submenu Tabs ── */
@@ -259,12 +262,12 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         }
         .submenu-container {
           display: inline-flex;
-          background: rgba(255, 255, 255, 0.7);
+          background: color-mix(in srgb, var(--bg-secondary) 82%, transparent);
           backdrop-filter: blur(12px);
           padding: 3px;
           border-radius: 99px;
-          border: 1px solid rgba(255, 255, 255, 0.6);
-          box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+          border: 1px solid var(--border);
+          box-shadow: var(--about-shadow-sm);
           gap: 3px;
         }
         .submenu-btn {
@@ -280,12 +283,12 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         }
         .submenu-btn:hover {
           color: var(--text-strong);
-          background: rgba(255,255,255,0.5);
+          background: color-mix(in srgb, var(--primary-color) 8%, var(--bg-secondary));
         }
         .submenu-btn.active {
-          background: var(--text-strong);
-          color: var(--bg-main);
-          box-shadow: var(--shadow-md);
+          background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+          color: #ffffff;
+          box-shadow: var(--about-shadow-md);
         }
 
         /* ── Content Card (Fixed Container) ── */
@@ -298,7 +301,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
           background: var(--bg-main);
           border-radius: var(--radius);
           padding: 1.5rem;
-          box-shadow: var(--shadow-md);
+          box-shadow: var(--about-shadow-md);
           border: 1px solid var(--border);
           min-height: 250px;
         }
@@ -338,7 +341,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         .story-img-col {
           border-radius: var(--radius);
           overflow: hidden;
-          box-shadow: var(--shadow-md);
+          box-shadow: var(--about-shadow-md);
           width: 400px;
           aspect-ratio: 3/2;
           background: var(--bg-alt);
@@ -372,9 +375,9 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         }
         .feature-card:hover {
           background: var(--brand-light);
-          border-color: #bae6fd;
+          border-color: color-mix(in srgb, var(--primary-color) 38%, var(--border));
           transform: translateY(-1px);
-          box-shadow: var(--shadow-sm);
+          box-shadow: var(--about-shadow-sm);
         }
         .feat-icon {
           font-size: 1rem;
@@ -385,7 +388,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
           align-items: center;
           justify-content: center;
           border-radius: 6px;
-          box-shadow: var(--shadow-sm);
+          box-shadow: var(--about-shadow-sm);
           flex-shrink: 0;
         }
         .feat-text {
@@ -420,12 +423,12 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         .step-card:hover {
           background: var(--bg-main);
           border-color: var(--brand-blue);
-          box-shadow: var(--shadow-hover);
+          box-shadow: var(--about-shadow-hover);
         }
         .step-card.active {
           background: var(--bg-main);
           border-color: var(--brand-blue);
-          box-shadow: var(--shadow-hover);
+          box-shadow: var(--about-shadow-hover);
         }
         .step-header {
           display: flex;
@@ -510,7 +513,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
           justify-content: center;
           border-radius: 8px;
           flex-shrink: 0;
-          box-shadow: var(--shadow-sm);
+          box-shadow: var(--about-shadow-sm);
         }
         .highlight-item strong {
           display: block;
@@ -529,7 +532,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
           border-radius: var(--radius);
           overflow: hidden;
           border: 1px solid var(--border);
-          box-shadow: var(--shadow-md);
+          box-shadow: var(--about-shadow-md);
         }
         .infra-map iframe {
           width: 100%;

@@ -719,7 +719,11 @@ const DashboardTab = React.memo(function DashboardTab({
                   onClick={() => {
                     if (hasAlert) {
                       if (onNavigateToOrdersWithFilter && alert.tab === 'orders' && alert.filter && alert.view) {
-                        onNavigateToOrdersWithFilter(alert.filter, alert.view as any, formatDateForInput(filterStartDate));
+                        onNavigateToOrdersWithFilter(
+                          alert.filter,
+                          alert.view as any,
+                          timeFilter === 'overall' ? undefined : formatDateForInput(filterStartDate)
+                        );
                       } else if (alert.onClickAction) {
                         alert.onClickAction();
                       } else if (setActiveTab && alert.tab) {

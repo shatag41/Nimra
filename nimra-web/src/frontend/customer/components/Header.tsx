@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
@@ -57,7 +57,10 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
   const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
   const [hoveredNav, setHoveredNav] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [notificationsOwnerKey, setNotificationsOwnerKey] = useState('');
+  const [notificationAttention, setNotificationAttention] = useState(false);
+  const notificationOwnerRef = useRef('');
+  const notificationIdsRef = useRef<Set<string>>(new Set());
+  const hasLoadedNotificationsRef = useRef(false);
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
   const searchParams = useSearchParams();
@@ -126,14 +129,23 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
     const notificationRole = activeUser ? normalizeRole(getUserRole(activeUser)) : null;
     if (!activeUser || notificationRole !== 'CUSTOMER') {
       setNotifications([]);
-      setNotificationsOwnerKey('');
+      setNotificationAttention(false);
+      notificationOwnerRef.current = '';
+      notificationIdsRef.current = new Set();
+      hasLoadedNotificationsRef.current = false;
       return;
     }
     const ownerKey = String(activeUser.ID || activeUser.Username || '');
-    if (!notificationDropdownOpen || (notifications.length > 0 && notificationsOwnerKey === ownerKey)) return;
+    if (notificationOwnerRef.current !== ownerKey) {
+      notificationOwnerRef.current = ownerKey;
+      notificationIdsRef.current = new Set();
+      hasLoadedNotificationsRef.current = false;
+    }
+    let cancelled = false;
 
     const loadNotifications = () => {
       fetchNotifications(activeUser.ID, activeUser.Username).then(data => {
+        if (cancelled) return;
         const key = `nimra_read_notifs_${activeUser.ID || activeUser.Username}`;
         let readIds: string[] = [];
         try {
@@ -152,16 +164,33 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           const isRead = readIds.includes(String(n.ID)) || n.Read === true || n.Read === 'true';
           return { ...n, Read: isRead };
         });
-        setNotificationsOwnerKey(ownerKey);
+        const unreadNotifications = updated.filter(n => !n.Read);
+        const hasNewUnread = unreadNotifications.some(n => !notificationIdsRef.current.has(String(n.ID)));
+        if (!hasLoadedNotificationsRef.current) {
+          setNotificationAttention(unreadNotifications.length > 0 && !notificationDropdownOpen);
+        } else if (hasNewUnread && !notificationDropdownOpen) {
+          setNotificationAttention(true);
+        } else if (unreadNotifications.length === 0) {
+          setNotificationAttention(false);
+        }
+        notificationIdsRef.current = new Set(updated.map(n => String(n.ID)));
+        hasLoadedNotificationsRef.current = true;
         setNotifications(updated);
       }).catch(console.error);
     };
 
     loadNotifications();
-  }, [activeUser, activeRoleValue, notificationDropdownOpen, notifications.length, notificationsOwnerKey]);
+    const refreshInterval = window.setInterval(loadNotifications, 30000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(refreshInterval);
+    };
+  }, [activeUser, activeRoleValue, notificationDropdownOpen]);
 
   const handleMarkAsRead = useCallback(async (id: string | number) => {
     try {
+      setNotificationAttention(false);
       setNotifications(prev => prev.map(n => String(n.ID) === String(id) ? { ...n, Read: true } : n));
       
       if (activeUser) {
@@ -184,6 +213,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
 
   const handleMarkAllAsRead = useCallback(async () => {
     try {
+      setNotificationAttention(false);
       const unread = notifications.filter(n => n.Read !== true && n.Read !== 'true');
       if (!unread.length) return;
       
@@ -341,8 +371,12 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
             {activeRole === 'CUSTOMER' && activeUser && (
               <div className="notification-container">
                 <button 
-                  className="icon-btn" 
-                  onClick={() => setNotificationDropdownOpen(!notificationDropdownOpen)} 
+                  className={`icon-btn notification-bell-button ${notificationAttention && unreadCount > 0 && !notificationDropdownOpen ? 'notification-attention' : ''}`}
+                  onClick={() => {
+                    const willOpen = !notificationDropdownOpen;
+                    setNotificationDropdownOpen(willOpen);
+                    if (willOpen) setNotificationAttention(false);
+                  }}
                   aria-label="Notifications" 
                   title="Notifications"
                 >
