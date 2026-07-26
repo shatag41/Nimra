@@ -1,23 +1,23 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { AdminUser, Inquiry, Notification, OrderRecord, Product } from '@/types/cms';
+import { AdminUser, CancellationRequest, Inquiry, Notification, OrderRecord, Product } from '@/types/cms';
 import { normalizeRole } from '../utils/accessControl';
+import { getActionableAdminUpdates } from '../utils/liveAdminEvents';
 
 type Props = {
   orders: OrderRecord[];
   users: AdminUser[];
   products: Product[];
   inquiries: Inquiry[];
+  cancellationRequests: CancellationRequest[];
   notifications: Notification[];
   onNavigate: (tab: string) => void;
+  onOpenCancellationRequests: () => void;
 };
 
-export default function SuperAdminDashboard({ orders, users, products, inquiries, notifications, onNavigate }: Props) {
-  // `notifications` is the dedicated getAdminUpdates feed supplied by
-  // AdminPortalClient. Do not filter it again here: live-sheet responses may
-  // omit the audience field after the endpoint has already selected the rows.
-  const adminUpdates = notifications;
+export default function SuperAdminDashboard({ orders, users, products, inquiries, cancellationRequests, notifications, onNavigate, onOpenCancellationRequests }: Props) {
+  const adminUpdates = getActionableAdminUpdates(notifications, orders, inquiries, cancellationRequests);
   const [liveUpdateIndex, setLiveUpdateIndex] = useState(0);
   const [pauseLiveUpdates, setPauseLiveUpdates] = useState(false);
   const currentLiveUpdate = adminUpdates.length ? adminUpdates[liveUpdateIndex % adminUpdates.length] : null;
@@ -31,6 +31,10 @@ export default function SuperAdminDashboard({ orders, users, products, inquiries
   const openLiveUpdate = () => {
     const actionLink = currentLiveUpdate?.ActionLink;
     if (!actionLink) return;
+    if (actionLink === 'orders:cancellations') {
+      onOpenCancellationRequests();
+      return;
+    }
     const tab = actionLink.split(':')[0];
     if (['dashboard', 'orders', 'products', 'banners', 'faqs', 'inquiries', 'users', 'settings'].includes(tab)) onNavigate(tab);
   };

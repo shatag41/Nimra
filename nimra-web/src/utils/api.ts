@@ -534,12 +534,12 @@ export const fetchCustomerOrders = async (userId: string | number, email: string
   return Array.isArray(data) ? data : (data.orders || []);
 };
 
-export const updateOrderStatus = async (orderId: string, status: string, adminId?: string | number): Promise<{ success: boolean; message: string }> => {
+export const updateOrderStatus = async (orderId: string, status: string, adminId?: string | number, customerMessage?: string): Promise<{ success: boolean; message: string }> => {
   try {
     const res = await fetch('/api/cms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'updateOrderStatus', orderId, status, adminId }),
+      body: JSON.stringify({ type: 'updateOrderStatus', orderId, status, adminId, customerMessage }),
     });
     const data = await res.json();
     if (data.success) invalidateReadCache(['orders', 'customer-orders', 'users']);

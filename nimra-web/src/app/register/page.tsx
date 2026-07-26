@@ -35,6 +35,7 @@ export default function RegisterPage() {
   const [registeredGoogleEmail, setRegisteredGoogleEmail] = useState('');
   const [verifiedGoogleAccount, setVerifiedGoogleAccount] = useState<{ email: string; name: string; user?: User } | null>(null);
   const [isExistingGoogleLoginLoading, setIsExistingGoogleLoginLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errors, setErrors] = useState({
     name: '',
     email: '',
@@ -49,15 +50,21 @@ export default function RegisterPage() {
   const [resendSeconds, setResendSeconds] = useState(0);
   const [expiresAt, setExpiresAt] = useState(0);
   const registrationSourceRef = useRef(registrationSourceFromSearch(''));
+  const registrationRedirectRef = useRef('/customer-portal');
+  const googleChooserOpenRef = useRef(false);
   const otpRefs = useRef<Array<HTMLInputElement | null>>([]);
 
   useEffect(() => {
     let cancelled = false;
     const source = registrationSourceFromSearch(window.location.search);
+    const requestedNext = new URLSearchParams(window.location.search).get('next');
+    const safeNext = requestedNext?.startsWith('/') && !requestedNext.startsWith('//') ? requestedNext : null;
+    const redirectTo = source === 'cart' ? (safeNext?.startsWith('/checkout') ? safeNext : '/checkout') : '/customer-portal';
     registrationSourceRef.current = source;
-    sessionStorage.setItem(REGISTRATION_CONTEXT_KEY, JSON.stringify({ source, redirectTo: source === 'cart' ? '/checkout' : '/customer-portal' }));
-    if (source === 'cart' && new URLSearchParams(window.location.search).get('next') !== '/checkout') {
-      window.history.replaceState(null, '', '/register?next=%2Fcheckout');
+    registrationRedirectRef.current = redirectTo;
+    sessionStorage.setItem(REGISTRATION_CONTEXT_KEY, JSON.stringify({ source, redirectTo }));
+    if (source === 'cart' && requestedNext !== redirectTo) {
+      window.history.replaceState(null, '', `/register?next=${encodeURIComponent(redirectTo)}`);
     }
 
     const raw = sessionStorage.getItem(REGISTRATION_DRAFT_KEY);
@@ -217,7 +224,10 @@ export default function RegisterPage() {
     if (!shouldReturnToCart && registrationSourceRef.current === 'cart') {
       window.history.replaceState(null, '', '/register');
     }
-    login(createdUser, { isNewAccount: true });
+    login(createdUser, {
+      isNewAccount: true,
+      redirectTo: shouldReturnToCart ? registrationRedirectRef.current : undefined,
+    });
   };
 
   const handleVerify = async () => {
@@ -242,8 +252,9 @@ export default function RegisterPage() {
   };
 
   const handleGoogleSuccess = async (accessToken: string) => {
-    if (isLoading || registrationComplete) return;
-    setIsLoading(true);
+    googleChooserOpenRef.current = false;
+    if (!accessToken || isGoogleLoading || registrationComplete) return;
+    setIsGoogleLoading(true);
     try {
       setError('');
       setRegisteredGoogleEmail('');
@@ -297,7 +308,10 @@ export default function RegisterPage() {
         if (!shouldReturnToCart && registrationSourceRef.current === 'cart') {
           window.history.replaceState(null, '', '/register');
         }
-        login(res.user, { isNewAccount });
+        login(res.user, {
+          isNewAccount,
+          redirectTo: shouldReturnToCart ? registrationRedirectRef.current : undefined,
+        });
         if (res.emailError) {
           notify.warning('Email Failed', `Account created, but welcome email failed: ${res.emailError}`);
         } else {
@@ -318,7 +332,7 @@ export default function RegisterPage() {
       setError('Google Sign-In failed.');
       notify.error('Registration Error', 'Google Sign-In failed.');
     } finally {
-      setIsLoading(false);
+      setIsGoogleLoading(false);
     }
   };
 
@@ -354,7 +368,9 @@ export default function RegisterPage() {
       setRegisteredGoogleEmail('');
       setVerifiedGoogleAccount(null);
       notify.success('Login Successful', `Welcome back, ${authenticatedUser.Name}!`);
-      login(authenticatedUser);
+      login(authenticatedUser, {
+        redirectTo: registrationSourceRef.current === 'cart' ? registrationRedirectRef.current : undefined,
+      });
     } catch (loginError) {
       const message = loginError instanceof Error ? loginError.message : 'Google login failed. Please try again.';
       setError(message);
@@ -365,8 +381,29 @@ export default function RegisterPage() {
 
   const googleLogin = useGoogleLogin({
     onSuccess: (tokenResponse) => handleGoogleSuccess(tokenResponse.access_token),
-    onError: () => setError('Google Sign-In failed'),
+    onError: () => {
+      googleChooserOpenRef.current = false;
+      setIsGoogleLoading(false);
+      setError('Google Sign-In failed');
+    },
+    onNonOAuthError: () => {
+      googleChooserOpenRef.current = false;
+      setIsGoogleLoading(false);
+    },
   });
+
+  const handleGoogleRegistration = () => {
+    if (googleChooserOpenRef.current || isGoogleLoading || registrationComplete) return;
+    setError('');
+    googleChooserOpenRef.current = true;
+    try {
+      googleLogin();
+    } catch {
+      googleChooserOpenRef.current = false;
+      setIsGoogleLoading(false);
+      setError('Google Sign-In failed');
+    }
+  };
 
   return (
     <section className="auth-page">
@@ -593,11 +630,11 @@ export default function RegisterPage() {
              <button
                 type="button"
                 className="auth-google-button"
-                onClick={() => googleLogin()}
-                disabled={isLoading}
+                onClick={handleGoogleRegistration}
+                disabled={isGoogleLoading || registrationComplete}
              >
                 <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
-                Sign up with Google
+                {isGoogleLoading ? 'Signing up with Google...' : 'Sign up with Google'}
              </button>
           </div>
 

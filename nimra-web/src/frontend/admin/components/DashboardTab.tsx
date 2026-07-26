@@ -4,6 +4,7 @@ import { formatCurrency } from '@/frontend/customer/utils/commerce';
 import { calculateDonutStats, formatDateLabel } from '../utils/chartUtils';
 import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
 import LogoutConfirmationModal from '@/frontend/customer/components/LogoutConfirmationModal';
+import { getActionableAdminUpdates } from '../utils/liveAdminEvents';
 
 interface DashboardTabProps {
   orders: OrderRecord[];
@@ -47,7 +48,10 @@ const DashboardTab = React.memo(function DashboardTab({
     }
     return true;
   });
-  const adminUpdates = notifications.filter((event) => event.TargetAudience === 'ADMIN_UPDATE');
+  const adminUpdates = React.useMemo(
+    () => getActionableAdminUpdates(notifications, orders, filteredInquiries, cancellationRequests),
+    [cancellationRequests, filteredInquiries, notifications, orders],
+  );
   const currentLiveUpdate = adminUpdates.length ? adminUpdates[liveUpdateIndex % adminUpdates.length] : null;
 
   React.useEffect(() => {

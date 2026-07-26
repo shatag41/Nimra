@@ -34,6 +34,7 @@ type StoredSession = {
 
 type LoginOptions = {
   isNewAccount?: boolean;
+  redirectTo?: string;
 };
 
 interface AuthContextType {
@@ -179,7 +180,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const isAdminUser = isAdminRole(userData.Role);
     const nextPath = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('next') : null;
-    const safeNextPath = nextPath?.startsWith('/') && !nextPath.startsWith('//') ? nextPath : null;
+    const requestedRedirect = options?.redirectTo || nextPath;
+    const safeNextPath = requestedRedirect?.startsWith('/') && !requestedRedirect.startsWith('//') ? requestedRedirect : null;
     const expiresAt = Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000;
     const session: StoredSession = {
       token: createSessionToken(),

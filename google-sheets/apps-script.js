@@ -1071,6 +1071,7 @@ function trackOrder(spreadsheet, orderId, mobile, userId, email) {
 function updateOrderStatus(spreadsheet, params) {
   var orderId = params.orderId;
   var status  = params.status;
+  var customerMessage = String(params.customerMessage || '').trim();
   var sheet = SpreadsheetService.getInstance().getSheet('Orders');
   if (!sheet) return { success: false, message: 'Orders sheet not found.' };
 
@@ -1084,22 +1085,54 @@ function updateOrderStatus(spreadsheet, params) {
   var updatedAtIndex = headers.indexOf('Updated At');
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][orderIdIndex]).trim() === String(orderId).trim()) {
-      if (statusIndex  >= 0) sheet.getRange(i + 1, statusIndex  + 1).setValue(status);
-      if (updatedAtIndex >= 0) sheet.getRange(i + 1, updatedAtIndex + 1).setValue(new Date());
-      incrementAdminMetric(spreadsheet, params.adminId, 'Orders Managed');
+      var previousStatus = String(data[i][statusIndex] || '').trim();
+      if (previousStatus === status) {
+        return { success: true, message: 'Order is already ' + status + '; no duplicate notification was sent.', duplicatePrevented: true };
+      }
+
+      var statusSequence = ['Pending', 'Confirmed', 'Processing', 'Dispatched', 'Out for Delivery', 'Delivered'];
+      var previousIndex = statusSequence.indexOf(previousStatus);
+      var nextIndex = statusSequence.indexOf(status);
+      var isOutOfSequence = previousIndex >= 0 && nextIndex >= 0 &&
+        (nextIndex < previousIndex || nextIndex > previousIndex + 1);
+      if (isOutOfSequence && customerMessage.length < 20) {
+        return { success: false, message: 'A valid customer apology message is required for an out-of-sequence status update.' };
+      }
 
       users = users || getUsersData(spreadsheet);
       var order = rowToOrder(headers, data[i], spreadsheet, users);
       var name   = order.customer.name || '';
       var email  = order.customer.email || '';
       var mobile = order.customer.mobile || '';
+      var previousUpdatedAt = updatedAtIndex >= 0 ? data[i][updatedAtIndex] : '';
 
-      var emailResult = sendOrderStatusUpdateEmail(email, name, orderId, status, mobile);
+      if (statusIndex  >= 0) sheet.getRange(i + 1, statusIndex  + 1).setValue(status);
+      if (updatedAtIndex >= 0) sheet.getRange(i + 1, updatedAtIndex + 1).setValue(new Date());
+
+      var emailResult = sendOrderStatusUpdateEmail(
+        email,
+        name,
+        orderId,
+        status,
+        mobile,
+        isOutOfSequence ? customerMessage : '',
+        previousStatus
+      );
+      if (isOutOfSequence && !emailResult.sent) {
+        if (statusIndex >= 0) sheet.getRange(i + 1, statusIndex + 1).setValue(previousStatus);
+        if (updatedAtIndex >= 0) sheet.getRange(i + 1, updatedAtIndex + 1).setValue(previousUpdatedAt);
+        return {
+          success: false,
+          message: emailResult.error || 'The customer email could not be sent. The order status was not changed.'
+        };
+      }
+
+      incrementAdminMetric(spreadsheet, params.adminId, 'Orders Managed');
       createDomainEvent(spreadsheet, {
         TargetAudience: 'CUSTOMER_NOTIFICATION',
         EventType: 'ORDER_STATUS_CHANGED',
         Title: 'Order ' + orderId + ' updated',
-        Message: 'Your order status is now ' + status + '.',
+        Message: isOutOfSequence ? customerMessage : 'Your order status is now ' + status + '.',
         Category: status === 'Delivered' ? 'Delivery Updates' : 'Orders',
         Priority: status === 'Cancelled' ? 'High' : 'Medium',
         ActionLink: '/orders?orderId=' + encodeURIComponent(orderId),
@@ -4270,7 +4303,7 @@ function sendOrderConfirmationEmail(email, name, orderId, products, totalAmount,
   return sendNimraEmail(email, subject, plainBody, htmlBody, 'NIMRA Support');
 }
 
-function sendOrderStatusUpdateEmail(email, name, orderId, status, mobile) {
+function sendOrderStatusUpdateEmail(email, name, orderId, status, mobile, customerMessage, previousStatus) {
   email = normalizeEmail(email);
   if (!email || !isValidEmail(email)) {
     Logger.log("sendOrderStatusUpdateEmail skipped: invalid email address provided.");
@@ -4281,8 +4314,9 @@ function sendOrderStatusUpdateEmail(email, name, orderId, status, mobile) {
     return { sent: false, error: 'User opted out of order status update emails.' };
   }
   var displayName = String(name || 'Customer').trim();
-  var trackingUrl = 'https://nimrawater.com/track?orderId=' + encodeURIComponent(orderId) + '&mobile=' + encodeURIComponent(mobile || '') + '&autoSubmit=true';
   var subject = 'NIMRA Order #' + orderId + ' Status Update: ' + status;
+  customerMessage = String(customerMessage || '').trim();
+  previousStatus = String(previousStatus || '').trim();
   
   var messageText = 'Your order status has been updated to: ' + status + '.';
   if (status.toLowerCase() === 'dispatched' || status.toLowerCase() === 'shipped') {
@@ -4297,15 +4331,17 @@ function sendOrderStatusUpdateEmail(email, name, orderId, status, mobile) {
 
   var plainBody = 'Hello ' + displayName + ',\n\n' +
     'Your order ' + orderId + ' status has been updated.\n\n' +
+    (previousStatus && customerMessage ? 'Previous Status: ' + previousStatus + '\n' : '') +
     'New Status: ' + status + '\n' +
-    messageText + '\n\n' +
-    'You can track your order here: ' + trackingUrl + '\n\n' +
+    messageText + '\n' +
+    (customerMessage ? '\n' + customerMessage + '\n' : '') + '\n' +
     'NIMRA Support';
   var htmlBody = '<p>Hello ' + escapeHtml(displayName) + ',</p>' +
     '<p>Your order <strong>' + orderId + '</strong> status has been updated.</p>' +
+    (previousStatus && customerMessage ? '<p><strong>Previous Status:</strong> ' + escapeHtml(previousStatus) + '</p>' : '') +
     '<p><strong>New Status:</strong> <span style="font-weight:bold;color:#1e3a8a;">' + escapeHtml(status) + '</span></p>' +
     '<p>' + escapeHtml(messageText) + '</p>' +
-    '<p>You can track your order here: <a href="' + trackingUrl + '">' + trackingUrl + '</a></p>' +
+    (customerMessage ? '<p>' + escapeHtml(customerMessage) + '</p>' : '') +
     '<p>NIMRA Support</p>';
 
   return sendNimraEmail(email, subject, plainBody, htmlBody, 'NIMRA Support');

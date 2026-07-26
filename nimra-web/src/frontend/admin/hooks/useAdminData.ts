@@ -203,10 +203,10 @@ export const useAdminData = (initialCMSData: CMSData) => {
   };
 
   // Update order status callback
-  const handleUpdateStatusSubmit = async (orderId: string, status: string) => {
+  const handleUpdateStatusSubmit = async (orderId: string, status: string, customerMessage?: string) => {
     setSaveLoading(true);
     try {
-      const res = await updateOrderStatus(orderId, status, currentUser?.id);
+      const res = await updateOrderStatus(orderId, status, currentUser?.id, customerMessage);
       if (res.success) {
         showAlert(res.message);
         setOrders(prev => prev.map(o => o.orderId === orderId ? { ...o, status: status as any, updatedAt: new Date().toISOString() } : o));

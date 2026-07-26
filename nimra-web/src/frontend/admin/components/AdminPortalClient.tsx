@@ -219,10 +219,10 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
   );
 
   // Submits callbacks mapping to states
-  const onUpdateOrderStatus = async (e: React.FormEvent) => {
+  const onUpdateOrderStatus = async (e: React.FormEvent, customerMessage?: string) => {
     e.preventDefault();
     if (!selectedOrder) return;
-    const success = await handleUpdateStatusSubmit(selectedOrder.orderId, orderStatusVal);
+    const success = await handleUpdateStatusSubmit(selectedOrder.orderId, orderStatusVal, customerMessage);
     if (success) {
       setSelectedOrder(null);
     }
@@ -298,7 +298,16 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           {/* TAB CONTENTS */}
           <div className={`tab-viewport ${loading ? 'is-refreshing' : ''}`}>
               {activeTab === 'dashboard' && isSuperAdmin(currentUser.role) && (
-                <SuperAdminOverview orders={orders} users={users} products={products} inquiries={inquiries} notifications={adminUpdates} onNavigate={setActiveTab} />
+                <SuperAdminOverview
+                  orders={orders}
+                  users={users}
+                  products={products}
+                  inquiries={inquiries}
+                  cancellationRequests={cancellationRequests}
+                  notifications={adminUpdates}
+                  onNavigate={setActiveTab}
+                  onOpenCancellationRequests={() => handleNavigateToOrdersWithFilter('All', 'cancellations')}
+                />
               )}
 
               {activeTab === 'dashboard' && !isSuperAdmin(currentUser.role) && (

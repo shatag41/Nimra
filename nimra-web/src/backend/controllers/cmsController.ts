@@ -924,10 +924,28 @@ export async function handlePost(req: NextRequest) {
         message: `Cancellation request ${String(decision || '').toLowerCase()} (local fallback mode)`
       });
     } else if (payload.type === 'updateOrderStatus') {
-      const { orderId, status } = payload;
+      const { orderId, status, customerMessage } = payload;
       const orderIndex = fallbackData.orders.findIndex((o: any) => String(o.orderId) === String(orderId));
       const now = new Date().toISOString();
       if (orderIndex >= 0) {
+        const statusSequence = ['Pending', 'Confirmed', 'Processing', 'Dispatched', 'Out for Delivery', 'Delivered'];
+        const previousStatus = fallbackData.orders[orderIndex].status;
+        const previousIndex = statusSequence.indexOf(previousStatus);
+        const nextIndex = statusSequence.indexOf(status);
+        const isOutOfSequence = previousIndex >= 0 && nextIndex >= 0
+          && (nextIndex < previousIndex || nextIndex > previousIndex + 1);
+        if (previousStatus === status) {
+          return NextResponse.json({ success: true, message: `Order is already ${status}; no duplicate notification was sent.` });
+        }
+        if (isOutOfSequence) {
+          if (String(customerMessage || '').trim().length < 20) {
+            return NextResponse.json({ success: false, message: 'A valid customer apology message is required for an out-of-sequence status update.' });
+          }
+          return NextResponse.json({
+            success: false,
+            message: 'The live email service is unavailable. The order status was not changed.'
+          });
+        }
         fallbackData.orders[orderIndex].status = status;
         fallbackData.orders[orderIndex].updatedAt = now;
 
