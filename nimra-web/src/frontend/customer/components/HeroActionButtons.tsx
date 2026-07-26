@@ -13,6 +13,11 @@ export default function HeroActionButtons({ hideBackButton }: { hideBackButton?:
   const { items } = useCart();
   const { user } = useAuth();
   const navigation = useNavigationHistory(user?.Role);
+  const [hasHydrated, setHasHydrated] = React.useState(false);
+
+  React.useEffect(() => {
+    setHasHydrated(true);
+  }, []);
   
   const tab = searchParams.get('tab');
 
@@ -38,7 +43,12 @@ export default function HeroActionButtons({ hideBackButton }: { hideBackButton?:
       break;
     }
   }
-  const backDestination = currentIndex > 0 ? navigation.stack[currentIndex - 1] : navigation.root;
+  // Navigation history and authentication are restored from browser storage.
+  // Keep the server and first client render identical, then use the restored
+  // destination after hydration to avoid changing button text mid-hydration.
+  const backDestination = hasHydrated
+    ? (currentIndex > 0 ? navigation.stack[currentIndex - 1] : navigation.root)
+    : { path: '/', label: 'Home' };
   const backText = `Back to ${backDestination.label}`;
 
   const handleBack = () => {

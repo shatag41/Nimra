@@ -14,7 +14,10 @@ type Props = {
 };
 
 export default function SuperAdminDashboard({ orders, users, products, inquiries, notifications, onNavigate }: Props) {
-  const adminUpdates = notifications.filter((event) => event.TargetAudience === 'ADMIN_UPDATE');
+  // `notifications` is the dedicated getAdminUpdates feed supplied by
+  // AdminPortalClient. Do not filter it again here: live-sheet responses may
+  // omit the audience field after the endpoint has already selected the rows.
+  const adminUpdates = notifications;
   const [liveUpdateIndex, setLiveUpdateIndex] = useState(0);
   const [pauseLiveUpdates, setPauseLiveUpdates] = useState(false);
   const currentLiveUpdate = adminUpdates.length ? adminUpdates[liveUpdateIndex % adminUpdates.length] : null;
@@ -39,7 +42,7 @@ export default function SuperAdminDashboard({ orders, users, products, inquiries
   const today = new Date().toDateString();
   const todaysOrders = orders.filter((order) => new Date(order.createdAt).toDateString() === today);
   const revenue = (list: OrderRecord[]) => list
-    .filter((order) => order.status !== 'Cancelled')
+    .filter((order) => order.status === 'Delivered')
     .reduce((sum, order) => sum + Number(order.total || 0), 0);
   const money = (amount: number) => `₹${amount.toLocaleString('en-IN')}`;
   const pending = orders.filter((order) => order.status === 'Pending').length;

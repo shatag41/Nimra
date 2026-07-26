@@ -106,6 +106,13 @@ export function CheckoutForm({
 }: CheckoutFormProps) {
 
   const selectedAddress = savedAddresses.find(a => a.id === selectedAddressId);
+  const selectedAddressReturnPath = React.useMemo(() => {
+    if (!selectedAddress) return checkoutReturnPath;
+    const [pathname, query = ''] = checkoutReturnPath.split('?');
+    const params = new URLSearchParams(query);
+    params.set('addressId', selectedAddress.id);
+    return `${pathname}?${params.toString()}`;
+  }, [checkoutReturnPath, selectedAddress]);
   const countries = Object.keys(WORLD_DATA);
   const states = form.country ? Object.keys(WORLD_DATA[form.country] || {}) : [];
   const cities = form.country && form.state ? (WORLD_DATA[form.country][form.state] || []) : [];
@@ -173,18 +180,9 @@ export function CheckoutForm({
                 <span className="info-email">{user?.Username || selectedAddress.email || 'Not provided'}</span>
                 {errors.email && <span className="error-hint">{errors.email}</span>}
               </div>
-              <div className="checkout-alt-mobile-section" style={{ borderTop: 'none', paddingTop: 0, marginTop: 0 }}>
-                <label className="info-label" style={{ marginBottom: '0.15rem', display: 'block' }}>Alt. Mobile <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(Optional)</span></label>
-                <input
-                  className="checkout-alt-mobile-input"
-                  type="tel"
-                  inputMode="numeric"
-                  maxLength={10}
-                  placeholder="10-digit number"
-                  value={form.altMobile}
-                  data-checkout-field="altMobile"
-                  onChange={(e) => { update('altMobile', e.target.value.replace(/\D/g, '')); clearError('altMobile'); }}
-                />
+              <div className={`info-block ${errors.altMobile ? 'info-error' : ''}`} data-checkout-field="altMobile" tabIndex={-1}>
+                <span className="info-label">Alt. Mobile <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(Optional)</span></span>
+                <span className="info-sub">{user?.AlternateMobile || selectedAddress.altMobile || 'Not provided'}</span>
                 {errors.altMobile && <span className="error-hint">{errors.altMobile}</span>}
               </div>
             </div>
@@ -194,7 +192,7 @@ export function CheckoutForm({
             <div className="detail-section-heading address-heading">
               <div className="address-heading-title"><h4>Address Details</h4><div className="address-badges"><span className={`type-badge type-${selectedAddress.type.toLowerCase()}`}>{selectedAddress.type}</span>{selectedAddress.isDefault && <span className="default-badge">Default</span>}</div></div>
               <div className="address-header-actions">
-                <Link className="checkout-action-button checkout-action-edit" href={`/customer-portal?tab=addresses&redirect=${encodeURIComponent(checkoutReturnPath)}`} aria-label="Edit address details"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Edit Address</Link>
+                <Link className="checkout-action-button checkout-action-edit" href={`/customer-portal?tab=addresses&editAddressId=${encodeURIComponent(selectedAddress.id)}&returnContext=checkout&redirect=${encodeURIComponent(selectedAddressReturnPath)}`} aria-label="Edit address details"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Edit Address</Link>
                 <Link className="checkout-action-button checkout-action-add" href={`/customer-portal?tab=addresses&add=true&redirect=${encodeURIComponent(checkoutReturnPath)}`} aria-label="Add a new address"><span aria-hidden="true">+</span>Add New Address</Link>
               </div>
             </div>

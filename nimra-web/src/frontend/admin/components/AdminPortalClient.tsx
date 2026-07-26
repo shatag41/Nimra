@@ -295,7 +295,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           {/* TAB CONTENTS */}
           <div className={`tab-viewport ${loading ? 'is-refreshing' : ''}`}>
               {activeTab === 'dashboard' && isSuperAdmin(currentUser.role) && (
-                <SuperAdminOverview orders={orders} users={users} products={products} inquiries={inquiries} notifications={notifications} onNavigate={setActiveTab} />
+                <SuperAdminOverview orders={orders} users={users} products={products} inquiries={inquiries} notifications={adminUpdates} onNavigate={setActiveTab} />
               )}
 
               {activeTab === 'dashboard' && !isSuperAdmin(currentUser.role) && (

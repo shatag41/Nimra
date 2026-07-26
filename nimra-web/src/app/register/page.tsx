@@ -9,6 +9,7 @@ import { useNotification } from '@/frontend/customer/contexts/NotificationContex
 import { recentlyViewedKey } from '@/frontend/customer/utils/recentlyViewed';
 import LogoutConfirmationModal from '@/frontend/customer/components/LogoutConfirmationModal';
 import LoadingButton from '@/frontend/shared/LoadingButton';
+import type { User } from '@/frontend/customer/contexts/AuthContext';
 import {
   hasGuestCartItems,
   mergeGuestCartIntoNewCustomer,
@@ -32,6 +33,8 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [registrationComplete, setRegistrationComplete] = useState(false);
   const [registeredGoogleEmail, setRegisteredGoogleEmail] = useState('');
+  const [verifiedGoogleAccount, setVerifiedGoogleAccount] = useState<{ email: string; name: string; user?: User } | null>(null);
+  const [isExistingGoogleLoginLoading, setIsExistingGoogleLoginLoading] = useState(false);
   const [errors, setErrors] = useState({
     name: '',
     email: '',
@@ -253,19 +256,21 @@ export default function RegisterPage() {
       }
 
       const payload = await profileRes.json();
+      const selectedEmail = String(payload.email || '').trim().toLowerCase();
+      const selectedName = String(payload.name || '').trim();
 
       const res = await sendRequest({
         type: 'googleSignIn',
-        email: payload.email,
-        name: payload.name,
+        email: selectedEmail,
+        name: selectedName,
         role: role,
         intent: 'register'
       });
 
       if (res.success && res.user) {
         if (res.message !== 'Registration successful') {
-          const selectedEmail = String(payload.email || '').trim().toLowerCase();
           setRegisteredGoogleEmail(selectedEmail);
+          setVerifiedGoogleAccount({ email: selectedEmail, name: selectedName, user: res.user });
           setError('');
           return;
         }
@@ -300,8 +305,9 @@ export default function RegisterPage() {
         }
       } else {
         if (res.code === 'ACCOUNT_ALREADY_REGISTERED') {
-          const selectedEmail = String(res.registeredEmail || payload.email || '').trim().toLowerCase();
-          setRegisteredGoogleEmail(selectedEmail);
+          const registeredEmail = String(res.registeredEmail || selectedEmail).trim().toLowerCase();
+          setRegisteredGoogleEmail(registeredEmail);
+          setVerifiedGoogleAccount({ email: registeredEmail, name: selectedName });
           setError('');
         } else {
           setError(res.message ?? 'Google Sign-In failed.');
@@ -313,6 +319,47 @@ export default function RegisterPage() {
       notify.error('Registration Error', 'Google Sign-In failed.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleExistingGoogleLogin = async () => {
+    if (isExistingGoogleLoginLoading || !verifiedGoogleAccount) return;
+    setIsExistingGoogleLoginLoading(true);
+    setError('');
+    try {
+      let authenticatedUser = verifiedGoogleAccount.user;
+      if (!authenticatedUser) {
+        const response = await sendRequest({
+          type: 'googleSignIn',
+          email: verifiedGoogleAccount.email,
+          name: verifiedGoogleAccount.name,
+          intent: 'login',
+        });
+        if (!response.success || !response.user) {
+          throw new Error(response.message || 'Google login failed.');
+        }
+        authenticatedUser = response.user;
+      }
+
+      if (hasGuestCartItems()) {
+        const cartResult = await mergeGuestCartIntoNewCustomer(authenticatedUser.ID);
+        if (!cartResult.success) {
+          // Keep authentication available and retain the untouched guest cart;
+          // the authenticated cart provider can retry synchronization later.
+          notify.warning('Cart Sync Pending', cartResult.message || 'Your cart is preserved and will sync shortly.');
+        }
+      }
+
+      sessionStorage.removeItem(REGISTRATION_CONTEXT_KEY);
+      setRegisteredGoogleEmail('');
+      setVerifiedGoogleAccount(null);
+      notify.success('Login Successful', `Welcome back, ${authenticatedUser.Name}!`);
+      login(authenticatedUser);
+    } catch (loginError) {
+      const message = loginError instanceof Error ? loginError.message : 'Google login failed. Please try again.';
+      setError(message);
+      notify.error('Login Failed', message);
+      setIsExistingGoogleLoginLoading(false);
     }
   };
 
@@ -562,13 +609,19 @@ export default function RegisterPage() {
       </div>
       <LogoutConfirmationModal
         isOpen={Boolean(registeredGoogleEmail)}
-        onClose={() => setRegisteredGoogleEmail('')}
-        onConfirm={() => window.location.assign(`/login?email=${encodeURIComponent(registeredGoogleEmail)}`)}
+        onClose={() => {
+          if (isExistingGoogleLoginLoading) return;
+          setRegisteredGoogleEmail('');
+          setVerifiedGoogleAccount(null);
+        }}
+        onConfirm={handleExistingGoogleLogin}
         title="Account already registered"
         description="Want to log in?"
         confirmText="Log In"
         cancelText="Stay on Sign Up"
         confirmButtonClass="btn btn-primary"
+        isProcessing={isExistingGoogleLoginLoading}
+        processingText="Logging in..."
         stableFlowLayout
         centerContent
       />

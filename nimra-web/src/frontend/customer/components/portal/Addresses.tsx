@@ -38,9 +38,12 @@ export function Addresses() {
   const { user, updateUserSession } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const requestedEditAddressId = searchParams.get('editAddressId');
+  const isCheckoutReturn = searchParams.get('returnContext') === 'checkout';
 
   const [addresses, setAddresses] = useState<Address[]>(() => getUserSavedAddresses(user) as Address[]);
   const [addressesLoading, setAddressesLoading] = useState(true);
+  const [routeEditReady, setRouteEditReady] = useState(!requestedEditAddressId);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -312,10 +315,12 @@ export function Addresses() {
     if (!saved) return;
     setDuplicateAddress(null);
 
-    const redirectPath = searchParams ? searchParams.get('redirect') : null;
+    const redirectPath = searchParams.get('redirect');
     if (redirectPath) {
+      const returnUrl = new URL(redirectPath, window.location.origin);
+      if (isCheckoutReturn) returnUrl.searchParams.set('addressId', newSavedAddr.id);
       setIsRedirecting(true);
-      router.replace(redirectPath);
+      router.replace(`${returnUrl.pathname}${returnUrl.search}${returnUrl.hash}`);
       return;
     }
     setIsAdding(false);
@@ -406,6 +411,24 @@ export function Addresses() {
     setIsAdding(true);
   };
 
+  useEffect(() => {
+    if (addressesLoading || !requestedEditAddressId || routeEditReady) return;
+    const requestedAddress = addresses.find(address => address.id === requestedEditAddressId);
+    if (requestedAddress) handleEdit(requestedAddress);
+    setRouteEditReady(true);
+  }, [addresses, addressesLoading, requestedEditAddressId, routeEditReady]);
+
+  const handleCancelForm = () => {
+    const redirectPath = searchParams.get('redirect');
+    if (isCheckoutReturn && redirectPath) {
+      setIsRedirecting(true);
+      router.replace(redirectPath);
+      return;
+    }
+    setIsAdding(false);
+    setEditId(null);
+  };
+
   const handleDelete = (address: Address) => {
     setAddressPendingDelete(address);
   };
@@ -484,7 +507,7 @@ export function Addresses() {
     );
   }
 
-  if (addressesLoading) {
+  if (addressesLoading || !routeEditReady) {
     return (
       <div className="addresses-loading-grid" aria-label="Loading saved addresses" aria-busy="true">
         {Array.from({ length: 4 }, (_, index) => <div className="addresses-loading-card" key={index} />)}
@@ -686,10 +709,12 @@ export function Addresses() {
             </div>
 
             <div className="form-actions-footer">
-              <button type="button" onClick={() => setIsAdding(false)} className="btn-cancel">
+              <button type="button" onClick={handleCancelForm} className="address-footer-button address-footer-cancel">
                 Cancel
               </button>
-              <LoadingButton type="submit" className="btn-submit" isLoading={saving} loadingText="Saving...">Save Address</LoadingButton>
+              <LoadingButton type="submit" className="btn-submit address-footer-save" isLoading={saving} loadingText="Saving...">
+                Save Address
+              </LoadingButton>
             </div>
           </form>
         </div>
@@ -1410,49 +1435,103 @@ export function Addresses() {
         }
  
         .form-actions-footer {
+          position: static;
           display: flex;
+          width: 100%;
+          box-sizing: border-box;
+          align-items: center;
           justify-content: flex-end;
-          gap: 0.85rem;
-          margin-top: 0.85rem;
-          padding-top: 1rem;
+          gap: 16px;
+          margin: 0;
+          padding: 16px 24px 24px;
           border-top: 1px solid var(--border-color);
+          transform: none;
         }
  
-        .btn-cancel {
-          padding: 0.6rem 1.25rem;
+        .address-footer-button {
+          position: static;
+          width: 160px;
+          min-width: 0;
+          max-width: none;
+          height: 48px;
+          min-height: 0;
+          margin: 0;
+          padding: 0 20px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          flex: 0 0 160px;
+          gap: 0;
+          white-space: nowrap;
           font-family: var(--font-heading);
           font-weight: 600;
-          font-size: 0.88rem;
+          font-size: 16px;
+          line-height: 1;
+          text-align: center;
+          text-indent: 0;
+          border-radius: var(--radius-md);
+          cursor: pointer;
+          transform: none;
+          transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+        }
+
+        .address-footer-cancel {
           background: transparent;
           border: 1px solid var(--border-color);
-          border-radius: var(--radius-md);
           color: var(--text-secondary);
-          cursor: pointer;
-          transition: all 0.2s ease;
         }
  
-        .btn-cancel:hover {
+        .address-footer-cancel:hover:not(:disabled) {
           background: rgba(148, 163, 184, 0.08);
           color: var(--text-primary);
         }
  
-        .btn-submit {
-          padding: 0.6rem 1.5rem;
+        .form-actions-footer :global(.address-footer-save) {
+          position: static;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          flex: 0 0 160px;
+          width: 160px;
+          min-width: 0;
+          max-width: none;
+          height: 48px;
+          min-height: 0;
+          margin: 0;
+          padding: 0 20px;
+          gap: 0;
+          white-space: nowrap;
           font-family: var(--font-heading);
+          font-size: 16px;
           font-weight: 600;
-          font-size: 0.88rem;
+          line-height: 1;
+          text-align: center;
+          text-indent: 0;
           color: #ffffff;
           background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
-          border: none;
+          border: 1px solid transparent;
           border-radius: var(--radius-md);
           cursor: pointer;
           box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
-          transition: all 0.2s ease;
+          transform: none;
+          transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
         }
  
-        .btn-submit:hover {
-          transform: translateY(-1px);
+        .form-actions-footer :global(.address-footer-save:hover:not(:disabled)) {
           box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+        }
+
+        .address-footer-button:disabled,
+        .form-actions-footer :global(.address-footer-save:disabled) {
+          cursor: wait;
+          opacity: 0.65;
+        }
+
+        .form-actions-footer :global(.address-footer-save .shared-loading-button-content) {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
         }
  
         @keyframes spin-kf {
@@ -1510,11 +1589,14 @@ export function Addresses() {
  
           .form-actions-footer {
             flex-direction: column-reverse;
-            gap: 0.75rem;
+            gap: 16px;
+            padding: 16px 20px 20px;
           }
  
-          .btn-cancel, .btn-submit {
+          .address-footer-button,
+          .form-actions-footer :global(.address-footer-save) {
             width: 100%;
+            flex-basis: 48px;
             text-align: center;
           }
         }
