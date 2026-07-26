@@ -15,7 +15,16 @@ export function getActionableAdminUpdates(
   inquiries: Inquiry[],
   cancellationRequests: CancellationRequest[] = [],
 ) {
+  const seenEvents = new Set<string>();
+
   return notifications.filter((event) => {
+    const eventKey = text(event.EventID || event.ID)
+      || [event.EventType, event.RelatedEntityID, event.OrderID, event.InquiryID, event.Timestamp, event.Message]
+        .map(text)
+        .join('|');
+    if (seenEvents.has(eventKey)) return false;
+    seenEvents.add(eventKey);
+
     const eventType = text(event.EventType).toUpperCase();
     if (completedEventTypes.has(eventType)) return false;
 

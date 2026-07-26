@@ -41,6 +41,7 @@ export default function RegisterPage() {
   const [verifiedGoogleAccount, setVerifiedGoogleAccount] = useState<{ email: string; name: string; user?: User } | null>(null);
   const [isExistingGoogleLoginLoading, setIsExistingGoogleLoginLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isExistingAccountLoginLoading, setIsExistingAccountLoginLoading] = useState(false);
   const [errors, setErrors] = useState({
     name: '',
     email: '',
@@ -56,6 +57,8 @@ export default function RegisterPage() {
   const [expiresAt, setExpiresAt] = useState(0);
   const registrationSourceRef = useRef(registrationSourceFromSearch(''));
   const registrationRedirectRef = useRef('/customer-portal');
+  const registrationRequestInFlightRef = useRef(false);
+  const googleAuthInFlightRef = useRef(false);
   const googleChooserOpenRef = useRef(false);
   const otpRefs = useRef<Array<HTMLInputElement | null>>([]);
 
@@ -160,7 +163,7 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLoading || registrationComplete) return;
+    if (registrationRequestInFlightRef.current || registrationComplete) return;
     setError('');
     setErrors({ name: '', email: '', mobile: '', password: '', confirmPassword: '' });
 
@@ -168,6 +171,7 @@ export default function RegisterPage() {
       return;
     }
 
+    registrationRequestInFlightRef.current = true;
     setIsLoading(true);
 
     try {
@@ -184,6 +188,33 @@ export default function RegisterPage() {
         const resendAt = Date.now() + 30 * 1000;
         sessionStorage.setItem(REGISTRATION_DRAFT_KEY, JSON.stringify({ name, email: user.Username, mobile, password, confirmPassword, role, expiresAt: nextExpiry, resendAt }));
         setExpiresAt(nextExpiry); setResendSeconds(30); setOtp(''); setOtpError(''); setOtpExpired(false); setOtpOpen(true);
+      } else if (
+        res.code === 'ACCOUNT_ALREADY_REGISTERED'
+        || /already (?:registered|exists)/i.test(res.message || '')
+      ) {
+        setIsExistingAccountLoginLoading(true);
+        const loginResponse = await sendRequest({
+          type: 'login',
+          username: user.Username,
+          password: user.Password,
+        });
+
+        if (loginResponse.success && loginResponse.user) {
+          if (hasGuestCartItems()) {
+            const cartResult = await mergeGuestCartIntoNewCustomer(loginResponse.user.ID);
+            if (!cartResult.success) {
+              notify.warning('Cart Sync Pending', cartResult.message || 'Your cart is preserved and will sync shortly.');
+            }
+          }
+          sessionStorage.removeItem(REGISTRATION_CONTEXT_KEY);
+          notify.success('Login Successful', `Welcome back, ${loginResponse.user.Name}!`);
+          login(loginResponse.user, {
+            redirectTo: registrationSourceRef.current === 'cart' ? registrationRedirectRef.current : undefined,
+          });
+        } else {
+          setError(loginResponse.message ?? 'This account already exists. Please check your password and try again.');
+          notify.error('Login Failed', loginResponse.message ?? 'This account already exists. Please check your password.');
+        }
       } else {
         setError(res.message ?? 'Registration failed. Please try again.');
         notify.error('Registration Failed', res.message ?? 'Registration failed.');
@@ -192,6 +223,8 @@ export default function RegisterPage() {
       setError('Registration failed. Please try again.');
       notify.error('Registration Error', 'Registration failed. Please try again.');
     } finally {
+      registrationRequestInFlightRef.current = false;
+      setIsExistingAccountLoginLoading(false);
       setIsLoading(false);
     }
   };
@@ -264,7 +297,8 @@ export default function RegisterPage() {
 
   const handleGoogleSuccess = async (accessToken: string) => {
     googleChooserOpenRef.current = false;
-    if (!accessToken || isGoogleLoading || registrationComplete) return;
+    if (!accessToken || googleAuthInFlightRef.current || registrationComplete) return;
+    googleAuthInFlightRef.current = true;
     setIsGoogleLoading(true);
     try {
       setError('');
@@ -343,6 +377,7 @@ export default function RegisterPage() {
       setError('Google Sign-In failed.');
       notify.error('Registration Error', 'Google Sign-In failed.');
     } finally {
+      googleAuthInFlightRef.current = false;
       setIsGoogleLoading(false);
     }
   };
@@ -394,23 +429,26 @@ export default function RegisterPage() {
     onSuccess: (tokenResponse) => handleGoogleSuccess(tokenResponse.access_token),
     onError: () => {
       googleChooserOpenRef.current = false;
+      googleAuthInFlightRef.current = false;
       setIsGoogleLoading(false);
       setError('Google Sign-In failed');
     },
     onNonOAuthError: () => {
       googleChooserOpenRef.current = false;
+      googleAuthInFlightRef.current = false;
       setIsGoogleLoading(false);
     },
   });
 
   const handleGoogleRegistration = () => {
-    if (googleChooserOpenRef.current || isGoogleLoading || registrationComplete) return;
+    if (googleChooserOpenRef.current || googleAuthInFlightRef.current || registrationComplete) return;
     setError('');
     googleChooserOpenRef.current = true;
     try {
       googleLogin();
     } catch {
       googleChooserOpenRef.current = false;
+      googleAuthInFlightRef.current = false;
       setIsGoogleLoading(false);
       setError('Google Sign-In failed');
     }
@@ -623,7 +661,19 @@ export default function RegisterPage() {
           </div>
 
           <div style={{ marginTop: '0.8vh' }}>
-            <LoadingButton className="btn btn-primary auth-submit" type="submit" disabled={registrationComplete} isLoading={isLoading} loadingText="Sending OTP...">
+            <LoadingButton
+              className="btn btn-primary auth-submit"
+              type="submit"
+              disabled={registrationComplete}
+              isLoading={isLoading || isGoogleLoading}
+              loadingText={
+                isGoogleLoading
+                  ? 'Signing in...'
+                  : isExistingAccountLoginLoading
+                    ? 'Logging you in...'
+                    : 'Sending OTP...'
+              }
+            >
                 <>
                   Send OTP
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -645,7 +695,7 @@ export default function RegisterPage() {
                 disabled={isGoogleLoading || registrationComplete}
              >
                 <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
-                {isGoogleLoading ? 'Signing up with Google...' : 'Sign up with Google'}
+                {isGoogleLoading ? 'Creating account...' : 'Sign up with Google'}
              </button>
           </div>
 

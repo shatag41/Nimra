@@ -31,7 +31,7 @@ export default function CancelOrderModal({
           <button className="cancel-modal-button cancel-modal-button-secondary" onClick={() => setOrderToCancel(null)} disabled={cancelling}>
             No, Keep Order
           </button>
-          <LoadingButton className="cancel-modal-button cancel-modal-button-danger" onClick={(e) => { e.stopPropagation(); handleCancelOrder(); }} isLoading={cancelling} loadingText="Submitting...">Submit Request</LoadingButton>
+          <LoadingButton type="button" className="cancel-modal-button cancel-modal-button-danger" onClick={(e) => { e.stopPropagation(); handleCancelOrder(); }} isLoading={cancelling} loadingText="Submitting...">Submit Request</LoadingButton>
         </div>
       </div>
       <style jsx>{`
@@ -80,12 +80,22 @@ export default function CancelOrderModal({
           justify-content: center;
           margin-top: 0.5rem;
         }
-        .cancel-modal-button {
+        .cancel-modal-button,
+        .cancel-modal-actions :global(.cancel-modal-button-danger) {
           flex: 1;
+          min-width: 0;
+          min-height: 48px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.45rem;
           padding: 0.65rem 1rem;
           border-radius: var(--radius-md);
+          font-family: inherit;
           font-weight: 700;
           font-size: 0.9rem;
+          line-height: 1.2;
+          text-align: center;
           cursor: pointer;
           transition: all var(--transition-fast);
         }
@@ -97,17 +107,27 @@ export default function CancelOrderModal({
         .cancel-modal-button-secondary:hover:not(:disabled) {
           background: var(--bg-tertiary);
         }
-        .cancel-modal-button-danger {
+        .cancel-modal-actions :global(.cancel-modal-button-danger) {
           background: #dc2626;
           border: 1px solid #dc2626;
-          color: white;
+          color: #ffffff;
+          box-shadow: 0 8px 18px rgba(220, 38, 38, 0.2);
         }
-        .cancel-modal-button-danger:hover:not(:disabled) {
+        .cancel-modal-actions :global(.cancel-modal-button-danger:hover:not(:disabled)) {
           background: #b91c1c;
+          border-color: #b91c1c;
+          box-shadow: 0 10px 22px rgba(185, 28, 28, 0.28);
         }
-        .cancel-modal-button:disabled {
+        .cancel-modal-button:disabled,
+        .cancel-modal-actions :global(.cancel-modal-button-danger:disabled) {
           opacity: 0.6;
           cursor: not-allowed;
+        }
+        .cancel-modal-actions :global(.cancel-modal-button-danger .shared-loading-button-content) {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.45rem;
         }
         @keyframes cancelModalScaleIn {
           from {
