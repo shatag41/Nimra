@@ -155,62 +155,7 @@ export default function OrdersClient() {
 
   if (!mounted || authLoading) return null;
 
-  if (!isAuthenticated) {
-    return (
-      <div className="guest-state-container container animate-fade-in">
-        <div className="guest-card glass card">
-          <div className="guest-icon">🔒</div>
-          <h2>Access Restricted</h2>
-          <p>Please log in to your account to view your order history, track deliveries, and manage reorders.</p>
-          <div className="guest-actions">
-            <Link href="/login" className="btn btn-primary">
-              Login / Register
-            </Link>
-          </div>
-        </div>
-        <style jsx>{`
-          .guest-state-container {
-            min-height: 80vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding-top: 100px;
-          }
-          .guest-card {
-            max-width: 480px;
-            width: 100%;
-            padding: 3.5rem 2.5rem;
-            text-align: center;
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-xl);
-          }
-          .guest-icon {
-            font-size: 3.5rem;
-            margin-bottom: 1.5rem;
-          }
-          .guest-card h2 {
-            font-size: 1.8rem;
-            margin-bottom: 0.75rem;
-          }
-          .guest-card p {
-            color: var(--text-secondary);
-            margin-bottom: 2rem;
-            line-height: 1.6;
-          }
-          .guest-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-          }
-          @media (max-width: 480px) {
-            .guest-actions {
-              flex-direction: column;
-            }
-          }
-        `}</style>
-      </div>
-    );
-  }
+  if (!isAuthenticated) return null;
 
   interface TimelineStep {
     key: string;

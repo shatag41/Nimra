@@ -148,6 +148,16 @@ export function useCustomerOrders() {
   const userName = user?.Name || '';
   const userEmail = user?.Username || '';
   const userMobile = user?.Mobile || '';
+
+  useEffect(() => {
+    const clearProtectedOrderState = () => {
+      clearCustomerOrdersCache();
+      setOrders([]);
+      setLoadingOrders(false);
+    };
+    window.addEventListener('nimra-auth-logout', clearProtectedOrderState);
+    return () => window.removeEventListener('nimra-auth-logout', clearProtectedOrderState);
+  }, []);
   const userAltMobile = user?.AlternateMobile || '';
   const userSavedAddresses = user?.SavedAddresses || '';
   const cacheKey = userId ? String(userId) : userEmail;

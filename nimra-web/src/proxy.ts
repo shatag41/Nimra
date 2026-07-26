@@ -35,7 +35,7 @@ export function proxy(request: NextRequest) {
 
   const authPaths = ['/login', '/register', '/forgot-password', '/admin/login'];
   const isAuthPath = authPaths.includes(pathname);
-  const protectedCustomerPaths = ['/checkout', '/settings'];
+  const protectedCustomerPaths = ['/checkout', '/settings', '/profile-settings', '/orders', '/customer-portal'];
   const isProtectedCustomerPath = protectedCustomerPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
   const isAdminPath = pathname.startsWith('/admin');
 
@@ -92,11 +92,15 @@ export function proxy(request: NextRequest) {
   }
 
   if (!user && isProtectedCustomerPath) {
+    const isCheckoutPath = pathname === '/checkout' || pathname.startsWith('/checkout/');
+    if (!isCheckoutPath) {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
     const loginUrl = new URL('/login', request.url);
     const requestedPath = `${pathname}${request.nextUrl.search}`;
     loginUrl.searchParams.set('next', requestedPath);
     const response = NextResponse.redirect(loginUrl);
-    if (pathname === '/checkout' || pathname.startsWith('/checkout/')) {
+    if (isCheckoutPath) {
       response.cookies.set(AUTH_RETURN_COOKIE, requestedPath, {
         path: '/',
         sameSite: 'lax',

@@ -52,6 +52,15 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
   const isAdminLogin = pathname === '/admin/login';
   const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password' || isAdminLogin;
   const isCheckout = pathname === '/checkout' || pathname?.startsWith('/checkout/');
+  const isProtectedCustomerRoute = isCheckout
+    || pathname === '/orders'
+    || pathname?.startsWith('/orders/')
+    || pathname === '/customer-portal'
+    || pathname?.startsWith('/customer-portal/')
+    || pathname === '/settings'
+    || pathname?.startsWith('/settings/')
+    || pathname === '/profile-settings'
+    || pathname?.startsWith('/profile-settings/');
 
   useEffect(() => {
     if (isLoading) return;
@@ -69,8 +78,10 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
       const fullPath = window.location.pathname + window.location.search;
       persistCheckoutAuthHandoff(fullPath);
       router.replace(`/login?next=${encodeURIComponent(fullPath)}`);
+    } else if (!isAuthenticated && isProtectedCustomerRoute) {
+      router.replace('/');
     }
-  }, [isAdmin, isAdminLogin, isAuthPage, isAuthenticated, isCheckout, isLoading, pathname, router, searchParams, user]);
+  }, [isAdmin, isAdminLogin, isAuthPage, isAuthenticated, isCheckout, isLoading, isProtectedCustomerRoute, pathname, router, searchParams, user]);
 
   const renderBareShell = (content: React.ReactNode) => (
     <div className="ds-app-shell">
@@ -80,7 +91,7 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
     </div>
   );
 
-  const isProtectedRoute = (isAdmin && !isAdminLogin) || isCheckout;
+  const isProtectedRoute = (isAdmin && !isAdminLogin) || isProtectedCustomerRoute;
 
   if (!mounted && isProtectedRoute) return renderBareShell(null);
   if (isLoading && isProtectedRoute) return renderBareShell(null);
@@ -90,7 +101,7 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
     return renderBareShell(null);
   }
 
-  if (!isAuthenticated && isCheckout) {
+  if (!isAuthenticated && isProtectedCustomerRoute) {
     return renderBareShell(null);
   }
 

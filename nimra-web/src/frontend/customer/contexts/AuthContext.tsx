@@ -8,7 +8,7 @@ import { isAdminRole } from '@/frontend/admin/utils/accessControl';
 import type { CartItem } from '@/types/cms';
 import { mergeCartItems, mergeCartSnapshots, normalizeCartItem } from '../utils/commerce';
 import { resetNavigationHistory } from '../navigation/navigationHistory';
-import { readCheckoutAuthReturn } from '../utils/checkoutAuthHandoff';
+import { clearCheckoutAuthHandoff, readCheckoutAuthReturn } from '../utils/checkoutAuthHandoff';
 
 export interface User {
   ID: number;
@@ -73,11 +73,13 @@ const createSessionToken = () => {
 };
 
 export const clearBrowserSession = () => {
-  Cookies.remove(USER_COOKIE, { path: '/' });
+  const secureCookie = typeof window !== 'undefined' && window.location.protocol === 'https:';
+  const cookieOptions = { path: '/', sameSite: 'lax' as const, secure: secureCookie };
+  Cookies.remove(USER_COOKIE, cookieOptions);
   Cookies.remove(USER_COOKIE);
-  Cookies.remove(SESSION_COOKIE, { path: '/' });
+  Cookies.remove(SESSION_COOKIE, cookieOptions);
   Cookies.remove(SESSION_COOKIE);
-  Cookies.remove('nimra_admin_user', { path: '/' });
+  Cookies.remove('nimra_admin_user', cookieOptions);
   Cookies.remove('nimra_admin_user');
 
   if (typeof window === 'undefined') return;
@@ -253,6 +255,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(null);
     setIsNewAccountSession(false);
     clearBrowserSession();
+    clearCheckoutAuthHandoff();
     resetNavigationHistory();
     notifyRecentlyViewedChanged();
   }, []);
@@ -305,10 +308,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     clearBrowserSession();
     resetNavigationHistory();
     notifyRecentlyViewedChanged();
-    // Use hard navigation so all React state is fully reset and the
-    // guest navbar renders correctly on the home page.
-    window.location.replace('/');
-  }, []);
+    if (typeof window !== 'undefined') {
+      Object.keys(window.sessionStorage)
+        .filter((key) => key.startsWith('nimra-orders:') || key.startsWith('nimra_navigation_'))
+        .forEach((key) => window.sessionStorage.removeItem(key));
+      window.dispatchEvent(new Event('nimra-auth-logout'));
+    }
+    router.replace('/');
+    queueMicrotask(() => router.refresh());
+  }, [router]);
 
   // Synchronize Recently Viewed Products with Database
   useEffect(() => {
