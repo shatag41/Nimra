@@ -2386,7 +2386,9 @@ function deleteRowsOwnedByUser(spreadsheet, sheetName, ownerHeaders, userId) {
 
 function deleteCustomerOwnedData(spreadsheet, userId) {
   deleteUserAddresses(spreadsheet, userId);
-  deleteRowsOwnedByUser(spreadsheet, 'Orders', ['Customer User ID'], userId);
+  // Orders are immutable financial and operational history. Account deletion
+  // removes customer-owned account data, but never the completed/cancelled
+  // order snapshots used by Admin and Super Admin reporting.
   deleteRowsOwnedByUser(spreadsheet, 'Carts', ['User ID', 'UserID'], userId);
   deleteRowsOwnedByUser(spreadsheet, 'Events', ['UserID', 'User ID'], userId);
   deleteRowsOwnedByUser(spreadsheet, 'Sessions', ['User ID', 'UserID'], userId);
@@ -3637,6 +3639,7 @@ function handleAuthGoogleSignIn(spreadsheet, params) {
   var email = normalizeEmail(params.email);
   var name = String(params.name || '').trim();
   var role = String(params.role || 'Customer').trim(); // Default role for new users
+  var intent = String(params.intent || 'login').trim().toLowerCase();
   
   if (!email) {
     return { success: false, message: 'Email is required for Google Sign-In.' };
@@ -3651,13 +3654,20 @@ function handleAuthGoogleSignIn(spreadsheet, params) {
     var u = users[i];
     if (normalizeEmail(u.Username) === email) {
       if (!u.Active) {
-        return { success: false, message: 'Your account is inactive. Please contact support.' };
+        return { success: false, code: 'GOOGLE_ACCOUNT_NOT_FOUND', registeredEmail: email, message: 'Account doesn’t exist. Create an account to continue.' };
+      }
+      if (intent === 'register') {
+        return { success: false, code: 'ACCOUNT_ALREADY_REGISTERED', registeredEmail: email, message: 'Account already registered. Want to log in?' };
       }
       updateUserLastLogin(spreadsheet, u.ID);
       var safeUser = Object.assign({}, u);
       delete safeUser.Password;
       return { success: true, message: 'Login successful', user: safeUser };
     }
+  }
+
+  if (intent !== 'register') {
+    return { success: false, code: 'GOOGLE_ACCOUNT_NOT_FOUND', registeredEmail: email, message: 'Account doesn’t exist. Create an account to continue.' };
   }
   
   // Create new user if not found

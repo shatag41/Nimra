@@ -84,7 +84,8 @@ const DashboardTab = React.memo(function DashboardTab({
     return d >= filterStartDate;
   });
 
-  const deliveredOrders = orders.filter(o => o.status === 'Delivered');
+  const normalizeOrderStatus = (status: unknown) => String(status || '').trim().toLowerCase();
+  const deliveredOrders = orders.filter(o => normalizeOrderStatus(o.status) === 'delivered');
   const filteredDeliveredOrdersInWindow = deliveredOrders.filter(o => {
     const d = new Date(o.createdAt || o.updatedAt || now);
     return d >= filterStartDate;
@@ -113,13 +114,10 @@ const DashboardTab = React.memo(function DashboardTab({
     return d >= filterStartDate;
   });
 
-  const activeCustomersMap = new Map<string, number>();
-  filteredActiveOrders.forEach(o => {
-    if (o.customer?.mobile) {
-      activeCustomersMap.set(o.customer.mobile, (activeCustomersMap.get(o.customer.mobile) || 0) + 1);
-    }
-  });
-  const activeCustomers = activeCustomersMap.size;
+  const activeCustomers = users.filter(user =>
+    String(user.Role || '').trim().toUpperCase() === 'CUSTOMER'
+    && String(user.Active).toLowerCase() !== 'false'
+  ).length;
 
   const filteredInquiriesInWindow = filteredInquiries.filter(i => {
     const d = new Date(i.Timestamp || now);
@@ -492,13 +490,13 @@ const DashboardTab = React.memo(function DashboardTab({
           minHeight: '120px'
         }}>
           <div className="stat-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '0.5rem' }}>
-            <span className="stat-label" style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Active Customers</span>
+            <span className="stat-label" style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Total Customers</span>
             <div className="stat-icon" style={{ color: 'var(--primary-color)', display: 'flex', alignItems: 'center' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             </div>
           </div>
           <strong className="stat-val" style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)' }}>{activeCustomers}</strong>
-          <span className="stat-desc" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>With active orders</span>
+          <span className="stat-desc" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Active customer accounts</span>
         </div>
       </div>
 

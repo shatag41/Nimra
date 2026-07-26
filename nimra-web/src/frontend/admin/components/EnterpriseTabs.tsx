@@ -15,15 +15,16 @@ const formatAdminDate = (value?: string) => {
 };
 
 export function SuperAdminOverview({ orders, users, products, inquiries, notifications }: { orders: OrderRecord[]; users: AdminUser[]; products: Product[]; inquiries: Inquiry[]; notifications: Notification[] }) {
-  const customers = users.filter((user) => normalizeRole(user.Role) === 'CUSTOMER');
+  const customers = users.filter((user) => normalizeRole(user.Role) === 'CUSTOMER' && String(user.Active).toLowerCase() !== 'false');
   const admins = users.filter((user) => ['ADMIN', 'SUPER_ADMIN'].includes(normalizeRole(user.Role)));
   const today = new Date().toDateString();
   const todaysOrders = orders.filter((order) => new Date(order.createdAt).toDateString() === today);
-  const revenue = (list: OrderRecord[]) => list.filter((order) => order.status !== 'Cancelled').reduce((sum, order) => sum + Number(order.total || 0), 0);
+  const status = (value: unknown) => String(value || '').trim().toLowerCase();
+  const revenue = (list: OrderRecord[]) => list.filter((order) => status(order.status) === 'delivered').reduce((sum, order) => sum + Number(order.total || 0), 0);
   const cards = [
     ['Total Revenue', `₹${revenue(orders).toLocaleString('en-IN')}`], ["Today's Revenue", `₹${revenue(todaysOrders).toLocaleString('en-IN')}`],
-    ['Total Orders', orders.length], ['Pending Orders', orders.filter((order) => order.status === 'Pending').length], ['Completed Orders', orders.filter((order) => order.status === 'Delivered').length],
-    ['Cancelled Orders', orders.filter((order) => order.status === 'Cancelled').length], ['Customers', customers.length], ['Admins', admins.length],
+    ['Total Orders', orders.length], ['Pending Orders', orders.filter((order) => status(order.status) === 'pending' && !['approved', 'cancelled'].includes(status(order.cancellationStatus))).length], ['Completed Orders', orders.filter((order) => status(order.status) === 'delivered').length],
+    ['Cancelled Orders', orders.filter((order) => status(order.status) === 'cancelled').length], ['Customers', customers.length], ['Admins', admins.length],
     ['Active Admins', admins.filter((user) => String(user.Active).toLowerCase() !== 'false').length], ['New Registrations', users.filter((user) => user.CreatedAt && Date.now() - new Date(user.CreatedAt).getTime() < 604800000).length],
     ['Products', products.length], ['Pending Inquiries', inquiries.filter((inquiry) => inquiry.Status !== 'Reviewed').length], ['Notifications', notifications.length], ['System Health', 'Operational'], ['Google Sheets Status', 'Connected'],
   ];

@@ -6,16 +6,18 @@ import { useGoogleLogin } from '@react-oauth/google';
 import Link from 'next/link';
 import { sendRequest } from '@/utils/api';
 import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import LoadingButton from '@/frontend/shared/LoadingButton';
+import LogoutConfirmationModal from '@/frontend/customer/components/LogoutConfirmationModal';
 import {
   persistCheckoutAuthHandoff,
   restoreGuestCartFromAuthHandoff,
 } from '@/frontend/customer/utils/checkoutAuthHandoff';
 
 function LoginPageContent() {
-  const { login } = useAuth();
+  const { login, clearSession } = useAuth();
   const { notify } = useNotification();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<'mobile' | 'email'>('mobile');
   const [username, setUsername] = useState('');
@@ -25,6 +27,7 @@ function LoginPageContent() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [missingGoogleEmail, setMissingGoogleEmail] = useState('');
   const loginInFlightRef = useRef(false);
   const googleAuthInFlightRef = useRef(false);
   const googleChooserOpenRef = useRef(false);
@@ -137,12 +140,19 @@ function LoginPageContent() {
       const res = await sendRequest({ 
         type: 'googleSignIn', 
         email: payload.email, 
-        name: payload.name 
+        name: payload.name,
+        intent: 'login',
       });
 
       if (res.success && res.user) {
         login(res.user);
         notify.success('Login Successful', `Welcome back, ${res.user.Name}!`);
+      } else if (res.code === 'GOOGLE_ACCOUNT_NOT_FOUND') {
+        const selectedEmail = String(res.registeredEmail || payload.email || '').trim().toLowerCase();
+        clearSession();
+        if (nextPath?.startsWith('/checkout')) persistCheckoutAuthHandoff(nextPath);
+        setMissingGoogleEmail(selectedEmail);
+        setError('');
       } else {
         setError(res.message ?? 'Google Sign-In failed.');
         notify.error('Login Failed', res.message ?? 'Google Sign-In failed.');
@@ -519,6 +529,24 @@ function LoginPageContent() {
         </div>
       </div>
     </div>
+      <LogoutConfirmationModal
+        isOpen={Boolean(missingGoogleEmail)}
+        onClose={() => setMissingGoogleEmail('')}
+        onConfirm={() => {
+          const params = new URLSearchParams();
+          params.set('email', missingGoogleEmail);
+          if (nextPath?.startsWith('/checkout')) params.set('next', nextPath);
+          setMissingGoogleEmail('');
+          router.push(`/register?${params.toString()}`);
+        }}
+        title="Account not found"
+        description="Account doesn’t exist. Create an account to continue."
+        confirmText="Create Account"
+        cancelText="Cancel"
+        confirmButtonClass="btn btn-primary"
+        stableFlowLayout
+        centerContent
+      />
     </section>
   );
 }

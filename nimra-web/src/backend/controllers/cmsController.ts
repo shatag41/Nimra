@@ -190,7 +190,7 @@ function invalidateCMSCache(type?: string) {
     'updateCancellation', 'reviewCancellationRequest', 'updateOrderStatus', 'registerUser',
     'userAction', 'saveAddress', 'accountSettings', 'userAddresses', 'login', 'register',
     'verifyRegistrationOTP', 'createVerifiedUser', 'googleSignIn', 'cartSync', 'notificationCRUD',
-    'adminUpdateCRUD', 'inquiryCRUD', 'inquiryReview'
+    'adminUpdateCRUD', 'inquiryCRUD', 'inquiryReview', 'userCRUD'
   ];
 
   if (!type || cmsTypes.includes(type)) {
@@ -596,16 +596,22 @@ export async function handlePost(req: NextRequest) {
       }
     }
 
-    if (payload.type === 'googleSignIn' && payload.intent === 'register') {
+    if (payload.type === 'googleSignIn') {
       try {
         const googleEmail = String(payload.email || '').trim().toLowerCase();
         const users = getAppsScriptUrl()
           ? await fetchAppsScriptData('getUsers')
           : (fallbackData.users || []);
-        const existingUser = (Array.isArray(users) ? users : []).find(
+        const matchingUsers = (Array.isArray(users) ? users : []).filter(
           (user: any) => String(user.Username || user.Email || '').trim().toLowerCase() === googleEmail
         );
-        if (existingUser) {
+        const activeUser = matchingUsers.find((user: any) => {
+          const active = String(user.Active ?? 'true').trim().toLowerCase();
+          const status = String(user.Status || '').trim().toLowerCase();
+          return !['false', 'inactive', 'deleted', 'disabled', 'suspended'].includes(active)
+            && !['inactive', 'deleted', 'disabled', 'suspended'].includes(status);
+        });
+        if (payload.intent === 'register' && activeUser) {
           return NextResponse.json({
             success: false,
             code: 'ACCOUNT_ALREADY_REGISTERED',
@@ -613,8 +619,16 @@ export async function handlePost(req: NextRequest) {
             message: 'Account already registered. Want to log in?',
           });
         }
+        if (payload.intent !== 'register' && !activeUser) {
+          return NextResponse.json({
+            success: false,
+            code: 'GOOGLE_ACCOUNT_NOT_FOUND',
+            registeredEmail: googleEmail,
+            message: 'Account doesn’t exist. Create an account to continue.',
+          }, { status: 404 });
+        }
       } catch (error) {
-        console.error('[Google registration] Existing-account check failed:', error);
+        console.error('[Google authentication] Active-account check failed:', error);
         return NextResponse.json(
           { success: false, message: 'Unable to verify this Google account. Please try again.' },
           { status: 503 }
@@ -1119,7 +1133,7 @@ export async function handlePost(req: NextRequest) {
         }
         fallbackData.users.splice(userIndex, 1);
         fallbackData.carts = (fallbackData.carts || []).filter((cart: any) => String(cart.userId) !== String(payload.userId));
-        fallbackData.orders = fallbackData.orders.filter((order: any) => String(order.userId || order.customer?.userId || '').trim() !== String(payload.userId).trim());
+        // Preserve completed/cancelled order snapshots for historical KPIs.
         fallbackData.notifications = (fallbackData.notifications || []).filter((event: any) => String(event.UserID || event.UserId || '').trim() !== String(payload.userId).trim());
         localDeletionOTPCache.delete(String(payload.userId));
         await syncLocalDB('save');

@@ -664,7 +664,11 @@ export const saveUser = async (user: Partial<AdminUser>, action: 'create' | 'upd
       body: JSON.stringify({ type: 'userCRUD', action, user }),
     });
     const data = await res.json();
-    if (data.success) invalidateReadCache(['users']);
+    if (data.success) {
+      invalidateReadCache(action === 'delete'
+        ? ['users', 'orders', 'cancellations', 'admin-updates']
+        : ['users']);
+    }
     return { success: data.success, message: data.message || 'User saved successfully', ID: data.ID };
   } catch (err) {
     console.error('Error saving user:', err);

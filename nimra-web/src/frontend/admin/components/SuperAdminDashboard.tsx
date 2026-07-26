@@ -16,28 +16,35 @@ type Props = {
 };
 
 export default function SuperAdminDashboard({ orders, users, products, inquiries, cancellationRequests, notifications, onNavigate, onOpenCancellationRequests }: Props) {
-  const customers = users.filter((user) => normalizeRole(user.Role) === 'CUSTOMER');
+  const customers = users.filter((user) =>
+    normalizeRole(user.Role) === 'CUSTOMER'
+    && String(user.Active).toLowerCase() !== 'false'
+  );
   const admins = users.filter((user) => ['ADMIN', 'SUPER_ADMIN'].includes(normalizeRole(user.Role)));
   const activeAdmins = admins.filter((admin) => String(admin.Active).toLowerCase() !== 'false');
   const activeProducts = products.filter((product) => String(product.Active).toLowerCase() !== 'false');
   const today = new Date().toDateString();
   const todaysOrders = orders.filter((order) => new Date(order.createdAt).toDateString() === today);
+  const normalizeStatus = (status: unknown) => String(status || '').trim().toLowerCase();
   const revenue = (list: OrderRecord[]) => list
-    .filter((order) => order.status === 'Delivered')
+    .filter((order) => normalizeStatus(order.status) === 'delivered')
     .reduce((sum, order) => sum + Number(order.total || 0), 0);
   const money = (amount: number) => `₹${amount.toLocaleString('en-IN')}`;
-  const pending = orders.filter((order) => order.status === 'Pending').length;
-  const completed = orders.filter((order) => order.status === 'Delivered').length;
-  const cancelled = orders.filter((order) => order.status === 'Cancelled').length;
+  const pending = orders.filter((order) =>
+    normalizeStatus(order.status) === 'pending'
+    && !['approved', 'cancelled'].includes(normalizeStatus(order.cancellationStatus))
+  ).length;
+  const completed = orders.filter((order) => normalizeStatus(order.status) === 'delivered').length;
+  const cancelled = orders.filter((order) => normalizeStatus(order.status) === 'cancelled').length;
   const pendingInquiries = inquiries.filter((inquiry) => inquiry.Status !== 'Reviewed').length;
   const cards = [
-    ['Total Revenue', money(revenue(orders)), `${orders.filter((order) => order.status !== 'Cancelled').length} revenue orders`, '₹', 'revenue'],
+    ['Total Revenue', money(revenue(orders)), `${completed} completed revenue orders`, '₹', 'revenue'],
     ["Today's Revenue", money(revenue(todaysOrders)), `${todaysOrders.length} orders today`, '↗', 'revenue'],
     ['Total Orders', orders.length, `${orders.length} backend records`, '▣', 'orders'],
     ['Pending Orders', pending, `${pending} awaiting action`, '◷', 'inquiries'],
     ['Completed Orders', completed, `${orders.length ? Math.round(completed / orders.length * 100) : 0}% completion rate`, '✓', 'revenue'],
     ['Cancelled Orders', cancelled, `${orders.length ? Math.round(cancelled / orders.length * 100) : 0}% cancellation rate`, '×', 'danger'],
-    ['Total Customers', customers.length, `${customers.filter((user) => String(user.Active).toLowerCase() !== 'false').length} active accounts`, '◉', 'customers'],
+    ['Total Customers', customers.length, `${customers.length} active accounts`, '◉', 'customers'],
     ['Total Admins', admins.length, `${activeAdmins.length} active accounts`, '◆', 'customers'],
     ['Products', products.length, `${activeProducts.length} active products`, '◇', 'products'],
     ['Pending Inquiries', pendingInquiries, `${inquiries.length} total inquiries`, '?', 'inquiries'],

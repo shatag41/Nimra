@@ -66,7 +66,13 @@ export default function RegisterPage() {
     let cancelled = false;
     restoreGuestCartFromAuthHandoff();
     const source = registrationSourceFromSearch(window.location.search);
-    const requestedNext = new URLSearchParams(window.location.search).get('next');
+    const registrationParams = new URLSearchParams(window.location.search);
+    const requestedNext = registrationParams.get('next');
+    const prefilledGoogleEmail = registrationParams.get('email')?.trim().toLowerCase();
+    if (prefilledGoogleEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(prefilledGoogleEmail)) {
+      setEmail(prefilledGoogleEmail);
+      sessionStorage.removeItem(REGISTRATION_DRAFT_KEY);
+    }
     const safeNext = requestedNext?.startsWith('/') && !requestedNext.startsWith('//') ? requestedNext : null;
     const storedCheckoutReturn = readCheckoutAuthReturn();
     const isCheckoutRegistration = source === 'cart' || Boolean(storedCheckoutReturn);
@@ -81,7 +87,7 @@ export default function RegisterPage() {
       window.history.replaceState(null, '', `/register?next=${encodeURIComponent(redirectTo)}`);
     }
 
-    const raw = sessionStorage.getItem(REGISTRATION_DRAFT_KEY);
+    const raw = prefilledGoogleEmail ? null : sessionStorage.getItem(REGISTRATION_DRAFT_KEY);
     if (!raw) return;
     try {
       const draft = JSON.parse(raw);

@@ -515,7 +515,9 @@ export const useAdminData = (initialCMSData: CMSData) => {
       const res = await saveUser({ ID: id }, 'delete');
       if (res.success) {
         showAlert(res.message);
-        setUsers(await fetchUsers());
+        clearAdminDataCache();
+        clearCMSDataCache();
+        await refreshDataSWR();
         return true;
       } else {
         showAlert(res.message, 'error');
