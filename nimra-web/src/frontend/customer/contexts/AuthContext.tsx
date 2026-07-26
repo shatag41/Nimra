@@ -42,9 +42,10 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isLoggingOut: boolean;
   isNewAccountSession: boolean;
   login: (userData: User, options?: LoginOptions) => void;
-  logout: () => void;
+  logout: (beforeNavigate?: () => void) => Promise<void>;
   clearSession: () => void;
   updateUserSession: (userData: User) => void;
 }
@@ -53,9 +54,10 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   isAuthenticated: false,
   isLoading: true,
+  isLoggingOut: false,
   isNewAccountSession: false,
   login: () => {},
-  logout: () => {},
+  logout: async () => {},
   clearSession: () => {},
   updateUserSession: () => {},
 });
@@ -157,6 +159,7 @@ const readNewAccountSessionFlag = (): boolean => {
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isNewAccountSession, setIsNewAccountSession] = useState(false);
   const router = useRouter();
 
@@ -302,21 +305,66 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [router, user]);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async (beforeNavigate?: () => void) => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'same-origin',
+        cache: 'no-store',
+      });
+    } catch (error) {
+      console.error('Server logout failed; completing local logout:', error);
+    }
+
     setUser(null);
     setIsNewAccountSession(false);
     clearBrowserSession();
+    clearCheckoutAuthHandoff();
     resetNavigationHistory();
     notifyRecentlyViewedChanged();
+
     if (typeof window !== 'undefined') {
       Object.keys(window.sessionStorage)
-        .filter((key) => key.startsWith('nimra-orders:') || key.startsWith('nimra_navigation_'))
+        .filter((key) =>
+          key.startsWith('nimra-orders:')
+          || key.startsWith('nimra_navigation_')
+          || key.startsWith('nimra_registration_')
+        )
         .forEach((key) => window.sessionStorage.removeItem(key));
       window.dispatchEvent(new Event('nimra-auth-logout'));
     }
+
+    beforeNavigate?.();
     router.replace('/');
-    queueMicrotask(() => router.refresh());
-  }, [router]);
+
+    await new Promise<void>((resolve) => {
+      if (typeof window === 'undefined') {
+        resolve();
+        return;
+      }
+      window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve()));
+    });
+    router.refresh();
+
+    if (typeof window !== 'undefined') {
+      if (window.location.pathname === '/') {
+        setIsLoggingOut(false);
+        return;
+      }
+      window.setTimeout(() => {
+        if (window.location.pathname !== '/') {
+          window.location.replace('/');
+        } else {
+          setIsLoggingOut(false);
+        }
+      }, 1500);
+      return;
+    }
+    setIsLoggingOut(false);
+  }, [isLoggingOut, router]);
 
   // Synchronize Recently Viewed Products with Database
   useEffect(() => {
@@ -388,7 +436,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [user, updateUserSession]);
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, isNewAccountSession, login, logout, clearSession, updateUserSession }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, isLoggingOut, isNewAccountSession, login, logout, clearSession, updateUserSession }}>
       {children}
     </AuthContext.Provider>
   );

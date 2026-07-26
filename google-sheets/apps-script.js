@@ -1086,15 +1086,20 @@ function updateOrderStatus(spreadsheet, params) {
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][orderIdIndex]).trim() === String(orderId).trim()) {
       var previousStatus = String(data[i][statusIndex] || '').trim();
-      if (previousStatus === status) {
+      var normalizeOrderStatus = function(value) {
+        return String(value || '').trim().toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ');
+      };
+      var normalizedPreviousStatus = normalizeOrderStatus(previousStatus);
+      var normalizedNextStatus = normalizeOrderStatus(status);
+      if (normalizedPreviousStatus && normalizedPreviousStatus === normalizedNextStatus) {
         return { success: true, message: 'Order is already ' + status + '; no duplicate notification was sent.', duplicatePrevented: true };
       }
 
-      var statusSequence = ['Pending', 'Confirmed', 'Processing', 'Dispatched', 'Out for Delivery', 'Delivered'];
-      var previousIndex = statusSequence.indexOf(previousStatus);
-      var nextIndex = statusSequence.indexOf(status);
+      var statusSequence = ['pending', 'confirmed', 'processing', 'dispatched', 'out for delivery', 'delivered'];
+      var previousIndex = normalizedPreviousStatus ? statusSequence.indexOf(normalizedPreviousStatus) : -1;
+      var nextIndex = normalizedNextStatus ? statusSequence.indexOf(normalizedNextStatus) : -1;
       var isOutOfSequence = previousIndex >= 0 && nextIndex >= 0 &&
-        (nextIndex < previousIndex || nextIndex > previousIndex + 1);
+        nextIndex < previousIndex;
       if (isOutOfSequence && customerMessage.length < 20) {
         return { success: false, message: 'A valid customer apology message is required for an out-of-sequence status update.' };
       }

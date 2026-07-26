@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Inquiry } from '@/types/cms';
 import CustomSelect from './CustomSelect';
 
@@ -25,8 +25,24 @@ export default function InquiriesTab({
   inquiryEndDate,
   setInquiryEndDate,
   handleInquiryReview,
-  saveLoading,
 }: InquiriesTabProps) {
+  const [reviewingInquiryId, setReviewingInquiryId] = useState<string | null>(null);
+  const inquiryRowKey = (inquiry: Inquiry) => [
+    inquiry['Inquiry ID'] || inquiry.InquiryID || inquiry.ID || 'legacy',
+    inquiry['Submission Key'] || inquiry.Timestamp || '',
+  ].map(String).join('|');
+
+  const reviewInquiry = async (inquiry: Inquiry) => {
+    const inquiryId = inquiry['Inquiry ID'] || inquiry.InquiryID || inquiry.ID;
+    if (!inquiryId || reviewingInquiryId) return;
+    setReviewingInquiryId(inquiryRowKey(inquiry));
+    try {
+      await handleInquiryReview(inquiry);
+    } finally {
+      setReviewingInquiryId(null);
+    }
+  };
+
   return (
     <div className="inquiries-tab card glass">
       {showFilters && (
@@ -82,6 +98,7 @@ export default function InquiriesTab({
           <tbody>
             {filteredInquiries.map((inq, index) => {
               const inquiryId = inq['Inquiry ID'] || inq.InquiryID || inq.ID;
+              const isReviewingThisInquiry = Boolean(inquiryId) && reviewingInquiryId === inquiryRowKey(inq);
               const customerId = inq['Customer ID'] || inq.CustomerID || 'Guest';
               const isNew = !inq.Status || inq.Status === 'New';
               return (
@@ -118,10 +135,10 @@ export default function InquiriesTab({
                       <button
                         type="button"
                         className="btn-table btn-approve"
-                        disabled={saveLoading || !inquiryId}
-                        onClick={() => void handleInquiryReview(inq)}
+                        disabled={isReviewingThisInquiry || !inquiryId}
+                        onClick={() => void reviewInquiry(inq)}
                       >
-                        ✓ Mark Reviewed
+                        {isReviewingThisInquiry ? 'Marking Reviewed...' : '✓ Mark Reviewed'}
                       </button>
                     )}
                   </div>

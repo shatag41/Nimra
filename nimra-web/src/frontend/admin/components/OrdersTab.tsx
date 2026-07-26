@@ -105,6 +105,24 @@ export default React.memo(function OrdersTab({
     }
   };
 
+  const formatCancellationDate = (value: string) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return { date: 'Date unavailable', time: '' };
+    return {
+      date: date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+      time: date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+    };
+  };
+
+  const renderWithSafeBreaks = (value: string) => value
+    .split(/([@._/-])/)
+    .map((part, index) => (
+      <React.Fragment key={`${part}-${index}`}>
+        {part}
+        {/^[.@_/-]$/.test(part) ? <wbr /> : null}
+      </React.Fragment>
+    ));
+
   return (
     <div className="orders-tab card glass">
       <div className="orders-mode-tabs">
@@ -125,8 +143,18 @@ export default React.memo(function OrdersTab({
       </div>
 
       {ordersView === 'cancellations' ? (
-        <div className="table-responsive">
-          <table className="admin-table compact-table">
+        <div className="table-responsive cancellation-requests-table-wrap">
+          <table className="admin-table compact-table cancellation-requests-table">
+            <colgroup>
+              <col style={{ width: '8%' }} />
+              <col style={{ width: '13%' }} />
+              <col style={{ width: '16%' }} />
+              <col style={{ width: '12%' }} />
+              <col style={{ width: '12%' }} />
+              <col style={{ width: '12%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '12%' }} />
+            </colgroup>
             <thead>
               <tr>
                 <th>Status</th>
@@ -144,25 +172,32 @@ export default React.memo(function OrdersTab({
                 const isPending = request.status === 'Pending';
                 return (
                   <tr key={request.requestId}>
-                    <td>
-                      <span className={`badge ${isPending ? 'badge-orange' : request.status === 'Approved' ? 'badge-primary' : 'badge-cancelled'}`}>{request.status}</span>
+                    <td className="cancellation-status-cell">
+                      <span className={`badge ${isPending ? 'badge-orange' : request.status === 'Approved' ? 'badge-success' : 'badge-cancelled'}`}>{request.status}</span>
                     </td>
-                    <td>
-                      <strong className="order-id-link">{request.orderId}</strong>
-                      <br />
+                    <td className="cancellation-order-cell">
+                      <strong className="order-id-link cancellation-safe-value">{renderWithSafeBreaks(request.orderId)}</strong>
                       <small>{formatCurrency(request.orderTotal)}</small>
                     </td>
-                    <td>
+                    <td className="cancellation-customer-cell">
                       <div>{request.customerName}</div>
-                      <small>{request.customerMobile} - {request.customerEmail || 'No email'}</small>
+                      <small className="cancellation-mobile">{request.customerMobile}</small>
+                      <small className="cancellation-email cancellation-safe-value">
+                        {request.customerEmail ? renderWithSafeBreaks(request.customerEmail) : 'No email'}
+                      </small>
                     </td>
-                    <td>
-                      {new Date(request.requestDate).toLocaleString('en-IN')}
-                      {request.approvalDate ? <><br /><small>Reviewed: {new Date(request.approvalDate).toLocaleString('en-IN')}</small></> : null}
+                    <td className="cancellation-date-cell">
+                      <span>{formatCancellationDate(request.requestDate).date}</span>
+                      <small>{formatCancellationDate(request.requestDate).time}</small>
+                      {request.approvalDate ? (
+                        <span className="cancellation-reviewed-date">
+                          Reviewed: {formatCancellationDate(request.approvalDate).date}, {formatCancellationDate(request.approvalDate).time}
+                        </span>
+                      ) : null}
                     </td>
-                    <td>
-                      <div>{request.paymentMethod || 'Cash on Delivery'}</div>
-                      <small>{request.refundStatus || 'Pending approval'}</small>
+                    <td className="cancellation-payment-cell">
+                      <span><b>Pay:</b> {request.paymentMethod || 'Cash on Delivery'}</span>
+                      <small><b>Refund:</b> {request.refundStatus || 'Pending approval'}</small>
                     </td>
                     <td className="reason-col">{request.reason || 'Not specified'}</td>
                     <td className="remarks-col">
@@ -178,7 +213,7 @@ export default React.memo(function OrdersTab({
                         <small>{request.adminRemarks || 'No remarks recorded'}</small>
                       )}
                     </td>
-                    <td className="sticky-action-col">
+                    <td className="sticky-action-col cancellation-actions-cell">
                       {isPending ? (
                         <div className="actions-flex row-wrap">
                           <button type="button" className="btn-table btn-reject" onClick={() => reviewCancellation(request, 'Rejected')}>
@@ -189,9 +224,18 @@ export default React.memo(function OrdersTab({
                           </button>
                         </div>
                       ) : (
-                        <small>
-                          {request.statusHistory?.map((item) => `${item.status} ${new Date(item.at).toLocaleDateString('en-IN')}`).join(' -> ') || 'Reviewed'}
-                        </small>
+                        request.statusHistory?.length ? (() => {
+                          const latestAction = request.statusHistory[request.statusHistory.length - 1];
+                          return (
+                            <span className="cancellation-action-history">
+                              <strong className={`history-status-${latestAction.status.toLowerCase()}`}>{latestAction.status}</strong>
+                              <small>
+                                {formatCancellationDate(latestAction.at).date}
+                                {latestAction.by ? ` · ${latestAction.by}` : ''}
+                              </small>
+                            </span>
+                          );
+                        })() : <small>Reviewed</small>
                       )}
                     </td>
                   </tr>
@@ -344,6 +388,140 @@ export default React.memo(function OrdersTab({
       </div>
         </>
       )}
+      <style jsx>{`
+        .cancellation-requests-table-wrap {
+          width: 100%;
+          min-height: 0 !important;
+          height: auto !important;
+          max-height: none !important;
+          overflow: visible !important;
+        }
+        .cancellation-requests-table {
+          width: 100% !important;
+          min-width: 0 !important;
+          max-width: 100% !important;
+          table-layout: fixed !important;
+          font-size: clamp(.61rem, .72vw, .72rem) !important;
+        }
+        .cancellation-requests-table :is(th, td) {
+          vertical-align: middle !important;
+          word-break: normal !important;
+          overflow-wrap: normal;
+          white-space: normal;
+          padding: clamp(.36rem, .55vw, .55rem) clamp(.28rem, .45vw, .48rem) !important;
+          line-height: 1.28 !important;
+        }
+        .cancellation-requests-table th {
+          font-size: clamp(.56rem, .63vw, .65rem) !important;
+          line-height: 1.15 !important;
+          letter-spacing: .025em !important;
+        }
+        .cancellation-requests-table .sticky-action-col {
+          position: static !important;
+          right: auto !important;
+          box-shadow: none !important;
+        }
+        .cancellation-status-cell .badge,
+        .cancellation-actions-cell .btn-table {
+          display: inline-flex;
+          align-items: center;
+          white-space: nowrap;
+          word-break: keep-all !important;
+          overflow-wrap: normal;
+        }
+        .cancellation-status-cell .badge {
+          padding: .2rem .38rem !important;
+          border-radius: .35rem !important;
+          font-size: clamp(.54rem, .6vw, .62rem) !important;
+          line-height: 1 !important;
+        }
+        .cancellation-order-cell,
+        .cancellation-customer-cell,
+        .cancellation-date-cell,
+        .cancellation-payment-cell {
+          line-height: 1.35;
+        }
+        .cancellation-order-cell,
+        .cancellation-customer-cell,
+        .cancellation-date-cell,
+        .cancellation-payment-cell {
+          display: table-cell;
+        }
+        .cancellation-order-cell small,
+        .cancellation-customer-cell small,
+        .cancellation-date-cell small,
+        .cancellation-payment-cell small {
+          display: block;
+          margin-top: .22rem;
+        }
+        .cancellation-safe-value {
+          overflow-wrap: normal !important;
+          word-break: normal !important;
+        }
+        .cancellation-mobile {
+          white-space: nowrap;
+        }
+        .cancellation-date-cell > span:first-child,
+        .cancellation-date-cell > small {
+          white-space: nowrap;
+        }
+        .cancellation-reviewed-date {
+          display: block;
+          margin-top: .25rem;
+          color: var(--text-muted);
+          font-size: .62rem;
+        }
+        .cancellation-payment-cell > span {
+          display: block;
+        }
+        .cancellation-payment-cell b {
+          color: var(--text-secondary);
+          font-size: .95em;
+        }
+        .cancellation-actions-cell .actions-flex {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: .28rem !important;
+          min-width: 0;
+        }
+        .cancellation-actions-cell .btn-table {
+          justify-content: center;
+          width: 100%;
+          min-height: 1.7rem !important;
+          padding: .24rem .34rem !important;
+          font-size: clamp(.55rem, .62vw, .64rem) !important;
+        }
+        .cancellation-action-history {
+          display: flex;
+          flex-direction: column;
+          gap: .15rem;
+        }
+        .cancellation-action-history strong {
+          color: var(--text-primary);
+          font-size: .66rem;
+          white-space: nowrap;
+        }
+        .cancellation-action-history .history-status-approved {
+          color: #16a34a;
+        }
+        .cancellation-action-history .history-status-pending {
+          color: #ea580c;
+        }
+        .cancellation-action-history .history-status-rejected {
+          color: #dc2626;
+        }
+        .cancellation-action-history small {
+          color: var(--text-muted);
+          font-size: .59rem;
+          line-height: 1.2;
+        }
+        .remarks-textarea {
+          min-height: 2.8rem !important;
+          padding: .38rem .42rem !important;
+          font-size: .66rem !important;
+          line-height: 1.25 !important;
+        }
+      `}</style>
     </div>
   );
 });

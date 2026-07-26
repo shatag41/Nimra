@@ -94,6 +94,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
     faqs,
     companyInfo,
     loading,
+    isLoggingOut,
     saveLoading,
     showAlert,
     refreshData,
@@ -509,11 +510,12 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
 
         <LogoutConfirmationModal
           isOpen={isLogoutModalOpen}
-          onClose={() => setIsLogoutModalOpen(false)}
-          onConfirm={() => {
-            setIsLogoutModalOpen(false);
-            performLogout();
+          onClose={() => {
+            if (!isLoggingOut) setIsLogoutModalOpen(false);
           }}
+          onConfirm={() => performLogout(() => setIsLogoutModalOpen(false))}
+          isProcessing={isLoggingOut}
+          processingText="Logging out..."
         />
 
         {/* PROFILE EDIT PANEL */}

@@ -67,7 +67,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
   const router = useRouter();
   const currentTab = searchParams ? searchParams.get('tab') : null;
   const { totalItems } = useCart();
-  const { user, logout, isLoading: isAuthLoading } = useAuth();
+  const { user, logout, isLoading: isAuthLoading, isLoggingOut } = useAuth();
   const { city, loading, requestLocation, permissionDenied } = useLocation();
   const { notify } = useNotification();
 
@@ -766,13 +766,15 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
 
       <LogoutConfirmationModal
         isOpen={isLogoutModalOpen}
-        onClose={() => setIsLogoutModalOpen(false)}
-        onConfirm={() => {
-          setIsLogoutModalOpen(false);
-          notify.success('Logged Out', 'You have been successfully logged out.');
-          // Brief delay so the toast registers before the page replaces
-          setTimeout(() => logout(), 150);
+        onClose={() => {
+          if (!isLoggingOut) setIsLogoutModalOpen(false);
         }}
+        onConfirm={async () => {
+          notify.success('Logged Out', 'You have been successfully logged out.');
+          await logout(() => setIsLogoutModalOpen(false));
+        }}
+        isProcessing={isLoggingOut}
+        processingText="Logging out..."
       />
     </>
   );

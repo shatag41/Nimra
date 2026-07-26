@@ -20,7 +20,7 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, isLoggingOut } = useAuth();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
   }, []);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || isLoggingOut) return;
     recordNavigation(meaningfulPath(pathname, searchParams.toString()), user?.Role);
   }, [isLoading, pathname, searchParams, user?.Role]);
 
@@ -81,7 +81,7 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
     } else if (!isAuthenticated && isProtectedCustomerRoute) {
       router.replace('/');
     }
-  }, [isAdmin, isAdminLogin, isAuthPage, isAuthenticated, isCheckout, isLoading, isProtectedCustomerRoute, pathname, router, searchParams, user]);
+  }, [isAdmin, isAdminLogin, isAuthPage, isAuthenticated, isCheckout, isLoading, isLoggingOut, isProtectedCustomerRoute, pathname, router, searchParams, user]);
 
   const renderBareShell = (content: React.ReactNode) => (
     <div className="ds-app-shell">
@@ -92,6 +92,21 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
   );
 
   const isProtectedRoute = (isAdmin && !isAdminLogin) || isProtectedCustomerRoute;
+
+  if (isLoggingOut) {
+    return renderBareShell(
+      <div className="logout-page-state" role="status" aria-live="polite">
+        <span className="loading-spinner" aria-hidden="true" />
+        <strong>Logging out...</strong>
+        <style jsx>{`
+          .logout-page-state { min-height:100svh; display:grid; place-content:center; justify-items:center; gap:.75rem; color:var(--text-primary); background:var(--bg-primary); }
+          .logout-page-state .loading-spinner { width:1.6rem; height:1.6rem; border:3px solid var(--border-color); border-top-color:var(--primary-color); border-radius:50%; animation:logout-spin .8s linear infinite; }
+          @keyframes logout-spin { to { transform:rotate(360deg); } }
+          @media (prefers-reduced-motion: reduce) { .logout-page-state .loading-spinner { animation:none; } }
+        `}</style>
+      </div>
+    );
+  }
 
   if (!mounted && isProtectedRoute) return renderBareShell(null);
   if (isLoading && isProtectedRoute) return renderBareShell(null);

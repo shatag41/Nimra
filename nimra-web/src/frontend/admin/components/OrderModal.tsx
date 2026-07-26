@@ -24,11 +24,18 @@ export default function OrderModal({
   const [showSequenceWarning, setShowSequenceWarning] = useState(false);
   const [customerMessage, setCustomerMessage] = useState('');
   const [messageError, setMessageError] = useState('');
-  const statusSequence = ['Pending', 'Confirmed', 'Processing', 'Dispatched', 'Out for Delivery', 'Delivered'];
-  const previousIndex = statusSequence.indexOf(selectedOrder.status);
-  const nextIndex = statusSequence.indexOf(orderStatusVal);
+  const normalizeStatus = (value: unknown) => String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ');
+  const statusSequence = ['pending', 'confirmed', 'processing', 'dispatched', 'out for delivery', 'delivered'];
+  const savedCurrentStatus = normalizeStatus(selectedOrder.status);
+  const selectedNewStatus = normalizeStatus(orderStatusVal);
+  const previousIndex = savedCurrentStatus ? statusSequence.indexOf(savedCurrentStatus) : -1;
+  const nextIndex = selectedNewStatus ? statusSequence.indexOf(selectedNewStatus) : -1;
   const isOutOfSequence = previousIndex >= 0 && nextIndex >= 0
-    && (nextIndex < previousIndex || nextIndex > previousIndex + 1);
+    && nextIndex < previousIndex;
   const defaultApology = useMemo(
     () => `We’re sorry for the change in your order status. Your order has been moved from ${selectedOrder.status} to ${orderStatusVal} due to an operational update. We appreciate your patience and will keep you informed.`,
     [orderStatusVal, selectedOrder.status],

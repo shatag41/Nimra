@@ -928,13 +928,20 @@ export async function handlePost(req: NextRequest) {
       const orderIndex = fallbackData.orders.findIndex((o: any) => String(o.orderId) === String(orderId));
       const now = new Date().toISOString();
       if (orderIndex >= 0) {
-        const statusSequence = ['Pending', 'Confirmed', 'Processing', 'Dispatched', 'Out for Delivery', 'Delivered'];
+        const normalizeStatus = (value: unknown) => String(value ?? '')
+          .trim()
+          .toLowerCase()
+          .replace(/[_-]+/g, ' ')
+          .replace(/\s+/g, ' ');
+        const statusSequence = ['pending', 'confirmed', 'processing', 'dispatched', 'out for delivery', 'delivered'];
         const previousStatus = fallbackData.orders[orderIndex].status;
-        const previousIndex = statusSequence.indexOf(previousStatus);
-        const nextIndex = statusSequence.indexOf(status);
+        const normalizedPreviousStatus = normalizeStatus(previousStatus);
+        const normalizedNextStatus = normalizeStatus(status);
+        const previousIndex = normalizedPreviousStatus ? statusSequence.indexOf(normalizedPreviousStatus) : -1;
+        const nextIndex = normalizedNextStatus ? statusSequence.indexOf(normalizedNextStatus) : -1;
         const isOutOfSequence = previousIndex >= 0 && nextIndex >= 0
-          && (nextIndex < previousIndex || nextIndex > previousIndex + 1);
-        if (previousStatus === status) {
+          && nextIndex < previousIndex;
+        if (normalizedPreviousStatus && normalizedPreviousStatus === normalizedNextStatus) {
           return NextResponse.json({ success: true, message: `Order is already ${status}; no duplicate notification was sent.` });
         }
         if (isOutOfSequence) {

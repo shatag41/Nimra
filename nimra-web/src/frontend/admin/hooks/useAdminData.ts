@@ -50,7 +50,7 @@ export interface CurrentUser {
 
 export const useAdminData = (initialCMSData: CMSData) => {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, isLoggingOut, logout } = useAuth();
   const { notify } = useNotification();
 
   // Auth state
@@ -97,7 +97,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
 
   // Check auth on mount
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading || isLoggingOut) return;
 
     if (isAuthenticated && user && isAdminRole(user.Role)) {
       const adminSession: CurrentUser = {
@@ -118,7 +118,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
     setCurrentUser(null);
     setAuthChecked(false);
     router.replace('/');
-  }, [authLoading, isAuthenticated, router, user]);
+  }, [authLoading, isAuthenticated, isLoggingOut, router, user]);
 
   // Load all dashboard databases
   
@@ -198,8 +198,10 @@ export const useAdminData = (initialCMSData: CMSData) => {
 
   // Refresh logic is now handled by SWR
 
-  const performLogout = () => {
-    logout();
+  const performLogout = async (beforeNavigate?: () => void) => {
+    clearAdminDataCache();
+    clearCMSDataCache();
+    await logout(beforeNavigate);
   };
 
   // Update order status callback
@@ -265,12 +267,20 @@ export const useAdminData = (initialCMSData: CMSData) => {
       const res = await markInquiryReviewed(inquiryId, currentUser?.name || 'Admin', currentUser?.id);
       if (res.success) {
         showAlert(res.message || 'Inquiry marked as reviewed.');
-        setInquiries(prev => prev.map(item => {
-          const itemId = item['Inquiry ID'] || item.InquiryID || item.ID;
-          return String(itemId) === String(inquiryId)
-            ? { ...item, Status: 'Reviewed', 'Reviewed At': new Date().toISOString(), 'Reviewed By': currentUser?.name || 'Admin' }
-            : item;
-        }));
+        setInquiries(prev => {
+          let matchingInquiryUpdated = false;
+          return prev.map(item => {
+            const itemId = item['Inquiry ID'] || item.InquiryID || item.ID;
+            if (matchingInquiryUpdated || String(itemId) !== String(inquiryId)) return item;
+            matchingInquiryUpdated = true;
+            return {
+              ...item,
+              Status: 'Reviewed',
+              'Reviewed At': new Date().toISOString(),
+              'Reviewed By': currentUser?.name || 'Admin',
+            };
+          });
+        });
         setUsers(await fetchUsers());
         return true;
       }
@@ -613,6 +623,7 @@ export const useAdminData = (initialCMSData: CMSData) => {
     faqs,
     companyInfo,
     loading,
+    isLoggingOut,
     saveLoading,
     showAlert,
     refreshData,
