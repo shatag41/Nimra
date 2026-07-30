@@ -1430,7 +1430,14 @@ export default function HomeClient({ banners: initialBanners, products: initialP
             flex-direction: column;
             align-items: stretch;
           }
-          .hero-eyebrow { margin-bottom: 1rem; }
+          .hero-eyebrow {
+            align-self: flex-start;
+            width: fit-content;
+            margin-bottom: 1.2rem;
+            padding: 0.35rem 0.8rem;
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+          }
           .hero-copy,
           .hero-copy > *,
           .hero-title,
