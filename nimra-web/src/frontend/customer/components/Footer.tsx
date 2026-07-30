@@ -52,7 +52,7 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
             </div>
 
             <nav className="footer-col" aria-label="Footer navigation">
-              <h2>Explore</h2>
+              <h2 className="footer-section-title">Explore      </h2>
               <ul className="footer-links">
                 <li><Link href="/products">Products</Link></li>
                 <li><Link href="/about">About</Link></li>
@@ -62,7 +62,7 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
             </nav>
 
             <div className="footer-col">
-              <h2>Contact</h2>
+              <h2 className="footer-section-title">Contact</h2>
               <ul className="contact-list">
                 {companyInfo.Phone && (
                   <li>
@@ -89,7 +89,7 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
             </div>
 
             <div className="footer-col">
-              <h2>Locations</h2>
+              <h2 className="footer-section-title">Locations</h2>
               <address className="locations-list">
                 {companyInfo.OfficeAddress && (
                   <div className="location-item">
@@ -146,7 +146,7 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
         .footer-col { min-width: 0; }
         .footer-col + .footer-col { border-left: 1px solid var(--border-color); padding-left: 1.5rem; }
 
-        .footer-col h2 {
+        .footer-section-title {
           margin: 0 0 0.75rem;
           color: var(--text-primary);
           font-size: 0.72rem;
@@ -290,20 +290,143 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
           .locations-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
 
-        @media (max-width: 700px) {
-          .footer-container { padding-top: 1.35rem; }
-          .footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2rem; padding-bottom: 1.15rem; }
-          .footer-col + .footer-col { border-left: 0; padding-left: 0; }
-          .footer-brand { grid-column: 1 / -1; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color); }
-          .footer-grid > :last-child { padding-top: 1rem; }
+        @media (max-width: 768px) {
+          .footer { background: #f8fbff; }
+          .footer-container {
+            width: 100% !important;
+            max-width: none !important;
+            padding: 16px 16px 0 !important;
+          }
+          .footer-grid {
+            grid-template-columns: minmax(0, 1fr);
+            gap: 20px;
+            padding-bottom: 20px;
+          }
+          .footer-col,
+          .footer-col + .footer-col,
+          .footer-brand,
+          .footer-grid > :last-child {
+            grid-column: auto;
+            padding: 16px;
+            border: 1px solid rgba(var(--primary-rgb), 0.12);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.82);
+            box-shadow: 0 8px 24px rgba(30, 64, 175, 0.07);
+            backdrop-filter: blur(14px);
+          }
+          .footer-section-title,
+          :global(.footer-logo) {
+            margin-top: 0;
+            margin-bottom: 12px;
+            font-size: 20px;
+            font-weight: 700;
+            line-height: 1.2;
+            letter-spacing: -0.01em;
+            text-align: left;
+          }
+          :global(.footer-logo) { gap: 8px; }
+          .footer-logo-icon {
+            width: 28px;
+            height: 28px;
+            flex-basis: 28px;
+            border-radius: 8px;
+          }
+          .brand-pitch { width: 100%; max-width: none; margin: 0 0 12px; font-size: 13px; line-height: 1.5; }
+          .footer-certs { width: 100%; gap: 8px; }
+          .footer-certs span {
+            min-height: 24px;
+            max-width: 100%;
+            padding: 4px 7px;
+            border-radius: 7px;
+            font-size: 10px;
+            font-weight: 650;
+            white-space: normal;
+          }
+          .footer-certs span :global(svg) { width: 11px; height: 11px; }
+          .footer-links { gap: 2px; }
+          .footer-links li { min-width: 0; }
+          :global(.footer-links a) {
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            padding: 7px 0;
+            font-size: 14px;
+            line-height: 1.35;
+          }
+          .contact-list, .locations-list { gap: 10px; }
+          .contact-list li,
+          .location-item {
+            width: 100%;
+            min-width: 0;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 8px 10px;
+            border: 1px solid rgba(var(--primary-rgb), 0.09);
+            border-radius: 12px;
+            background: rgba(var(--primary-rgb), 0.035);
+          }
+          .contact-list li > div,
+          .location-item > div,
+          .location-item span:last-child {
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;
+            white-space: normal;
+            word-break: normal;
+            overflow-wrap: anywhere;
+          }
+          .contact-list li > div,
+          .location-item > div { gap: 2px; }
+          .contact-list a,
+          .location-item span:last-child { font-size: 13px; line-height: 1.45; }
+          .footer-icon {
+            width: 28px;
+            height: 28px;
+            flex-basis: 28px;
+            margin-top: 1px;
+            border-radius: 9px;
+          }
+          .footer-icon :global(svg) {
+            width: 14px;
+            height: 14px;
+          }
+          .contact-label,
+          .location-item strong {
+            font-size: 11px;
+            font-weight: 650;
+            line-height: 1.35;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+          }
+          .locations-list { grid-template-columns: minmax(0, 1fr); }
+          .footer-bottom {
+            padding: 14px 8px calc(64px + env(safe-area-inset-bottom));
+            text-align: center;
+          }
+          .footer-bottom p { margin: 0; font-size: 11px; line-height: 1.45; }
+          .whatsapp-fab {
+            right: 0.75rem;
+            bottom: calc(0.75rem + env(safe-area-inset-bottom));
+            width: 40px;
+            height: 40px;
+          }
+          .whatsapp-fab :global(svg) { width: 21px; height: 21px; }
         }
 
         @media (max-width: 480px) {
-          .footer-grid { grid-template-columns: 1fr; gap: 1rem; }
-          .footer-brand, .footer-grid > :last-child { grid-column: auto; }
-          .footer-col:not(:first-child) { padding-top: 0.9rem; border-top: 1px solid var(--border-color); }
-          .locations-list { grid-template-columns: 1fr; }
-          .whatsapp-fab { right: 1rem; bottom: 1rem; width: 48px; height: 48px; }
+          .footer-certs span { flex: 0 1 auto; }
+        }
+      `}</style>
+      <style jsx global>{`
+        @media (max-width: 768px) {
+          .back-to-top-btn {
+            top: auto !important;
+            right: auto !important;
+            bottom: calc(1rem + env(safe-area-inset-bottom)) !important;
+            left: calc(1rem + 24px) !important;
+            width: 48px !important;
+            height: 48px !important;
+          }
         }
       `}</style>
     </>

@@ -686,7 +686,6 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                 </AnimatePresence>
               </div>
             )}
-            </div>
 
             {/* Mobile Hamburger */}
             <button
@@ -701,6 +700,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12h16M4 6h16M4 18h16"/></svg>
               )}
             </button>
+            </div>
           </div>
         </div>
 
@@ -763,6 +763,53 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           </div>
         )}
       </header>
+
+      <style jsx global>{`
+        @media (max-width: 768px) {
+          .header .header-actions {
+            width: auto !important;
+            flex: 0 0 auto !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            gap: 0 !important;
+            margin-left: auto !important;
+          }
+
+          .header .header-icon-group {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            gap: 0.4rem !important;
+            width: auto !important;
+            flex-wrap: nowrap !important;
+          }
+
+          .header .location-btn { display: none !important; }
+          .header .notification-container { order: 1; }
+          .header .cart-link { order: 2; }
+          .header .profile-menu-container,
+          .header .header-profile-placeholder { order: 3; }
+          .header .mobile-menu-btn { order: 4; }
+
+          .header .notification-container,
+          .header .profile-menu-container {
+            flex: 0 0 auto;
+          }
+
+          .header .icon-btn,
+          .header .cart-link,
+          .header .profile-btn,
+          .header .header-profile-placeholder,
+          .header .mobile-menu-btn {
+            width: 32px !important;
+            height: 32px !important;
+            min-width: 32px !important;
+            flex: 0 0 32px !important;
+          }
+        }
+      `}</style>
 
       <LogoutConfirmationModal
         isOpen={isLogoutModalOpen}

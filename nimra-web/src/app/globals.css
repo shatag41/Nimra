@@ -3112,7 +3112,7 @@ td {
     font-size: clamp(2rem, 10vw, 3rem) !important;
   }
 
-  h2 {
+  h2:not(.footer-section-title) {
     font-size: clamp(1.45rem, 7vw, 2.1rem) !important;
   }
 

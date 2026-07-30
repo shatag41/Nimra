@@ -180,12 +180,31 @@ export default function FAQSection({ faqs }: FAQSectionProps) {
         }
         .support-link:hover svg { transform: translateX(3px); }
         @media (max-width: 768px) {
-          .shared-faq-section { grid-template-columns: 1fr; }
+          .shared-faq-section { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
           .faq-visual {
             width: 100%;
-            max-width: 400px;
-            margin: 0 auto;
+            max-width: none;
+            margin: 0;
             padding-top: 0;
+          }
+          .support-card {
+            width: 100%;
+            min-height: 0;
+            aspect-ratio: auto;
+            padding: 1rem;
+            gap: 0.4rem;
+          }
+          .support-icon {
+            width: 42px;
+            height: 42px;
+            margin-bottom: 0.15rem;
+            border-radius: 13px;
+          }
+          .support-card p { margin-bottom: 0.25rem; }
+          .support-link {
+            align-self: center;
+            justify-content: center;
+            min-height: 36px;
           }
         }
         @media (prefers-reduced-motion: reduce) {
