@@ -1546,13 +1546,12 @@ export default function HomeClient({ banners: initialBanners, products: initialP
             overflow-wrap: break-word;
           }
           .story-image-container {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr);
+            display: block;
             width: 100%;
             max-width: none;
             min-width: 0;
-            gap: .75rem;
             margin: 0;
+            position: relative;
           }
           .story-image-container::before { inset: -4%; }
           .story-img-wrapper {
@@ -1561,15 +1560,35 @@ export default function HomeClient({ banners: initialBanners, products: initialP
             min-width: 0;
           }
           .story-img { width: 100%; height: 100%; max-width: 100%; object-fit: cover; }
-          .purity-card,
-          .story-badge-pill {
-            position: static;
-            width: 100%;
-            max-width: none;
-            min-width: 0;
+          
+          /* Overlays on Mobile (Matching Desktop) */
+          .purity-card {
+            position: absolute;
+            bottom: 0.5rem;
+            right: 0.5rem;
+            width: auto;
+            max-width: calc(100% - 1rem);
+            padding: 0.6rem 0.75rem;
+            border-radius: 14px;
+            z-index: 4;
           }
-          .purity-card { order: 2; }
-          .story-badge-pill { order: 3; justify-content: center; }
+          .purity-icon {
+            width: 1.8rem;
+            height: 1.8rem;
+            font-size: 0.9rem;
+          }
+          .purity-card strong { font-size: 0.85rem; }
+          .purity-card p { font-size: 0.7rem; }
+
+          .story-badge-pill {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            width: auto;
+            padding: 0.35rem 0.65rem;
+            font-size: 0.65rem;
+            z-index: 4;
+          }
           .preview-grid { grid-template-columns: minmax(0, 1fr); width: 100%; max-width: none; margin: 0; }
           :global(.home-page .product-preview-section .product-section-compact .card-desc) {
             display: block !important;
