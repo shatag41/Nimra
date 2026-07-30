@@ -1464,7 +1464,37 @@ export default function HomeClient({ banners: initialBanners, products: initialP
           .hero-card { padding:1.15rem; }
           .hero-card-list { display:none; }
           .hero-card h3 { margin-bottom:.75rem; }
+
+          /* ── Mobile Stats Section (768px) ── */
           .stats-section { padding-top: .75rem; }
+          .stats-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 12px !important;
+          }
+          .stat-card {
+            border-radius: 16px;
+            padding: 0.75rem 0.5rem;
+            min-height: 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(15,23,42,0.05), inset 0 1px 0 rgba(255,255,255,0.4);
+          }
+          .stat-emoji {
+            width: 1.8rem;
+            height: 1.8rem;
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+          }
+          .stat-value {
+            font-size: 1rem;
+          }
+          .stat-label {
+            font-size: 0.55rem;
+          }
+
           .story-section { overflow: visible; }
           .story-bg-shape { display: none; }
           .story-grid {
@@ -1560,7 +1590,6 @@ export default function HomeClient({ banners: initialBanners, products: initialP
         }
 
         @media (max-width: 640px) {
-          .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
           .hero-trust-bar { gap: 0.75rem; }
           .trust-divider { display: none; }
           .faq-section { padding-top: 1.25rem; padding-bottom: 1.25rem; }
@@ -1572,8 +1601,6 @@ export default function HomeClient({ banners: initialBanners, products: initialP
           .hero-actions .btn { width: 100%; justify-content: center; }
           .hero-trust-bar { display: grid; grid-template-columns: 1fr; }
           .hero-card-shell { width: 100%; }
-          .stats-grid { grid-template-columns: minmax(0, 1fr) !important; }
-          .stat-card { min-width: 0; padding-inline: 0.5rem; }
           .story-section { padding-block: 1.5rem; }
           .story-grid { gap: 1.25rem; }
           .value-item { padding: .75rem; }
