@@ -528,11 +528,119 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
             height: 40px;
           }
           .whatsapp-fab :global(svg) { width: 20px; height: 20px; }
+
+          /* ── Animated dividers: replace static border-top with animated pseudo-elements ── */
+
+          /* Remove the static border-top from non-brand cols; add position for pseudo-elements */
+          .footer-col:not(.footer-brand) {
+            border-top: none;
+            position: relative;
+          }
+
+          /* ::before  — line that expands left→right on load */
+          .footer-col:not(.footer-brand)::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: var(--border-color);
+            transform-origin: left center;
+            transform: scaleX(0);
+            animation: mFooterExpand 0.7s cubic-bezier(0.22,1,0.36,1) forwards;
+            will-change: transform;
+          }
+
+          /* ::after  — shimmer sweep that repeats every 5s */
+          .footer-col:not(.footer-brand)::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(
+              90deg,
+              transparent 0%,
+              rgba(96,165,250,0.7) 50%,
+              transparent 100%
+            );
+            transform: translateX(-150%);
+            animation: mFooterShimmer 5s linear infinite;
+            will-change: transform;
+          }
+
+          /* Staggered expand delays */
+          .footer-grid > :nth-child(2)::before { animation-delay: 0.05s; }
+          .footer-grid > :nth-child(3)::before { animation-delay: 0.22s; }
+          .footer-grid > :nth-child(4)::before { animation-delay: 0.39s; }
+
+          /* Staggered shimmer delays (start after expand finishes) */
+          .footer-grid > :nth-child(2)::after  { animation-delay: 1.8s;  }
+          .footer-grid > :nth-child(3)::after  { animation-delay: 2.6s;  }
+          .footer-grid > :nth-child(4)::after  { animation-delay: 3.4s;  }
+
+          /* Footer bottom bar — same animated divider */
+          .footer-bottom {
+            border-top: none;
+            position: relative;
+          }
+          .footer-bottom::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: var(--border-color);
+            transform-origin: left center;
+            transform: scaleX(0);
+            animation: mFooterExpand 0.7s cubic-bezier(0.22,1,0.36,1) forwards 0.56s;
+            will-change: transform;
+          }
+          .footer-bottom::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(
+              90deg,
+              transparent 0%,
+              rgba(96,165,250,0.7) 50%,
+              transparent 100%
+            );
+            transform: translateX(-150%);
+            animation: mFooterShimmer 5s linear infinite 4.2s;
+            will-change: transform;
+          }
+
+          /* Keyframes: line expand (scaleX 0→1) */
+          @keyframes mFooterExpand {
+            to { transform: scaleX(1); }
+          }
+
+          /* Keyframes: shimmer sweep (left→right, idle 80% of cycle) */
+          @keyframes mFooterShimmer {
+            0%   { transform: translateX(-150%); }
+            20%  { transform: translateX(150%); }
+            100% { transform: translateX(150%); }
+          }
         }
 
         @media (max-width: 480px) {
           .footer-container { padding: 12px 14px 0 !important; }
           .footer-links li { width: 50%; }
+        }
+
+        /* Disable animations for users who prefer reduced motion */
+        @media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+          .footer-col:not(.footer-brand)::before,
+          .footer-col:not(.footer-brand)::after,
+          .footer-bottom::before,
+          .footer-bottom::after {
+            animation: none;
+            transform: none;
+          }
+          /* Restore visible static borders */
+          .footer-col:not(.footer-brand)::before,
+          .footer-bottom::before {
+            transform: scaleX(1);
+          }
         }
       `}</style>
       <style jsx global>{`

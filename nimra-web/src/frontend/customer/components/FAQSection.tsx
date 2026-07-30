@@ -199,6 +199,18 @@ export default function FAQSection({ faqs }: FAQSectionProps) {
             height: 42px;
             margin-bottom: 0.15rem;
             border-radius: 13px;
+            /* ── Premium float + glow animations (mobile-only) ── */
+            will-change: transform;
+            animation:
+              mIconFloat 3.5s ease-in-out infinite,
+              mIconGlow  4.0s ease-in-out infinite 0.8s;
+          }
+          /* Hover/tap: pause float, apply gentle scale */
+          .support-card:hover .support-icon,
+          .support-card:active .support-icon {
+            animation-play-state: paused;
+            transform: translateY(0) scale(1.05);
+            transition: transform 250ms cubic-bezier(0.34,1.56,0.64,1);
           }
           .support-card p { margin-bottom: 0.25rem; }
           .support-link {
@@ -206,9 +218,34 @@ export default function FAQSection({ faqs }: FAQSectionProps) {
             justify-content: center;
             min-height: 36px;
           }
+
+          /* ── Icon float: gentle 5px vertical oscillation ── */
+          @keyframes mIconFloat {
+            0%, 100% { transform: translateY(0); }
+            50%       { transform: translateY(-5px); }
+          }
+
+          /* ── Icon glow: soft radial pulse every ~4s ── */
+          @keyframes mIconGlow {
+            0%, 55%, 100% {
+              box-shadow:
+                0 8px 20px rgba(37,99,235,0.14),
+                inset 0 1px 0 rgba(255,255,255,0.13);
+            }
+            78% {
+              box-shadow:
+                0 8px 20px rgba(37,99,235,0.14),
+                inset 0 1px 0 rgba(255,255,255,0.13),
+                0 0 0 6px rgba(96,165,250,0.12),
+                0 0 18px rgba(37,99,235,0.38);
+            }
+          }
         }
         @media (prefers-reduced-motion: reduce) {
           .support-card, .support-link, .support-link svg { transition-duration: 0.001ms; }
+          .support-icon { animation: none !important; }
+          .support-card:hover .support-icon,
+          .support-card:active .support-icon { transform: none; transition: none; }
         }
       `}</style>
     </div>
