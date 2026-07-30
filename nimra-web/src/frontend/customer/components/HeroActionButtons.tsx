@@ -6,7 +6,7 @@ import { useCart } from '@/frontend/customer/hooks/useCart';
 import { useAuth } from '@/frontend/customer/contexts/AuthContext';
 import { consumeBackDestination, meaningfulPath, useNavigationHistory } from '@/frontend/customer/navigation/navigationHistory';
 
-export default function HeroActionButtons({ hideBackButton }: { hideBackButton?: boolean }) {
+export default function HeroActionButtons({ hideBackButton, pageTitle, mobileBackDestination }: { hideBackButton?: boolean; pageTitle: string; mobileBackDestination?: { label: string; path: string } }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -33,8 +33,6 @@ export default function HeroActionButtons({ hideBackButton }: { hideBackButton?:
   const isCheckoutPage = pathname === '/checkout';
   const showFinishOrderButton = cartItemCount > 0 && !isCartPage && !isCheckoutPage;
 
-  if (!showBackButton && !showFinishOrderButton) return null;
-
   const currentPath = meaningfulPath(pathname, searchParams.toString());
   let currentIndex = -1;
   for (let index = navigation.stack.length - 1; index >= 0; index -= 1) {
@@ -52,6 +50,10 @@ export default function HeroActionButtons({ hideBackButton }: { hideBackButton?:
   const backText = `Back to ${backDestination.label}`;
 
   const handleBack = () => {
+    if (mobileBackDestination && window.matchMedia('(max-width: 768px)').matches) {
+      router.push(mobileBackDestination.path);
+      return;
+    }
     const destination = consumeBackDestination(currentPath, user?.Role);
     router.push(destination.path);
   };
@@ -68,9 +70,12 @@ export default function HeroActionButtons({ hideBackButton }: { hideBackButton?:
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 18l-6-6 6-6" />
             </svg>
-            <span>{backText}</span>
+            <span className="hero-back-label-desktop">{backText}</span>
+            <span className="hero-back-label-mobile">{mobileBackDestination?.label || backDestination.label}</span>
           </button>
         ) : <div className="hero-action-spacer" />}
+
+        <strong className="hero-mobile-page-title" title={pageTitle}>{pageTitle}</strong>
         
         {showFinishOrderButton && (
           <button className="hero-action-btn hero-action-finish" onClick={handleFinishOrder} aria-label="Finish Your Order">
@@ -106,6 +111,11 @@ export default function HeroActionButtons({ hideBackButton }: { hideBackButton?:
 
         .hero-action-spacer {
           flex: 1;
+        }
+
+        .hero-back-label-mobile,
+        .hero-mobile-page-title {
+          display: none;
         }
 
         .hero-action-btn {
@@ -167,29 +177,100 @@ export default function HeroActionButtons({ hideBackButton }: { hideBackButton?:
 
         @media (max-width: 768px) {
           .hero-actions-wrapper {
-            padding-left: max(1rem, calc(50vw - 280px));
-            padding-right: max(1rem, calc(50vw - 280px));
+            position: static;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1.45fr) minmax(0, 1fr);
+            align-items: center;
+            width: 100%;
+            max-width: none;
+            min-height: 2.85rem;
+            margin: 0;
+            padding: 0.28rem 0;
+            gap: 0.4rem;
+          }
+
+          .hero-action-btn {
+            min-width: 0;
+            height: 2.3rem;
+            padding: 0 0.35rem;
+            border: 0;
+            border-radius: 0.55rem;
+            background: transparent;
+            box-shadow: none;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            font-size: 0.78rem;
+            font-weight: 750;
+          }
+
+          .hero-action-back {
+            justify-self: start;
+            max-width: 100%;
+          }
+
+          .hero-action-back svg {
+            width: 0.95rem;
+            height: 0.95rem;
+            flex: 0 0 auto;
+          }
+
+          .hero-back-label-desktop {
+            display: none;
+          }
+
+          .hero-back-label-mobile {
+            display: block;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+
+          .hero-mobile-page-title {
+            display: block;
+            min-width: 0;
+            overflow: hidden;
+            color: #163669;
+            font-family: var(--font-heading, inherit);
+            font-size: clamp(0.9rem, 3.6vw, 1.05rem);
+            font-weight: 850;
+            line-height: 1.15;
+            text-align: center;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+
+          :global([data-theme="dark"]) .hero-mobile-page-title {
+            color: #dbeafe;
+          }
+
+          .hero-action-spacer {
+            display: block;
+            min-width: 0;
+          }
+
+          .hero-action-finish {
+            justify-self: end;
+            width: 2.3rem;
+            min-width: 2.3rem;
+            padding: 0;
+            border: 1px solid rgba(37, 99, 235, 0.12);
+            background: rgba(255, 255, 255, 0.55);
+            animation: none;
+          }
+
+          .hero-action-finish .hero-finish-text {
+            display: none;
+          }
+
+          .hero-action-finish::before {
+            display: none;
           }
         }
 
         @media (max-width: 640px) {
           .hero-actions-wrapper {
-            position: static;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 0.8rem;
-            padding: 0;
-            gap: 0.5rem;
-          }
-          
-          .hero-action-spacer {
-            display: none;
-          }
-          
-          .hero-action-btn {
-            width: max-content;
-            margin: 0 auto;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1fr);
           }
         }
 

@@ -20,11 +20,42 @@ interface ProductsFiltersProps {
   onCategoryChange: (value: string) => void;
   onStatusChange: (value: ProductStatusFilter) => void;
   onSizeChange: (value: ProductSizeFilter) => void;
+  isMobileOpen: boolean;
+  onMobileToggle: () => void;
+  onClearAll: () => void;
 }
 
-export default React.memo(function ProductsFilters({ category, status, size, onCategoryChange, onStatusChange, onSizeChange }: ProductsFiltersProps) {
+export default React.memo(function ProductsFilters({ category, status, size, onCategoryChange, onStatusChange, onSizeChange, isMobileOpen, onMobileToggle, onClearAll }: ProductsFiltersProps) {
+  const activeFilterCount = Number(category !== 'All') + Number(status !== 'all') + Number(size !== 'all');
+  const selectedLabels = [
+    category !== 'All' ? categories.find((option) => option.id === category)?.name : null,
+    status !== 'all' ? (status === 'available' ? 'Available Now' : 'Upcoming') : null,
+    size !== 'all' ? (size === 'jar' ? 'Bulk Jars (20L)' : 'Bottles (250ml - 2L)') : null,
+  ].filter(Boolean) as string[];
+
   return (
-    <aside className="products-sidebar card">
+    <div className="products-filter-area">
+      <div className="mobile-filter-bar">
+        <button
+          type="button"
+          className="mobile-filter-toggle"
+          aria-expanded={isMobileOpen}
+          aria-controls="products-filter-panel"
+          onClick={onMobileToggle}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4" /></svg>
+          <span className="mobile-filter-label">Filters</span>
+          {activeFilterCount > 0 && <span className="mobile-filter-count">{activeFilterCount}</span>}
+          <svg className="mobile-filter-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+        </button>
+        {activeFilterCount > 0 && <button type="button" className="mobile-clear-filters" onClick={onClearAll}>Clear All</button>}
+      </div>
+      {selectedLabels.length > 0 && (
+        <div className="mobile-selected-filters" aria-label="Selected filters">
+          {selectedLabels.map((label) => <span key={label}>{label}</span>)}
+        </div>
+      )}
+      <aside id="products-filter-panel" className={`products-sidebar card ${isMobileOpen ? 'mobile-open' : ''}`}>
       <div className="sidebar-section">
         <h3>Categories</h3>
         <div className="filter-options">
@@ -61,6 +92,7 @@ export default React.memo(function ProductsFilters({ category, status, size, onC
           ))}
         </div>
       </div>
-    </aside>
+      </aside>
+    </div>
   );
 });

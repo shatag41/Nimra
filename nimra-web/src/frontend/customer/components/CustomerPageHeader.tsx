@@ -9,6 +9,7 @@ interface CustomerPageHeaderProps {
   height?: number | string;
   hideBackButton?: boolean;
   children?: React.ReactNode;
+  mobileBackDestination?: { label: string; path: string };
 }
 
 export default function CustomerPageHeader({
@@ -19,6 +20,7 @@ export default function CustomerPageHeader({
   height,
   hideBackButton = false,
   children,
+  mobileBackDestination,
 }: CustomerPageHeaderProps) {
   const headingId = React.useId();
   const resolvedHeight = typeof height === 'number' ? `${height}px` : height;
@@ -33,7 +35,7 @@ export default function CustomerPageHeader({
       <div className="customer-page-header__glow customer-page-header__glow--right" aria-hidden="true" />
 
       <div className="customer-page-header__content">
-        <HeroActionButtons hideBackButton={hideBackButton} />
+        <HeroActionButtons hideBackButton={hideBackButton} pageTitle={title} mobileBackDestination={mobileBackDestination} />
         <span className="customer-page-header__badge">{badge}</span>
         <h1 id={headingId}>{title}</h1>
         <p>{subtitle}</p>
@@ -203,30 +205,34 @@ export default function CustomerPageHeader({
           color: #cbd5e1;
         }
 
-        @media (max-width: 640px) {
+        @media (max-width: 768px) {
           .customer-page-header {
             width: 100vw;
-            min-height: clamp(1.9rem, 7.2vw, 2.3rem);
-            padding-block: clamp(0.6rem, 1.5vw, 0.8rem) !important;
-            margin-bottom: 0.8rem;
+            min-height: 0;
+            padding-block: 0 !important;
+            margin-top: 0;
+            margin-bottom: 0.45rem;
+            border-radius: 0 0 0.72rem 0.72rem;
           }
 
           .customer-page-header__content {
-            width: min(100% - 1.2rem, 560px);
-            padding-block: 0;
+            display: block;
+            width: min(100% - 0.75rem, 48rem);
+            padding: 0;
           }
 
-          .customer-page-header__badge {
-            min-height: 1.34rem;
-            padding: 0.1rem 0.62rem;
-          }
-
+          .customer-page-header__badge,
           .customer-page-header h1 {
-            font-size: clamp(0.98rem, 4.6vw, 1.2rem);
+            display: none;
           }
 
           .customer-page-header p {
-            font-size: clamp(0.64rem, 2.7vw, 0.76rem);
+            display: none;
+          }
+
+          .customer-page-header__children {
+            margin: 0;
+            padding: 0 0 0.35rem;
           }
         }
 
