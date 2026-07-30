@@ -291,130 +291,248 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
         }
 
         @media (max-width: 768px) {
-          .footer { background: #f8fbff; }
+          /* ── Mobile footer v2: flat divider layout, ~35-40% less height ── */
+
+          /* ── Outer shell ── */
+          .footer {
+            background: var(--surface-2);
+            border-top: 1px solid var(--border-color);
+          }
           .footer-container {
             width: 100% !important;
             max-width: none !important;
-            padding: 16px 16px 0 !important;
+            padding: 14px 16px 0 !important;
           }
+
+          /* ── Grid: single column, sections separated by dividers ── */
           .footer-grid {
             grid-template-columns: minmax(0, 1fr);
-            gap: 20px;
-            padding-bottom: 20px;
+            gap: 0;
+            padding-bottom: 0;
           }
+
+          /* ── Remove card styling from every col ── */
           .footer-col,
           .footer-col + .footer-col,
           .footer-brand,
           .footer-grid > :last-child {
             grid-column: auto;
-            padding: 16px;
-            border: 1px solid rgba(var(--primary-rgb), 0.12);
-            border-radius: 16px;
-            background: rgba(255, 255, 255, 0.82);
-            box-shadow: 0 8px 24px rgba(30, 64, 175, 0.07);
-            backdrop-filter: blur(14px);
+            padding: 14px 0;
+            border: none;
+            border-top: 1px solid var(--border-color);
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+            backdrop-filter: none;
           }
-          .footer-section-title,
+          /* First col (brand) — no top border */
+          .footer-brand {
+            padding-top: 0;
+            border-top: none;
+          }
+
+          /* ── Brand / logo ── */
           :global(.footer-logo) {
-            margin-top: 0;
-            margin-bottom: 12px;
-            font-size: 20px;
-            font-weight: 700;
-            line-height: 1.2;
-            letter-spacing: -0.01em;
-            text-align: left;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 16px;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 8px;
+            text-decoration: none;
+            color: var(--text-primary);
           }
-          :global(.footer-logo) { gap: 8px; }
           .footer-logo-icon {
-            width: 28px;
-            height: 28px;
-            flex-basis: 28px;
-            border-radius: 8px;
+            width: 26px;
+            height: 26px;
+            flex: 0 0 26px;
+            border-radius: 6px;
           }
-          .brand-pitch { width: 100%; max-width: none; margin: 0 0 12px; font-size: 13px; line-height: 1.5; }
-          .footer-certs { width: 100%; gap: 8px; }
+          .brand-pitch {
+            width: 100%;
+            max-width: none;
+            margin: 0 0 10px;
+            font-size: 13px;
+            line-height: 1.45;
+            color: var(--text-secondary);
+          }
+
+          /* ── Cert badges ── */
+          .footer-certs { display: flex; flex-wrap: wrap; gap: 5px; }
           .footer-certs span {
-            min-height: 24px;
-            max-width: 100%;
-            padding: 4px 7px;
-            border-radius: 7px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 7px;
+            border-radius: 5px;
             font-size: 10px;
-            font-weight: 650;
-            white-space: normal;
+            font-weight: 700;
+            line-height: 1;
+            flex: 0 1 auto;
+            white-space: nowrap;
           }
-          .footer-certs span :global(svg) { width: 11px; height: 11px; }
-          .footer-links { gap: 2px; }
-          .footer-links li { min-width: 0; }
+          .footer-certs span :global(svg) { width: 10px; height: 10px; }
+
+          /* ── Section headings ── */
+          .footer-section-title {
+            margin: 0 0 10px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            line-height: 1.2;
+            color: var(--text-muted);
+          }
+
+          /* ── Explore nav links ── */
+          .footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+          }
+          .footer-links li { width: 50%; min-width: 0; }
           :global(.footer-links a) {
-            min-height: 40px;
             display: flex;
             align-items: center;
-            padding: 7px 0;
+            min-height: 40px;
+            padding: 5px 0;
             font-size: 14px;
-            line-height: 1.35;
+            font-weight: 500;
+            line-height: 1.3;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 150ms ease;
           }
-          .contact-list, .locations-list { gap: 10px; }
-          .contact-list li,
-          .location-item {
-            width: 100%;
+          :global(.footer-links a:hover) { color: var(--primary-color); }
+
+          /* ── Contact list: compact horizontal rows ── */
+          .contact-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+          }
+          .contact-list li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 10px;
+            border: 1px solid rgba(var(--primary-rgb), 0.1);
+            border-radius: 10px;
+            background: rgba(var(--primary-rgb), 0.035);
             min-width: 0;
+          }
+          .contact-list li > div {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+            flex: 1;
+            overflow: hidden;
+          }
+          .contact-label {
+            flex-shrink: 0;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+          }
+          .contact-list a {
+            font-size: 13px;
+            font-weight: 500;
+            line-height: 1.3;
+            color: var(--text-primary);
+            text-decoration: none;
+            overflow-wrap: anywhere;
+            min-width: 0;
+          }
+          .contact-list a:hover { color: var(--primary-color); }
+
+          /* ── Location list: compact rows ── */
+          .locations-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 0;
+            font-style: normal;
+          }
+          .location-item {
+            display: flex;
             align-items: flex-start;
             gap: 10px;
-            padding: 8px 10px;
-            border: 1px solid rgba(var(--primary-rgb), 0.09);
-            border-radius: 12px;
+            padding: 7px 10px;
+            border: 1px solid rgba(var(--primary-rgb), 0.1);
+            border-radius: 10px;
             background: rgba(var(--primary-rgb), 0.035);
-          }
-          .contact-list li > div,
-          .location-item > div,
-          .location-item span:last-child {
-            width: 100%;
             min-width: 0;
-            max-width: 100%;
-            white-space: normal;
-            word-break: normal;
-            overflow-wrap: anywhere;
           }
-          .contact-list li > div,
-          .location-item > div { gap: 2px; }
-          .contact-list a,
-          .location-item span:last-child { font-size: 13px; line-height: 1.45; }
+          .location-item > div {
+            display: grid;
+            gap: 1px;
+            min-width: 0;
+            flex: 1;
+          }
+          .location-item strong {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-style: normal;
+          }
+          .location-item span:last-child {
+            font-size: 13px;
+            line-height: 1.4;
+            color: var(--text-secondary);
+            overflow-wrap: anywhere;
+            word-break: normal;
+          }
+
+          /* ── Icon containers: 28-30px ── */
           .footer-icon {
             width: 28px;
             height: 28px;
-            flex-basis: 28px;
-            margin-top: 1px;
-            border-radius: 9px;
+            flex: 0 0 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 7px;
+            border: 1px solid rgba(var(--primary-rgb), 0.15);
+            background: rgba(37, 99, 235, 0.08);
+            color: var(--primary-color);
+            margin-top: 0;
           }
-          .footer-icon :global(svg) {
-            width: 14px;
-            height: 14px;
-          }
-          .contact-label,
-          .location-item strong {
-            font-size: 11px;
-            font-weight: 650;
-            line-height: 1.35;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-          }
-          .locations-list { grid-template-columns: minmax(0, 1fr); }
+          .footer-icon :global(svg) { width: 13px; height: 13px; }
+
+          /* ── Footer bottom bar ── */
           .footer-bottom {
-            padding: 14px 8px calc(64px + env(safe-area-inset-bottom));
+            padding: 12px 0 calc(56px + env(safe-area-inset-bottom));
+            border-top: 1px solid var(--border-color);
             text-align: center;
           }
-          .footer-bottom p { margin: 0; font-size: 11px; line-height: 1.45; }
+          .footer-bottom p { margin: 0; font-size: 11px; line-height: 1.4; }
+
+          /* ── WhatsApp FAB ── */
           .whatsapp-fab {
             right: 0.75rem;
             bottom: calc(0.75rem + env(safe-area-inset-bottom));
             width: 40px;
             height: 40px;
           }
-          .whatsapp-fab :global(svg) { width: 21px; height: 21px; }
+          .whatsapp-fab :global(svg) { width: 20px; height: 20px; }
         }
 
         @media (max-width: 480px) {
-          .footer-certs span { flex: 0 1 auto; }
+          .footer-container { padding: 12px 14px 0 !important; }
+          .footer-links li { width: 50%; }
         }
       `}</style>
       <style jsx global>{`
