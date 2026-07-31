@@ -22,6 +22,8 @@ const LocationIcon = () => (
   </svg>
 );
 
+const MobileFooterSeparator = () => <div className="mobile-footer-separator" aria-hidden="true" />;
+
 export default React.memo(function Footer({ companyInfo }: FooterProps) {
   const currentYear = new Date().getFullYear();
   const brandName = companyInfo.BrandName || 'NIMRA';
@@ -51,6 +53,8 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
               </div>
             </div>
 
+            <MobileFooterSeparator />
+
             <nav className="footer-col" aria-label="Footer navigation">
               <h2 className="footer-section-title">Explore      </h2>
               <ul className="footer-links">
@@ -60,6 +64,8 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
                 <li><Link href="/contact">Contact</Link></li>
               </ul>
             </nav>
+
+            <MobileFooterSeparator />
 
             <div className="footer-col">
               <h2 className="footer-section-title">Contact</h2>
@@ -88,6 +94,8 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
               </ul>
             </div>
 
+            <MobileFooterSeparator />
+
             <div className="footer-col">
               <h2 className="footer-section-title">Locations</h2>
               <address className="locations-list">
@@ -107,6 +115,7 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
             </div>
           </div>
 
+          <MobileFooterSeparator />
           <div className="footer-bottom">
             <p>&copy; {currentYear} <strong>{brandName}</strong> Beverage Company, T.S. Enterprises. All rights reserved.</p>
           </div>
@@ -135,6 +144,8 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
         }
 
         .footer-container { max-width: 1400px; padding-top: 1.75rem; }
+
+        .mobile-footer-separator { display: none; }
 
         .footer-grid {
           display: grid;
@@ -620,15 +631,314 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
             20%  { transform: translateX(150%); }
             100% { transform: translateX(150%); }
           }
+
+          /* Premium NIMRA mobile footer skin. */
+          .footer {
+            --m-footer-bg: #e8f2ff;
+            --m-footer-primary: #173b67;
+            --m-footer-secondary: #475569;
+            --m-footer-detail: #334155;
+            --m-footer-accent: #2563eb;
+            --m-footer-accent-soft: #315f91;
+            --m-footer-divider: #a9c9ee;
+            --m-footer-marquee: rgba(37, 99, 235, 0.58);
+            --m-footer-highlight: rgba(37, 99, 235, 0.78);
+            color: var(--m-footer-detail) !important;
+            background: var(--m-footer-bg) !important;
+            border-top-color: var(--m-footer-divider) !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            font-family: var(--font-body);
+            text-align: center;
+            margin-bottom: calc(0px - var(--mobile-nav-clearance));
+            padding-bottom: var(--mobile-nav-clearance);
+          }
+
+          :global([data-theme="dark"]) .footer {
+            --m-footer-bg: #071a3a;
+            --m-footer-primary: #ffffff;
+            --m-footer-secondary: #c2d0e2;
+            --m-footer-detail: #dbe7f5;
+            --m-footer-accent: #93c5fd;
+            --m-footer-accent-soft: #b6d8ff;
+            --m-footer-divider: #285b9f;
+            --m-footer-marquee: rgba(147, 197, 253, 0.56);
+            --m-footer-highlight: rgba(103, 232, 249, 0.68);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+          }
+
+          .footer,
+          .footer * {
+            opacity: 1 !important;
+            mix-blend-mode: normal !important;
+            font-family: var(--font-body) !important;
+          }
+
+          .footer-container {
+            padding: 14px 18px 0 !important;
+            background: transparent !important;
+          }
+
+          .footer-col,
+          .footer-col + .footer-col,
+          .footer-brand,
+          .footer-grid > :last-child {
+            padding-block: 11px;
+            background: transparent !important;
+          }
+
+          .footer-brand { padding-top: 0; }
+
+          :global(.footer-logo) {
+            justify-content: center;
+            color: var(--m-footer-primary) !important;
+            font-family: var(--font-body);
+            gap: 7px;
+            margin-bottom: 8px;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+          }
+
+          .footer-logo-icon {
+            width: 23px;
+            height: 23px;
+            flex-basis: 23px;
+            color: var(--m-footer-accent) !important;
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none;
+          }
+
+          .brand-pitch {
+            margin-inline: auto;
+            margin-bottom: 10px;
+            color: var(--m-footer-secondary) !important;
+            font-size: 11.5px;
+            font-weight: 400;
+            line-height: 1.55;
+          }
+
+          .footer-section-title {
+            margin-bottom: 8px;
+            color: var(--m-footer-primary) !important;
+            font-family: var(--font-body);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+          }
+
+          .footer-certs { justify-content: center; gap: 6px; }
+          .footer-certs span {
+            gap: 3px;
+            padding: 1px 4px 1px 0;
+            color: var(--m-footer-detail) !important;
+            border: 0 !important;
+            border-radius: 0;
+            background: transparent !important;
+            box-shadow: none;
+            font-size: 9px;
+            font-weight: 500;
+          }
+
+          .footer-certs span :global(svg) { width: 9px; height: 9px; }
+
+          :global(.footer-links a) {
+            justify-content: center;
+            min-height: 34px;
+            padding-block: 4px;
+            color: var(--m-footer-primary) !important;
+            font-size: 12px;
+            font-weight: 400;
+            line-height: 1.45;
+          }
+
+          :global(.footer-links a:hover),
+          :global(.footer-links a:focus-visible) {
+            color: var(--m-footer-accent) !important;
+          }
+
+          .contact-list li,
+          .location-item {
+            justify-content: center;
+            gap: 8px;
+            width: fit-content;
+            max-width: 100%;
+            margin-inline: auto;
+            padding: 3px 4px;
+            border: 0 !important;
+            border-radius: 0;
+            background: transparent !important;
+            box-shadow: none;
+            -webkit-backdrop-filter: none;
+            backdrop-filter: none;
+          }
+
+          .location-item {
+            gap: 4px;
+            align-items: flex-start;
+          }
+
+          .location-item .footer-icon {
+            margin-right: 0;
+          }
+
+          .contact-list,
+          .locations-list { gap: 7px; }
+
+          .contact-list li > div,
+          .location-item > div {
+            width: fit-content;
+            max-width: calc(100% - 30px);
+            justify-content: center;
+            justify-items: center;
+            text-align: center;
+          }
+
+          .contact-list li > div {
+            flex: 0 1 auto;
+            overflow: visible;
+          }
+
+          .location-item > div {
+            flex: 0 1 auto;
+          }
+
+          .contact-label,
+          .location-item strong {
+            color: var(--m-footer-accent-soft) !important;
+            font-size: 8.5px;
+            font-weight: 500;
+            letter-spacing: 0.07em;
+          }
+
+          .contact-list a {
+            color: var(--m-footer-primary) !important;
+            font-size: 12px;
+            font-weight: 400;
+            line-height: 1.45;
+          }
+
+          .contact-list a:hover { color: var(--m-footer-accent) !important; }
+
+          .location-item span:last-child {
+            color: var(--m-footer-secondary) !important;
+            font-size: 11px;
+            font-weight: 400;
+            line-height: 1.5;
+            max-width: min(280px, 100%);
+            white-space: normal;
+            overflow-wrap: break-word;
+            word-break: normal;
+            text-align: center;
+          }
+
+          .footer-icon {
+            width: 22px;
+            height: 22px;
+            flex-basis: 22px;
+            color: var(--m-footer-accent) !important;
+            border: 0 !important;
+            border-radius: 0;
+            background: transparent !important;
+          }
+
+          .footer-icon :global(svg) { width: 12px; height: 12px; }
+
+          .footer-col:not(.footer-brand)::before,
+          .footer-bottom::before {
+            display: none;
+          }
+
+          .footer-col:not(.footer-brand)::after,
+          .footer-bottom::after { display: none; }
+
+          .footer-bottom {
+            padding: 14px 8px;
+            color: var(--m-footer-secondary) !important;
+          }
+
+          .footer-bottom p { font-size: 10.5px; font-weight: 400; line-height: 1.45; }
+
+          .footer-bottom strong { color: var(--m-footer-primary) !important; font-weight: 500; }
+
+          .mobile-footer-separator {
+            display: block;
+            width: 100%;
+            overflow: hidden;
+            padding: 2px 0;
+            color: var(--m-footer-marquee);
+            border-block: 1px solid color-mix(in srgb, var(--m-footer-divider) 56%, transparent);
+            outline: none;
+            contain: inline-size;
+          }
+
+          .mobile-footer-marquee {
+            display: flex;
+            width: max-content;
+            animation: mobileFooterMarquee 24s linear infinite;
+            will-change: transform;
+          }
+
+          .mobile-footer-marquee-group {
+            display: flex;
+            flex: 0 0 auto;
+            align-items: center;
+            gap: 1.35rem;
+            padding-right: 1.35rem;
+          }
+
+          .mobile-footer-marquee-group > span {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            color: currentColor;
+            font-size: 8px;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            line-height: 1.4;
+            text-transform: uppercase;
+            white-space: nowrap;
+          }
+
+          .mobile-footer-marquee-group :global(svg) {
+            width: 8px;
+            height: 8px;
+            fill: currentColor;
+          }
+
+          .mobile-footer-separator:hover .mobile-footer-marquee,
+          .mobile-footer-separator:focus-within .mobile-footer-marquee,
+          .mobile-footer-separator:active .mobile-footer-marquee {
+            animation-play-state: paused;
+          }
+
+          @keyframes mobileFooterMarquee {
+            to { transform: translateX(-50%); }
+          }
+
+          .whatsapp-fab {
+            bottom: calc(7.5rem + env(safe-area-inset-bottom));
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            box-shadow: 0 9px 24px rgba(2, 6, 23, 0.3), 0 0 0 3px rgba(22, 163, 74, 0.12);
+          }
         }
 
         @media (max-width: 480px) {
-          .footer-container { padding: 12px 14px 0 !important; }
+          .footer-container { padding: 13px 18px 0 !important; }
           .footer-links li { width: 50%; }
         }
 
         /* Disable animations for users who prefer reduced motion */
         @media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+          .mobile-footer-marquee {
+            animation: none;
+            transform: none;
+          }
+
+          .mobile-footer-marquee-group:nth-child(2) {
+            display: none;
+          }
+
           .footer-col:not(.footer-brand)::before,
           .footer-col:not(.footer-brand)::after,
           .footer-bottom::before,
@@ -644,14 +954,65 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
         }
       `}</style>
       <style jsx global>{`
+        .mobile-footer-separator {
+          display: none;
+        }
+
         @media (max-width: 768px) {
+          body {
+            padding-bottom: var(--mobile-nav-clearance) !important;
+          }
+
+          .footer .mobile-footer-separator {
+            display: block;
+            position: relative;
+            width: 100%;
+            max-width: 100%;
+            height: 1px;
+            overflow: hidden;
+            margin: 2px 0;
+            padding: 0;
+            border: 0;
+            background: linear-gradient(90deg, transparent, var(--m-footer-divider) 12%, var(--m-footer-divider) 88%, transparent);
+            contain: inline-size;
+          }
+
+          .footer .mobile-footer-separator::after {
+            content: '';
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 32%;
+            background: linear-gradient(90deg, transparent, var(--m-footer-highlight), transparent);
+            transform: translateX(-140%);
+            animation: mobileFooterLineSweep 7s ease-in-out infinite;
+            will-change: transform;
+          }
+
+          .footer .mobile-footer-separator:hover::after,
+          .footer .mobile-footer-separator:active::after {
+            animation-play-state: paused;
+          }
+
           .back-to-top-btn {
+            display: flex !important;
             top: auto !important;
             right: auto !important;
-            bottom: calc(1rem + env(safe-area-inset-bottom)) !important;
-            left: calc(1rem + 24px) !important;
+            bottom: calc(7.5rem + env(safe-area-inset-bottom)) !important;
+            left: calc(50% - 24px) !important;
             width: 48px !important;
             height: 48px !important;
+          }
+        }
+
+        @keyframes mobileFooterLineSweep {
+          0%, 18% { transform: translateX(-140%); }
+          72%, 100% { transform: translateX(420%); }
+        }
+
+        @media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+          .footer .mobile-footer-separator::after {
+            animation: none;
+            display: none;
           }
         }
       `}</style>

@@ -204,6 +204,8 @@ export default function HeroActionButtons({ hideBackButton, pageTitle, mobileBac
           }
 
           .hero-action-back {
+            visibility: hidden;
+            pointer-events: none;
             justify-self: start;
             max-width: 100%;
           }

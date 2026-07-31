@@ -764,7 +764,32 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
         )}
       </header>
 
+      <nav className="mobile-bottom-nav" aria-label="Mobile primary navigation">
+        <Link href="/" prefetch={true} className={`mobile-bottom-nav-link ${pathname === '/' ? 'active' : ''}`} aria-label="Home">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h13V10"/><path d="M9.5 20v-6h5v6"/></svg>
+          <span>Home</span>
+        </Link>
+        <Link href="/products" prefetch={true} className={`mobile-bottom-nav-link ${pathname === '/products' ? 'active' : ''}`} aria-label="Products">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 8 4.5v11L12 22l-8-4.5v-11L12 2Z"/><path d="m4.5 6.8 7.5 4.3 7.5-4.3M12 11.1V22"/></svg>
+          <span>Products</span>
+        </Link>
+        <Link href="/track" prefetch={true} className={`mobile-bottom-nav-link ${pathname === '/track' ? 'active' : ''}`} aria-label="Track Order">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2.1 4.9-4.9 2.1 2.1-4.9 4.9-2.1Z"/></svg>
+          <span>Track</span>
+        </Link>
+        <Link href="/about" prefetch={true} className={`mobile-bottom-nav-link ${pathname === '/about' ? 'active' : ''}`} aria-label="About Us">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+          <span>About Us</span>
+        </Link>
+        <Link href="/contact" prefetch={true} className={`mobile-bottom-nav-link ${pathname === '/contact' ? 'active' : ''}`} aria-label="Contact Us">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v12H8l-4 3V5Z"/><path d="m5 6 7 6 7-6"/></svg>
+          <span>Contact Us</span>
+        </Link>
+      </nav>
+
       <style jsx global>{`
+        .mobile-bottom-nav { display: none; }
+
         @media (max-width: 768px) {
           .header .header-actions {
             width: auto !important;
@@ -791,7 +816,9 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           .header .cart-link { order: 2; }
           .header .profile-menu-container,
           .header .header-profile-placeholder { order: 3; }
-          .header .mobile-menu-btn { order: 4; }
+          .header .mobile-menu-btn { display: none !important; }
+
+          .header .mobile-drawer { display: none !important; }
 
           .header .notification-container,
           .header .profile-menu-container {
@@ -807,6 +834,97 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
             height: 32px !important;
             min-width: 32px !important;
             flex: 0 0 32px !important;
+          }
+
+          body {
+            --mobile-nav-clearance: calc(5.75rem + env(safe-area-inset-bottom));
+            padding-bottom: var(--mobile-nav-clearance);
+          }
+
+          .mobile-bottom-nav {
+            position: fixed;
+            z-index: 1100;
+            right: 0.5rem;
+            bottom: max(0.4rem, env(safe-area-inset-bottom));
+            left: 0.5rem;
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 0.08rem;
+            min-height: 60px;
+            padding: 0.28rem;
+            border: 1px solid rgba(96, 165, 250, 0.28);
+            border-radius: 1rem;
+            background: #eef5ff;
+            box-shadow: 0 10px 30px rgba(30, 64, 175, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            -webkit-backdrop-filter: none;
+            backdrop-filter: none;
+          }
+
+          [data-theme="dark"] .mobile-bottom-nav {
+            border-color: rgba(96, 165, 250, 0.26);
+            background: #10254a;
+          }
+
+          .mobile-bottom-nav-link {
+            display: flex;
+            min-width: 0;
+            min-height: 52px;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 0.16rem;
+            padding: 0.25rem 0.05rem;
+            border-radius: 0.72rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            -webkit-tap-highlight-color: transparent;
+          }
+
+          .mobile-bottom-nav-link svg {
+            width: 19px;
+            height: 19px;
+            flex: 0 0 19px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+          }
+
+          .mobile-bottom-nav-link span {
+            display: block;
+            max-width: 100%;
+            overflow: hidden;
+            font-family: var(--font-heading);
+            font-size: clamp(0.52rem, 2.2vw, 0.64rem);
+            font-weight: 650;
+            line-height: 1.05;
+            text-align: center;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+
+          .mobile-bottom-nav-link:hover,
+          .mobile-bottom-nav-link.active {
+            color: #1d4ed8;
+            background: rgba(255, 255, 255, 0.68);
+            box-shadow: 0 3px 12px rgba(37, 99, 235, 0.12);
+          }
+
+          [data-theme="dark"] .mobile-bottom-nav-link { color: #cbd5e1; }
+          [data-theme="dark"] .mobile-bottom-nav-link:hover,
+          [data-theme="dark"] .mobile-bottom-nav-link.active {
+            color: #93c5fd;
+            background: rgba(37, 99, 235, 0.24);
+          }
+
+          .mobile-bottom-nav-link:focus-visible {
+            outline: 2px solid #2563eb;
+            outline-offset: -2px;
+          }
+
+          .whatsapp-fab {
+            bottom: calc(5.25rem + env(safe-area-inset-bottom)) !important;
           }
         }
       `}</style>
