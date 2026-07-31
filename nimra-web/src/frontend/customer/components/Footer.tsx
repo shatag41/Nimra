@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { CompanyInfo } from '@/types/cms';
+import BackToTop from './BackToTop';
 
 interface FooterProps {
   companyInfo: CompanyInfo;
@@ -27,10 +28,12 @@ const MobileFooterSeparator = () => <div className="mobile-footer-separator" ari
 export default React.memo(function Footer({ companyInfo }: FooterProps) {
   const currentYear = new Date().getFullYear();
   const brandName = companyInfo.BrandName || 'NIMRA';
+  const [emailName, emailDomain] = (companyInfo.Email || '').split('@');
 
   return (
     <>
       <footer className="footer">
+        <BackToTop />
         <div className="container footer-container">
           <div className="footer-grid">
             <div className="footer-col footer-brand">
@@ -88,7 +91,12 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
                         <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
                       </svg>
                     </span>
-                    <div><span className="contact-label">Email</span><a href={`mailto:${companyInfo.Email}`}>{companyInfo.Email}</a></div>
+                    <div>
+                      <span className="contact-label">Email</span>
+                      <a href={`mailto:${companyInfo.Email}`}>
+                        {emailDomain ? <>{emailName}@<wbr />{emailDomain}</> : companyInfo.Email}
+                      </a>
+                    </div>
                   </li>
                 )}
               </ul>
@@ -649,8 +657,9 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
             font-family: var(--font-body);
             text-align: center;
-            margin-bottom: calc(0px - var(--mobile-nav-clearance));
-            padding-bottom: var(--mobile-nav-clearance);
+            margin-bottom: 0;
+            padding-bottom: 0;
+            position: relative;
           }
 
           :global([data-theme="dark"]) .footer {
@@ -674,7 +683,7 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
           }
 
           .footer-container {
-            padding: 14px 18px 0 !important;
+            padding: 8px 12px 0 !important;
             background: transparent !important;
           }
 
@@ -682,7 +691,7 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
           .footer-col + .footer-col,
           .footer-brand,
           .footer-grid > :last-child {
-            padding-block: 11px;
+            padding-block: 6px;
             background: transparent !important;
           }
 
@@ -692,17 +701,17 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
             justify-content: center;
             color: var(--m-footer-primary) !important;
             font-family: var(--font-body);
-            gap: 7px;
-            margin-bottom: 8px;
-            font-size: 15px;
+            gap: 5px;
+            margin-bottom: 5px;
+            font-size: 14px;
             font-weight: 700;
             letter-spacing: 0.02em;
           }
 
           .footer-logo-icon {
-            width: 23px;
-            height: 23px;
-            flex-basis: 23px;
+            width: 20px;
+            height: 20px;
+            flex-basis: 20px;
             color: var(--m-footer-accent) !important;
             border: 0 !important;
             background: transparent !important;
@@ -711,23 +720,23 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
 
           .brand-pitch {
             margin-inline: auto;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             color: var(--m-footer-secondary) !important;
-            font-size: 11.5px;
+            font-size: 10.5px;
             font-weight: 400;
-            line-height: 1.55;
+            line-height: 1.35;
           }
 
           .footer-section-title {
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             color: var(--m-footer-primary) !important;
             font-family: var(--font-body);
-            font-size: 10px;
+            font-size: 9px;
             font-weight: 700;
             letter-spacing: 0.1em;
           }
 
-          .footer-certs { justify-content: center; gap: 6px; }
+          .footer-certs { justify-content: center; gap: 4px; }
           .footer-certs span {
             gap: 3px;
             padding: 1px 4px 1px 0;
@@ -736,7 +745,7 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
             border-radius: 0;
             background: transparent !important;
             box-shadow: none;
-            font-size: 9px;
+            font-size: 8.5px;
             font-weight: 500;
           }
 
@@ -744,12 +753,12 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
 
           :global(.footer-links a) {
             justify-content: center;
-            min-height: 34px;
-            padding-block: 4px;
+            min-height: 24px;
+            padding-block: 1px;
             color: var(--m-footer-primary) !important;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 400;
-            line-height: 1.45;
+            line-height: 1.3;
           }
 
           :global(.footer-links a:hover),
@@ -760,11 +769,11 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
           .contact-list li,
           .location-item {
             justify-content: center;
-            gap: 8px;
+            gap: 5px;
             width: fit-content;
             max-width: 100%;
             margin-inline: auto;
-            padding: 3px 4px;
+            padding: 1px 3px;
             border: 0 !important;
             border-radius: 0;
             background: transparent !important;
@@ -783,7 +792,22 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
           }
 
           .contact-list,
-          .locations-list { gap: 7px; }
+          .locations-list { gap: 4px; }
+
+          .contact-list {
+            display: grid;
+            grid-template-columns: minmax(125px, 0.78fr) minmax(0, 1.22fr);
+            align-items: center;
+            width: 100%;
+            max-width: 620px;
+            margin-inline: auto;
+          }
+
+          .contact-list li {
+            width: 100%;
+            margin: 0;
+            min-width: 0;
+          }
 
           .contact-list li > div,
           .location-item > div {
@@ -795,8 +819,14 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
           }
 
           .contact-list li > div {
-            flex: 0 1 auto;
+            display: flex;
+            flex: 1 1 auto;
+            align-items: baseline;
+            justify-content: flex-start;
+            gap: 4px;
+            min-width: 0;
             overflow: visible;
+            text-align: left;
           }
 
           .location-item > div {
@@ -806,43 +836,98 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
           .contact-label,
           .location-item strong {
             color: var(--m-footer-accent-soft) !important;
-            font-size: 8.5px;
+            font-size: 8px;
             font-weight: 500;
             letter-spacing: 0.07em;
           }
 
           .contact-list a {
             color: var(--m-footer-primary) !important;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 400;
-            line-height: 1.45;
+            line-height: 1.3;
+            min-width: 0;
+            overflow-wrap: normal;
+            word-break: normal;
+          }
+
+          .contact-list li:first-child a { white-space: nowrap; }
+
+          .contact-list li:last-child a {
+            font-size: 9.5px;
+            white-space: nowrap;
+          }
+
+          .contact-list li:last-child {
+            padding-left: 8px;
           }
 
           .contact-list a:hover { color: var(--m-footer-accent) !important; }
 
           .location-item span:last-child {
             color: var(--m-footer-secondary) !important;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 400;
-            line-height: 1.5;
-            max-width: min(280px, 100%);
+            line-height: 1.35;
+            max-width: min(300px, 100%);
             white-space: normal;
             overflow-wrap: break-word;
             word-break: normal;
             text-align: center;
           }
 
+          .locations-list {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            align-items: stretch;
+            max-width: 680px;
+            margin-inline: auto;
+          }
+
+          .location-item {
+            display: grid;
+            grid-template-columns: 18px minmax(0, max-content);
+            grid-template-rows: auto auto;
+            justify-content: center;
+            align-content: start;
+            column-gap: 4px;
+            row-gap: 2px;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding-inline: 5px;
+          }
+
+          .location-item > div { display: contents; }
+
+          .location-item strong {
+            grid-column: 1 / -1;
+            grid-row: 1;
+            text-align: center;
+          }
+
+          .location-item .footer-icon {
+            grid-column: 1;
+            grid-row: 2;
+            align-self: start;
+          }
+
+          .location-item span:last-child {
+            grid-column: 2;
+            grid-row: 2;
+            align-self: start;
+          }
+
           .footer-icon {
-            width: 22px;
-            height: 22px;
-            flex-basis: 22px;
+            width: 18px;
+            height: 18px;
+            flex-basis: 18px;
             color: var(--m-footer-accent) !important;
             border: 0 !important;
             border-radius: 0;
             background: transparent !important;
           }
 
-          .footer-icon :global(svg) { width: 12px; height: 12px; }
+          .footer-icon :global(svg) { width: 11px; height: 11px; }
 
           .footer-col:not(.footer-brand)::before,
           .footer-bottom::before {
@@ -853,11 +938,11 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
           .footer-bottom::after { display: none; }
 
           .footer-bottom {
-            padding: 14px 8px;
+            padding: 6px 56px calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + 18px);
             color: var(--m-footer-secondary) !important;
           }
 
-          .footer-bottom p { font-size: 10.5px; font-weight: 400; line-height: 1.45; }
+          .footer-bottom p { font-size: 9.5px; font-weight: 400; line-height: 1.3; }
 
           .footer-bottom strong { color: var(--m-footer-primary) !important; font-weight: 500; }
 
@@ -917,14 +1002,17 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
           }
 
           .whatsapp-fab {
-            bottom: calc(7.5rem + env(safe-area-inset-bottom));
+            right: 14px;
+            bottom: calc(var(--mobile-nav-clearance) + 12px);
+            width: 42px;
+            height: 42px;
             border: 1px solid rgba(255, 255, 255, 0.28);
             box-shadow: 0 9px 24px rgba(2, 6, 23, 0.3), 0 0 0 3px rgba(22, 163, 74, 0.12);
           }
         }
 
         @media (max-width: 480px) {
-          .footer-container { padding: 13px 18px 0 !important; }
+          .footer-container { padding: 8px 10px 0 !important; }
           .footer-links li { width: 50%; }
         }
 
@@ -970,7 +1058,7 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
             max-width: 100%;
             height: 1px;
             overflow: hidden;
-            margin: 2px 0;
+            margin: 0;
             padding: 0;
             border: 0;
             background: linear-gradient(90deg, transparent, var(--m-footer-divider) 12%, var(--m-footer-divider) 88%, transparent);
@@ -995,12 +1083,14 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
 
           .back-to-top-btn {
             display: flex !important;
-            top: auto !important;
+            position: absolute !important;
+            top: -21px !important;
             right: auto !important;
-            bottom: calc(7.5rem + env(safe-area-inset-bottom)) !important;
-            left: calc(50% - 24px) !important;
-            width: 48px !important;
-            height: 48px !important;
+            bottom: auto !important;
+            left: 50% !important;
+            width: 42px !important;
+            height: 42px !important;
+            z-index: 3 !important;
           }
         }
 

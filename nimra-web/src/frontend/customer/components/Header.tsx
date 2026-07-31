@@ -837,44 +837,49 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           }
 
           body {
-            --mobile-nav-clearance: calc(5.75rem + env(safe-area-inset-bottom));
+            --mobile-nav-height: 64px;
+            --mobile-nav-clearance: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom));
             padding-bottom: var(--mobile-nav-clearance);
           }
 
           .mobile-bottom-nav {
             position: fixed;
-            z-index: 1100;
-            right: 0.5rem;
-            bottom: max(0.4rem, env(safe-area-inset-bottom));
-            left: 0.5rem;
+            z-index: 10000;
+            right: 0;
+            bottom: 0;
+            left: 0;
             display: grid;
             grid-template-columns: repeat(5, minmax(0, 1fr));
-            gap: 0.08rem;
-            min-height: 60px;
-            padding: 0.28rem;
-            border: 1px solid rgba(96, 165, 250, 0.28);
-            border-radius: 1rem;
+            gap: 0;
+            height: var(--mobile-nav-clearance);
+            min-height: var(--mobile-nav-clearance);
+            padding: 4px 4px env(safe-area-inset-bottom);
+            overflow: hidden;
+            isolation: isolate;
+            border: 0;
+            border-top: 1px solid var(--border-color);
+            border-radius: 14px 14px 0 0;
             background: #eef5ff;
-            box-shadow: 0 10px 30px rgba(30, 64, 175, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            box-shadow: 0 -4px 16px rgba(30, 64, 175, 0.14);
             -webkit-backdrop-filter: none;
             backdrop-filter: none;
           }
 
           [data-theme="dark"] .mobile-bottom-nav {
-            border-color: rgba(96, 165, 250, 0.26);
+            border-top-color: #274568;
             background: #10254a;
           }
 
           .mobile-bottom-nav-link {
             display: flex;
             min-width: 0;
-            min-height: 52px;
+            min-height: 56px;
             align-items: center;
             justify-content: center;
             flex-direction: column;
             gap: 0.16rem;
-            padding: 0.25rem 0.05rem;
-            border-radius: 0.72rem;
+            padding: 0.2rem 0.05rem;
+            border-radius: 0.6rem;
             color: var(--text-secondary);
             text-decoration: none;
             -webkit-tap-highlight-color: transparent;
@@ -907,15 +912,15 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           .mobile-bottom-nav-link:hover,
           .mobile-bottom-nav-link.active {
             color: #1d4ed8;
-            background: rgba(255, 255, 255, 0.68);
-            box-shadow: 0 3px 12px rgba(37, 99, 235, 0.12);
+            background: #ffffff;
+            box-shadow: none;
           }
 
           [data-theme="dark"] .mobile-bottom-nav-link { color: #cbd5e1; }
           [data-theme="dark"] .mobile-bottom-nav-link:hover,
           [data-theme="dark"] .mobile-bottom-nav-link.active {
             color: #93c5fd;
-            background: rgba(37, 99, 235, 0.24);
+            background: #183766;
           }
 
           .mobile-bottom-nav-link:focus-visible {
@@ -924,7 +929,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           }
 
           .whatsapp-fab {
-            bottom: calc(5.25rem + env(safe-area-inset-bottom)) !important;
+            bottom: calc(var(--mobile-nav-clearance) + 12px) !important;
           }
         }
       `}</style>

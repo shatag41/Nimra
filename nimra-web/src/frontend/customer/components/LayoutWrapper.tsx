@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import Header from './Header';
 import Footer from './Footer';
-import BackToTop from './BackToTop';
 import { CompanyInfo } from '@/types/cms';
 import { useAuth } from '../contexts/AuthContext';
 import { isAdminRole } from '@/frontend/admin/utils/accessControl';
@@ -133,7 +132,6 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
         </div>
       </main>
       <Footer companyInfo={companyInfo} />
-      <BackToTop />
     </div>
   );
 }
