@@ -764,27 +764,48 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
         )}
       </header>
 
-      <nav className="mobile-bottom-nav" aria-label="Mobile primary navigation">
-        <Link href="/" prefetch={true} className={`mobile-bottom-nav-link ${pathname === '/' ? 'active' : ''}`} aria-label="Home">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h13V10"/><path d="M9.5 20v-6h5v6"/></svg>
-          <span>Home</span>
-        </Link>
-        <Link href="/products" prefetch={true} className={`mobile-bottom-nav-link ${pathname === '/products' ? 'active' : ''}`} aria-label="Products">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 8 4.5v11L12 22l-8-4.5v-11L12 2Z"/><path d="m4.5 6.8 7.5 4.3 7.5-4.3M12 11.1V22"/></svg>
-          <span>Products</span>
-        </Link>
-        <Link href="/track" prefetch={true} className={`mobile-bottom-nav-link ${pathname === '/track' ? 'active' : ''}`} aria-label="Track Order">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2.1 4.9-4.9 2.1 2.1-4.9 4.9-2.1Z"/></svg>
-          <span>Track</span>
-        </Link>
-        <Link href="/about" prefetch={true} className={`mobile-bottom-nav-link ${pathname === '/about' ? 'active' : ''}`} aria-label="About Us">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
-          <span>About Us</span>
-        </Link>
-        <Link href="/contact" prefetch={true} className={`mobile-bottom-nav-link ${pathname === '/contact' ? 'active' : ''}`} aria-label="Contact Us">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v12H8l-4 3V5Z"/><path d="m5 6 7 6 7-6"/></svg>
-          <span>Contact Us</span>
-        </Link>
+      <nav
+        className={`mobile-bottom-nav ${activeUser && activeRole === 'CUSTOMER' ? 'customer-nav' : ''}`}
+        aria-label="Mobile primary navigation"
+        aria-busy={!authReady}
+      >
+        {authReady && (
+          <>
+            {activeUser && activeRole === 'CUSTOMER' ? (
+              <Link href="/customer-portal" prefetch={true} className={`mobile-bottom-nav-link ${pathname === '/customer-portal' ? 'active' : ''}`} aria-label="Portal">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                <span>Portal</span>
+              </Link>
+            ) : (
+              <Link href="/" prefetch={true} className={`mobile-bottom-nav-link ${pathname === '/' ? 'active' : ''}`} aria-label="Home">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h13V10"/><path d="M9.5 20v-6h5v6"/></svg>
+                <span>Home</span>
+              </Link>
+            )}
+            <Link href="/products" prefetch={true} className={`mobile-bottom-nav-link ${pathname === '/products' ? 'active' : ''}`} aria-label="Products">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 8 4.5v11L12 22l-8-4.5v-11L12 2Z"/><path d="m4.5 6.8 7.5 4.3 7.5-4.3M12 11.1V22"/></svg>
+              <span>Products</span>
+            </Link>
+            {activeUser && activeRole === 'CUSTOMER' && (
+              <Link href="/orders" prefetch={true} className={`mobile-bottom-nav-link ${pathname === '/orders' ? 'active' : ''}`} aria-label="Orders">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg>
+                <span>Orders</span>
+              </Link>
+            )}
+            <Link href="/track" prefetch={true} className={`mobile-bottom-nav-link ${pathname === '/track' ? 'active' : ''}`} aria-label="Track Order">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2.1 4.9-4.9 2.1 2.1-4.9 4.9-2.1Z"/></svg>
+              <span>Track</span>
+            </Link>
+            <Link href="/about" prefetch={true} className={`mobile-bottom-nav-link ${pathname === '/about' ? 'active' : ''}`} aria-label="About Us">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+              <span>About Us</span>
+            </Link>
+            <Link href="/contact" prefetch={true} className={`mobile-bottom-nav-link ${pathname === '/contact' ? 'active' : ''}`} aria-label="Contact Us">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v12H8l-4 3V5Z"/><path d="m5 6 7 6 7-6"/></svg>
+              <span>Contact Us</span>
+            </Link>
+          </>
+        )}
       </nav>
 
       <style jsx global>{`
@@ -865,6 +886,14 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
             backdrop-filter: none;
           }
 
+          .mobile-bottom-nav.customer-nav {
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+          }
+
+          .mobile-bottom-nav[aria-busy="true"] {
+            pointer-events: none;
+          }
+
           [data-theme="dark"] .mobile-bottom-nav {
             border-top-color: #274568;
             background: #10254a;
@@ -907,6 +936,21 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
             text-align: center;
             text-overflow: ellipsis;
             white-space: nowrap;
+          }
+
+          .mobile-bottom-nav.customer-nav .mobile-bottom-nav-link {
+            gap: 0.12rem;
+            padding-inline: 0.02rem;
+          }
+
+          .mobile-bottom-nav.customer-nav .mobile-bottom-nav-link svg {
+            width: 18px;
+            height: 18px;
+            flex-basis: 18px;
+          }
+
+          .mobile-bottom-nav.customer-nav .mobile-bottom-nav-link span {
+            font-size: clamp(0.48rem, 2vw, 0.6rem);
           }
 
           .mobile-bottom-nav-link:hover,

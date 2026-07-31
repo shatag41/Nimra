@@ -3,6 +3,10 @@ export type AppTheme = 'light' | 'dark';
 export const THEME_STORAGE_KEY = 'nimra_theme';
 export const LEGACY_THEME_STORAGE_KEY = 'theme';
 export const THEME_CHANGE_EVENT = 'nimra-theme-change';
+const THEME_COLORS: Record<AppTheme, string> = {
+  light: '#ffffff',
+  dark: '#0f172a',
+};
 
 export function getStoredTheme(): AppTheme {
   if (typeof window === 'undefined') return 'light';
@@ -18,6 +22,9 @@ export function applyTheme(theme: AppTheme, persist = false) {
   document.documentElement.setAttribute('data-theme', theme);
   document.documentElement.style.colorScheme = theme;
   document.body?.setAttribute('data-theme', theme);
+  document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((meta) => {
+    meta.content = THEME_COLORS[theme];
+  });
 
   if (persist && typeof window !== 'undefined') {
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);

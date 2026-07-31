@@ -45,7 +45,7 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
   useEffect(() => {
     if (isLoading || isLoggingOut) return;
     recordNavigation(meaningfulPath(pathname, searchParams.toString()), user?.Role);
-  }, [isLoading, pathname, searchParams, user?.Role]);
+  }, [isLoading, isLoggingOut, pathname, searchParams, user?.Role]);
 
   const isAdmin = pathname?.startsWith('/admin');
   const isAdminLogin = pathname === '/admin/login';
@@ -82,9 +82,14 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
     }
   }, [isAdmin, isAdminLogin, isAuthPage, isAuthenticated, isCheckout, isLoading, isLoggingOut, isProtectedCustomerRoute, pathname, router, searchParams, user]);
 
-  const renderBareShell = (content: React.ReactNode) => (
+  const renderBareShell = (content: React.ReactNode, includeMobileHeader = false) => (
     <div className="ds-app-shell">
-      <main className="ds-main">
+      {includeMobileHeader && (
+        <div className="mobile-only-site-header">
+          <Header companyInfo={companyInfo} />
+        </div>
+      )}
+      <main className={`ds-main ${includeMobileHeader ? 'with-mobile-site-header' : ''}`}>
         {content}
       </main>
     </div>
@@ -103,12 +108,13 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
           @keyframes logout-spin { to { transform:rotate(360deg); } }
           @media (prefers-reduced-motion: reduce) { .logout-page-state .loading-spinner { animation:none; } }
         `}</style>
-      </div>
+      </div>,
+      !isAdmin,
     );
   }
 
-  if (!mounted && isProtectedRoute) return renderBareShell(null);
-  if (isLoading && isProtectedRoute) return renderBareShell(null);
+  if (!mounted && isProtectedRoute) return renderBareShell(null, !isAdmin);
+  if (isLoading && isProtectedRoute) return renderBareShell(null, !isAdmin);
 
   // Also block access if not authenticated
   if (isAdmin && !isAdminLogin && (!isAuthenticated || !isAdminRole(user?.Role))) {
@@ -120,7 +126,7 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
   }
 
   if (isAdmin || isAuthPage) {
-    return renderBareShell(children);
+    return renderBareShell(children, !isAdmin);
   }
 
   return (

@@ -86,7 +86,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
           {activeSection === 'story' && (
             <div className="fade-enter about-grid">
               <div className="story-text-col">
-                <h2 className="story-title">The NIMRA Philosophy</h2>
+                <h2 className="story-title">The Nimra Philosophy</h2>
                 <div className="story-paragraph">
                   <p>{companyInfo.AboutStory}</p>
                   <p>
@@ -557,6 +557,22 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         }
         
         @media (max-width: 768px) {
+          .story-title {
+            max-width: 100%;
+            margin: 0 0 0.3rem !important;
+            overflow-wrap: anywhere;
+            font-size: clamp(1.1rem, 5vw, 1.35rem) !important;
+            line-height: 1.15 !important;
+          }
+
+          .infra-highlights .section-title {
+            max-width: 100%;
+            margin: 0 0 0.35rem !important;
+            overflow-wrap: anywhere;
+            font-size: clamp(1.1rem, 5vw, 1.35rem) !important;
+            line-height: 1.15 !important;
+          }
+
           .about-grid, .infra-grid {
             grid-template-columns: 1fr;
             gap: 1.5rem;

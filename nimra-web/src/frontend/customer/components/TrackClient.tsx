@@ -197,9 +197,10 @@ export default function TrackClient() {
   const displayedMobile = mounted ? (order?.customer?.mobile || mobileValue) : '';
   const inputsDisabled = mounted ? (loading || authLoading || (Boolean(user) && loadingOrders)) : true;
   const showingSkeleton = loading || authLoading || (Boolean(user) && loadingOrders);
+  const isGuestView = mounted && !authLoading && !user;
 
   return (
-    <section className="track-page">
+    <section className={`track-page ${isGuestView ? 'guest-view' : ''}`}>
       <div className="track-bg" aria-hidden="true">
         <span className="glow glow-one" />
         <span className="glow glow-two" />
@@ -210,12 +211,13 @@ export default function TrackClient() {
 
       <div className="track-shell">
         <CustomerPageHeader
+          className="track-page-header"
           badge="TRACK ORDER"
           title="Track Your Nimra Delivery"
           subtitle="Enter your Order ID and registered mobile number to track your order in real time."
         />
 
-        <div className={`tracking-flow ${order ? 'has-result' : ''} ${showingSkeleton ? 'is-searching' : ''}`}>
+        <div className={`tracking-flow ${isGuestView ? 'guest-view' : ''} ${order ? 'has-result' : ''} ${showingSkeleton ? 'is-searching' : ''}`}>
           <form className="track-form premium-card search-card" onSubmit={submit}>
             <label className="field-group">
               <span>Order ID</span>
@@ -1232,7 +1234,50 @@ export default function TrackClient() {
 
         @media (max-width: 760px) {
           .track-page {
-            padding-top: 0.55rem;
+            padding-top: 0;
+          }
+
+          .tracking-flow {
+            margin-top: 0.65rem;
+          }
+
+          .track-page.guest-view .track-shell {
+            display: flex;
+            min-height: calc(100svh - var(--ds-header-offset) - var(--mobile-nav-clearance));
+            flex-direction: column;
+          }
+
+          .tracking-flow.guest-view {
+            width: 100%;
+            max-width: 34rem;
+            min-height: 0;
+            flex: 1 1 auto;
+            align-self: center;
+            align-content: center;
+            justify-items: center;
+            gap: 0.75rem;
+            margin-top: 0;
+            padding: 0.75rem clamp(0.75rem, 3vw, 1rem) 1rem;
+          }
+
+          .tracking-flow.guest-view .search-card,
+          .tracking-flow.guest-view .empty-card {
+            width: 100%;
+            max-width: 32rem;
+            margin-inline: auto;
+            overflow-wrap: anywhere;
+          }
+
+          .tracking-flow.guest-view .track-form {
+            min-width: 0;
+          }
+
+          .tracking-flow.guest-view .field-group,
+          .tracking-flow.guest-view .input-shell,
+          .tracking-flow.guest-view .input-shell input,
+          .tracking-flow.guest-view .track-button {
+            width: 100%;
+            min-width: 0;
           }
 
           .search-card,
@@ -1341,6 +1386,13 @@ export default function TrackClient() {
 
           .skeleton-row {
             grid-template-columns: 1fr;
+          }
+        }
+
+        @media (max-width: 760px) and (max-height: 700px) {
+          .tracking-flow.guest-view {
+            flex: 0 0 auto;
+            align-content: start;
           }
         }
 

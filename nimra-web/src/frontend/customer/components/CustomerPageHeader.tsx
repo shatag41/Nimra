@@ -206,33 +206,66 @@ export default function CustomerPageHeader({
         }
 
         @media (max-width: 768px) {
-          .customer-page-header {
+          .customer-page-header.customer-page-header {
             width: 100vw;
-            min-height: 0;
-            padding-block: 0 !important;
+            height: auto !important;
+            min-height: auto !important;
+            padding: 0.85rem 0.85rem 0.95rem !important;
             margin-top: 0;
             margin-bottom: 0.45rem;
             border-radius: 0 0 0.72rem 0.72rem;
           }
 
-          .customer-page-header__content {
-            display: block;
-            width: min(100% - 0.75rem, 48rem);
-            padding: 0;
+          .customer-page-header.customer-page-header .customer-page-header__content {
+            display: flex !important;
+            width: min(100% - 0.5rem, 35rem) !important;
+            padding: 0 !important;
           }
 
-          .customer-page-header__badge,
-          .customer-page-header h1 {
-            display: none;
+          :global(.customer-page-header .hero-actions-wrapper) {
+            display: none !important;
           }
 
-          .customer-page-header p {
-            display: none;
+          .customer-page-header.customer-page-header .customer-page-header__badge {
+            display: inline-flex !important;
+            position: static !important;
+            min-height: 1.35rem !important;
+            margin: 0 !important;
+            padding: 0.12rem 0.62rem !important;
+            font-size: 0.52rem !important;
+          }
+
+          .customer-page-header.customer-page-header h1 {
+            display: block !important;
+            width: 100%;
+            max-width: 100% !important;
+            margin: 0.3rem 0 0.2rem !important;
+            overflow: visible !important;
+            font-size: clamp(0.86rem, 3.65vw, 1.02rem) !important;
+            line-height: 1.12 !important;
+            text-overflow: clip !important;
+            white-space: normal !important;
+          }
+
+          .customer-page-header.customer-page-header p {
+            display: block !important;
+            width: 100%;
+            max-width: 31rem !important;
+            margin: 0 !important;
+            overflow: visible !important;
+            font-size: clamp(0.72rem, 3.2vw, 0.86rem) !important;
+            line-height: 1.38 !important;
+            text-overflow: clip !important;
+            white-space: normal !important;
           }
 
           .customer-page-header__children {
-            margin: 0;
-            padding: 0 0 0.35rem;
+            margin: 0.25rem 0 0;
+            padding: 0;
+          }
+
+          .customer-page-header.track-page-header {
+            margin-bottom: 0;
           }
         }
 

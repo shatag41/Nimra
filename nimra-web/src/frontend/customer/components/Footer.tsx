@@ -314,13 +314,15 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
 
           /* ── Outer shell ── */
           .footer {
+            position: relative;
+            overflow: visible;
             background: var(--surface-2);
             border-top: 1px solid var(--border-color);
           }
           .footer-container {
             width: 100% !important;
             max-width: none !important;
-            padding: 14px 16px 0 !important;
+            padding: 35px 16px 0 !important;
           }
 
           /* ── Grid: single column, sections separated by dividers ── */
@@ -1083,15 +1085,16 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
 
           .back-to-top-btn {
             display: flex !important;
-            position: absolute !important;
-            top: -21px !important;
+            position: fixed !important;
+            top: calc(3.4375rem + 8px) !important;
             right: auto !important;
             bottom: auto !important;
             left: 50% !important;
             width: 42px !important;
             height: 42px !important;
-            z-index: 3 !important;
+            z-index: 9999 !important;
           }
+
         }
 
         @keyframes mobileFooterLineSweep {

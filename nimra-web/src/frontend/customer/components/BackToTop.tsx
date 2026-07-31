@@ -8,7 +8,7 @@ export default function BackToTop() {
   const [isVisible, setIsVisible] = useState(false);
   const pathname = usePathname();
 
-  const allowedRoutes = ['/', '/products', '/orders', '/customer-portal'];
+  const allowedRoutes = ['/', '/products', '/orders', '/customer-portal', '/about'];
   const isAllowed = allowedRoutes.some(route => 
     route === '/' ? pathname === '/' : pathname?.startsWith(route)
   );

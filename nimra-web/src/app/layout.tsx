@@ -14,6 +14,11 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
+  colorScheme: 'light dark',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0f172a' },
+  ],
 };
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -68,6 +73,10 @@ export default async function RootLayout({
                   document.documentElement.setAttribute('data-theme', activeTheme);
                   document.documentElement.style.colorScheme = activeTheme;
                   document.body && document.body.setAttribute('data-theme', activeTheme);
+                  var browserColor = activeTheme === 'dark' ? '#0f172a' : '#ffffff';
+                  document.querySelectorAll('meta[name="theme-color"]').forEach(function(meta) {
+                    meta.setAttribute('content', browserColor);
+                  });
                 } catch (e) {}
               })();
             `,
