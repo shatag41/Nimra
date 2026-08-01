@@ -297,7 +297,43 @@ function MobilePremiumShowcase(props: any) {
              20% { left: 150%; }
              100% { left: 150%; }
            }
-        }
+           
+           /* Dark Mode Adjustments */
+           [data-theme="dark"] .mobile-premium-showcase .showcase-card {
+             background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+             box-shadow: 0 12px 36px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+             border: 1px solid rgba(255,255,255,0.08);
+           }
+           [data-theme="dark"] .mobile-premium-showcase .showcase-image-container {
+             background: linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+             box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);
+           }
+           [data-theme="dark"] .mobile-premium-showcase .shimmer-sweep {
+             background: linear-gradient(to right, transparent, rgba(255,255,255,0.05), transparent);
+           }
+           [data-theme="dark"] .mobile-premium-showcase .showcase-num {
+             color: rgba(96, 165, 250, 0.7);
+           }
+           [data-theme="dark"] .mobile-premium-showcase .showcase-badges .cat-volume {
+             background: rgba(96, 165, 250, 0.15);
+             color: #93c5fd;
+           }
+           [data-theme="dark"] .mobile-premium-showcase .showcase-content h3 {
+             color: #ffffff;
+           }
+           [data-theme="dark"] .mobile-premium-showcase .showcase-content .card-desc {
+             color: #cbd5e1;
+           }
+           [data-theme="dark"] .mobile-premium-showcase .showcase-price {
+             color: #94a3b8;
+           }
+           [data-theme="dark"] .mobile-premium-showcase .showcase-price span {
+             color: #f8fafc;
+           }
+           [data-theme="dark"] .mobile-premium-showcase .showcase-btn {
+             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+           }
+         }
       `}} />
     </div>
   );
