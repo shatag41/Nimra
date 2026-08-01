@@ -118,10 +118,12 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
               ))}
             </div>
             <Link href={`/contact?subject=Notify%20me%20about%20${encodeURIComponent(product.Name)}`} className="btn btn-rush">
-              <svg className="bell-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-              </svg>
+              <span className="bell-wrapper">
+                <svg className="bell-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+              </span>
               Get Notified on Launch
             </Link>
           </div>
@@ -485,6 +487,28 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
           }
           .is-visible .btn-rush { animation: btnGradientMove 3s linear infinite, btnGlowPulse 5.5s ease-in-out infinite; }
           
+          /* Bell Icon Notification Animation */
+          .bell-wrapper {
+            position: relative; display: inline-flex; align-items: center; justify-content: center;
+            width: 17px; height: 17px; overflow: visible;
+          }
+          .is-visible .bell-icon {
+            transform-origin: 50% 10%;
+            animation: mobileBellRing 4.5s ease-in-out infinite;
+            will-change: transform, filter;
+          }
+          .bell-wrapper::before, .bell-wrapper::after {
+            content: ''; position: absolute; inset: 50%; width: 17px; height: 17px;
+            border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.7);
+            transform: translate(-50%, -50%); opacity: 0; pointer-events: none;
+          }
+          .is-visible .bell-wrapper::before { animation: bellRingExpand 4.5s cubic-bezier(0.1, 0.8, 0.3, 1) infinite; animation-delay: 0.1s; }
+          .is-visible .bell-wrapper::after { animation: bellRingExpand 4.5s cubic-bezier(0.1, 0.8, 0.3, 1) infinite; animation-delay: 0.35s; }
+          
+          .btn-rush:active .bell-icon, .btn-rush:active .bell-wrapper::before, .btn-rush:active .bell-wrapper::after {
+            animation-play-state: paused !important;
+          }
+          
           /* Ripple effect */
           .btn-rush::after {
             content: ''; position: absolute; inset: 50%; width: 0; height: 0;
@@ -523,6 +547,21 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
           .is-visible .rush-pill:nth-child(4) { animation-delay: 0.45s; }
           
           /* Keyframes */
+          @keyframes mobileBellRing {
+            0%, 80%, 100% { transform: rotate(0) translate(0); filter: drop-shadow(0 0 0 rgba(255,255,255,0)); }
+            83% { transform: rotate(14deg) translate(0.5px, -0.5px); filter: drop-shadow(0 0 4px rgba(255,255,255,0.8)); }
+            86% { transform: rotate(-12deg) translate(-0.5px, 0.5px); }
+            89% { transform: rotate(10deg) translate(0.5px, -0.5px); filter: drop-shadow(0 0 6px rgba(255,255,255,1)); }
+            92% { transform: rotate(-8deg) translate(-0.5px, 0.5px); }
+            95% { transform: rotate(6deg) translate(0.5px, -0.5px); filter: drop-shadow(0 0 4px rgba(255,255,255,0.8)); }
+            98% { transform: rotate(-4deg) translate(-0.5px, 0.5px); }
+          }
+          @keyframes bellRingExpand {
+            0%, 80% { width: 17px; height: 17px; opacity: 0; border-width: 1.5px; }
+            82% { opacity: 0.8; }
+            98% { width: 44px; height: 44px; opacity: 0; border-width: 0.5px; }
+            100% { width: 44px; height: 44px; opacity: 0; border-width: 0; }
+          }
           @keyframes mobileSectionFadeUp { from { opacity: 0; transform: translateY(24px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
           @keyframes mobileBorderShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
           @keyframes depthGlowMove { from { transform: translate(-10%, -10%) scale(0.9); } to { transform: translate(10%, 10%) scale(1.1); } }
@@ -533,13 +572,12 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
           @keyframes wordFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
           @keyframes btnGradientMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
           @keyframes btnGlowPulse { 0%, 100% { box-shadow: 0 4px 15px rgba(249, 115, 22, 0.25); } 50% { box-shadow: 0 4px 25px rgba(249, 115, 22, 0.6); } }
-          @keyframes sparkleTwinkle { 0%, 100% { opacity: 0; transform: scale(0.5); } 50% { opacity: 1; transform: scale(1.5); } }
         }
 
         @media (prefers-reduced-motion: reduce) {
           .rush-grid, .launch-product-wrap, .product-spotlight, .bubble, 
           .rush-section, .launch-product-wrap::before, .rush-content .badge, .rush-pill, .btn-rush,
-          .rush-section::before, .sparkles span, .rush-word { 
+          .rush-section::before, .sparkles span, .rush-word, .bell-icon, .bell-wrapper::before, .bell-wrapper::after { 
             animation: none !important; 
           }
           .btn-rush, .showcase-arrow, .showcase-dots button, .launch-product-wrap, .rush-section { transition: none !important; }
