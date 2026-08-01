@@ -76,38 +76,38 @@ export default function HomeClient({ banners: initialBanners, products: initialP
     };
   }, []);
 
-  const handleHeroPointer = useCallback((event: React.PointerEvent<HTMLElement>) => {
-    if (event.pointerType === 'touch' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const handleHeroPointer = useCallback((event: React.MouseEvent<HTMLElement>) => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const rect = event.currentTarget.getBoundingClientRect();
     event.currentTarget.style.setProperty('--pointer-x', ((((event.clientX - rect.left) / rect.width) - 0.5) * 2).toFixed(3));
     event.currentTarget.style.setProperty('--pointer-y', ((((event.clientY - rect.top) / rect.height) - 0.5) * 2).toFixed(3));
   }, []);
 
-  const resetHeroPointer = useCallback((event: React.PointerEvent<HTMLElement>) => {
+  const resetHeroPointer = useCallback((event: React.MouseEvent<HTMLElement>) => {
     event.currentTarget.style.setProperty('--pointer-x', '0');
     event.currentTarget.style.setProperty('--pointer-y', '0');
   }, []);
 
-  const handleCardPointer = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    if (event.pointerType === 'touch' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const handleCardPointer = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const rect = event.currentTarget.getBoundingClientRect();
     event.currentTarget.style.setProperty('--card-x', ((((event.clientX - rect.left) / rect.width) - 0.5) * 2).toFixed(3));
     event.currentTarget.style.setProperty('--card-y', ((((event.clientY - rect.top) / rect.height) - 0.5) * 2).toFixed(3));
   }, []);
 
-  const resetCardPointer = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+  const resetCardPointer = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     event.currentTarget.style.setProperty('--card-x', '0');
     event.currentTarget.style.setProperty('--card-y', '0');
   }, []);
 
-  const handleMagneticPointer = useCallback((event: React.PointerEvent<HTMLAnchorElement>) => {
-    if (event.pointerType === 'touch' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const handleMagneticPointer = useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const rect = event.currentTarget.getBoundingClientRect();
     event.currentTarget.style.setProperty('--mag-x', `${((event.clientX - rect.left) / rect.width - 0.5) * 7}px`);
     event.currentTarget.style.setProperty('--mag-y', `${((event.clientY - rect.top) / rect.height - 0.5) * 7}px`);
   }, []);
 
-  const resetMagneticPointer = useCallback((event: React.PointerEvent<HTMLAnchorElement>) => {
+  const resetMagneticPointer = useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
     event.currentTarget.style.setProperty('--mag-x', '0px');
     event.currentTarget.style.setProperty('--mag-y', '0px');
   }, []);
@@ -124,7 +124,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
   return (
     <div className="home-page">
       {/* ─── 1. HERO CAROUSEL ───────────────────────────────────────────────── */}
-      <section className="hero-section" ref={heroRef} onPointerMove={handleHeroPointer} onPointerLeave={resetHeroPointer}>
+      <section className="hero-section" ref={heroRef} onMouseMove={handleHeroPointer} onMouseLeave={resetHeroPointer}>
         {banners.map((banner, index) => (
           <div
             key={banner.ID}
@@ -191,7 +191,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
 
               <div className="hero-visual-column">
               <div className="hero-card-shell">
-              <div className="hero-card glass" onPointerMove={handleCardPointer} onPointerLeave={resetCardPointer}>
+              <div className="hero-card glass" onMouseMove={handleCardPointer} onMouseLeave={resetCardPointer}>
                 <div className="hero-card-tag">NIMRA Promise</div>
                 <h3>Pure water crafted for everyday wellness.</h3>
                 <ul className="hero-card-list">
@@ -208,7 +208,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
                     Fast, dependable service across the city
                   </li>
                 </ul>
-                <Link href="/products" className="btn btn-primary ds-btn-full hero-card-cta" onPointerMove={handleMagneticPointer} onPointerLeave={resetMagneticPointer}>
+                <Link href="/products" className="btn btn-primary ds-btn-full hero-card-cta" onMouseMove={handleMagneticPointer} onMouseLeave={resetMagneticPointer}>
                   Explore Products
                 </Link>
               </div>
@@ -343,6 +343,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
             descriptionOnly={true}
             showCartBadge={false}
             compact={true}
+            mobileShowcase={true}
           />
         </div>
       </section>

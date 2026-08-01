@@ -25,6 +25,284 @@ export interface ProductCardProps {
   onUpdateQuantity?: (productId: string, quantity: number) => void;
 }
 
+function ShowcaseCard({ 
+  product, 
+  index = 0, 
+  onViewMore, 
+  badgeText,
+  priceLabel,
+  actionLink,
+  actionText = 'View More',
+}: ProductCardProps) {
+  const cardRef = React.useRef<HTMLElement>(null);
+  const [inView, setInView] = React.useState(false);
+  
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setInView(true);
+        observer.unobserve(entry.target);
+      }
+    }, { threshold: 0.1 });
+    if (cardRef.current) observer.observe(cardRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const isLeft = index % 2 === 0;
+  const description = product.Description || '';
+  const maxLen = 60;
+  const shortDescription = description.length > maxLen ? description.substring(0, maxLen).trim() + '...' : description;
+  const displayBadge = badgeText || normalizeCategory(product.Category);
+  
+  return (
+    <article 
+      ref={cardRef} 
+      className={`showcase-card glass ${inView ? 'in-view' : ''} ${isLeft ? 'image-left' : 'image-right'}`}
+      onClick={(e) => {
+        const target = e.target as HTMLElement;
+        if (!target.closest('.showcase-btn')) {
+          onViewMore && onViewMore(product);
+        }
+      }}
+    >
+      <div className="showcase-image-container">
+        <div className="showcase-img-wrap">
+          <ProductImage src={product.ImageUrl} alt={product.Name} />
+        </div>
+        <div className="shimmer-sweep"></div>
+      </div>
+      <div className="showcase-content">
+        <div className="showcase-badges">
+          <span className="cat-volume">{product.Volume}</span>
+          {displayBadge && <span className={displayBadge === 'Best Seller' ? 'prod-badge-best' : 'cat-badge'}>{displayBadge}</span>}
+        </div>
+        <h3>{product.Name}</h3>
+        <p className="card-desc">{shortDescription}</p>
+        <div className="showcase-price">{priceLabel || 'Retail Price'} <span>{formatCurrency(Number(product.Price))}</span></div>
+        
+        {actionLink ? (
+          <Link href={actionLink} className="btn btn-primary showcase-btn">
+            {actionText}
+          </Link>
+        ) : (
+          <button 
+            type="button" 
+            className="btn btn-primary showcase-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewMore && onViewMore(product);
+            }}
+          >
+            {actionText}
+          </button>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function MobilePremiumShowcase(props: any) {
+  const { products, cartItemsMap, ...rest } = props;
+  return (
+    <div className="mobile-premium-showcase">
+      {products.map((product: Product, index: number) => {
+        const id = productId(product);
+        return (
+          <ShowcaseCard 
+            key={id}
+            product={product}
+            index={index}
+            cartQty={cartItemsMap[id] || 0}
+            {...rest}
+            badgeText={rest.getBadgeText ? rest.getBadgeText(product, index) : undefined}
+            priceLabel={rest.getPriceLabel ? rest.getPriceLabel(product, index) : undefined}
+          />
+        );
+      })}
+      
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media (max-width: 768px) {
+           .mobile-premium-showcase {
+             display: flex;
+             flex-direction: column;
+             gap: 1.5rem;
+             padding: 0.5rem 0 1rem;
+           }
+           .showcase-card {
+             display: grid;
+             grid-template-columns: 1fr 1.15fr;
+             gap: 1.25rem;
+             padding: 1.25rem;
+             border-radius: 28px;
+             background: linear-gradient(145deg, rgba(255,255,255,0.9), rgba(255,255,255,0.6));
+             backdrop-filter: blur(24px);
+             box-shadow: 0 12px 36px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.8);
+             opacity: 0;
+             transform: translateY(40px);
+             transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease;
+             cursor: pointer;
+             border: 1px solid rgba(255,255,255,0.5);
+           }
+           .showcase-card:active {
+             transform: scale(0.97) !important;
+             box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+           }
+           .showcase-card.in-view {
+             animation: showcaseFadeUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+           }
+           .showcase-card.image-right {
+             grid-template-columns: 1.15fr 1fr;
+           }
+           .showcase-card.image-right .showcase-image-container {
+             order: 2;
+           }
+           .showcase-card.image-right .showcase-content {
+             order: 1;
+           }
+           .showcase-image-container {
+             position: relative;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             border-radius: 20px;
+             background: linear-gradient(145deg, rgba(255,255,255,0.8), rgba(240,245,255,0.4));
+             padding: 1rem;
+             overflow: hidden;
+             box-shadow: inset 0 2px 10px rgba(0,0,0,0.02);
+           }
+           .showcase-img-wrap {
+             position: relative;
+             width: 100%;
+             aspect-ratio: 3/4;
+           }
+           .showcase-img-wrap :global(img) {
+             object-fit: contain;
+             filter: drop-shadow(0 12px 24px rgba(0,0,0,0.12));
+             width: 100%;
+             height: 100%;
+           }
+           .in-view .showcase-img-wrap {
+             animation: floatBottle 5s ease-in-out infinite alternate;
+           }
+           .shimmer-sweep {
+             position: absolute;
+             top: 0;
+             left: -150%;
+             width: 50%;
+             height: 100%;
+             background: linear-gradient(to right, transparent, rgba(255,255,255,0.9), transparent);
+             transform: skewX(-20deg);
+           }
+           .in-view .shimmer-sweep {
+             animation: shimmer 7s ease-in-out infinite;
+             animation-delay: 1.5s;
+           }
+           .showcase-content {
+             display: flex;
+             flex-direction: column;
+             justify-content: center;
+             gap: 0.4rem;
+           }
+           .showcase-content > * {
+             opacity: 0;
+             transform: translateY(15px);
+           }
+           .in-view .showcase-content > * {
+             animation: staggerFadeUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+           }
+           .in-view .showcase-num { animation-delay: 0.1s; }
+           .in-view .showcase-badges { animation-delay: 0.2s; }
+           .in-view h3 { animation-delay: 0.3s; }
+           .in-view .card-desc { animation-delay: 0.4s; }
+           .in-view .showcase-price { animation-delay: 0.5s; }
+           .in-view .showcase-btn { animation-delay: 0.6s; }
+           
+           .showcase-num {
+             font-size: 0.85rem;
+             font-weight: 800;
+             color: rgba(59, 130, 246, 0.4);
+             letter-spacing: 0.1em;
+             margin-bottom: 0.2rem;
+           }
+           .showcase-badges {
+             display: flex;
+             flex-wrap: wrap;
+             gap: 0.35rem;
+             margin-bottom: 0.2rem;
+           }
+           .showcase-badges span {
+             font-size: 0.65rem;
+             padding: 0.25rem 0.6rem;
+             border-radius: 99px;
+             font-weight: 700;
+             letter-spacing: 0.02em;
+           }
+           .showcase-badges .cat-volume {
+             background: rgba(59, 130, 246, 0.1);
+             color: #2563eb;
+           }
+           .showcase-content h3 {
+             font-size: 1.25rem;
+             line-height: 1.15;
+             margin: 0;
+             color: #1e293b;
+             font-weight: 800;
+             letter-spacing: -0.01em;
+           }
+           .showcase-content .card-desc {
+             font-size: 0.82rem;
+             color: #64748b;
+             margin: 0 0 0.4rem;
+             line-height: 1.45;
+           }
+           .showcase-price {
+             display: flex;
+             flex-direction: column;
+             gap: 0;
+           }
+           .showcase-price { font-size: 0.68rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; }
+           .showcase-price span { font-size: 1.2rem; color: #0f172a; font-weight: 800; letter-spacing: -0.02em; }
+           .showcase-btn {
+             margin-top: 0.6rem;
+             padding: 0.75rem 1rem;
+             font-size: 0.85rem;
+             font-weight: 700;
+             border-radius: 14px;
+             width: 100%;
+             text-align: center;
+             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+             transition: all 0.2s ease;
+           }
+           .showcase-btn:active {
+             transform: scale(0.95);
+           }
+           
+           .mobile-showcase-heading {
+             transform: translateY(14px);
+           }
+           
+           @keyframes showcaseFadeUp {
+             to { opacity: 1; transform: translateY(0); }
+           }
+           @keyframes staggerFadeUp {
+             to { opacity: 1; transform: translateY(0); }
+           }
+           @keyframes floatBottle {
+             0% { transform: translateY(0px) rotate(0deg); }
+             50% { transform: translateY(-8px) rotate(2deg); }
+             100% { transform: translateY(0px) rotate(0deg); }
+           }
+           @keyframes shimmer {
+             0% { left: -150%; }
+             20% { left: 150%; }
+             100% { left: 150%; }
+           }
+        }
+      `}} />
+    </div>
+  );
+}
+
 export const ProductCard = React.memo(function ProductCard({ 
   product, 
   onAdd, 
@@ -254,6 +532,7 @@ export interface ProductSectionProps {
   actionText?: string;
   descriptionOnly?: boolean;
   showCartBadge?: boolean;
+  mobileShowcase?: boolean;
 }
 
 export function ProductSection({
@@ -277,7 +556,17 @@ export function ProductSection({
   actionText,
   descriptionOnly,
   showCartBadge = true,
+  mobileShowcase = false,
 }: ProductSectionProps) {
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const displayProducts = limit ? products.slice(0, limit) : products;
   const { addProduct, updateQuantity, items } = useCart();
 
@@ -305,14 +594,30 @@ export function ProductSection({
       {(badge || title || subtitle) && (
         <div className="section-header">
           {badge && <span className="badge badge-primary">{badge}</span>}
-          {title && (typeof title === 'string' ? <h2>{title}</h2> : title)}
+          {title && (typeof title === 'string' ? <h2 className={mobileShowcase ? 'mobile-showcase-heading' : ''}>{title}</h2> : title)}
           {subtitle && (typeof subtitle === 'string' ? <p>{subtitle}</p> : subtitle)}
         </div>
       )}
 
+      {mobileShowcase && isMobile && (
+        <MobilePremiumShowcase 
+          products={displayProducts} 
+          onAdd={handleAdd} 
+          onUpdateQuantity={handleUpdateQuantity} 
+          cartItemsMap={cartItemsMap} 
+          onViewMore={onViewMore} 
+          getBadgeText={getBadgeText} 
+          getPriceLabel={getPriceLabel} 
+          actionLink={actionLink} 
+          actionText={actionText} 
+          showCartBadge={showCartBadge}
+        />
+      )}
+
       {displayProducts.length > 0 ? (
-        <div className="catalog-grid">
-          {displayProducts.map((product, index) => {
+        (!mobileShowcase || !isMobile) && (
+          <div className="catalog-grid">
+            {displayProducts.map((product, index) => {
             const id = productId(product);
             return (
               <ProductCard 
@@ -335,7 +640,8 @@ export function ProductSection({
               />
             );
           })}
-        </div>
+          </div>
+        )
       ) : (
         emptyState || (
           <div className="empty-state">
