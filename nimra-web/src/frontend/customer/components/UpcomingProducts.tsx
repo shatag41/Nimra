@@ -103,8 +103,10 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
           <div className="rush-content">
             <span className="badge badge-orange">{product.StockStatus || 'Coming Soon'}</span>
             <h2 className="rush-title">
-              {titlePrefix && `${titlePrefix} `}
-              <span className="rush-brand">{brandWord}</span>
+              {titlePrefix && titlePrefix.split(' ').map((word, i) => (
+                <span key={`word-${i}`} className="rush-word">{word}&nbsp;</span>
+              ))}
+              <span className="rush-brand rush-word">{brandWord}</span>
             </h2>
             <p className="rush-tagline">{getTagline(product)}</p>
             <p className="rush-text">
@@ -126,6 +128,7 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
 
           <div className="showcase-column">
             <div className="rush-visual">
+              <div className="sparkles" aria-hidden="true"><span/><span/><span/></div>
               <div className="product-spotlight" aria-hidden="true" />
               <div className="product-floor" aria-hidden="true" />
               <div className="launch-product-wrap">
@@ -417,22 +420,133 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
           .rush-visual { --showcase-size: clamp(175px, 23vw, 220px); }
         }
 
-        @media (max-width: 720px) {
-          .rush-section { width: min(100% - 0.75rem, 100%); border-radius: var(--radius-lg); }
-          .rush-inner { padding: 0.65rem 0.75rem 0.78rem; }
-          .rush-grid { grid-template-columns: 1fr; gap: 0.55rem; text-align: center; }
-          .showcase-column { grid-row: 1; }
-          .rush-content { grid-row: 2; align-items: center; }
-          .rush-visual { --showcase-size: min(200px, 50vw); }
-          .rush-title { font-size: clamp(1.2rem, 6vw, 1.55rem); }
-          .rush-text { font-size: 0.72rem; max-width: 34rem; }
-          .rush-features { justify-content: center; }
-          .showcase-arrow { opacity: 0.85; transform: translateY(-50%) scale(0.9); }
+        @media (max-width: 768px) {
+          /* Animated border glow around the card shifting with brand colors */
+          .rush-section { 
+            width: min(100% - 0.75rem, 100%); 
+            border-radius: var(--radius-lg); 
+            margin: 0.5rem auto; 
+            border: 1px solid transparent;
+            background: linear-gradient(135deg, #020617, #0d1728, #111827) padding-box,
+                        linear-gradient(135deg, rgba(249,115,22,0.4), rgba(251,191,36,0.1), rgba(249,115,22,0.4)) border-box;
+            background-size: 200% 200%;
+            position: relative;
+            transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+          }
+          
+          /* Fade-up + scale (0.96 -> 1) */
+          .rush-section.is-visible { animation: mobileSectionFadeUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards, mobileBorderShift 6s linear infinite; }
+          .rush-section:not(.is-visible) { opacity: 0; transform: translateY(24px) scale(0.96); }
+          
+          /* Slightly lift entire card + stronger shadow during touch */
+          .rush-section:active { transform: translateY(-4px) scale(0.99) !important; box-shadow: 0 15px 35px rgba(0,0,0,0.4); }
+          
+          /* Very slow moving radial background gradient for section depth */
+          .rush-section::before {
+            content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+            background: radial-gradient(circle at 50% 50%, rgba(249,115,22,0.08), transparent 70%);
+            animation: depthGlowMove 8s ease-in-out infinite alternate;
+          }
+
+          .rush-inner { padding: 0.5rem 0.6rem 0.65rem; position: relative; z-index: 2; }
+          .rush-grid { grid-template-columns: 1fr; gap: 0.4rem; text-align: center; }
+          .showcase-column { grid-row: 1; margin-bottom: -0.2rem; }
+          .rush-content { grid-row: 2; align-items: center; gap: 0.25rem; }
+          
+          .rush-visual { --showcase-size: min(180px, 45vw); perspective: 800px; position: relative; }
+          .rush-title { font-size: clamp(1.15rem, 5.5vw, 1.45rem); margin: 0; }
+          
+          /* Word-by-word staggered fade-in */
+          .is-visible .rush-word { opacity: 0; display: inline-block; animation: wordFadeIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+          .is-visible .rush-word:nth-child(1) { animation-delay: 0.1s; }
+          .is-visible .rush-word:nth-child(2) { animation-delay: 0.15s; }
+          .is-visible .rush-word:nth-child(3) { animation-delay: 0.2s; }
+          .is-visible .rush-word:nth-child(4) { animation-delay: 0.25s; }
+          .is-visible .rush-word:nth-child(5) { animation-delay: 0.3s; }
+          
+          .rush-text { font-size: 0.7rem; max-width: 32rem; margin: 0 0 0.2rem; }
+          .rush-features { justify-content: center; gap: 0.25rem; margin-top: 0.1rem; }
+          .rush-pill { padding: 0.15rem 0.4rem; font-size: 0.58rem; }
+          .showcase-arrow { opacity: 0.85; transform: translateY(-50%) scale(0.85); width: 1.7rem; height: 1.7rem; }
+          .showcase-dots { margin-top: 0.2rem; }
+          
+          /* CTA Button: gradient, soft glow pulse, ripple */
+          .btn-rush { 
+            margin-top: 0.3rem; padding: 0.45rem 0.9rem; font-size: 0.72rem; 
+            background-size: 200% 200% !important; 
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease; 
+            position: relative; overflow: hidden;
+            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.25);
+          }
+          .is-visible .btn-rush { animation: btnGradientMove 3s linear infinite, btnGlowPulse 5.5s ease-in-out infinite; }
+          
+          /* Ripple effect */
+          .btn-rush::after {
+            content: ''; position: absolute; inset: 50%; width: 0; height: 0;
+            background: rgba(255,255,255,0.4); border-radius: 50%; opacity: 0;
+            transform: translate(-50%, -50%); transition: width 0.4s, height 0.4s, opacity 0.4s;
+          }
+          .btn-rush:active::after { width: 120px; height: 120px; opacity: 1; transition: 0s; }
+          .btn-rush:active { transform: scale(0.92); }
+          
+          /* Continuous float (6-8px) + slow 3D tilt */
+          .is-visible .launch-product-wrap { animation: mobileFloatTilt 4.5s ease-in-out infinite alternate; transform-style: preserve-3d; }
+          
+          /* Slow shimmer across can */
+          .launch-product-wrap::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.3) 50%, transparent 80%);
+            transform: skewX(-20deg) translateX(-150%);
+            pointer-events: none; z-index: 10;
+          }
+          .is-visible .launch-product-wrap::before { animation: mobileShimmerSweep 5s ease-in-out infinite; animation-delay: 1.5s; }
+          
+          /* Soft rotating radial glow */
+          .is-visible .product-spotlight { animation: mobileRotatingGlow 6s linear infinite; width: 120%; left: -10%; }
+          
+          /* Pulse "Coming Soon" badge */
+          .is-visible .rush-content .badge { animation: badgeBreathing 2.5s ease-in-out infinite alternate; }
+          
+          /* Staggered slide-up feature tags */
+          .is-visible .rush-pill { opacity: 0; animation: staggerFeatureSlideUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+          .is-visible .rush-pill:nth-child(1) { animation-delay: 0.15s; }
+          .is-visible .rush-pill:nth-child(2) { animation-delay: 0.25s; }
+          .is-visible .rush-pill:nth-child(3) { animation-delay: 0.35s; }
+          .is-visible .rush-pill:nth-child(4) { animation-delay: 0.45s; }
+          
+          /* Sparkling light effects */
+          .sparkles { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+          .sparkles span {
+            position: absolute; width: 4px; height: 4px; background: white; border-radius: 50%;
+            box-shadow: 0 0 8px 2px rgba(255,255,255,0.8); opacity: 0;
+          }
+          .is-visible .sparkles span:nth-child(1) { top: 15%; left: 20%; animation: sparkleTwinkle 3s ease-in-out infinite; animation-delay: 0.5s; }
+          .is-visible .sparkles span:nth-child(2) { top: 75%; right: 15%; animation: sparkleTwinkle 4s ease-in-out infinite; animation-delay: 1.2s; }
+          .is-visible .sparkles span:nth-child(3) { top: 40%; right: 25%; animation: sparkleTwinkle 3.5s ease-in-out infinite; animation-delay: 2.1s; }
+          
+          /* Keyframes */
+          @keyframes mobileSectionFadeUp { from { opacity: 0; transform: translateY(24px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+          @keyframes mobileBorderShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+          @keyframes depthGlowMove { from { transform: translate(-10%, -10%) scale(0.9); } to { transform: translate(10%, 10%) scale(1.1); } }
+          @keyframes mobileFloatTilt { from { transform: translateY(4px) rotateX(2deg) rotateY(-3deg); } to { transform: translateY(-7px) rotateX(-2deg) rotateY(3deg); } }
+          @keyframes mobileRotatingGlow { 0% { opacity: 0.4; transform: scale(0.9) rotate(0deg); } 50% { opacity: 0.75; transform: scale(1.1); } 100% { opacity: 0.4; transform: scale(0.9) rotate(360deg); } }
+          @keyframes mobileShimmerSweep { 0% { transform: skewX(-20deg) translateX(-150%); } 20%, 100% { transform: skewX(-20deg) translateX(150%); } }
+          @keyframes badgeBreathing { from { box-shadow: 0 0 4px rgba(249,115,22,0.2); transform: scale(0.97); } to { box-shadow: 0 0 16px rgba(249,115,22,0.5); transform: scale(1.03); } }
+          @keyframes staggerFeatureSlideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+          @keyframes wordFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+          @keyframes btnGradientMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+          @keyframes btnGlowPulse { 0%, 100% { box-shadow: 0 4px 15px rgba(249, 115, 22, 0.25); } 50% { box-shadow: 0 4px 25px rgba(249, 115, 22, 0.6); } }
+          @keyframes sparkleTwinkle { 0%, 100% { opacity: 0; transform: scale(0.5); } 50% { opacity: 1; transform: scale(1.5); } }
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .rush-grid, .launch-product-wrap, .product-spotlight, .bubble { animation: none; }
-          .btn-rush, .showcase-arrow, .showcase-dots button, .launch-product-wrap { transition: none; }
+          .rush-grid, .launch-product-wrap, .product-spotlight, .bubble, 
+          .rush-section, .launch-product-wrap::before, .rush-content .badge, .rush-pill, .btn-rush,
+          .rush-section::before, .sparkles span, .rush-word { 
+            animation: none !important; 
+          }
+          .btn-rush, .showcase-arrow, .showcase-dots button, .launch-product-wrap, .rush-section { transition: none !important; }
+          .rush-section, .rush-pill, .rush-word { opacity: 1 !important; transform: none !important; }
         }
       `}</style>
     </section>
