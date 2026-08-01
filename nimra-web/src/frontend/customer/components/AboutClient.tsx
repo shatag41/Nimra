@@ -69,7 +69,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         title="Pure. Premium. Protected."
         subtitle="Committed to absolute purity and your health with every single drop, crafted by T.S. Enterprises."
       >
-        <div className="submenu-bar">
+        <div className="submenu-bar desktop-tabs">
           <div className="submenu-container">
             <button className={`submenu-btn ${activeSection === 'story' ? 'active' : ''}`} onClick={() => selectSection('story')}>Our Story</button>
             <button className={`submenu-btn ${activeSection === 'quality' ? 'active' : ''}`} onClick={() => selectSection('quality')}>10-Step Purity</button>
@@ -78,6 +78,15 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
           </div>
         </div>
       </CustomerPageHeader>
+
+      <div className="submenu-bar mobile-tabs" aria-label="About sections">
+        <div className="submenu-container">
+          <button className={`submenu-btn ${activeSection === 'story' ? 'active' : ''}`} onClick={() => selectSection('story')}>Our Story</button>
+          <button className={`submenu-btn ${activeSection === 'quality' ? 'active' : ''}`} onClick={() => selectSection('quality')}>10-Step Purity</button>
+          <button className={`submenu-btn ${activeSection === 'plant' ? 'active' : ''}`} onClick={() => selectSection('plant')}>Infrastructure</button>
+          <button className={`submenu-btn ${activeSection === 'faqs' ? 'active' : ''}`} onClick={() => selectSection('faqs')}>FAQs</button>
+        </div>
+      </div>
 
       <div className="container main-content">
         <div className="content-card">
@@ -259,6 +268,9 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         .submenu-bar {
           display: flex;
           justify-content: center;
+        }
+        .mobile-tabs {
+          display: none;
         }
         .submenu-container {
           display: inline-flex;
@@ -557,11 +569,32 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         }
         
         @media (max-width: 768px) {
+          .desktop-tabs {
+            display: none;
+          }
+          :global(.premium-about .customer-page-header__children) {
+            display: none;
+          }
+          .mobile-tabs {
+            display: flex;
+            width: 100%;
+            margin: 0;
+            padding: 0.35rem 0.5rem;
+          }
+          .main-content {
+            margin-top: 0;
+            padding-top: 0.35rem;
+            position: static;
+            z-index: auto;
+          }
+
           .story-title {
             max-width: 100%;
             margin: 0 0 0.3rem !important;
-            overflow-wrap: anywhere;
-            font-size: clamp(1.1rem, 5vw, 1.35rem) !important;
+            overflow-wrap: normal;
+            word-break: normal;
+            font-size: 1.1rem !important;
+            font-weight: 700 !important;
             line-height: 1.15 !important;
           }
 
@@ -587,8 +620,25 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
           }
           .submenu-container {
             width: 100%;
-            overflow-x: auto;
-            justify-content: flex-start;
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 3px;
+            padding: 4px;
+            overflow: hidden;
+          }
+          .submenu-btn {
+            min-width: 0;
+            padding: 7px 2px;
+            font-size: clamp(0.55rem, 2.35vw, 0.66rem);
+            font-weight: 500;
+            line-height: 1.2;
+            text-align: center;
+            white-space: nowrap;
+            overflow-wrap: normal;
+            word-break: normal;
+          }
+          .submenu-btn.active {
+            box-shadow: 0 1px 4px color-mix(in srgb, var(--primary-color) 22%, transparent);
           }
         }
         

@@ -1,13 +1,17 @@
 'use client';
 
 import React from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { Product } from '@/types/cms';
 import { useCart } from '@/frontend/customer/hooks/useCart';
 import { useCMSData } from '@/frontend/customer/hooks/useCMSData';
 import { formatCurrency, isOrderable, productId } from '../utils/commerce';
 import ProductImage from './ProductImage';
 import { CartItemsList, CartSummary } from './portal/Cart';
 import CustomerPageHeader from './CustomerPageHeader';
+
+const ProductDetailModal = dynamic(() => import('./portal/ProductDetailModal'), { ssr: false });
 
 const ArrowLeft = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m6 6-6-6 6-6" /></svg>;
 const Trash = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6" /></svg>;
@@ -74,20 +78,81 @@ export default function CartClient() {
 }
 
 function Recommendations({ products, onAdd }: { products: ReturnType<typeof useCMSData>['products']; onAdd: ReturnType<typeof useCart>['addProduct'] }) {
+  const trackRef = React.useRef<HTMLDivElement>(null);
+  const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pointerStartX = React.useRef(0);
+  const pointerMoved = React.useRef(false);
+  const [activeIndex, setActiveIndex] = React.useState(0);
+  const [isPaused, setIsPaused] = React.useState(false);
+  const [progressKey, setProgressKey] = React.useState(0);
+  const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
+
+  const pauseTimer = React.useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setIsPaused(true);
+  }, []);
+
+  const startTimer = React.useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (typeof window === 'undefined' || !window.matchMedia('(max-width: 768px)').matches || products.length < 2) return;
+    setIsPaused(false);
+    setProgressKey((key) => key + 1);
+    timerRef.current = setTimeout(() => {
+      const track = trackRef.current;
+      if (!track) return;
+      const cards = Array.from(track.querySelectorAll<HTMLElement>('.recommendation-card'));
+      const currentIndex = cards.reduce((closest, card, index) =>
+        Math.abs(card.offsetLeft - track.scrollLeft) < Math.abs(cards[closest].offsetLeft - track.scrollLeft) ? index : closest
+      , 0);
+      track.scrollTo({ left: cards[(currentIndex + 1) % cards.length].offsetLeft, behavior: 'smooth' });
+      startTimer();
+    }, 5_000);
+  }, [products.length]);
+
+  React.useEffect(() => {
+    startTimer();
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    mediaQuery.addEventListener('change', startTimer);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      mediaQuery.removeEventListener('change', startTimer);
+    };
+  }, [startTimer]);
+
+  const syncActiveIndex = React.useCallback(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    const cards = Array.from(track.querySelectorAll<HTMLElement>('.recommendation-card'));
+    if (!cards.length) return;
+    setActiveIndex(cards.reduce((closest, card, index) =>
+      Math.abs(card.offsetLeft - track.scrollLeft) < Math.abs(cards[closest].offsetLeft - track.scrollLeft) ? index : closest
+    , 0));
+  }, []);
+
   if (!products.length) return null;
   return (
+    <>
     <section className="cart-recommendations">
-      <div className="recommendations-heading"><div><span className="cart-kicker">Customers also bought</span><h2>You May Also Like</h2></div><Link href="/products">View all <span>→</span></Link></div>
-      <div className="recommendation-track">
-        {products.map((product) => (
-          <article className="recommendation-card" key={productId(product)}>
-            <Link href="/products" className="recommendation-image"><ProductImage src={product.ImageUrl} alt={product.Name} /></Link>
-            <div className="recommendation-copy"><span>{product.Volume} · {product.Category}</span><h3>{product.Name}</h3><div><strong>{formatCurrency(Number(product.Price))}</strong><button type="button" onClick={() => onAdd(product)} aria-label={`Add ${product.Name} to cart`}>+ <span>Add</span></button></div></div>
+      <div className="recommendations-heading"><div><span className="cart-kicker">Customers also bought</span><h2>You may also like</h2></div><Link href="/products">View all <span>→</span></Link></div>
+      <div className="recommendation-track" ref={trackRef} onScroll={syncActiveIndex} onPointerDown={(event) => { pointerStartX.current = event.clientX; pointerMoved.current = false; pauseTimer(); }} onPointerMove={(event) => { if (Math.abs(event.clientX - pointerStartX.current) > 8) pointerMoved.current = true; }} onPointerUp={startTimer} onPointerCancel={startTimer} onMouseEnter={pauseTimer} onMouseLeave={startTimer}>
+        {products.map((product, index) => (
+          <article className={`recommendation-card ${index === activeIndex ? 'active' : ''}`} key={productId(product)} role="button" tabIndex={0} onClick={() => { if (pointerMoved.current) return; pauseTimer(); setSelectedProduct(product); }} onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              pauseTimer();
+              setSelectedProduct(product);
+            }
+          }}>
+            <div className="recommendation-image"><ProductImage src={product.ImageUrl} alt={product.Name} /></div>
+            <div className="recommendation-copy"><span>{product.Volume} · {product.Category}</span><h3>{product.Name}</h3><p className="recommendation-description">{product.Description}</p><div><strong>{formatCurrency(Number(product.Price))}</strong><button type="button" onClick={(event) => { event.stopPropagation(); startTimer(); onAdd(product); }} aria-label={`Add ${product.Name} to cart`}>+ <span>Add</span></button></div></div>
           </article>
         ))}
       </div>
+      <div className={`recommendation-progress ${isPaused ? 'paused' : ''}`} aria-hidden="true"><span key={progressKey} /></div>
       <style jsx global>{styles}</style>
     </section>
+    {selectedProduct && <ProductDetailModal product={selectedProduct} onClose={() => { setSelectedProduct(null); startTimer(); }} />}
+    </>
   );
 }
 
@@ -144,9 +209,11 @@ const styles = `
   .checkout-button.is-loading svg { animation:checkoutArrow 700ms ease infinite; } .summary-note { margin:.58rem 0 0!important;text-align:center;color:var(--text-muted)!important;font-size:.54rem!important; }
   .cart-recommendations { margin-top:clamp(1.15rem,2.5vw,2rem); } .recommendations-heading { margin-bottom:.75rem; } .recommendations-heading>a { color:var(--primary-color);font-size:.72rem;font-weight:800; } .recommendations-heading>a span { margin-left:.2rem; }
   .recommendation-track { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(.7rem,1.5vw,1rem); }
+  .recommendation-progress { display:none; }
   .recommendation-card { min-width:0;display:grid;grid-template-columns:38% 1fr;overflow:hidden;border:1px solid var(--cart-border);border-radius:16px;background:var(--cart-glass);box-shadow:0 10px 28px rgba(15,23,42,.06);transition:transform 180ms ease,box-shadow 180ms ease; } .recommendation-card:hover { transform:translateY(-3px);box-shadow:0 16px 34px rgba(37,99,235,.12); }
   .recommendation-image { min-height:120px;background:var(--product-image-bg); } .recommendation-image .product-image-container { height:100%!important;aspect-ratio:auto!important;padding:.45rem; } .recommendation-card:hover .product-img { transform:scale(1.05); }
   .recommendation-copy { min-width:0;padding:.75rem .65rem;display:flex;flex-direction:column;justify-content:center; } .recommendation-copy>span { color:var(--primary-color);font-size:.53rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase; } .recommendation-copy h3 { display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;margin:.2rem 0 .55rem;font-size:.76rem;line-height:1.3; }
+  .recommendation-description { display:none; }
   .recommendation-copy>div { display:flex;align-items:center;justify-content:space-between;gap:.3rem; } .recommendation-copy strong { font-size:.75rem; } .recommendation-copy button { height:28px;display:flex;align-items:center;gap:.2rem;padding:0 .5rem;border:0;border-radius:8px;background:#2563eb;color:white;font-size:.62rem;font-weight:800;cursor:pointer;box-shadow:0 5px 12px rgba(37,99,235,.2); }
   .empty-cart-card { width:min(100%,520px);margin:clamp(1rem,2.5vw,1.75rem) auto;text-align:center;padding:clamp(1.5rem,3.5vw,2.25rem);border:1px solid var(--cart-border);border-radius:20px;background:var(--cart-glass);box-shadow:0 15px 45px rgba(15,23,42,.07);backdrop-filter:blur(18px); }
   .empty-cart-art { position:relative;width:88px;height:88px;display:grid;place-items:center;margin:0 auto .9rem;border:1px solid rgba(59,130,246,.18);border-radius:22px;background:linear-gradient(145deg,rgba(59,130,246,.12),rgba(255,255,255,.2));transform:rotate(-3deg); } .empty-cart-art svg { width:42px;height:42px;fill:none;stroke:#3b82f6;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transform:rotate(3deg); }
@@ -160,5 +227,113 @@ const styles = `
   @media (max-width:1050px) { .cart-layout { grid-template-columns:1fr; } .summary { position:static;margin-top:0; } .cart-row { grid-template-columns:108px minmax(0,1fr) 112px 96px 96px; } .cart-thumb { width:104px;grid-row:1 / span 2; } .cart-quantity-block { grid-column:3;grid-row:1; } .unit-price-block { grid-column:4;grid-row:1; } .line-total-block { grid-column:5;grid-row:1; } .cart-row-actions { grid-column:5;grid-row:2;align-self:center;justify-content:flex-end; } .recommendation-track { grid-template-columns:repeat(2,minmax(0,1fr)); } }
   @media (max-width:820px) { .cart-layout { grid-template-columns:1fr; } .summary { position:static;margin-top:0; } .cart-row { grid-template-columns:100px minmax(0,1fr) auto;gap:.6rem .75rem; } .cart-thumb { width:96px;grid-row:1 / span 3; } .cart-quantity-block { grid-column:2;grid-row:2;align-items:flex-start; } .unit-price-block { grid-column:3;grid-row:1; } .line-total-block { grid-column:3;grid-row:2; } .cart-row-actions { grid-column:3;grid-row:3; } .cart-column-label,.line-subtotal-label { font-size:.55rem; } }
   @media (max-width:600px) { .cart-page { padding-top:12px!important; } .cart-shell { width:min(100% - 1rem,1380px); } .cart-actions-top { margin:.55rem 0 .62rem; } .continue-shopping,.clear-cart { min-height:44px;font-size:.72rem; } .cart-row { grid-template-columns:88px minmax(0,1fr);gap:.55rem .7rem;min-height:0;padding:.65rem;border-radius:15px;align-items:start; } .cart-thumb { grid-row:1/3;width:88px; } .row-main p { display:none; } .product-pills span:nth-child(n+2) { display:none; } .cart-quantity-block { grid-column:2;grid-row:2;flex-direction:row;align-items:center;justify-content:space-between;margin-top:.08rem; } .cart-quantity-block .cart-column-label { display:none; } .qty { grid-template-columns:38px 35px 38px; } .qty button { width:38px;height:38px; } .unit-price-block { display:none; } .line-total-block { grid-column:1;grid-row:3;align-self:auto;display:flex;flex-direction:column;gap:.05rem;width:auto;align-items:flex-start;padding:0;text-align:left; } .line-total-block b { text-align:left; } .line-total-block .line-subtotal-label { display:block; } .cart-row-actions { grid-column:2;grid-row:3;align-self:end;justify-content:flex-end; } .remove { min-height:40px; } .summary { padding:1rem;border-radius:17px; } .cart-recommendations { margin-top:2rem; } .recommendation-track { display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding:.15rem .05rem .75rem;scrollbar-width:none; } .recommendation-track::-webkit-scrollbar { display:none; } .recommendation-card { flex:0 0 min(82vw,300px);scroll-snap-align:start; } .recommendations-heading { align-items:flex-end; } .recommendation-copy button span { display:inline; } .cart-list-heading { padding-inline:.15rem; } }
+  @media (max-width:600px) {
+    .cart-page { padding-top:0!important;padding-bottom:calc(6rem + env(safe-area-inset-bottom))!important; }
+    .cart-page .customer-page-header { margin-top:0!important; }
+    .empty-cart-card { width:min(100%,440px);margin:.65rem auto .8rem;padding:.85rem .9rem;border-radius:16px; }
+    .empty-cart-art { width:54px;height:54px;margin:0 auto .45rem;border-radius:15px; }
+    .empty-cart-art svg { width:29px;height:29px; }
+    .empty-cart-card .cart-kicker { font-size:.52rem;letter-spacing:.09em; }
+    .empty-cart-card h2 { margin:.12rem 0 .18rem;font-size:1.02rem;line-height:1.18; }
+    .empty-cart-card>p { margin:0 auto .62rem;font-size:.68rem;line-height:1.35; }
+    .empty-shop-button { min-width:140px!important;min-height:34px!important;padding:.45rem .9rem!important;font-size:.68rem!important;border-radius:9px!important; }
+    .empty-shop-button svg { width:13px!important;height:13px!important; }
+    .cart-recommendations { margin-top:.9rem; }
+    .recommendations-heading { margin-bottom:.42rem;gap:.5rem; }
+    .recommendations-heading .cart-kicker { font-size:.5rem;letter-spacing:.08em; }
+    .cart-recommendations h2 { margin:.02rem 0 0;font-size:.95rem;line-height:1.18; }
+    .recommendations-heading>a { font-size:.64rem;font-weight:700;white-space:nowrap; }
+    .recommendation-track { gap:.65rem;scroll-behavior:smooth;padding:.1rem .05rem .6rem;overscroll-behavior-inline:contain;touch-action:pan-x; }
+    .recommendation-card { scroll-snap-stop:always; }
+  }
+  @media (max-width:768px) {
+    .cart-page.cart-page { padding-top:0!important;padding-bottom:calc(6rem + env(safe-area-inset-bottom))!important; }
+    .cart-page .cart-shell { width:calc(100% - 1rem)!important;margin-inline:auto!important; }
+    .cart-page .cart-shell>.customer-page-header { margin-top:0!important; }
+    .cart-page .customer-page-header__content { overflow:visible!important; }
+    .cart-page .customer-page-header__badge {
+      display:inline-flex!important;
+      visibility:visible!important;
+      opacity:1!important;
+      position:static!important;
+      width:auto!important;
+      min-height:1.35rem!important;
+      margin:0!important;
+      padding:.12rem .62rem!important;
+      overflow:visible!important;
+    }
+    .cart-page .empty-cart-card {
+      width:min(100%,440px)!important;
+      min-height:200px!important;
+      height:auto!important;
+      margin:clamp(.75rem,3.5vh,1.35rem) auto 0!important;
+      padding:1rem .8rem!important;
+      border-radius:16px!important;
+      display:flex!important;
+      flex-direction:column!important;
+      align-items:center!important;
+      justify-content:center!important;
+      text-align:center!important;
+    }
+    .cart-page .empty-cart-art { width:42px!important;height:42px!important;margin:0 auto .18rem!important;border-radius:12px!important; }
+    .cart-page .empty-cart-art svg { width:23px!important;height:23px!important; }
+    .cart-page .empty-cart-card>.cart-kicker { font-size:.48rem!important;line-height:1.15!important;letter-spacing:.07em!important; }
+    .cart-page .empty-cart-card>h2 { margin:.06rem 0 .08rem!important;font-size:clamp(.86rem,3.65vw,1.02rem)!important;line-height:1.12!important; }
+    .cart-page .empty-cart-card>p { margin:0 auto .28rem!important;font-size:.61rem!important;line-height:1.25!important; }
+    .cart-page .empty-shop-button { min-width:122px!important;min-height:28px!important;padding:.3rem .62rem!important;gap:.25rem!important;font-size:.6rem!important; }
+    .cart-page .cart-recommendations {
+      width:100%!important;
+      margin-top:clamp(1.35rem,4.5vh,2.25rem)!important;
+      padding:.58rem!important;
+      border:1px solid var(--cart-border)!important;
+      border-radius:16px!important;
+      background:var(--cart-glass)!important;
+      box-shadow:0 10px 28px rgba(15,23,42,.06)!important;
+      backdrop-filter:blur(18px);
+      overflow:hidden;
+    }
+    .cart-page .recommendations-heading { margin-bottom:.22rem!important;gap:.4rem!important;padding:0 .03rem!important; }
+    .cart-page .recommendations-heading .cart-kicker { font-size:.46rem!important;line-height:1.12!important;letter-spacing:.07em!important; }
+    .cart-page .cart-recommendations h2 { margin:.03rem 0 0!important;font-size:clamp(.86rem,3.65vw,1.02rem)!important;line-height:1.12!important; }
+    .cart-page .recommendations-heading>a { font-size:.6rem!important;font-weight:700!important;white-space:nowrap!important; }
+    .cart-page .recommendation-track {
+      display:flex!important;
+      width:100%!important;
+      gap:0!important;
+      padding:.03rem 0 0!important;
+      overflow-x:auto!important;
+      scroll-behavior:smooth;
+      scroll-snap-type:x mandatory;
+      scrollbar-width:none;
+      overscroll-behavior-inline:contain;
+      touch-action:pan-x;
+    }
+    .cart-page .recommendation-card {
+      flex:0 0 100%!important;
+      width:100%!important;
+      max-width:100%!important;
+      scroll-snap-align:start;
+      scroll-snap-stop:always;
+      grid-template-columns:32% 1fr!important;
+      min-height:0!important;
+      cursor:pointer;
+      opacity:.7;
+      transform:translateY(5px);
+      transition:opacity 260ms ease,transform 260ms ease,box-shadow 180ms ease!important;
+    }
+    .cart-page .recommendation-card.active { opacity:1;transform:translateY(0); }
+    .cart-page .recommendation-image { min-height:88px!important; }
+    .cart-page .recommendation-image .product-image-container { padding:.25rem!important; }
+    .cart-page .recommendation-copy { padding:.45rem .5rem!important; }
+    .cart-page .recommendation-copy>span { font-size:.47rem!important; }
+    .cart-page .recommendation-copy h3 { margin:.12rem 0 .35rem!important;font-size:.69rem!important;line-height:1.22!important; }
+    .cart-page .recommendation-description { display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;margin:-.2rem 0 .3rem;color:var(--text-muted);font-size:.55rem;line-height:1.25; }
+    .cart-page .recommendation-copy strong { font-size:.68rem!important; }
+    .cart-page .recommendation-copy button { height:25px!important;padding:0 .42rem!important;gap:.15rem!important;font-size:.56rem!important;border-radius:7px!important; }
+    .cart-page .recommendation-progress { display:block;height:2px;margin:.35rem .08rem 0;overflow:hidden;border-radius:999px;background:color-mix(in srgb,var(--primary-color) 12%,transparent); }
+    .cart-page .recommendation-progress span { display:block;width:100%;height:100%;border-radius:inherit;background:var(--primary-color);transform-origin:left;animation:recommendationProgress 5s linear forwards; }
+    .cart-page .recommendation-progress.paused span { animation-play-state:paused; }
+  }
+  @keyframes recommendationProgress { from { transform:scaleX(0); } to { transform:scaleX(1); } }
   @media (prefers-reduced-motion:reduce) { .cart-page * { animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.001ms!important; } }
 `;

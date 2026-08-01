@@ -136,47 +136,49 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
         
         {/* 1. Left Column: Details & Maps */}
         <div className="details-col">
-          <h2>Contact Details</h2>
-          <p className="subtitle">Feel free to contact our customer relations team directly.</p>
+          <div className="contact-details-card">
+            <h2>Contact Details</h2>
+            <p className="subtitle">Feel free to contact our customer relations team directly.</p>
 
-          <div className="contact-info-list">
-            <div className="info-card glass">
-              <div className="info-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            <div className="contact-info-list">
+              <div className="info-card glass">
+                <div className="info-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                </div>
+                <div>
+                  <h4>Phone Number</h4>
+                  <p><a href={`tel:${companyInfo.Phone}`} className="hover-link">{companyInfo.Phone}</a></p>
+                </div>
               </div>
-              <div>
-                <h4>Phone Number</h4>
-                <p><a href={`tel:${companyInfo.Phone}`} className="hover-link">{companyInfo.Phone}</a></p>
-              </div>
-            </div>
 
-            <div className="info-card glass">
-              <div className="info-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              <div className="info-card glass">
+                <div className="info-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                </div>
+                <div>
+                  <h4>Email Address</h4>
+                  <p><a href={`mailto:${companyInfo.Email}`} className="hover-link">{companyInfo.Email}</a></p>
+                </div>
               </div>
-              <div>
-                <h4>Email Address</h4>
-                <p><a href={`mailto:${companyInfo.Email}`} className="hover-link">{companyInfo.Email}</a></p>
-              </div>
-            </div>
 
-            <div className="info-card glass">
-              <div className="info-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              <div className="info-card glass">
+                <div className="info-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                </div>
+                <div>
+                  <h4>Office Address</h4>
+                  <p>{companyInfo.OfficeAddress}</p>
+                </div>
               </div>
-              <div>
-                <h4>Office Address</h4>
-                <p>{companyInfo.OfficeAddress}</p>
-              </div>
-            </div>
 
-            <div className="info-card glass">
-              <div className="info-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 20h20M5 17h14M8 14h8M10 11h4M12 2v6"/></svg>
-              </div>
-              <div>
-                <h4>Manufacturing Site</h4>
-                <p>{companyInfo.PlantAddress}</p>
+              <div className="info-card glass">
+                <div className="info-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 20h20M5 17h14M8 14h8M10 11h4M12 2v6"/></svg>
+                </div>
+                <div>
+                  <h4>Manufacturing Site</h4>
+                  <p>{companyInfo.PlantAddress}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -236,7 +238,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
 
         {/* 2. Right Column: Inquiry Form */}
         <div className="form-col glass">
-          <h2>Send an Inquiry</h2>
+          <h2>Send an inquiry</h2>
           <p className="subtitle">Submit this form to send your messages or bulk order inquiries directly to our dashboard.</p>
 
           {status.type && (
@@ -354,6 +356,9 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
           position: relative;
           z-index: 1;
           pointer-events: auto;
+        }
+        .contact-details-card {
+          display: contents;
         }
         .details-col h2, .form-col h2 {
           font-size: 1.5rem;
@@ -594,8 +599,96 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
           }
         }
         @media (max-width: 600px) {
+          .contact-page {
+            padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+          }
+          .contact-grid {
+            gap: 1.25rem;
+          }
+          .contact-details-card {
+            display: block;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(150, 150, 150, 0.15);
+            border-radius: var(--radius-lg);
+            background: var(--bg-primary);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+          }
+          .details-col h2,
+          .form-col h2 {
+            font-size: 1.1rem !important;
+            font-weight: 700 !important;
+            line-height: 1.15 !important;
+            letter-spacing: -0.02em !important;
+            margin: 0 0 0.25rem !important;
+            text-align: center;
+          }
+          .details-col > .subtitle {
+            margin: 0 0 0.75rem !important;
+            line-height: 1.35;
+          }
+          .contact-details-card > .subtitle {
+            margin: 0 0 0.75rem !important;
+            font-weight: 400;
+            line-height: 1.35;
+            text-align: center;
+          }
+          .form-col > .subtitle {
+            margin: 0 0 0.75rem !important;
+            font-weight: 400;
+            line-height: 1.35;
+            text-align: center;
+          }
           .contact-info-list {
             grid-template-columns: 1fr;
+            gap: 0;
+            margin: 0;
+          }
+          .info-card {
+            min-width: 0;
+            height: auto;
+            padding: 0.75rem 0;
+            gap: 0.75rem;
+            border: 0;
+            border-bottom: 1px solid rgba(150, 150, 150, 0.15);
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+          }
+          .info-card:first-child {
+            padding-top: 0.25rem;
+          }
+          .info-card:last-child {
+            padding-bottom: 0;
+            border-bottom: 0;
+          }
+          .info-card:hover {
+            border-color: rgba(150, 150, 150, 0.15);
+            background: transparent;
+            box-shadow: none;
+            transform: none;
+          }
+          .info-icon {
+            width: 36px;
+            height: 36px;
+          }
+          .info-icon svg {
+            width: 19px;
+            height: 19px;
+          }
+          .info-card > div:last-child {
+            min-width: 0;
+          }
+          .info-card h4 {
+            margin-bottom: 0.1rem;
+            font-size: 0.82rem;
+            font-weight: 600;
+          }
+          .info-card p {
+            font-size: 0.8rem;
+            line-height: 1.4;
+            overflow-wrap: anywhere;
+            word-break: normal;
           }
           .form-row {
             grid-template-columns: 1fr;
