@@ -614,10 +614,9 @@ export function ProductSection({
         />
       )}
 
-      {displayProducts.length > 0 ? (
-        (!mobileShowcase || !isMobile) && (
-          <div className="catalog-grid">
-            {displayProducts.map((product, index) => {
+      {displayProducts.length > 0 && (!mobileShowcase || !isMobile) && (
+        <div className="catalog-grid">
+          {displayProducts.map((product, index) => {
             const id = productId(product);
             return (
               <ProductCard 
@@ -641,8 +640,9 @@ export function ProductSection({
             );
           })}
           </div>
-        )
-      ) : (
+      )}
+      
+      {displayProducts.length === 0 && (
         emptyState || (
           <div className="empty-state">
             <div className="empty-icon">📦</div>
