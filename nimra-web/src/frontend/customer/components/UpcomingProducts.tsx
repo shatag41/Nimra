@@ -453,8 +453,13 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
           .showcase-column { grid-row: 1; margin-bottom: -0.2rem; }
           .rush-content { grid-row: 2; align-items: center; gap: 0.25rem; }
           
+          /* Hide external decorative elements on mobile to keep it clean */
+          .product-spotlight, .product-floor, .sparkles, .bubble { display: none !important; }
+          
           .rush-visual { --showcase-size: min(180px, 45vw); perspective: 800px; position: relative; }
-          .rush-title { font-size: clamp(1.15rem, 5.5vw, 1.45rem); margin: 0; }
+          
+          /* Increased title size (10-15%) and weight */
+          .rush-title { font-size: clamp(1.3rem, 6.2vw, 1.65rem); font-weight: 900; margin: 0; }
           
           /* Word-by-word staggered fade-in */
           .is-visible .rush-word { opacity: 0; display: inline-block; animation: wordFadeIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
@@ -489,10 +494,16 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
           .btn-rush:active::after { width: 120px; height: 120px; opacity: 1; transition: 0s; }
           .btn-rush:active { transform: scale(0.92); }
           
-          /* Continuous float (6-8px) + slow 3D tilt */
+          /* Continuous subtle float (4-6px) + slow 3D tilt */
+          /* Ensure product image stays completely inside its rounded container */
+          .launch-product-wrap {
+            overflow: hidden;
+            border-radius: 22px;
+            filter: none !important;
+          }
           .is-visible .launch-product-wrap { animation: mobileFloatTilt 4.5s ease-in-out infinite alternate; transform-style: preserve-3d; }
           
-          /* Slow shimmer across can */
+          /* Slow shimmer across can, clipped inside the wrap */
           .launch-product-wrap::before {
             content: ''; position: absolute; inset: 0;
             background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.3) 50%, transparent 80%);
@@ -500,9 +511,6 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
             pointer-events: none; z-index: 10;
           }
           .is-visible .launch-product-wrap::before { animation: mobileShimmerSweep 5s ease-in-out infinite; animation-delay: 1.5s; }
-          
-          /* Soft rotating radial glow */
-          .is-visible .product-spotlight { animation: mobileRotatingGlow 6s linear infinite; width: 120%; left: -10%; }
           
           /* Pulse "Coming Soon" badge */
           .is-visible .rush-content .badge { animation: badgeBreathing 2.5s ease-in-out infinite alternate; }
@@ -514,22 +522,11 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
           .is-visible .rush-pill:nth-child(3) { animation-delay: 0.35s; }
           .is-visible .rush-pill:nth-child(4) { animation-delay: 0.45s; }
           
-          /* Sparkling light effects */
-          .sparkles { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
-          .sparkles span {
-            position: absolute; width: 4px; height: 4px; background: white; border-radius: 50%;
-            box-shadow: 0 0 8px 2px rgba(255,255,255,0.8); opacity: 0;
-          }
-          .is-visible .sparkles span:nth-child(1) { top: 15%; left: 20%; animation: sparkleTwinkle 3s ease-in-out infinite; animation-delay: 0.5s; }
-          .is-visible .sparkles span:nth-child(2) { top: 75%; right: 15%; animation: sparkleTwinkle 4s ease-in-out infinite; animation-delay: 1.2s; }
-          .is-visible .sparkles span:nth-child(3) { top: 40%; right: 25%; animation: sparkleTwinkle 3.5s ease-in-out infinite; animation-delay: 2.1s; }
-          
           /* Keyframes */
           @keyframes mobileSectionFadeUp { from { opacity: 0; transform: translateY(24px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
           @keyframes mobileBorderShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
           @keyframes depthGlowMove { from { transform: translate(-10%, -10%) scale(0.9); } to { transform: translate(10%, 10%) scale(1.1); } }
-          @keyframes mobileFloatTilt { from { transform: translateY(4px) rotateX(2deg) rotateY(-3deg); } to { transform: translateY(-7px) rotateX(-2deg) rotateY(3deg); } }
-          @keyframes mobileRotatingGlow { 0% { opacity: 0.4; transform: scale(0.9) rotate(0deg); } 50% { opacity: 0.75; transform: scale(1.1); } 100% { opacity: 0.4; transform: scale(0.9) rotate(360deg); } }
+          @keyframes mobileFloatTilt { from { transform: translateY(2px) rotateX(1deg) rotateY(-1deg); } to { transform: translateY(-3px) rotateX(-1deg) rotateY(1deg); } }
           @keyframes mobileShimmerSweep { 0% { transform: skewX(-20deg) translateX(-150%); } 20%, 100% { transform: skewX(-20deg) translateX(150%); } }
           @keyframes badgeBreathing { from { box-shadow: 0 0 4px rgba(249,115,22,0.2); transform: scale(0.97); } to { box-shadow: 0 0 16px rgba(249,115,22,0.5); transform: scale(1.03); } }
           @keyframes staggerFeatureSlideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
