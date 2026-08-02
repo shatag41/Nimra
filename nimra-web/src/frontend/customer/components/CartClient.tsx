@@ -48,7 +48,7 @@ export default function CartClient() {
           <div className="empty-cart-card">
             <div className="empty-cart-art" aria-hidden="true"><span className="empty-bubble bubble-one" /><span className="empty-bubble bubble-two" /><svg viewBox="0 0 64 64"><path d="M8 11h7l5 30h27l6-21H18"/><circle cx="25" cy="50" r="3"/><circle cx="45" cy="50" r="3"/><path d="M25 27h19"/></svg></div>
             <span className="cart-kicker">Your next refresh starts here</span>
-            <h2>Your cart is empty</h2>
+            <h2 className="mobile-section-title">Your cart is empty</h2>
             <p>Browse our premium drinking water products and add your favourites.</p>
             <Link href="/products" className="empty-shop-button">Explore Products <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg></Link>
           </div>
@@ -133,7 +133,7 @@ function Recommendations({ products, onAdd }: { products: ReturnType<typeof useC
   return (
     <>
     <section className="cart-recommendations">
-      <div className="recommendations-heading"><div><span className="cart-kicker">Customers also bought</span><h2>You may also like</h2></div><Link href="/products">View all <span>→</span></Link></div>
+      <div className="recommendations-heading"><div><span className="cart-kicker">Customers also bought</span><h2 className="mobile-section-title">You may also like</h2></div><Link href="/products">View all <span>→</span></Link></div>
       <div className="recommendation-track" ref={trackRef} onScroll={syncActiveIndex} onPointerDown={(event) => { pointerStartX.current = event.clientX; pointerMoved.current = false; pauseTimer(); }} onPointerMove={(event) => { if (Math.abs(event.clientX - pointerStartX.current) > 8) pointerMoved.current = true; }} onPointerUp={startTimer} onPointerCancel={startTimer} onMouseEnter={pauseTimer} onMouseLeave={startTimer}>
         {products.map((product, index) => (
           <article className={`recommendation-card ${index === activeIndex ? 'active' : ''}`} key={productId(product)} role="button" tabIndex={0} onClick={() => { if (pointerMoved.current) return; pauseTimer(); setSelectedProduct(product); }} onKeyDown={(event) => {
@@ -261,6 +261,130 @@ const styles = `
       margin:0!important;
       padding:.12rem .62rem!important;
       overflow:visible!important;
+    }
+    .cart-page.cart-page .cart-actions-top {
+      display:flex!important;
+      width:100%!important;
+      margin:.45rem 0 .4rem!important;
+      padding:0!important;
+      align-items:center!important;
+      justify-content:flex-end!important;
+    }
+    .cart-page.cart-page .cart-actions-top .clear-cart {
+      width:auto!important;
+      margin:0 0 0 auto!important;
+      justify-content:flex-end!important;
+    }
+    .cart-page .cart-list {
+      display:flex!important;
+      flex-direction:column!important;
+      gap:0!important;
+      padding:.7rem!important;
+      border:1px solid var(--cart-border)!important;
+      border-radius:16px!important;
+      background:var(--cart-glass)!important;
+      box-shadow:0 10px 28px rgba(15,23,42,.06)!important;
+      overflow:hidden;
+    }
+    .cart-page .cart-list-heading {
+      align-items:center!important;
+      margin:0!important;
+      padding:0 .1rem .55rem!important;
+      border-bottom:1px solid var(--cart-border);
+    }
+    .cart-page .cart-list-heading h2 { margin:.02rem 0 0!important; }
+    .cart-page .cart-item-count { font-size:.65rem!important;white-space:nowrap; }
+    .cart-page .cart-list>.cart-row {
+      margin:0!important;
+      border:0!important;
+      border-bottom:1px solid var(--cart-border)!important;
+      border-radius:0!important;
+      background:transparent!important;
+      box-shadow:none!important;
+      backdrop-filter:none!important;
+    }
+    .cart-page .cart-list>.cart-row:last-child { border-bottom:0!important; }
+    .cart-page .cart-list>.cart-row:hover { transform:none!important;box-shadow:none!important; }
+    .cart-page .cart-layout { gap:.85rem!important; }
+    .cart-page .cart-list>.cart-row {
+      position:relative;
+      display:grid!important;
+      grid-template-columns:minmax(0,48fr) minmax(0,52fr)!important;
+      grid-template-rows:auto auto auto!important;
+      column-gap:.65rem!important;
+      row-gap:.35rem!important;
+      min-height:0!important;
+      padding:.7rem .15rem!important;
+      align-items:start!important;
+    }
+    .cart-page .cart-list>.cart-row .cart-thumb {
+      grid-column:1!important;
+      grid-row:1 / 4!important;
+      align-self:start!important;
+      justify-self:stretch!important;
+      width:100%!important;
+      height:auto!important;
+      min-width:0!important;
+      max-width:none!important;
+      aspect-ratio:4 / 3!important;
+      border-radius:.65rem!important;
+      padding:0!important;
+    }
+    .cart-page .cart-list>.cart-row .cart-thumb .product-image-container,
+    .cart-page .cart-list>.cart-row .cart-thumb .product-img {
+      width:100%!important;
+      height:100%!important;
+      object-fit:contain!important;
+      object-position:center!important;
+    }
+    .cart-page .cart-list>.cart-row .cart-thumb .product-image-container {
+      min-width:0!important;
+      max-width:none!important;
+      padding:0!important;
+      border-radius:.65rem!important;
+      aspect-ratio:4 / 3!important;
+    }
+    .cart-page .cart-list>.cart-row .row-main {
+      grid-column:2!important;
+      grid-row:1!important;
+      align-self:start!important;
+      min-width:0!important;
+    }
+    .cart-page .cart-list>.cart-row .row-main h3 { margin:.1rem 0 .18rem!important; }
+    .cart-page .cart-list>.cart-row .product-pills { gap:.2rem!important; }
+    .cart-page .cart-list>.cart-row .cart-quantity-block {
+      grid-column:2!important;
+      grid-row:2!important;
+      width:100%!important;
+      margin:0!important;
+      flex-direction:row!important;
+      align-items:center!important;
+      justify-content:flex-start!important;
+      align-self:center!important;
+    }
+    .cart-page .cart-list>.cart-row .cart-quantity-block .cart-column-label { display:none!important; }
+    .cart-page .cart-list>.cart-row .unit-price-block { display:none!important; }
+    .cart-page .cart-list>.cart-row .line-total-block {
+      grid-column:2!important;
+      grid-row:3!important;
+      align-self:end!important;
+      width:auto!important;
+      padding:0!important;
+      align-items:flex-start!important;
+      text-align:left!important;
+    }
+    .cart-page .cart-list>.cart-row .line-total-block b { text-align:left!important; }
+    .cart-page .cart-list>.cart-row .cart-row-actions {
+      grid-column:2!important;
+      grid-row:3!important;
+      align-self:end!important;
+      justify-self:end!important;
+      min-width:0!important;
+    }
+    .cart-page .cart-list>.cart-row .remove {
+      min-width:0!important;
+      min-height:34px!important;
+      padding:.42rem .55rem!important;
     }
     .cart-page .empty-cart-card {
       width:min(100%,440px)!important;

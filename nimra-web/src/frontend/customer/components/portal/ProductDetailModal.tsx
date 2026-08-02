@@ -985,6 +985,77 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           }
         }
 
+        @media (max-width: 768px) {
+          .pdm-overlay {
+            padding-inline: 8px;
+          }
+          .pdm-container {
+            width: calc(100vw - 16px);
+            height: 78vh;
+            max-width: calc(100vw - 16px);
+            max-height: 78vh;
+          }
+          .pdm-detail-name {
+            font-size: .75rem;
+            line-height: 1.2;
+          }
+          .pdm-details-scroll-content {
+            gap: 9px;
+          }
+          .pdm-detail-brand {
+            font-size: .55rem;
+            line-height: 1.15;
+            letter-spacing: .11em;
+          }
+          .pdm-detail-category {
+            margin-top: -4px;
+            font-size: .68rem;
+            line-height: 1.2;
+          }
+          .pdm-detail-section {
+            gap: 2px;
+          }
+          .pdm-section-title {
+            font-size: .58rem;
+            line-height: 1.15;
+          }
+          .pdm-detail-description {
+            font-size: .68rem;
+            line-height: 1.32;
+          }
+          .pdm-spec-tags {
+            gap: 4px;
+          }
+          .pdm-spec-tag {
+            gap: 3px;
+            font-size: .57rem;
+            line-height: 1.2;
+          }
+          .pdm-tag-icon {
+            font-size: .6rem;
+          }
+          .pdm-badge-premium {
+            font-size: 8px;
+            line-height: 1;
+          }
+          .pdm-price-current {
+            font-size: 1.25rem;
+            line-height: 1.05;
+          }
+          .pdm-qty-value-premium {
+            font-size: .72rem;
+            line-height: 1;
+          }
+          .pdm-btn {
+            font-size: 11px;
+            line-height: 1;
+          }
+          .pdm-cart-hint-premium {
+            font-size: .58rem;
+            line-height: 1.2;
+          }
+        }
+
         @keyframes pdm-slide-up {
           from { transform: translateY(100%); }
           to   { transform: translateY(0); }

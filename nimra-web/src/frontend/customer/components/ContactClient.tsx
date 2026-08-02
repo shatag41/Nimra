@@ -137,7 +137,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
         {/* 1. Left Column: Details & Maps */}
         <div className="details-col">
           <div className="contact-details-card">
-            <h2>Contact Details</h2>
+            <h2 className="mobile-section-title">Contact Details</h2>
             <p className="subtitle">Feel free to contact our customer relations team directly.</p>
 
             <div className="contact-info-list">
@@ -238,7 +238,7 @@ export default function ContactClient({ companyInfo }: ContactClientProps) {
 
         {/* 2. Right Column: Inquiry Form */}
         <div className="form-col glass">
-          <h2>Send an inquiry</h2>
+          <h2 className="mobile-section-title">Send an inquiry</h2>
           <p className="subtitle">Submit this form to send your messages or bulk order inquiries directly to our dashboard.</p>
 
           {status.type && (

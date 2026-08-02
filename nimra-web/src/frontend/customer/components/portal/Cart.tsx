@@ -23,7 +23,7 @@ export function CartItemsList() {
       <div className="cart-list-heading">
         <div>
           <span className="cart-kicker">Selected products</span>
-          <h2>Your items</h2>
+          <h2 className="mobile-section-title">Your items</h2>
         </div>
         <span className="cart-item-count">{items.length} {items.length === 1 ? 'product' : 'products'}</span>
       </div>
@@ -87,7 +87,7 @@ export function CartSummary() {
       <div className="summary-heading">
         <div>
           <span className="cart-kicker">Your total</span>
-          <h2>Order Summary</h2>
+          <h2 className="mobile-section-title">Order Summary</h2>
         </div>
         <span className="secure-chip">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>

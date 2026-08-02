@@ -95,7 +95,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
           {activeSection === 'story' && (
             <div className="fade-enter about-grid">
               <div className="story-text-col">
-                <h2 className="story-title">The Nimra Philosophy</h2>
+                <h2 className="story-title mobile-section-title">The Nimra Philosophy</h2>
                 <div className="story-paragraph">
                   <p>{companyInfo.AboutStory}</p>
                   <p>
@@ -126,7 +126,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
           {activeSection === 'quality' && (
             <div className="fade-enter">
               <div className="section-header text-center">
-                <h2 className="section-title">10-Step Purification</h2>
+                <h2 className="section-title mobile-section-title">10-Step Purification</h2>
                 <p className="section-subtitle">{companyInfo.QualityText || 'Our advanced multi-stage process ensuring uncompromising quality.'}</p>
               </div>
               
@@ -157,7 +157,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
           {activeSection === 'plant' && (
             <div className="fade-enter infra-grid">
               <div className="infra-highlights">
-                <h2 className="section-title">World-Class Infrastructure</h2>
+                <h2 className="section-title mobile-section-title">World-Class Infrastructure</h2>
                 <p className="story-paragraph">{companyInfo.InfrastructureText}</p>
                 
                 <div className="highlight-list">

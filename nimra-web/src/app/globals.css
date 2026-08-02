@@ -13244,3 +13244,18 @@ body:has(.products-page-skeleton) {
     padding-top: var(--ds-header-offset) !important;
   }
 }
+
+@media (max-width: 768px) {
+  :root {
+    --mobile-section-title-size: clamp(0.86rem, 3.65vw, 1.02rem);
+    --mobile-section-title-line-height: 1.12;
+    --mobile-section-title-weight: 800;
+  }
+
+  .mobile-section-title.mobile-section-title {
+    font-size: var(--mobile-section-title-size) !important;
+    font-weight: var(--mobile-section-title-weight) !important;
+    line-height: var(--mobile-section-title-line-height) !important;
+    letter-spacing: -0.025em !important;
+  }
+}
