@@ -309,46 +309,65 @@ const styles = `
     .cart-page .cart-list>.cart-row {
       position:relative;
       display:grid!important;
-      grid-template-columns:minmax(0,48fr) minmax(0,52fr)!important;
-      grid-template-rows:auto auto auto!important;
-      column-gap:.65rem!important;
-      row-gap:.35rem!important;
+      grid-template-columns:clamp(6.5rem,35vw,8rem) minmax(0,1fr)!important;
+      grid-template-rows:auto!important;
+      column-gap:.5rem!important;
+      row-gap:.25rem!important;
+      height:auto!important;
       min-height:0!important;
-      padding:.7rem .15rem!important;
+      padding:.62rem .1rem!important;
       align-items:start!important;
     }
     .cart-page .cart-list>.cart-row .cart-thumb {
       grid-column:1!important;
-      grid-row:1 / 4!important;
+      grid-row:1 / 5!important;
       align-self:start!important;
       justify-self:stretch!important;
       width:100%!important;
       height:auto!important;
+      min-height:0!important;
       min-width:0!important;
       max-width:none!important;
       aspect-ratio:4 / 3!important;
       border-radius:.65rem!important;
+      border:0!important;
       padding:0!important;
+      margin:0!important;
+      overflow:hidden!important;
+      position:relative!important;
+      display:block!important;
+      background:var(--product-img-bg, #f4f6f8)!important;
+      box-shadow:none!important;
     }
-    .cart-page .cart-list>.cart-row .cart-thumb .product-image-container,
     .cart-page .cart-list>.cart-row .cart-thumb .product-img {
       width:100%!important;
       height:100%!important;
-      object-fit:contain!important;
-      object-position:center!important;
+      padding:0!important;
+      margin:0!important;
     }
     .cart-page .cart-list>.cart-row .cart-thumb .product-image-container {
+      position:absolute!important;
+      inset:0!important;
+      width:100%!important;
+      height:100%!important;
       min-width:0!important;
+      min-height:0!important;
       max-width:none!important;
+      max-height:none!important;
       padding:0!important;
-      border-radius:.65rem!important;
-      aspect-ratio:4 / 3!important;
+      margin:0!important;
+      border:0!important;
+      border-radius:0!important;
+      aspect-ratio:auto!important;
+      overflow:hidden!important;
+      background:transparent!important;
     }
     .cart-page .cart-list>.cart-row .row-main {
       grid-column:2!important;
       grid-row:1!important;
       align-self:start!important;
       min-width:0!important;
+      text-align:left!important;
     }
     .cart-page .cart-list>.cart-row .row-main h3 { margin:.1rem 0 .18rem!important; }
     .cart-page .cart-list>.cart-row .product-pills { gap:.2rem!important; }
@@ -360,31 +379,37 @@ const styles = `
       flex-direction:row!important;
       align-items:center!important;
       justify-content:flex-start!important;
-      align-self:center!important;
+      align-self:start!important;
+      gap:.2rem!important;
     }
+    .cart-page .cart-list>.cart-row .qty { grid-template-columns:30px 26px 30px!important;gap:.15rem!important; }
+    .cart-page .cart-list>.cart-row .qty button { width:30px!important;height:30px!important; }
     .cart-page .cart-list>.cart-row .cart-quantity-block .cart-column-label { display:none!important; }
     .cart-page .cart-list>.cart-row .unit-price-block { display:none!important; }
     .cart-page .cart-list>.cart-row .line-total-block {
       grid-column:2!important;
       grid-row:3!important;
-      align-self:end!important;
+      align-self:start!important;
       width:auto!important;
       padding:0!important;
-      align-items:flex-start!important;
+      flex-direction:row!important;
+      align-items:baseline!important;
+      justify-content:flex-start!important;
+      gap:.28rem!important;
       text-align:left!important;
     }
     .cart-page .cart-list>.cart-row .line-total-block b { text-align:left!important; }
     .cart-page .cart-list>.cart-row .cart-row-actions {
       grid-column:2!important;
-      grid-row:3!important;
-      align-self:end!important;
-      justify-self:end!important;
+      grid-row:4!important;
+      align-self:start!important;
+      justify-self:start!important;
       min-width:0!important;
     }
     .cart-page .cart-list>.cart-row .remove {
       min-width:0!important;
-      min-height:34px!important;
-      padding:.42rem .55rem!important;
+      min-height:30px!important;
+      padding:.35rem .5rem!important;
     }
     .cart-page .empty-cart-card {
       width:min(100%,440px)!important;

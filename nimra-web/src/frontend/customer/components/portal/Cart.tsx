@@ -30,7 +30,7 @@ export function CartItemsList() {
 
       {items.map((item, index) => (
         <article key={item.productId} className="cart-row" style={{ '--cart-index': index } as React.CSSProperties}>
-          <div className="cart-thumb">
+          <div className="cart-thumb product-img-wrap">
             <ProductImage src={item.imageUrl} alt={item.name} />
           </div>
 
