@@ -13566,6 +13566,8 @@ body:has(.products-page-skeleton) {
 }
 
 .auth-flow .auth-card-header h2 {
+  font-family: var(--font-heading) !important;
+  font-weight: 800 !important;
   color: var(--text-primary, #0f172a) !important;
   background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #2563eb 100%) !important;
   -webkit-background-clip: text !important;
@@ -13772,46 +13774,41 @@ body:has(.products-page-skeleton) {
     display: none !important;
   }
 
-  .auth-mobile-flow {
+  .auth-page.auth-flow.auth-mobile-flow {
     --auth-mobile-top-nav: var(--ds-header-offset, 3.6875rem);
     --auth-mobile-bottom-nav: var(--mobile-nav-height, 64px);
-    --auth-mobile-top-gap: clamp(12px, 2dvh, 24px);
     --auth-card-mobile-width: 22.5rem;
-    width: 100% !important;
-    height: 100dvh !important;
+    width: auto !important;
+    height: auto !important;
     min-height: 0 !important;
-    max-height: 100dvh !important;
-    position: relative !important;
-    inset: auto !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    padding-top: calc(var(--auth-mobile-top-nav) + env(safe-area-inset-top) + var(--auth-mobile-top-gap)) !important;
-    padding-bottom: calc(var(--auth-mobile-bottom-nav) + env(safe-area-inset-bottom) + 0.75rem) !important;
-    padding-inline: 0 !important;
+    max-height: none !important;
+    position: fixed !important;
+    top: calc(var(--auth-mobile-top-nav) + env(safe-area-inset-top)) !important;
+    bottom: calc(var(--auth-mobile-bottom-nav) + env(safe-area-inset-bottom)) !important;
+    left: 0 !important;
+    right: 0 !important;
+    display: grid !important;
+    place-items: center !important;
+    padding: 12px 16px !important;
     margin: 0 !important;
     overflow: hidden !important;
     overscroll-behavior: none !important;
   }
 
   .auth-mobile-flow .auth-flow-stage {
-    width: calc(100% - 32px);
+    position: relative !important;
+    inset: auto !important;
+    width: 100%;
     max-width: var(--auth-card-mobile-width);
-    max-height: calc(
-      100dvh
-      - var(--auth-mobile-top-nav)
-      - var(--auth-mobile-bottom-nav)
-      - env(safe-area-inset-top)
-      - env(safe-area-inset-bottom)
-      - var(--auth-mobile-top-gap)
-      - 0.75rem
-    );
-    flex: 0 1 auto;
-    align-self: auto;
-    margin-inline: auto;
-    margin-block: 0;
+    max-height: 100%;
+    min-height: 0;
+    margin: 0 auto !important;
     transform: none !important;
+  }
+
+  .auth-mobile-flow .auth-flow-background {
+    position: fixed;
+    inset: 0;
   }
 
   .auth-mobile-flow .auth-shell,
@@ -13823,8 +13820,7 @@ body:has(.products-page-skeleton) {
     max-height: none !important;
     display: grid !important;
     grid-template-columns: minmax(0, 1fr) !important;
-    margin-block: 0 !important;
-    margin-inline: auto !important;
+    margin: 1.7rem auto 0 !important;
     position: relative !important;
     inset: auto !important;
     transform: none !important;
@@ -13846,9 +13842,12 @@ body:has(.products-page-skeleton) {
   }
 
   .auth-mobile-flow .auth-shared-mark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
     width: 3.4rem;
-    margin-bottom: -1.75rem;
-    margin-inline: auto;
+    margin: 0 auto;
     padding: 0.48rem;
   }
 
@@ -14042,18 +14041,49 @@ body:has(.products-page-skeleton) {
 }
 
 @media (max-width: 768px) and (max-height: 700px) {
-  .auth-mobile-flow {
-    align-items: center !important;
-    justify-content: flex-start !important;
-  }
-
   .auth-mobile-flow .auth-shell,
   .auth-mobile-flow .auth-shell.glass {
-    margin-block: 0 !important;
+    margin: 1.7rem auto 0 !important;
   }
 
   .auth-mobile-flow .auth-flow-stage {
-    margin-inline: auto;
-    margin-block: 0;
+    margin: 0 !important;
+  }
+
+  .register-page .auth-card {
+    padding: 2.2rem 0.8rem 0.45rem !important;
+  }
+
+  .register-page .auth-card-header {
+    margin-bottom: 0.3rem !important;
+  }
+
+  .register-page .auth-form {
+    gap: 0.22rem !important;
+  }
+
+  .register-page .auth-field {
+    gap: 0.04rem !important;
+  }
+
+  .register-page .auth-input,
+  .register-page .auth-select,
+  .register-page .auth-submit,
+  .register-page .auth-google-button {
+    min-height: 1.95rem !important;
+    height: 1.95rem !important;
+  }
+
+  .register-page .auth-divider {
+    margin-block: 0 !important;
+  }
+
+  .register-page .auth-footer-link {
+    margin-top: 0.08rem !important;
+  }
+
+  .register-page .auth-benefits {
+    margin-top: 0.35rem;
+    padding-block: 0.2rem;
   }
 }

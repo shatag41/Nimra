@@ -151,7 +151,7 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
           aria-modal="true"
           aria-labelledby="modal-title"
           aria-describedby="modal-description"
-          className={`modal-content ${centerContent ? 'centered-copy' : ''} ${contentKey === 'otp' ? 'auth-otp-modal' : ''}`}
+          className={`modal-content ${centerContent ? 'centered-copy' : ''} ${contentKey === 'otp' || contentKey === 'google-auth' ? 'auth-verification-modal' : ''}`}
           onClick={(e) => e.stopPropagation()}
         >
           <div key={contentKey} className="modal-step">
@@ -256,7 +256,9 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
             margin: 0 0 0.35rem;
           }
 
-          .auth-otp-modal .modal-title {
+          .auth-verification-modal .modal-title {
+            font-family: var(--font-heading);
+            font-weight: 800;
             color: var(--text-primary, #0f172a);
             background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #2563eb 100%);
             -webkit-background-clip: text;
@@ -269,7 +271,7 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
             margin-bottom: 0.4rem;
           }
 
-          :global([data-theme="dark"]) .auth-otp-modal .modal-title {
+          :global([data-theme="dark"]) .auth-verification-modal .modal-title {
             background: linear-gradient(135deg, #e0f2fe 0%, #7dd3fc 45%, #3b82f6 100%);
             -webkit-background-clip: text;
             background-clip: text;

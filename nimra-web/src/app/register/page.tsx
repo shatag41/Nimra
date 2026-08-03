@@ -462,7 +462,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <AuthPageWrapper>
+    <AuthPageWrapper className="register-page">
       <style dangerouslySetInnerHTML={{__html: `
         .auth-submit {
           transition: all 0.2s ease;
@@ -729,6 +729,7 @@ export default function RegisterPage() {
         processingText="Logging in..."
         stableFlowLayout
         centerContent
+        contentKey="google-auth"
       />
       <LogoutConfirmationModal
         isOpen={otpOpen}

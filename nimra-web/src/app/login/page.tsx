@@ -544,6 +544,7 @@ function LoginPageContent() {
         description="Account doesn’t exist. Create an account to continue."
         confirmText="Create Account"
         cancelText="Cancel"
+        contentKey="google-auth"
         confirmButtonClass="btn btn-primary"
         stableFlowLayout
         centerContent
