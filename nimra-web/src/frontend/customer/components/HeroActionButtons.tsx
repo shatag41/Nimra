@@ -11,7 +11,7 @@ export default function HeroActionButtons({ hideBackButton, pageTitle, mobileBac
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { items } = useCart();
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const navigation = useNavigationHistory(user?.Role);
   const [hasHydrated, setHasHydrated] = React.useState(false);
 
@@ -64,7 +64,7 @@ export default function HeroActionButtons({ hideBackButton, pageTitle, mobileBac
 
   return (
     <>
-      <div className="hero-actions-wrapper">
+      <div className={`hero-actions-wrapper ${!isAuthLoading && !user ? 'hero-actions-guest' : ''}`}>
         {showBackButton ? (
           <button className="hero-action-btn hero-action-back" onClick={handleBack} aria-label={backText}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -116,6 +116,13 @@ export default function HeroActionButtons({ hideBackButton, pageTitle, mobileBac
         .hero-back-label-mobile,
         .hero-mobile-page-title {
           display: none;
+        }
+
+        @media (min-width: 769px) {
+          .hero-actions-guest .hero-action-back {
+            visibility: hidden;
+            pointer-events: none;
+          }
         }
 
         .hero-action-btn {

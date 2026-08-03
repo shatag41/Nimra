@@ -9,6 +9,7 @@ import { useNotification } from '@/frontend/customer/contexts/NotificationContex
 import { recentlyViewedKey } from '@/frontend/customer/utils/recentlyViewed';
 import LogoutConfirmationModal from '@/frontend/customer/components/LogoutConfirmationModal';
 import LoadingButton from '@/frontend/shared/LoadingButton';
+import AuthPageWrapper from '@/frontend/customer/components/AuthPageWrapper';
 import type { User } from '@/frontend/customer/contexts/AuthContext';
 import {
   hasGuestCartItems,
@@ -461,7 +462,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <section className="auth-page">
+    <AuthPageWrapper>
       <style dangerouslySetInnerHTML={{__html: `
         .auth-submit {
           transition: all 0.2s ease;
@@ -498,7 +499,7 @@ export default function RegisterPage() {
         }
         .auth-card-header h2 {
           font-size: 1.4rem !important;
-          margin-bottom: 0.15rem !important;
+          margin-bottom: 0.3rem !important;
         }
         .auth-card-header p {
           font-size: 0.8rem !important;
@@ -778,6 +779,6 @@ export default function RegisterPage() {
         .registration-resend:disabled { color:var(--text-muted); cursor:not-allowed; }
         @media(max-width:480px){ .registration-otp-boxes { gap:.35rem; } .registration-otp-boxes input { width:36px; height:44px; } }
       `}</style>
-    </section>
+    </AuthPageWrapper>
   );
 }

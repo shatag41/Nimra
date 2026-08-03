@@ -151,7 +151,7 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
           aria-modal="true"
           aria-labelledby="modal-title"
           aria-describedby="modal-description"
-          className={`modal-content ${centerContent ? 'centered-copy' : ''}`}
+          className={`modal-content ${centerContent ? 'centered-copy' : ''} ${contentKey === 'otp' ? 'auth-otp-modal' : ''}`}
           onClick={(e) => e.stopPropagation()}
         >
           <div key={contentKey} className="modal-step">
@@ -254,6 +254,25 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
             font-weight: 700;
             color: var(--text-primary);
             margin: 0 0 0.35rem;
+          }
+
+          .auth-otp-modal .modal-title {
+            color: var(--text-primary, #0f172a);
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #2563eb 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            height: auto;
+            overflow: visible;
+            line-height: 1.2;
+            padding-bottom: 0.12em;
+            margin-bottom: 0.4rem;
+          }
+
+          :global([data-theme="dark"]) .auth-otp-modal .modal-title {
+            background: linear-gradient(135deg, #e0f2fe 0%, #7dd3fc 45%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
           }
 
           .modal-description {

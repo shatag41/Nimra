@@ -302,8 +302,9 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
                 <text x="50" y="76" textAnchor="middle" fontSize="42" fontWeight="400" fontFamily="inherit" fill="white" letterSpacing="-1">N</text>
                 <defs>
                   <linearGradient id="logoGrad" x1="50" y1="5" x2="50" y2="100" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#3b82f6"/>
-                    <stop offset="1" stopColor="#2563eb"/>
+                    <stop className="nimra-logo-gradient-start" stopColor="#0f172a"/>
+                    <stop className="nimra-logo-gradient-mid" offset="0.55" stopColor="#1e3a8a"/>
+                    <stop className="nimra-logo-gradient-end" offset="1" stopColor="#2563eb"/>
                   </linearGradient>
                 </defs>
               </svg>

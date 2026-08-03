@@ -622,13 +622,13 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
             width: 100%;
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 3px;
-            padding: 4px;
+            gap: 4px;
+            padding: 5px;
             overflow: hidden;
           }
           .submenu-btn {
             min-width: 0;
-            padding: 7px 2px;
+            padding: 9px 2px;
             font-size: clamp(0.55rem, 2.35vw, 0.66rem);
             font-weight: 500;
             line-height: 1.2;

@@ -8,6 +8,7 @@ import { sendRequest } from '@/utils/api';
 import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import LoadingButton from '@/frontend/shared/LoadingButton';
+import AuthPageWrapper from '@/frontend/customer/components/AuthPageWrapper';
 import LogoutConfirmationModal from '@/frontend/customer/components/LogoutConfirmationModal';
 import {
   persistCheckoutAuthHandoff,
@@ -197,7 +198,7 @@ function LoginPageContent() {
   };
 
   return (
-    <section className="auth-page">
+    <AuthPageWrapper>
       <style dangerouslySetInnerHTML={{__html: `
         .auth-page {
           padding: clamp(0.75rem, 2vw, 1.25rem) !important;
@@ -255,7 +256,7 @@ function LoginPageContent() {
         }
         .auth-card-header h2 {
           font-size: clamp(1.18rem, 2.6vw, 1.35rem) !important;
-          margin-bottom: 0.2rem !important;
+          margin-bottom: 0.3rem !important;
         }
         .auth-card-header p {
           font-size: 0.78rem !important;
@@ -381,7 +382,7 @@ function LoginPageContent() {
           <div style={{ maxWidth: '400px', margin: '0 auto', width: '100%' }}>
           <div className="auth-card-header" style={{ marginBottom: '0.8vh', textAlign: 'center' }}>
             <h2 style={{ fontSize: 'clamp(1.2rem, 3vh, 1.4rem)', fontWeight: '800', marginBottom: '0.2vh', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
-              Login to NIMRA
+              Login To NIMRA
             </h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: 'clamp(0.7rem, 1.5vh, 0.85rem)', lineHeight: '1.4' }}>
               Access your account to manage orders, track deliveries, and more.
@@ -547,7 +548,7 @@ function LoginPageContent() {
         stableFlowLayout
         centerContent
       />
-    </section>
+    </AuthPageWrapper>
   );
 }
 

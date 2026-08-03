@@ -125,8 +125,19 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
     return renderBareShell(null);
   }
 
-  if (isAdmin || isAuthPage) {
-    return renderBareShell(children, !isAdmin);
+  if (isAdmin) {
+    return renderBareShell(children);
+  }
+
+  if (isAuthPage) {
+    return (
+      <div className="ds-app-shell auth-route-shell">
+        <Header companyInfo={companyInfo} />
+        <main className="ds-main with-site-header auth-route-main">
+          {children}
+        </main>
+      </div>
+    );
   }
 
   return (

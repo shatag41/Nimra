@@ -6,6 +6,7 @@ import { sendRequest } from '@/utils/api';
 import { useRouter } from 'next/navigation';
 import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
 import LoadingButton from '@/frontend/shared/LoadingButton';
+import AuthPageWrapper from '@/frontend/customer/components/AuthPageWrapper';
 
 export default function ForgotPasswordPage() {
   const { notify } = useNotification();
@@ -58,7 +59,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <section className="auth-page forgot-password-page">
+    <AuthPageWrapper className="forgot-password-page">
       <style dangerouslySetInnerHTML={{__html: `
         .auth-shell.glass {
           width: clamp(300px, 60vw, 720px) !important;
@@ -196,6 +197,6 @@ export default function ForgotPasswordPage() {
           </div>
         </div>
       </div>
-    </section>
+    </AuthPageWrapper>
   );
 }
