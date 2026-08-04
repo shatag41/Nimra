@@ -41,10 +41,12 @@ export default function FAQSection({ faqs }: FAQSectionProps) {
           <h3>Still have questions?</h3>
           <p>Our dedicated support team is available 24/7 to assist you.</p>
           <Link href="/contact" className="support-link">
-            Contact Support
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M5 12h14M13 6l6 6-6 6" />
-            </svg>
+            <span className="support-link-content">
+              Contact Support
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="support-arrow">
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+            </span>
           </Link>
         </div>
       </aside>
@@ -159,9 +161,7 @@ export default function FAQSection({ faqs }: FAQSectionProps) {
         }
         .support-link {
           padding: 0.48rem 0.85rem;
-          display: inline-flex;
-          align-items: center;
-          gap: 0.35rem;
+          display: inline-block;
           color: #60a5fa;
           background: rgba(37, 99, 235, 0.08);
           border: 1px solid rgba(96, 165, 250, 0.28);
@@ -172,13 +172,27 @@ export default function FAQSection({ faqs }: FAQSectionProps) {
           text-decoration: none;
           transition: transform 300ms ease, box-shadow 300ms ease, background 300ms ease;
         }
-        .support-link svg { transition: transform 300ms ease; }
+        .support-link-content {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+        }
+        .support-arrow { 
+          margin: 0;
+          padding: 0;
+          position: static;
+          top: auto;
+          transform: translateY(0);
+          line-height: normal;
+          transition: transform 300ms ease; 
+        }
         .support-link:hover {
           transform: translateY(-2px);
           background: rgba(37, 99, 235, 0.14);
           box-shadow: 0 8px 22px rgba(37, 99, 235, 0.15);
         }
-        .support-link:hover svg { transform: translateX(3px); }
+        .support-link:hover .support-arrow { transform: translateX(3px); }
         @media (max-width: 768px) {
           .shared-faq-section { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
           .faq-visual {
