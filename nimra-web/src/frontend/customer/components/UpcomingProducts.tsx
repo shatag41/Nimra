@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Product } from '@/types/cms';
 
@@ -30,6 +30,7 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [direction, setDirection] = useState<'next' | 'previous'>('next');
+  const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (currentIndex < upcomingProducts.length) return;
@@ -44,6 +45,27 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
     }, AUTOPLAY_DELAY);
     return () => window.clearInterval(interval);
   }, [isPaused, upcomingProducts.length]);
+
+  // Self-contained IntersectionObserver so the mobile reveal animation works
+  // in any page context (portal, home, etc.) without relying on HomeClient's
+  // observer. Root cause: the mobile CSS sets opacity:0 on .rush-section until
+  // .is-visible is added; HomeClient only sets it when rendering the home page.
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    // If HomeClient already added the class (home page), do nothing.
+    if (el.classList.contains('is-visible')) return;
+    const observer = new IntersectionObserver(
+      ([entry], obs) => {
+        if (!entry.isIntersecting) return;
+        el.classList.add('is-visible');
+        obs.disconnect();
+      },
+      { rootMargin: '100px 0px', threshold: 0.01 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   if (upcomingProducts.length === 0) return null;
 
@@ -66,6 +88,7 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
 
   return (
     <section
+      ref={sectionRef}
       className="rush-section home-deferred-section"
       aria-label="Upcoming product launches"
       onMouseEnter={() => setIsPaused(true)}
