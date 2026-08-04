@@ -70,6 +70,10 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
   const { user, logout, isLoading: isAuthLoading, isLoggingOut } = useAuth();
   const { city, loading, requestLocation, permissionDenied } = useLocation();
   const { notify } = useNotification();
+  const isAuthenticationRoute = pathname === '/login'
+    || pathname === '/register'
+    || pathname === '/forgot-password'
+    || pathname === '/admin/login';
 
   const authReady = mounted && !isAuthLoading;
   const activeUser = authReady ? user : null;
@@ -289,7 +293,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
 
   return (
     <>
-      <header className={`header ${pathname === '/' ? 'home-overlay' : ''}`}>
+      <header className={`header ${pathname === '/' ? 'home-overlay' : ''} ${isAuthenticationRoute ? 'authentication-header' : ''}`}>
         {/* Top accent bar */}
         <div className="header-accent-bar" />
 
@@ -765,7 +769,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
         )}
       </header>
 
-      <nav
+      {!isAuthenticationRoute && <nav
         className={`mobile-bottom-nav ${activeUser && activeRole === 'CUSTOMER' ? 'customer-nav' : ''}`}
         aria-label="Mobile primary navigation"
         aria-busy={!authReady}
@@ -807,7 +811,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
             </Link>
           </>
         )}
-      </nav>
+      </nav>}
 
       <style jsx global>{`
         .mobile-bottom-nav { display: none; }
@@ -834,6 +838,10 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
           }
 
           .header .location-btn { display: none !important; }
+          .header.authentication-header .cart-link,
+          .header.authentication-header .notification-container {
+            display: none !important;
+          }
           .header .notification-container { order: 1; }
           .header .cart-link { order: 2; }
           .header .profile-menu-container,

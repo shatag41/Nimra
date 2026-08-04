@@ -489,7 +489,7 @@ export default function RegisterPage() {
         .auth-shell {
           grid-template-columns: 1fr minmax(360px, 420px) !important;
           max-height: 95vh !important;
-          width: min(100%, 900px) !important;
+          width: min(100%, 880px) !important;
         }
         .auth-card {
           padding: 1.25rem 2.25rem !important;

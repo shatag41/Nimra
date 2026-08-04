@@ -351,7 +351,12 @@ export const fetchCMSData = async (): Promise<CMSData> => {
 
     return cmsData;
   } catch (err) {
-    console.error('Error loading CMS data.', err);
+    // The page already has server-provided CMS data. A transient client
+    // revalidation failure should retain that content without surfacing the
+    // expected network fallback as a development error overlay.
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('CMS revalidation unavailable; keeping server-provided content.', err);
+    }
     return {
       banners: [],
       products: [],

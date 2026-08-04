@@ -39,6 +39,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
     activeBanner: 0,
     loadedBannerIndexes: new Set([0, 1]),
   }));
+  const homePageRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -73,6 +74,57 @@ export default function HomeClient({ banners: initialBanners, products: initialP
     return () => {
       heroObserver.disconnect();
       sectionObserver.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    const homePage = homePageRef.current;
+    if (!homePage) return;
+
+    const mobileQuery = window.matchMedia('(max-width: 768px)');
+    const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const countElements = Array.from(homePage.querySelectorAll<HTMLElement>('[data-customer-count]'));
+    const statsSection = homePage.querySelector<HTMLElement>('.stats-section');
+    const showFinalCount = () => countElements.forEach((element) => { element.textContent = '50,000+'; });
+
+    if (!mobileQuery.matches || reducedMotionQuery.matches) {
+      showFinalCount();
+      return;
+    }
+
+    statsSection?.classList.add('mobile-stats-ready');
+    countElements.forEach((element) => { element.textContent = '0'; });
+
+    const countObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const element = entry.target as HTMLElement;
+        observer.unobserve(element);
+        const startedAt = performance.now();
+        const duration = 1750;
+        const updateCount = (now: number) => {
+          const progress = Math.min((now - startedAt) / duration, 1);
+          const easedProgress = 1 - Math.pow(1 - progress, 3);
+          const value = Math.round(50000 * easedProgress);
+          element.textContent = `${value.toLocaleString('en-US')}${progress === 1 ? '+' : ''}`;
+          if (progress < 1) window.requestAnimationFrame(updateCount);
+        };
+        window.requestAnimationFrame(updateCount);
+      });
+    }, { threshold: 0.35 });
+
+    const statsObserver = new IntersectionObserver(([entry], observer) => {
+      if (!entry?.isIntersecting) return;
+      statsSection?.classList.add('mobile-stats-entered');
+      observer.disconnect();
+    }, { threshold: 0.05 });
+
+    countElements.forEach((element) => countObserver.observe(element));
+    if (statsSection) statsObserver.observe(statsSection);
+
+    return () => {
+      countObserver.disconnect();
+      statsObserver.disconnect();
     };
   }, []);
 
@@ -122,7 +174,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
     });
   }, [products]);
   return (
-    <div className="home-page">
+    <div className="home-page" ref={homePageRef}>
       {/* ─── 1. HERO CAROUSEL ───────────────────────────────────────────────── */}
       <section className="hero-section" ref={heroRef} onMouseMove={handleHeroPointer} onMouseLeave={resetHeroPointer}>
         {banners.map((banner, index) => (
@@ -184,7 +236,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
                   <div className="trust-divider" />
                   <div className="trust-item">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    50,000+ Customers
+                    <span data-customer-count>50,000+</span> Customers
                   </div>
                 </div>
               </div>
@@ -227,7 +279,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
       </section>
 
       {/* ─── 2. STATS BAR ───────────────────────────────────────────────────── */}
-      <section className="stats-section home-deferred-section">
+      <section className="stats-section">
         <div className="container">
           <div className="stats-grid">
             {[
@@ -238,7 +290,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
             ].map((stat) => (
               <div key={stat.label} className="stat-card">
                 <span className="stat-emoji">{stat.icon}</span>
-                <strong className="stat-value">{stat.value}</strong>
+                <strong className="stat-value" {...(stat.label === 'Happy Customers' ? { 'data-customer-count': true } : {})}>{stat.value}</strong>
                 <span className="stat-label">{stat.label}</span>
               </div>
             ))}
@@ -1503,6 +1555,25 @@ export default function HomeClient({ banners: initialBanners, products: initialP
             font-size: 0.55rem;
           }
 
+          .stats-section.mobile-stats-ready:not(.mobile-stats-entered) .stat-card {
+            opacity: 0;
+            transform: translate3d(0, 10px, 0) scale(0.94);
+          }
+
+          .stats-section.mobile-stats-entered .stat-card {
+            opacity: 1;
+            transform: translate3d(0, 0, 0) scale(1);
+          }
+
+          .stat-card:hover {
+            transform: translate3d(0, 0, 0) scale(1);
+          }
+
+          .stat-card:active {
+            transform: translate3d(0, 1px, 0) scale(0.985);
+            transition-duration: 90ms;
+          }
+
           .story-section { overflow: visible; }
           .story-bg-shape { display: none; }
           .story-grid {
@@ -1637,10 +1708,30 @@ export default function HomeClient({ banners: initialBanners, products: initialP
           .hero-section *, .hero-section *::before, .hero-section *::after { animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
           .hero-slide-image, .hero-depth, .hero-visual-column, .hero-card, .hero-card-shell, .hero-card-cta { transform:none !important; }
           .hero-particles, .hero-ripples, .hero-fog { display:none; }
+          .stats-section .stat-card { opacity:1 !important; transform:none !important; animation:none !important; transition:none !important; }
         }
       `}</style>
       <style jsx global>{`
         @media (max-width: 768px) {
+          .home-page .stats-section .stat-card::before,
+          .home-page .stats-section .stat-card::after {
+            content: none !important;
+            display: none !important;
+          }
+
+          .home-page .stats-section.mobile-stats-ready:not(.mobile-stats-entered) .stat-card {
+            opacity: 0 !important;
+            transform: translate3d(0, 12px, 0) scale(0.94) !important;
+          }
+
+          .home-page .stats-section.mobile-stats-entered .stat-card {
+            animation: homeMobileStatPop 480ms cubic-bezier(.16, 1, .3, 1) backwards !important;
+          }
+
+          .home-page .stats-section.mobile-stats-entered .stat-card:nth-child(2) { animation-delay: 90ms !important; }
+          .home-page .stats-section.mobile-stats-entered .stat-card:nth-child(3) { animation-delay: 180ms !important; }
+          .home-page .stats-section.mobile-stats-entered .stat-card:nth-child(4) { animation-delay: 270ms !important; }
+
           .home-page .hero-title,
           .home-page .rush-title {
             height: auto !important;
@@ -1661,6 +1752,20 @@ export default function HomeClient({ banners: initialBanners, products: initialP
             white-space: normal !important;
             word-break: normal !important;
             overflow-wrap: break-word !important;
+          }
+        }
+
+        @keyframes homeMobileStatPop {
+          from { opacity: 0; transform: translate3d(0, 12px, 0) scale(0.94); }
+          to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+        }
+
+        @media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+          .home-page .stats-section .stat-card {
+            opacity: 1 !important;
+            transform: none !important;
+            animation: none !important;
+            transition: none !important;
           }
         }
       `}</style>

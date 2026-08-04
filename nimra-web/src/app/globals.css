@@ -13776,7 +13776,6 @@ body:has(.products-page-skeleton) {
 
   .auth-page.auth-flow.auth-mobile-flow {
     --auth-mobile-top-nav: var(--ds-header-offset, 3.6875rem);
-    --auth-mobile-bottom-nav: var(--mobile-nav-height, 64px);
     --auth-card-mobile-width: 22.5rem;
     width: auto !important;
     height: auto !important;
@@ -13784,7 +13783,7 @@ body:has(.products-page-skeleton) {
     max-height: none !important;
     position: fixed !important;
     top: calc(var(--auth-mobile-top-nav) + env(safe-area-inset-top)) !important;
-    bottom: calc(var(--auth-mobile-bottom-nav) + env(safe-area-inset-bottom)) !important;
+    bottom: env(safe-area-inset-bottom) !important;
     left: 0 !important;
     right: 0 !important;
     display: grid !important;
@@ -13804,6 +13803,12 @@ body:has(.products-page-skeleton) {
     min-height: 0;
     margin: 0 auto !important;
     transform: none !important;
+  }
+
+  .auth-mobile-flow:is(.register-page, .forgot-password-page) .auth-flow-stage {
+    width: min(25rem, calc(100vw - 2rem)) !important;
+    max-width: none !important;
+    justify-self: center !important;
   }
 
   .auth-mobile-flow .auth-flow-background {

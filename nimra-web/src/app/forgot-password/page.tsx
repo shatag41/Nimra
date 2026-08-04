@@ -62,7 +62,7 @@ export default function ForgotPasswordPage() {
     <AuthPageWrapper className="forgot-password-page">
       <style dangerouslySetInnerHTML={{__html: `
         .auth-shell.glass {
-          width: clamp(300px, 60vw, 720px) !important;
+          width: min(100%, 880px) !important;
           grid-template-columns: 42% 58% !important;
         }
         .forgot-password-page .auth-logo span { font-size: clamp(.88rem, 1.6vw, 1.05rem) !important; }
