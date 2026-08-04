@@ -363,8 +363,8 @@ const DashboardTab = React.memo(function DashboardTab({
         onOpenCancellationRequests={onOpenCancellationRequests}
       />
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1.25rem', width: '100%' }}>
-        <div>
+      <div className="customer-activity-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1.25rem', width: '100%' }}>
+        <div className="customer-activity-heading-copy">
           <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.65rem', color: 'var(--text-primary)' }}>
             Customer Activity Dashboard
           </h2>
@@ -372,7 +372,7 @@ const DashboardTab = React.memo(function DashboardTab({
             Live enterprise e-commerce metrics, order trends, and customer analytics.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '0.25rem', background: 'var(--bg-secondary)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+        <div className="customer-activity-filter" style={{ display: 'flex', gap: '0.25rem', background: 'var(--bg-secondary)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
           {(['overall', 'today', 'week', 'month'] as const).map(filter => (
             <button
               key={filter}
@@ -476,6 +476,9 @@ const DashboardTab = React.memo(function DashboardTab({
           <span className="stat-desc" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
             {showPriorityAlerts ? '▲ Click to collapse alerts' : '▼ Click to expand alerts'}
           </span>
+          <span className={`pending-actions-connector ${showPriorityAlerts ? 'expanded' : ''}`} aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </span>
         </div>
         
         <div className="stat-card glass card-customers" style={{ 
@@ -511,6 +514,10 @@ const DashboardTab = React.memo(function DashboardTab({
         marginBottom: showPriorityAlerts ? '0.5rem' : '0px',
       }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%', background: 'rgba(239, 68, 68, 0.01)', padding: '1.25rem', borderRadius: 'var(--radius-lg)', border: '1px dashed rgba(239, 68, 68, 0.2)' }}>
+          <div className="pending-action-details-label">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span>Pending Action Details</span>
+          </div>
           <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             ⚠️ Priority Alerts Requiring Attention
           </h3>

@@ -128,6 +128,21 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
   const [orderStatusVal, setOrderStatusVal] = useState('');
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [ordersView, setOrdersView] = useState<'active' | 'cancellations'>('active');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  React.useEffect(() => {
+    if (!isMobileSidebarOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsMobileSidebarOpen(false);
+    };
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [isMobileSidebarOpen]);
 
   const handleNavigateToOrdersWithFilter = (statusFilter: string, view: 'active' | 'cancellations', startDate?: string) => {
     filters.setOrderStatusFilter(statusFilter);
@@ -150,6 +165,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
       setOrdersView('active');
     }
     setActiveTab(tab);
+    setIsMobileSidebarOpen(false);
   };
 
   // Clear contextual filter when leaving the orders page or opening Orders directly
@@ -276,6 +292,23 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           activeTab={activeTab}
           setActiveTab={handleSidebarTabChange}
           isProfilePanelOpen={profile.isProfilePanelOpen}
+          isMobileOpen={isMobileSidebarOpen}
+          onEditProfile={() => {
+            setIsMobileSidebarOpen(false);
+            profile.setIsProfilePanelOpen(true);
+          }}
+          onLogout={() => {
+            setIsMobileSidebarOpen(false);
+            setIsLogoutModalOpen(true);
+          }}
+        />
+
+        <button
+          type="button"
+          className={`admin-sidebar-backdrop ${isMobileSidebarOpen ? 'mobile-open' : ''}`}
+          onClick={() => setIsMobileSidebarOpen(false)}
+          aria-label="Close admin navigation"
+          tabIndex={isMobileSidebarOpen ? 0 : -1}
         />
 
         {/* MAIN VIEW */}
@@ -292,6 +325,8 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             currentUser={currentUser}
             setIsProfilePanelOpen={profile.setIsProfilePanelOpen}
             handleLogout={() => setIsLogoutModalOpen(true)}
+            isMobileSidebarOpen={isMobileSidebarOpen}
+            toggleMobileSidebar={() => setIsMobileSidebarOpen((open) => !open)}
           />
 
           {/* ALERTS DEPRECATED - now handled by sonner */}

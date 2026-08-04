@@ -13,6 +13,8 @@ interface HeaderProps {
   currentUser: CurrentUser;
   setIsProfilePanelOpen: (open: boolean) => void;
   handleLogout: () => void;
+  isMobileSidebarOpen: boolean;
+  toggleMobileSidebar: () => void;
 }
 
 export default function Header({
@@ -26,10 +28,13 @@ export default function Header({
   currentUser,
   setIsProfilePanelOpen,
   handleLogout,
+  isMobileSidebarOpen,
+  toggleMobileSidebar,
 }: HeaderProps) {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const isSuperAdminDashboard = activeTab === 'dashboard' && currentUser.role.toUpperCase().replaceAll(' ', '_') === 'SUPER_ADMIN';
+  const connectionLabel = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL ? 'Connected to Google Sheets' : 'Local Fallback Mode';
   
   // Close profile dropdown when clicking outside
   useEffect(() => {
@@ -49,6 +54,16 @@ export default function Header({
 
   return (
     <header className="main-header glass">
+      <button
+        type="button"
+        className="mobile-console-trigger"
+        onClick={toggleMobileSidebar}
+        aria-label={`${isMobileSidebarOpen ? 'Close' : 'Open'} admin navigation`}
+        aria-controls="admin-mobile-sidebar"
+        aria-expanded={isMobileSidebarOpen}
+      >
+        <span className="profile-avatar" aria-hidden="true">{currentUser.name ? currentUser.name[0] : 'A'}</span>
+      </button>
       <h1>
         {isSuperAdminDashboard ? 'Super Admin Command Center' : `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Panel`}
       </h1>
@@ -100,12 +115,21 @@ export default function Header({
             </button>
           </div>
         )}
-        <button onClick={() => void refreshData()} disabled={loading} className="btn-refresh">
-          {loading ? 'Syncing...' : '🔄 Sync Live Sheets'}
+        <button
+          onClick={() => void refreshData()}
+          disabled={loading}
+          className="btn-refresh"
+          aria-label={`${loading ? 'Syncing Live Sheets' : 'Sync Live Sheets'}. ${connectionLabel}`}
+          title={connectionLabel}
+        >
+          <svg className="sync-button-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          <span className="desktop-sync-label">{loading ? 'Syncing...' : '🔄 Sync Live Sheets'}</span>
+          <span className="mobile-sync-label">{loading ? 'Syncing' : 'Sync'}</span>
+          <span className={`mobile-sync-status-dot ${process.env.NEXT_PUBLIC_APPS_SCRIPT_URL ? 'connected' : 'fallback'}`} aria-hidden="true" />
         </button>
         <span className="db-indicator">
           <span className="dot active"></span>
-          {process.env.NEXT_PUBLIC_APPS_SCRIPT_URL ? 'Connected to Google Sheets' : 'Local Fallback Mode'}
+          {connectionLabel}
         </span>
         
         {/* Profile Dropdown */}

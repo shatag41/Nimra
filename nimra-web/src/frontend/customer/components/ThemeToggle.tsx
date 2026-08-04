@@ -3,10 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { AppTheme, applyTheme, initializeTheme, THEME_CHANGE_EVENT } from '../utils/theme';
 
-export default function ThemeToggle() {
+export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean }) {
   const [theme, setTheme] = useState<AppTheme>('light');
 
   useEffect(() => {
+    // Initialize from persisted client state after hydration.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTheme(initializeTheme());
 
     const handleThemeChange = (event: Event) => {
@@ -53,6 +55,7 @@ export default function ThemeToggle() {
           <path d="M19.07 4.93l-1.41 1.41"/>
         </svg>
       )}
+      {showLabel && <span className="theme-toggle-label">{theme === 'light' ? 'Light mode' : 'Dark mode'}</span>}
       <style jsx>{`
         .theme-toggle-btn {
           display: flex;
@@ -76,6 +79,12 @@ export default function ThemeToggle() {
           background: rgba(var(--primary-rgb), 0.1);
           color: var(--primary-color);
           transform: scale(1.05);
+        }
+
+        .theme-toggle-label {
+          font-size: 0.75rem;
+          font-weight: 700;
+          white-space: nowrap;
         }
       `}</style>
     </button>
