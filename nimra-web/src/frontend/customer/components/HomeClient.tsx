@@ -65,8 +65,12 @@ export default function HomeClient({ banners: initialBanners, products: initialP
     }, { threshold: 0.05 });
 
     const deferredSections = Array.from(document.querySelectorAll<HTMLElement>('.home-deferred-section'));
-    const sectionObserver = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => entry.target.classList.toggle('is-visible', entry.isIntersecting));
+    const sectionObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('is-visible');
+        observer.unobserve(entry.target);
+      });
     }, { rootMargin: '100px 0px', threshold: 0.01 });
 
     heroObserver.observe(hero);
@@ -83,7 +87,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
 
     const mobileQuery = window.matchMedia('(max-width: 768px)');
     const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const countElements = Array.from(homePage.querySelectorAll<HTMLElement>('[data-customer-count]'));
+    const countElements = Array.from(homePage.querySelectorAll<HTMLElement>('[data-stats-customer-count]'));
     const statsSection = homePage.querySelector<HTMLElement>('.stats-section');
     const showFinalCount = () => countElements.forEach((element) => { element.textContent = '50,000+'; });
 
@@ -95,11 +99,8 @@ export default function HomeClient({ banners: initialBanners, products: initialP
     statsSection?.classList.add('mobile-stats-ready');
     countElements.forEach((element) => { element.textContent = '0'; });
 
-    const countObserver = new IntersectionObserver((entries, observer) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        const element = entry.target as HTMLElement;
-        observer.unobserve(element);
+    const startCountUp = () => {
+      countElements.forEach((element) => {
         const startedAt = performance.now();
         const duration = 1750;
         const updateCount = (now: number) => {
@@ -111,19 +112,18 @@ export default function HomeClient({ banners: initialBanners, products: initialP
         };
         window.requestAnimationFrame(updateCount);
       });
-    }, { threshold: 0.35 });
+    };
 
     const statsObserver = new IntersectionObserver(([entry], observer) => {
       if (!entry?.isIntersecting) return;
       statsSection?.classList.add('mobile-stats-entered');
+      startCountUp();
       observer.disconnect();
     }, { threshold: 0.05 });
 
-    countElements.forEach((element) => countObserver.observe(element));
     if (statsSection) statsObserver.observe(statsSection);
 
     return () => {
-      countObserver.disconnect();
       statsObserver.disconnect();
     };
   }, []);
@@ -290,7 +290,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
             ].map((stat) => (
               <div key={stat.label} className="stat-card">
                 <span className="stat-emoji">{stat.icon}</span>
-                <strong className="stat-value" {...(stat.label === 'Happy Customers' ? { 'data-customer-count': true } : {})}>{stat.value}</strong>
+                <strong className="stat-value" {...(stat.label === 'Happy Customers' ? { 'data-stats-customer-count': true } : {})}>{stat.value}</strong>
                 <span className="stat-label">{stat.label}</span>
               </div>
             ))}
@@ -313,26 +313,30 @@ export default function HomeClient({ banners: initialBanners, products: initialP
                 {[
                   {
                     icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+                    tone: 'blue',
                     title: 'Certified Quality',
                     desc: 'Stringent quality controls for dependable purity at every step.'
                   },
                   {
                     icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>,
+                    tone: 'green',
                     title: 'Balanced Minerals',
                     desc: 'Carefully enriched for a smooth, refreshing taste every time.'
                   },
                   {
                     icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" strokeWidth="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>,
+                    tone: 'orange',
                     title: 'Reliable Supply',
                     desc: 'Consistent stock and fast delivery across Pune and Daund.'
                   },
                   {
                     icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" strokeWidth="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>,
+                    tone: 'cyan',
                     title: 'Full Range',
                     desc: 'From 200ml bottles to 20L jars — every hydration need covered.'
                   }
                 ].map((v) => (
-                  <div key={v.title} className="value-item">
+                  <div key={v.title} className={`value-item value-item-${v.tone}`}>
                     <div className="value-icon">{v.icon}</div>
                     <div>
                       <h4>{v.title}</h4>
@@ -1603,17 +1607,117 @@ export default function HomeClient({ banners: initialBanners, products: initialP
             max-width: 100%;
             align-self: flex-start;
           }
+          .story-section .story-content .badge,
+          .story-section .story-title,
+          .story-section .story-description,
+          .story-section .value-item,
+          .story-section .story-img-wrapper,
+          .story-section .purity-card,
+          .story-section .story-badge-pill,
+          .story-section .story-cta-wrap {
+            will-change: opacity, transform;
+          }
+          .story-section:not(.is-visible) .story-content .badge,
+          .story-section:not(.is-visible) .story-description,
+          .story-section:not(.is-visible) .purity-card,
+          .story-section:not(.is-visible) .story-badge-pill {
+            opacity: 0;
+            transform: translate3d(0, 8px, 0);
+          }
+          .story-section:not(.is-visible) .story-title,
+          .story-section:not(.is-visible) .story-cta-wrap {
+            opacity: 0;
+            transform: translate3d(0, 14px, 0);
+          }
+          .story-section:not(.is-visible) .value-item {
+            opacity: 0;
+            transform: translate3d(0, 12px, 0) scale(.96);
+          }
+          .story-section:not(.is-visible) .story-img-wrapper {
+            opacity: 0;
+            transform: translate3d(0, 10px, 0) scale(.97);
+          }
+          .story-section.is-visible .story-content .badge,
+          .story-section.is-visible .story-title,
+          .story-section.is-visible .story-description,
+          .story-section.is-visible .value-item,
+          .story-section.is-visible .story-img-wrapper,
+          .story-section.is-visible .purity-card,
+          .story-section.is-visible .story-badge-pill,
+          .story-section.is-visible .story-cta-wrap {
+            opacity: 1;
+            transform: translate3d(0, 0, 0) scale(1);
+            transition-property: opacity, transform;
+            transition-duration: 560ms;
+            transition-timing-function: cubic-bezier(.16, 1, .3, 1);
+          }
+          .story-section.is-visible .story-content .badge { transition-delay: 40ms; }
+          .story-section.is-visible .story-title { transition-delay: 130ms; }
+          .story-section.is-visible .story-description { transition-delay: 220ms; }
+          .story-section.is-visible .value-item:nth-child(1) { transition-delay: 330ms; }
+          .story-section.is-visible .value-item:nth-child(2) { transition-delay: 410ms; }
+          .story-section.is-visible .value-item:nth-child(3) { transition-delay: 490ms; }
+          .story-section.is-visible .value-item:nth-child(4) { transition-delay: 570ms; }
+          .story-section.is-visible .story-img-wrapper {
+            transition-delay: 680ms;
+            transition-duration: 700ms;
+          }
+          .story-section.is-visible .purity-card,
+          .story-section.is-visible .story-badge-pill {
+            transition-delay: 850ms;
+          }
+          .story-section.is-visible .story-cta-wrap { transition-delay: 990ms; }
           .values-grid {
-            grid-template-columns: minmax(0, 1fr);
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             width: 100%;
             max-width: none;
-            gap: .75rem;
+            gap: .65rem;
+            align-items: stretch;
           }
           .value-item {
+            --value-accent-rgb: 37, 99, 235;
             width: 100%;
             max-width: none;
             min-width: 0;
+            height: 100%;
+            min-height: 92px;
             align-items: flex-start;
+            gap: .5rem;
+            padding: .68rem .58rem;
+            border-radius: 14px;
+            border-color: rgba(var(--value-accent-rgb), .12);
+            background: linear-gradient(145deg, rgba(255,255,255,.88), rgba(248,250,252,.72));
+            box-shadow: 0 6px 16px rgba(15, 23, 42, .055), inset 0 1px 0 rgba(255,255,255,.72);
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            transform: none;
+          }
+          .value-item-green { --value-accent-rgb: 34, 197, 94; }
+          .value-item-orange { --value-accent-rgb: 249, 115, 22; }
+          .value-item-cyan { --value-accent-rgb: 14, 165, 233; }
+          .value-item:hover {
+            transform: none;
+            border-color: rgba(var(--value-accent-rgb), .18);
+            background: linear-gradient(145deg, rgba(255,255,255,.92), rgba(248,250,252,.78));
+            box-shadow: 0 7px 18px rgba(15, 23, 42, .065), inset 0 1px 0 rgba(255,255,255,.76);
+          }
+          .value-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 10px;
+            background: rgba(var(--value-accent-rgb), .09);
+            color: rgb(var(--value-accent-rgb));
+            box-shadow: none;
+          }
+          .value-icon svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+          }
+          .value-item:hover .value-icon {
+            transform: none;
+            background: rgba(var(--value-accent-rgb), .14);
+            box-shadow: none;
           }
           .value-item > div:last-child,
           .value-item h4,
@@ -1623,6 +1727,17 @@ export default function HomeClient({ banners: initialBanners, products: initialP
             white-space: normal;
             word-break: normal;
             overflow-wrap: break-word;
+          }
+          .value-item h4 {
+            font-size: .73rem;
+            line-height: 1.18;
+            margin-bottom: .16rem;
+            letter-spacing: 0;
+          }
+          .value-item p {
+            font-size: .58rem;
+            line-height: 1.35;
+            color: color-mix(in srgb, var(--text-muted) 92%, #64748b 8%);
           }
           .story-image-container {
             display: block;
@@ -1761,6 +1876,19 @@ export default function HomeClient({ banners: initialBanners, products: initialP
         }
 
         @media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+          .home-page .story-section .story-content .badge,
+          .home-page .story-section .story-title,
+          .home-page .story-section .story-description,
+          .home-page .story-section .value-item,
+          .home-page .story-section .story-img-wrapper,
+          .home-page .story-section .purity-card,
+          .home-page .story-section .story-badge-pill,
+          .home-page .story-section .story-cta-wrap {
+            opacity: 1 !important;
+            transform: none !important;
+            animation: none !important;
+            transition: none !important;
+          }
           .home-page .stats-section .stat-card {
             opacity: 1 !important;
             transform: none !important;

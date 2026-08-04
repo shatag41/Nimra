@@ -628,11 +628,7 @@ export async function handlePost(req: NextRequest) {
           }, { status: 404 });
         }
       } catch (error) {
-        console.error('[Google authentication] Active-account check failed:', error);
-        return NextResponse.json(
-          { success: false, message: 'Unable to verify this Google account. Please try again.' },
-          { status: 503 }
-        );
+        console.warn('[Google authentication] Active-account pre-check failed; continuing with Apps Script auth handler:', error);
       }
     }
 

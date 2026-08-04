@@ -132,8 +132,7 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
   if (isAuthPage) {
     return (
       <div className="ds-app-shell auth-route-shell">
-        <Header companyInfo={companyInfo} />
-        <main className="ds-main with-site-header auth-route-main">
+        <main className="ds-main auth-route-main">
           {children}
         </main>
       </div>
