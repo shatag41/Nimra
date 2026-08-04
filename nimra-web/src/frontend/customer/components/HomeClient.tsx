@@ -85,13 +85,12 @@ export default function HomeClient({ banners: initialBanners, products: initialP
     const homePage = homePageRef.current;
     if (!homePage) return;
 
-    const mobileQuery = window.matchMedia('(max-width: 768px)');
     const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     const countElements = Array.from(homePage.querySelectorAll<HTMLElement>('[data-stats-customer-count]'));
     const statsSection = homePage.querySelector<HTMLElement>('.stats-section');
     const showFinalCount = () => countElements.forEach((element) => { element.textContent = '50,000+'; });
 
-    if (!mobileQuery.matches || reducedMotionQuery.matches) {
+    if (reducedMotionQuery.matches) {
       showFinalCount();
       return;
     }
@@ -408,7 +407,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
       <UpcomingProducts upcomingProducts={upcomingProducts} />
 
       {/* ─── 6. FAQ ─────────────────────────────────────────────────────────── */}
-      <section className="faq-section">
+      <section className="faq-section home-deferred-section">
         <div className="container">
           <FAQSection faqs={faqs} />
         </div>
@@ -1827,6 +1826,84 @@ export default function HomeClient({ banners: initialBanners, products: initialP
         }
       `}</style>
       <style jsx global>{`
+        .home-page .story-section .story-content .badge,
+        .home-page .story-section .story-title,
+        .home-page .story-section .story-description,
+        .home-page .story-section .value-item,
+        .home-page .story-section .story-img-wrapper,
+        .home-page .story-section .purity-card,
+        .home-page .story-section .story-badge-pill,
+        .home-page .story-section .story-cta-wrap {
+          will-change: opacity, transform;
+        }
+
+        .home-page .story-section:not(.is-visible) .story-content .badge,
+        .home-page .story-section:not(.is-visible) .story-description,
+        .home-page .story-section:not(.is-visible) .purity-card,
+        .home-page .story-section:not(.is-visible) .story-badge-pill {
+          opacity: 0;
+          transform: translate3d(0, 8px, 0);
+        }
+
+        .home-page .story-section:not(.is-visible) .story-title,
+        .home-page .story-section:not(.is-visible) .story-cta-wrap {
+          opacity: 0;
+          transform: translate3d(0, 14px, 0);
+        }
+
+        .home-page .story-section:not(.is-visible) .value-item {
+          opacity: 0;
+          transform: translate3d(0, 12px, 0) scale(.96);
+        }
+
+        .home-page .story-section:not(.is-visible) .story-img-wrapper {
+          opacity: 0;
+          transform: translate3d(0, 10px, 0) scale(.97);
+        }
+
+        .home-page .story-section.is-visible .story-content .badge,
+        .home-page .story-section.is-visible .story-title,
+        .home-page .story-section.is-visible .story-description,
+        .home-page .story-section.is-visible .value-item,
+        .home-page .story-section.is-visible .story-img-wrapper,
+        .home-page .story-section.is-visible .purity-card,
+        .home-page .story-section.is-visible .story-badge-pill,
+        .home-page .story-section.is-visible .story-cta-wrap {
+          opacity: 1;
+          transform: translate3d(0, 0, 0) scale(1);
+          transition-property: opacity, transform;
+          transition-duration: 560ms;
+          transition-timing-function: cubic-bezier(.16, 1, .3, 1);
+        }
+
+        .home-page .story-section.is-visible .story-content .badge { transition-delay: 40ms; }
+        .home-page .story-section.is-visible .story-title { transition-delay: 130ms; }
+        .home-page .story-section.is-visible .story-description { transition-delay: 220ms; }
+        .home-page .story-section.is-visible .value-item:nth-child(1) { transition-delay: 330ms; }
+        .home-page .story-section.is-visible .value-item:nth-child(2) { transition-delay: 410ms; }
+        .home-page .story-section.is-visible .value-item:nth-child(3) { transition-delay: 490ms; }
+        .home-page .story-section.is-visible .value-item:nth-child(4) { transition-delay: 570ms; }
+        .home-page .story-section.is-visible .story-img-wrapper {
+          transition-delay: 680ms;
+          transition-duration: 700ms;
+        }
+        .home-page .story-section.is-visible .purity-card,
+        .home-page .story-section.is-visible .story-badge-pill { transition-delay: 850ms; }
+        .home-page .story-section.is-visible .story-cta-wrap { transition-delay: 990ms; }
+
+        .home-page .stats-section.mobile-stats-ready:not(.mobile-stats-entered) .stat-card {
+          opacity: 0 !important;
+          transform: translate3d(0, 12px, 0) scale(0.94) !important;
+        }
+
+        .home-page .stats-section.mobile-stats-entered .stat-card {
+          animation: homeMobileStatPop 480ms cubic-bezier(.16, 1, .3, 1) backwards !important;
+        }
+
+        .home-page .stats-section.mobile-stats-entered .stat-card:nth-child(2) { animation-delay: 90ms !important; }
+        .home-page .stats-section.mobile-stats-entered .stat-card:nth-child(3) { animation-delay: 180ms !important; }
+        .home-page .stats-section.mobile-stats-entered .stat-card:nth-child(4) { animation-delay: 270ms !important; }
+
         @media (max-width: 768px) {
           .home-page .stats-section .stat-card::before,
           .home-page .stats-section .stat-card::after {
@@ -1875,7 +1952,89 @@ export default function HomeClient({ banners: initialBanners, products: initialP
           to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
         }
 
-        @media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+        @media (max-width: 768px) {
+          .home-page .faq-section .faq-eyebrow,
+          .home-page .faq-section .faq-content > h2,
+          .home-page .faq-section .faq-intro,
+          .home-page .faq-section .faq-item,
+          .home-page .faq-section .support-card,
+          .home-page .faq-section .support-icon,
+          .home-page .faq-section .support-card > h3,
+          .home-page .faq-section .support-card > p,
+          .home-page .faq-section .support-link {
+            will-change: opacity, translate, scale;
+          }
+
+          .home-page .faq-section:not(.is-visible) .faq-eyebrow,
+          .home-page .faq-section:not(.is-visible) .faq-intro {
+            opacity: 0;
+          }
+
+          .home-page .faq-section:not(.is-visible) .faq-content > h2 {
+            opacity: 0;
+            translate: 0 10px;
+          }
+
+          .home-page .faq-section:not(.is-visible) .faq-item {
+            opacity: 0;
+            scale: .97;
+          }
+
+          .home-page .faq-section:not(.is-visible) .support-card {
+            opacity: 0;
+            scale: .97;
+          }
+
+          .home-page .faq-section:not(.is-visible) .support-icon {
+            opacity: 0;
+            scale: .82;
+          }
+
+          .home-page .faq-section:not(.is-visible) .support-card > h3,
+          .home-page .faq-section:not(.is-visible) .support-card > p,
+          .home-page .faq-section:not(.is-visible) .support-link {
+            opacity: 0;
+            translate: 0 8px;
+          }
+
+          .home-page .faq-section.is-visible .faq-eyebrow,
+          .home-page .faq-section.is-visible .faq-content > h2,
+          .home-page .faq-section.is-visible .faq-intro,
+          .home-page .faq-section.is-visible .faq-item,
+          .home-page .faq-section.is-visible .support-card,
+          .home-page .faq-section.is-visible .support-icon,
+          .home-page .faq-section.is-visible .support-card > h3,
+          .home-page .faq-section.is-visible .support-card > p,
+          .home-page .faq-section.is-visible .support-link {
+            opacity: 1;
+            translate: 0 0;
+            scale: 1;
+            transition-property: opacity, translate, scale;
+            transition-duration: 480ms;
+            transition-timing-function: cubic-bezier(.16, 1, .3, 1);
+          }
+
+          .home-page .faq-section.is-visible .faq-eyebrow { transition-delay: 40ms; }
+          .home-page .faq-section.is-visible .faq-content > h2 { transition-delay: 120ms; }
+          .home-page .faq-section.is-visible .faq-intro { transition-delay: 200ms; }
+          .home-page .faq-section.is-visible .faq-item:nth-child(1) { transition-delay: 280ms; }
+          .home-page .faq-section.is-visible .faq-item:nth-child(2) { transition-delay: 340ms; }
+          .home-page .faq-section.is-visible .faq-item:nth-child(3) { transition-delay: 400ms; }
+          .home-page .faq-section.is-visible .faq-item:nth-child(4) { transition-delay: 460ms; }
+          .home-page .faq-section.is-visible .faq-item:nth-child(5) { transition-delay: 520ms; }
+          .home-page .faq-section.is-visible .faq-item:nth-child(n + 6) { transition-delay: 580ms; }
+
+          .home-page .faq-section.is-visible .support-card {
+            transition-delay: 160ms;
+            transition-duration: 560ms;
+          }
+          .home-page .faq-section.is-visible .support-icon { transition-delay: 300ms; }
+          .home-page .faq-section.is-visible .support-card > h3 { transition-delay: 380ms; }
+          .home-page .faq-section.is-visible .support-card > p { transition-delay: 450ms; }
+          .home-page .faq-section.is-visible .support-link { transition-delay: 520ms; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
           .home-page .story-section .story-content .badge,
           .home-page .story-section .story-title,
           .home-page .story-section .story-description,
@@ -1892,6 +2051,21 @@ export default function HomeClient({ banners: initialBanners, products: initialP
           .home-page .stats-section .stat-card {
             opacity: 1 !important;
             transform: none !important;
+            animation: none !important;
+            transition: none !important;
+          }
+          .home-page .faq-section .faq-eyebrow,
+          .home-page .faq-section .faq-content > h2,
+          .home-page .faq-section .faq-intro,
+          .home-page .faq-section .faq-item,
+          .home-page .faq-section .support-card,
+          .home-page .faq-section .support-icon,
+          .home-page .faq-section .support-card > h3,
+          .home-page .faq-section .support-card > p,
+          .home-page .faq-section .support-link {
+            opacity: 1 !important;
+            translate: none !important;
+            scale: none !important;
             animation: none !important;
             transition: none !important;
           }
