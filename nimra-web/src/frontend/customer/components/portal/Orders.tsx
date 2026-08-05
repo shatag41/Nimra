@@ -168,7 +168,7 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
                 <div className="order-card-top-row">
                   <div className="order-card-id-block">
                     <span className="order-card-id-label">Order ID</span>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', flexWrap: 'wrap' }}>
+                    <div className="order-card-id-value-row">
                       <span className="order-card-id-value">{order.orderId}</span>
                       <button
                         onClick={(e) => {
@@ -621,7 +621,8 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
           display: flex;
           align-items: flex-start;
           justify-content: space-between;
-          gap: 0.5rem;
+          gap: 0.6rem;
+          flex-wrap: wrap; /* allow status badge to wrap if necessary */
         }
         /* ID block takes all remaining space and wraps */
         .order-card-id-block {
@@ -629,7 +630,7 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
           flex-direction: column;
           gap: 0.12rem;
           min-width: 0;
-          flex: 1;
+          flex: 1 1 min-content;
         }
         .order-card-id-label {
           font-size: 0.62rem;
@@ -638,18 +639,27 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
           text-transform: uppercase;
           color: var(--text-muted);
         }
-        /* Allow Order ID to wrap instead of truncating */
+        .order-card-id-value-row {
+          display: flex;
+          align-items: flex-start; /* center causes jumping if text wraps */
+          gap: 0.35rem;
+          min-width: 0;
+          flex-wrap: nowrap;
+        }
+        /* Allow Order ID to wrap instead of truncating or overflowing */
         .order-card-id-value {
           font-family: var(--font-heading);
           font-weight: 700;
           font-size: 0.82rem;
           color: var(--text-primary);
-          word-break: break-word;
+          word-break: break-all;
           overflow-wrap: anywhere;
           white-space: normal;
-          line-height: 1.3;
+          line-height: 1.4;
+          min-width: 0; /* Crucial: allows text to shrink and wrap inside flex row */
+          padding-top: 0.15rem; /* visual alignment with button */
         }
-        /* Copy + badge stay grouped on the right */
+        /* Status badge container */
         .order-card-top-row-right {
           display: flex;
           align-items: center;
