@@ -640,24 +640,20 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
           color: var(--text-muted);
         }
         .order-card-id-value-row {
-          display: flex;
-          align-items: flex-start; /* center causes jumping if text wraps */
-          gap: 0.35rem;
-          min-width: 0;
-          flex-wrap: nowrap;
+          display: block;
+          line-height: 1.5;
+          width: 100%;
         }
-        /* Allow Order ID to wrap instead of truncating or overflowing */
+        /* Allow Order ID to wrap cleanly */
         .order-card-id-value {
           font-family: var(--font-heading);
           font-weight: 700;
           font-size: 0.82rem;
           color: var(--text-primary);
-          word-break: break-all;
-          overflow-wrap: anywhere;
+          word-break: break-word;
+          overflow-wrap: break-word;
           white-space: normal;
-          line-height: 1.4;
-          min-width: 0; /* Crucial: allows text to shrink and wrap inside flex row */
-          padding-top: 0.15rem; /* visual alignment with button */
+          display: inline;
         }
         /* Status badge container */
         .order-card-top-row-right {
@@ -665,22 +661,24 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
           align-items: center;
           gap: 0.3rem;
           flex-shrink: 0;
-          margin-top: 0.1rem;
         }
         .order-card-copy-btn {
           background: none;
           border: none;
           cursor: pointer;
-          padding: 0.25rem;
+          padding: 0.2rem;
           color: var(--text-muted);
           display: inline-flex;
           align-items: center;
           justify-content: center;
           transition: color 150ms ease;
-          flex-shrink: 0;
-          min-width: 28px;
-          min-height: 28px;
+          min-width: 24px;
+          min-height: 24px;
           border-radius: 6px;
+          vertical-align: middle;
+          margin-left: 0.3rem;
+          position: relative;
+          top: -2px;
         }
         .order-card-copy-btn:hover {
           color: var(--primary-color);

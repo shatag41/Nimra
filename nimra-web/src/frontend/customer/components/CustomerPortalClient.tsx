@@ -957,7 +957,8 @@ const portalStyles = `
   }
 
   @media (max-width: 700px) {
-    .metric-grid, .portal-grid, .quick-section, .recommendations-grid { grid-template-columns: 1fr; padding: 0 1rem; }
+    .portal-grid, .quick-section, .recommendations-grid { grid-template-columns: 1fr; padding: 0 1rem; }
+    .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0 1rem; margin-top: 1.25rem; }
     .recommendations-section { padding: 0 1rem; }
     .metric-grid { margin-top: 1.25rem; }
     .panel-head { align-items: flex-start; flex-direction: column; }
@@ -982,8 +983,8 @@ const portalStyles = `
   }
 
   @media (max-width: 380px) {
-    /* At 320–380px: single column metric grid */
-    .metric-grid { grid-template-columns: minmax(0, 1fr); padding: 0 0.5rem; }
+    /* At 320–380px: metric grid remains 2 columns but with tighter padding */
+    .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0 0.5rem; }
     .portal-grid { padding: 0 0.5rem; }
     .panel { padding: 0.65rem; }
     .panel-head { gap: 0.45rem; }
