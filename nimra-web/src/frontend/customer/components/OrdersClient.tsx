@@ -1013,6 +1013,38 @@ export default function OrdersClient() {
         @keyframes shimmer { to { background-position-x: -220%; } }
         @media (max-width: 900px) { :global(.orders-layout-grid) { grid-template-columns: 1fr; } :global(.orders-sidebar) { position: static; } .card-body-content-split { grid-template-columns: 1fr; } .items-list-column { --order-product-row-height: 112px; } .actions-column { border: 0; padding: 0; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); } .actions-column .amazon-action-btn { width: 100%; min-width: 0; } }
         @media (max-width: 640px) { .amazon-card-header { flex-direction: column; padding: 1rem; } .header-meta-columns { grid-template-columns: repeat(2,minmax(0,1fr)); } .header-id-column { min-width: 0; align-self: stretch; } .amazon-card-body { padding: 1rem; } .items-list-column { --order-product-row-height: 132px; } .amazon-item-row { grid-template-columns: 60px 1fr; } .item-img-wrapper { width: 60px; height: 60px; } .item-status-column { grid-column: 1 / -1; } .actions-column { grid-template-columns: 1fr; } .skeleton-header { grid-template-columns: 1fr 1fr; } .skeleton-body { grid-template-columns: 60px 1fr; } .skeleton-image { width: 60px; height: 60px; } .skeleton-actions { grid-column: 1 / -1; } }
+        @media (max-width: 480px) {
+          /* No horizontal overflow */
+          .orders-page { overflow-x: hidden; }
+          :global(.orders-layout-grid) { padding: 0 0.65rem; }
+          /* Card header: compact 2-col grid */
+          .header-meta-columns { grid-template-columns: 1fr 1fr; gap: 0.65rem; }
+          .amazon-card-header { padding: 0.75rem; gap: 0.6rem; }
+          .header-id-column { flex-direction: row; align-items: center; justify-content: space-between; padding: 0.5rem 0; border-top: 1px solid var(--border-color); }
+          /* Item rows: image + details only, status full-width */
+          .amazon-item-row { grid-template-columns: 50px 1fr; gap: 0.6rem; }
+          .item-img-wrapper { width: 50px; height: 50px; }
+          .item-status-column { grid-column: 1 / -1; border: 0; padding: 0; flex-direction: row; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem; }
+          .amazon-card-body { padding: 0.75rem; }
+          /* Actions: full-width buttons with 44px touch targets */
+          .actions-column { grid-template-columns: 1fr 1fr; gap: 6px; }
+          .amazon-action-btn { min-height: 44px; font-size: 0.72rem; border-radius: 10px; }
+          /* Footer chips */
+          .order-card-footer { gap: 0.25rem; padding: 0.4rem 0.75rem 0.5rem; }
+          .order-card-footer span { font-size: 0.6rem; }
+          /* Search bar */
+          :global(.orders-page .search-bar-wrapper) { border-radius: 14px; }
+        }
+        @media (max-width: 380px) {
+          :global(.orders-layout-grid) { padding: 0 0.5rem; }
+          .header-meta-columns { grid-template-columns: 1fr; gap: 0.5rem; }
+          .amazon-card-header { padding: 0.65rem; }
+          .amazon-item-row { gap: 0.5rem; }
+          .item-img-wrapper { width: 44px; height: 44px; border-radius: 10px; }
+          .actions-column { grid-template-columns: 1fr; }
+          .amazon-action-btn { min-height: 44px; }
+          .meta-value, .order-id-txt { font-size: 0.78rem; overflow-wrap: anywhere; word-break: break-all; }
+        }
         @media (prefers-reduced-motion: reduce) { .amazon-order-card, .amazon-action-btn, .status-chip, .shimmer, .skeleton-header span { animation: none; transition: none; } }
 
         .modal-overlay {

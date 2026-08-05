@@ -962,6 +962,34 @@ const portalStyles = `
     .metric-grid { margin-top: 1.25rem; }
     .panel-head { align-items: flex-start; flex-direction: column; }
     .guest-checkout { align-items: flex-start; flex-direction: column; padding: 1.25rem; }
+    .portal-page { overflow-x: hidden; }
+  }
+
+  @media (max-width: 480px) {
+    /* Ensure no horizontal overflow at all */
+    .portal-page { overflow-x: hidden; max-width: 100vw; }
+    .portal-grid, .metric-grid { padding: 0 0.65rem; gap: 0.75rem; }
+    .panel { padding: 0.75rem; }
+    /* Panel head becomes two-column on very small screens */
+    .panel-head { flex-direction: column; align-items: flex-start; gap: 0.55rem; margin-bottom: 0.75rem; }
+    /* Two-column metric grid on medium-small screens */
+    .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 1rem; }
+    /* Next card & quick controls full width spacing */
+    .next-card { padding: 0.85rem; gap: 0.7rem; }
+    .portal-quick-controls-card { padding: 0.85rem; }
+    .quick-control-row { padding: 0.6rem 0.7rem; }
+    .quick-control-text p { white-space: normal; }
+  }
+
+  @media (max-width: 380px) {
+    /* At 320–380px: single column metric grid */
+    .metric-grid { grid-template-columns: minmax(0, 1fr); padding: 0 0.5rem; }
+    .portal-grid { padding: 0 0.5rem; }
+    .panel { padding: 0.65rem; }
+    .panel-head { gap: 0.45rem; }
+    /* Stack button groups fully */
+    .next-progress-steps { font-size: 0.65rem; gap: 0.25rem; }
+    .btn-next-step { padding: 0.55rem; font-size: 0.78rem; }
   }
 
   /* ── Panel visual enhancements & Next Step Card ── */
