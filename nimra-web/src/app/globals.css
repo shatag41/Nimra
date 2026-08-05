@@ -17634,3 +17634,71 @@ body:has(.products-page-skeleton) {
     font-size: 0.64rem !important;
   }
 }
+
+@media (max-width: 768px) {
+  .admin-container .admin-page-settings {
+    padding-top: max(0.6rem, env(safe-area-inset-top)) !important;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom)) !important;
+    scroll-padding-top: calc(4.5rem + env(safe-area-inset-top)) !important;
+    scroll-padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)) !important;
+  }
+
+  .admin-container .admin-page-settings .tab-viewport {
+    padding-top: max(0.35rem, env(safe-area-inset-top)) !important;
+    padding-bottom: calc(6rem + env(safe-area-inset-bottom)) !important;
+    scroll-padding-bottom: calc(6rem + env(safe-area-inset-bottom)) !important;
+    box-sizing: border-box !important;
+  }
+
+  .admin-container .settings-tab {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)) !important;
+    overflow: visible !important;
+  }
+
+  .admin-container .settings-form {
+    padding-bottom: calc(5.75rem + env(safe-area-inset-bottom)) !important;
+  }
+
+  .admin-container .settings-tab .settings-section:last-of-type {
+    margin-bottom: 0.85rem !important;
+  }
+
+  .admin-container .settings-tab .settings-submit-btn {
+    position: sticky !important;
+    bottom: max(1rem, env(safe-area-inset-bottom)) !important;
+    align-self: stretch !important;
+    z-index: 4 !important;
+    margin: 0 !important;
+    transform: translateZ(0);
+  }
+
+  .admin-container .admin-sidebar .sidebar-nav .nav-btn {
+    font-weight: 850 !important;
+  }
+
+  .admin-container .admin-sidebar .sidebar-nav .nav-btn > span:first-child {
+    font-weight: 900 !important;
+  }
+
+  .admin-container .admin-sidebar .user-name,
+  .admin-container .mobile-sidebar-theme strong,
+  .admin-container .mobile-sidebar-logout span {
+    font-weight: 900 !important;
+  }
+
+  .admin-container :is(.section-head h3, .section-head-btn h3, .section-heading h3, .card-title h3, .activity-card h3, .chart-card h3, .settings-form h3, .notification-compose-card h3, .notification-history-panel h3) {
+    font-weight: 900 !important;
+  }
+
+  .admin-container :is(.settings-section-title, .filter-group label, .form-group label, .image-upload-heading label, .mobile-faq-card h4, .mobile-inquiry-customer h4, .mobile-product-info h4, .mobile-banner-info h4, .mobile-cancellation-details dt, .mobile-inquiry-details dt, .mobile-product-info dt, .mobile-banner-info dt) {
+    font-weight: 850 !important;
+  }
+
+  .admin-container :is(.mobile-product-info dd, .mobile-banner-info dd, .mobile-inquiry-details dd, .mobile-cancellation-details dd, .mobile-faq-id, .stat-label, .pending-action-details-label, .customer-activity-heading h2) {
+    font-weight: 800 !important;
+  }
+
+  .admin-container :is(.badge, .status-badge, .btn-table, .btn, .mobile-search-filter, .custom-select-text) {
+    font-weight: 800 !important;
+  }
+}
