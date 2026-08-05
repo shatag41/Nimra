@@ -221,6 +221,87 @@ function getLiveCacheKey(action: string | null, userId: string, mobile: string, 
   return parts.join('|');
 }
 
+async function getLocalReadData(action: string | null, userId = '', mobile = '', email = '') {
+  if (action === 'getBanners') return mapUploadedImagesFromStorage(fallbackData.banners, 'banners', fallbackData.banners);
+  if (action === 'getProducts') return mapUploadedImagesFromStorage(fallbackData.products, 'products', fallbackData.products);
+  if (action === 'getFAQs') return fallbackData.faqs;
+  if (action === 'getCompanyInfo') return mergeCompanyInfo(fallbackData.companyInfo);
+  if (action === 'trackOrder') return { success: false, message: 'No matching order found.' };
+  if (action === 'getOrders') {
+    if (!userId && !mobile && !email) return fallbackData.orders;
+    if (userId) {
+      return fallbackData.orders.filter((order: any) =>
+        String(order.userId || order.customer?.userId || '') === userId
+      );
+    }
+    return fallbackData.orders.filter((order: any) => {
+      const orderUserId = String(order.userId || order.customer?.userId || '');
+      if (orderUserId) return false;
+      return (
+        (mobile && order.customer?.mobile?.replace(/\D/g, '') === mobile.replace(/\D/g, '')) ||
+        (email && order.customer?.email?.toLowerCase() === email.toLowerCase())
+      );
+    });
+  }
+  if (action === 'getInquiries') return fallbackData.inquiries;
+  if (action === 'getCancellationRequests') return fallbackData.cancellationRequests || [];
+  if (action === 'getUsers') return fallbackData.users;
+  if (action === 'getNotifications' || action === 'getCustomerNotifications') {
+    return fallbackData.notifications.filter((notification: any) =>
+      (!notification.TargetAudience || notification.TargetAudience === 'CUSTOMER_NOTIFICATION') &&
+      (!notification.UserID || String(notification.UserID) === userId) &&
+      (!notification.Username || String(notification.Username).toLowerCase() === email.toLowerCase())
+    );
+  }
+  if (action === 'getCustomerNotificationLog') {
+    return fallbackData.notifications.filter((notification: any) =>
+      notification.TargetAudience === 'CUSTOMER_NOTIFICATION' && notification.EventType === 'ADMIN_BROADCAST'
+    );
+  }
+  if (action === 'getAdminUpdates') {
+    return fallbackData.notifications.filter((notification: any) =>
+      notification.TargetAudience === 'ADMIN_UPDATE'
+    );
+  }
+  return {
+    banners: await mapUploadedImagesFromStorage(fallbackData.banners, 'banners', fallbackData.banners),
+    products: await mapUploadedImagesFromStorage(fallbackData.products, 'products', fallbackData.products),
+    faqs: fallbackData.faqs,
+    companyInfo: mergeCompanyInfo(fallbackData.companyInfo),
+  };
+}
+
+async function getLocalCartSyncResponse(payload: Record<string, unknown>) {
+  const userId = String(payload.userId || '').trim();
+  if (!userId) {
+    return { body: { success: false, message: 'userId is required for cart sync' }, status: 400 };
+  }
+
+  const carts = Array.isArray(fallbackData.carts) ? fallbackData.carts : [];
+  const cartIndex = carts.findIndex((cart: any) => String(cart.userId) === userId);
+  const incomingUpdatedAt = String(payload.updatedAt || new Date().toISOString());
+  const cartRecord = {
+    userId,
+    items: Array.isArray(payload.items) ? payload.items : [],
+    updatedAt: incomingUpdatedAt,
+  };
+
+  if (cartIndex >= 0) {
+    const existingUpdatedAt = Date.parse(String(carts[cartIndex].updatedAt || ''));
+    const nextUpdatedAt = Date.parse(incomingUpdatedAt);
+    if (Number.isFinite(existingUpdatedAt) && Number.isFinite(nextUpdatedAt) && nextUpdatedAt < existingUpdatedAt) {
+      return { body: { success: true, message: 'Stale cart sync ignored', staleIgnored: true }, status: 200 };
+    }
+    carts[cartIndex] = cartRecord;
+  } else {
+    carts.push(cartRecord);
+  }
+
+  fallbackData.carts = carts;
+  await syncLocalDB('save');
+  return { body: { success: true, message: 'Cart synced locally; live sync will retry.' }, status: 200 };
+}
+
 async function saveLocalImageBinding(
   type: 'productCRUD' | 'bannerCRUD',
   action: string,
@@ -386,10 +467,14 @@ export async function handleGet(req: Request) {
               },
             });
           }
-          return NextResponse.json(
-            { success: false, message: 'Unable to sync live dashboard data. Please retry.' },
-            { status: 502, headers: cacheHeaders }
-          );
+          const localData = await getLocalReadData(action, userId, mobile, email);
+          return NextResponse.json(localData, {
+            headers: {
+              ...cacheHeaders,
+              'X-CMS-Data-Source': 'local-persisted',
+              'X-CMS-Live-Warning': 'non-json-live-response',
+            },
+          });
         }
       }
     } catch (err: any) {
@@ -411,6 +496,16 @@ export async function handleGet(req: Request) {
           },
         });
       }
+      if (requireLiveData) {
+        const localData = await getLocalReadData(action, userId, mobile, email);
+        return NextResponse.json(localData, {
+          headers: {
+            ...cacheHeaders,
+            'X-CMS-Data-Source': 'local-persisted',
+            'X-CMS-Live-Warning': err.name === 'AbortError' ? 'live-timeout' : 'live-fetch-failed',
+          },
+        });
+      }
     }
   }
 
@@ -427,66 +522,7 @@ export async function handleGet(req: Request) {
   }
 
   // Use fallback data
-  if (action === 'getBanners') {
-    return NextResponse.json(await mapUploadedImagesFromStorage(fallbackData.banners, 'banners', fallbackData.banners), { headers: cacheHeaders });
-  } else if (action === 'getProducts') {
-    return NextResponse.json(await mapUploadedImagesFromStorage(fallbackData.products, 'products', fallbackData.products), { headers: cacheHeaders });
-  } else if (action === 'getFAQs') {
-    return NextResponse.json(fallbackData.faqs, { headers: cacheHeaders });
-  } else if (action === 'getCompanyInfo') {
-    return NextResponse.json(mergeCompanyInfo(fallbackData.companyInfo), { headers: cacheHeaders });
-  } else if (action === 'trackOrder') {
-    return NextResponse.json({ success: false, message: 'No matching order found.' }, { headers: cacheHeaders });
-  } else if (action === 'getOrders') {
-    if (!userId && !mobile && !email) return NextResponse.json(fallbackData.orders, { headers: cacheHeaders });
-    if (userId) {
-      return NextResponse.json(
-        fallbackData.orders.filter((order: any) =>
-          String(order.userId || order.customer?.userId || '') === userId
-        ),
-        { headers: cacheHeaders }
-      );
-    }
-    return NextResponse.json(
-      fallbackData.orders.filter((order: any) => {
-        const orderUserId = String(order.userId || order.customer?.userId || '');
-        if (orderUserId) return false;
-        return (
-          (mobile && order.customer?.mobile?.replace(/\D/g, '') === mobile.replace(/\D/g, '')) ||
-          (email && order.customer?.email?.toLowerCase() === email.toLowerCase())
-        );
-      }),
-      { headers: cacheHeaders }
-    );
-  } else if (action === 'getInquiries') {
-    return NextResponse.json(fallbackData.inquiries, { headers: cacheHeaders });
-  } else if (action === 'getCancellationRequests') {
-    return NextResponse.json(fallbackData.cancellationRequests || [], { headers: cacheHeaders });
-  } else if (action === 'getUsers') {
-    return NextResponse.json(fallbackData.users, { headers: cacheHeaders });
-  } else if (action === 'getNotifications' || action === 'getCustomerNotifications') {
-    return NextResponse.json(fallbackData.notifications.filter((notification: any) =>
-      (!notification.TargetAudience || notification.TargetAudience === 'CUSTOMER_NOTIFICATION') &&
-      (!notification.UserID || String(notification.UserID) === userId) &&
-      (!notification.Username || String(notification.Username).toLowerCase() === email.toLowerCase())
-    ), { headers: cacheHeaders });
-  } else if (action === 'getCustomerNotificationLog') {
-    return NextResponse.json(fallbackData.notifications.filter((notification: any) =>
-      notification.TargetAudience === 'CUSTOMER_NOTIFICATION' && notification.EventType === 'ADMIN_BROADCAST'
-    ), { headers: cacheHeaders });
-  } else if (action === 'getAdminUpdates') {
-    return NextResponse.json(fallbackData.notifications.filter((notification: any) =>
-      notification.TargetAudience === 'ADMIN_UPDATE'
-    ), { headers: cacheHeaders });
-  } else {
-    // Return all customer CMS collections
-    return NextResponse.json({
-      banners: await mapUploadedImagesFromStorage(fallbackData.banners, 'banners', fallbackData.banners),
-      products: await mapUploadedImagesFromStorage(fallbackData.products, 'products', fallbackData.products),
-      faqs: fallbackData.faqs,
-      companyInfo: mergeCompanyInfo(fallbackData.companyInfo)
-    }, { headers: cacheHeaders });
-  }
+  return NextResponse.json(await getLocalReadData(action, userId, mobile, email), { headers: cacheHeaders });
 }
 
 // Proxy POST requests to Google Apps Script
@@ -780,9 +816,43 @@ export async function handlePost(req: NextRequest) {
         }
         backendError = 'Apps Script returned a non-JSON response. Check the Web App deployment URL and access settings.';
         console.warn(`[CMS API Proxy] POST Request: type="${payload.type}" -> Returned non-JSON/HTML response.`);
+        if (payload.type === 'cartSync') {
+          const localCartSync = await getLocalCartSyncResponse(payload);
+          return NextResponse.json(
+            {
+              ...(localCartSync.body as Record<string, unknown>),
+              liveSyncWarning: 'Google Sheets returned a temporary non-JSON response.',
+            },
+            {
+              status: localCartSync.status,
+              headers: {
+                'Cache-Control': 'no-store',
+                'X-CMS-Data-Source': 'local-persisted',
+                'X-CMS-Live-Warning': 'non-json-live-response',
+              },
+            }
+          );
+        }
       } catch (err) {
         backendError = err instanceof Error ? err.message : 'Google Sheets POST failed.';
         console.error(`[CMS API Proxy] POST Request: type="${payload.type}" -> Google Sheets POST failed:`, err);
+        if (payload.type === 'cartSync') {
+          const localCartSync = await getLocalCartSyncResponse(payload);
+          return NextResponse.json(
+            {
+              ...(localCartSync.body as Record<string, unknown>),
+              liveSyncWarning: backendError,
+            },
+            {
+              status: localCartSync.status,
+              headers: {
+                'Cache-Control': 'no-store',
+                'X-CMS-Data-Source': 'local-persisted',
+                'X-CMS-Live-Warning': 'live-post-failed',
+              },
+            }
+          );
+        }
       }
 
       return NextResponse.json(
@@ -805,34 +875,8 @@ export async function handlePost(req: NextRequest) {
       const savedCart = (fallbackData.carts || []).find((cart: any) => String(cart.userId) === userId);
       return NextResponse.json({ success: true, items: savedCart?.items || [] });
     } else if (payload.type === 'cartSync') {
-      const userId = String(payload.userId || '').trim();
-      if (!userId) {
-        return NextResponse.json({ success: false, message: 'userId is required for cart sync' }, { status: 400 });
-      }
-
-      const carts = Array.isArray(fallbackData.carts) ? fallbackData.carts : [];
-      const cartIndex = carts.findIndex((cart: any) => String(cart.userId) === userId);
-      const incomingUpdatedAt = String(payload.updatedAt || new Date().toISOString());
-      const cartRecord = {
-        userId,
-        items: Array.isArray(payload.items) ? payload.items : [],
-        updatedAt: incomingUpdatedAt,
-      };
-
-      if (cartIndex >= 0) {
-        const existingUpdatedAt = Date.parse(String(carts[cartIndex].updatedAt || ''));
-        const nextUpdatedAt = Date.parse(incomingUpdatedAt);
-        if (Number.isFinite(existingUpdatedAt) && Number.isFinite(nextUpdatedAt) && nextUpdatedAt < existingUpdatedAt) {
-          return NextResponse.json({ success: true, message: 'Stale cart sync ignored', staleIgnored: true });
-        }
-        carts[cartIndex] = cartRecord;
-      } else {
-        carts.push(cartRecord);
-      }
-
-      fallbackData.carts = carts;
-      await syncLocalDB('save');
-      return NextResponse.json({ success: true, message: 'Cart synced successfully' });
+      const localCartSync = await getLocalCartSyncResponse(payload);
+      return NextResponse.json(localCartSync.body, { status: localCartSync.status });
     } else if (payload.type === 'order') {
       const orderId = `NIMRA-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const now = new Date().toISOString();
