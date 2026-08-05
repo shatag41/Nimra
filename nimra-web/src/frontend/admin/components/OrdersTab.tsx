@@ -143,6 +143,7 @@ export default React.memo(function OrdersTab({
       </div>
 
       {ordersView === 'cancellations' ? (
+        <>
         <div className="table-responsive cancellation-requests-table-wrap">
           <table className="admin-table compact-table cancellation-requests-table">
             <colgroup>
@@ -249,10 +250,61 @@ export default React.memo(function OrdersTab({
             </tbody>
           </table>
         </div>
+        <div className="mobile-cancellation-list">
+          {visibleCancellationRequests.map((request) => {
+            const isPending = request.status === 'Pending';
+            const requestDate = formatCancellationDate(request.requestDate);
+            return (
+              <article className="mobile-cancellation-card" key={request.requestId}>
+                <div className="mobile-cancellation-card-head">
+                  <span className={`badge ${isPending ? 'badge-orange' : request.status === 'Approved' ? 'badge-success' : 'badge-cancelled'}`}>{request.status}</span>
+                  <strong className="mobile-cancellation-order-id">{renderWithSafeBreaks(request.orderId)}</strong>
+                </div>
+                <dl className="mobile-cancellation-details">
+                  <div><dt>Customer</dt><dd>{request.customerName}<small>{request.customerMobile}</small></dd></div>
+                  <div><dt>Request Date</dt><dd className="mobile-cancellation-date">{requestDate.date}<small>{requestDate.time}</small></dd></div>
+                  <div><dt>Payment / Refund</dt><dd>{request.paymentMethod || 'Cash on Delivery'}<small>{request.refundStatus || 'Pending approval'}</small></dd></div>
+                  <div><dt>Reason</dt><dd>{request.reason || 'Not specified'}</dd></div>
+                  <div className="mobile-cancellation-remarks"><dt>Admin Remarks</dt><dd>
+                    {isPending ? (
+                      <textarea
+                        className="form-input remarks-textarea"
+                        value={remarksByRequest[request.requestId] || ''}
+                        onChange={(event) => setRemarksByRequest((prev) => ({ ...prev, [request.requestId]: event.target.value }))}
+                        placeholder="Audit remarks"
+                        rows={2}
+                      />
+                    ) : request.adminRemarks || 'No remarks recorded'}
+                  </dd></div>
+                </dl>
+                <div className="mobile-cancellation-actions">
+                  {isPending ? (
+                    <>
+                      <button type="button" className="btn-table btn-reject" onClick={() => reviewCancellation(request, 'Rejected')}>✕ Reject</button>
+                      <button type="button" className="btn-table btn-approve" onClick={() => reviewCancellation(request, 'Approved')}>✓ Approve</button>
+                    </>
+                  ) : request.statusHistory?.length ? (() => {
+                    const latestAction = request.statusHistory[request.statusHistory.length - 1];
+                    return <span className="mobile-cancellation-reviewed"><strong>{latestAction.status}</strong><small>{formatCancellationDate(latestAction.at).date}{latestAction.by ? ` · ${latestAction.by}` : ''}</small></span>;
+                  })() : <span className="mobile-cancellation-reviewed">Reviewed</span>}
+                </div>
+              </article>
+            );
+          })}
+          {visibleCancellationRequests.length === 0 && (
+            <div className="mobile-cancellation-empty">
+              <span className="mobile-cancellation-empty-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></svg>
+              </span>
+              <strong>No cancellation requests found</strong>
+              <p>New customer requests will appear here.</p>
+            </div>
+          )}
+        </div>
+        </>
       ) : (
         <>
-      {showFilters && (
-        <div className="filter-bar animate-fade-in">
+        <div className={`filter-bar orders-filter-panel ${showFilters ? 'filters-open animate-fade-in' : 'filters-closed'}`} aria-hidden={!showFilters}>
           <div className="filter-group">
             <label>Status:</label>
             <CustomSelect
@@ -337,8 +389,7 @@ export default React.memo(function OrdersTab({
             </div>
           </div>
         </div>
-      )}
-      <div className="table-responsive">
+      <div className="table-responsive active-orders-table-wrap">
         <table className="admin-table">
           <thead>
             <tr>
@@ -385,6 +436,33 @@ export default React.memo(function OrdersTab({
             )}
           </tbody>
         </table>
+      </div>
+      <div className="mobile-orders-list">
+        {visibleOrders.map((order, index) => (
+          <article className="mobile-order-card" key={order.orderId || index}>
+            <div className="mobile-order-primary">
+              <strong className="mobile-order-id">{renderWithSafeBreaks(order.orderId || `Order ${index + 1}`)}</strong>
+              <time className="mobile-order-date" dateTime={order.createdAt || undefined}>
+                {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Date unavailable'}
+              </time>
+            </div>
+            <div className="mobile-order-summary">
+              <span className={`badge ${getStatusBadge(order.status)}`}>{order.status}</span>
+              <strong>{formatCurrency(order.total)}</strong>
+            </div>
+            <button
+              type="button"
+              className="btn-table btn-edit mobile-manage-status"
+              onClick={() => {
+                setSelectedOrder(order);
+                setOrderStatusVal(order.status);
+              }}
+            >
+              Manage Status
+            </button>
+          </article>
+        ))}
+        {visibleOrders.length === 0 && <div className="mobile-orders-empty">No active orders found.</div>}
       </div>
         </>
       )}

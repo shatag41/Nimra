@@ -396,13 +396,14 @@ const DashboardTab = React.memo(function DashboardTab({
       </div>
 
       {/* 2. Overview Stats Cards (4 KPI Cards at the top) */}
-      <div className="stats-grid" style={{ 
+      <div className="stats-grid dashboard-kpi-shell" style={{
         display: 'grid', 
         gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', 
         gap: '1.5rem', 
         width: '100%' 
       }}>
-        <div className="stat-card glass card-revenue" style={{ 
+        <div className="mobile-kpi-grid">
+        <div className="stat-card kpi-card glass card-revenue" style={{
           margin: 0,
           display: 'flex',
           flexDirection: 'column',
@@ -423,7 +424,7 @@ const DashboardTab = React.memo(function DashboardTab({
           <span className="stat-desc" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>From completed deliveries</span>
         </div>
         
-        <div className="stat-card glass card-orders" style={{ 
+        <div className="stat-card kpi-card glass card-orders" style={{
           margin: 0,
           display: 'flex',
           flexDirection: 'column',
@@ -445,7 +446,7 @@ const DashboardTab = React.memo(function DashboardTab({
         </div>
 
         <div 
-          className={`stat-card glass card-pending-actions ${showPriorityAlerts ? 'active-kpi-border' : ''}`} 
+          className={`stat-card kpi-card glass card-pending-actions ${showPriorityAlerts ? 'active-kpi-border' : ''}`}
           style={{ 
             margin: 0,
             display: 'flex',
@@ -481,7 +482,7 @@ const DashboardTab = React.memo(function DashboardTab({
           </span>
         </div>
         
-        <div className="stat-card glass card-customers" style={{ 
+        <div className="stat-card kpi-card glass card-customers" style={{
           margin: 0,
           display: 'flex',
           flexDirection: 'column',
@@ -500,6 +501,7 @@ const DashboardTab = React.memo(function DashboardTab({
           </div>
           <strong className="stat-val" style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)' }}>{activeCustomers}</strong>
           <span className="stat-desc" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Active customer accounts</span>
+        </div>
         </div>
       </div>
 

@@ -312,7 +312,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
         />
 
         {/* MAIN VIEW */}
-        <main className={`admin-main animate-fade-in fixed-page ${profile.isProfilePanelOpen ? 'blur-background' : ''}`}>
+        <main className={`admin-main admin-page-${activeTab} animate-fade-in fixed-page ${profile.isProfilePanelOpen ? 'blur-background' : ''}`}>
           {/* HEADER */}
           <Header
             activeTab={activeTab}
@@ -327,6 +327,19 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             handleLogout={() => setIsLogoutModalOpen(true)}
             isMobileSidebarOpen={isMobileSidebarOpen}
             toggleMobileSidebar={() => setIsMobileSidebarOpen((open) => !open)}
+            hasActiveFilters={
+              (activeTab === 'orders' && (
+                filters.orderStatusFilter !== 'All' ||
+                filters.orderPaymentFilter !== 'All' ||
+                filters.orderSort !== 'latest' ||
+                filters.orderStartDate !== '' ||
+                filters.orderEndDate !== ''
+              )) ||
+              (activeTab === 'products' && (
+                filters.productCategoryFilter !== 'All' ||
+                filters.productStatusFilter !== 'All'
+              ))
+            }
           />
 
           {/* ALERTS DEPRECATED - now handled by sonner */}

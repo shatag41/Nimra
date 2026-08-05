@@ -45,8 +45,7 @@ export default React.memo(function ProductsTab({
         </button>
       </div>
 
-      {showFilters && (
-        <div className="filter-bar animate-fade-in">
+        <div className={`filter-bar products-filter-panel ${showFilters ? 'filters-open animate-fade-in' : 'filters-closed'}`} aria-hidden={!showFilters}>
           <div className="filter-group">
             <label>Category:</label>
             <CustomSelect
@@ -78,9 +77,8 @@ export default React.memo(function ProductsTab({
             />
           </div>
         </div>
-      )}
 
-      <div className="table-responsive">
+      <div className="table-responsive products-table-wrap">
         <table className="admin-table">
           <thead>
             <tr>
@@ -140,6 +138,43 @@ export default React.memo(function ProductsTab({
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="mobile-products-list">
+        {filteredProducts.map((product, index) => (
+          <article className="mobile-product-card" key={`${product.ID}-${product.Name}-${index}`}>
+            <div className="mobile-product-image-wrap">
+              {product.ImageUrl ? (
+                <Image src={getUploadImageUrl(product.ImageUrl) || product.ImageUrl} alt={product.Name} className="mobile-product-image" width={112} height={168} />
+              ) : (
+                <span className="mobile-product-image-placeholder">No image</span>
+              )}
+            </div>
+            <div className="mobile-product-info">
+              <h4>{product.Name}</h4>
+              <dl>
+                <div><dt>Category</dt><dd>{product.Category}</dd></div>
+                <div><dt>Size</dt><dd>{product.Volume}</dd></div>
+                <div><dt>Price</dt><dd>{formatCurrency(Number(product.Price))}</dd></div>
+                <div><dt>Status</dt><dd><span className={`badge ${product.Active !== false ? 'badge-primary' : 'badge-cancelled'}`}>{product.Active !== false ? 'Active' : 'Inactive'}</span></dd></div>
+              </dl>
+            </div>
+            <div className="mobile-product-actions">
+              <button
+                type="button"
+                className="btn-table btn-edit"
+                onClick={() => {
+                  setEditingProduct(product);
+                  setProductFormOpen(true);
+                }}
+              >
+                Edit
+              </button>
+              <button type="button" className="btn-table btn-delete" onClick={() => void handleProductDelete(product.ID)}>Delete</button>
+            </div>
+          </article>
+        ))}
+        {filteredProducts.length === 0 && <div className="mobile-products-empty">No products found.</div>}
       </div>
 
       <style jsx>{`

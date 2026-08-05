@@ -15,6 +15,7 @@ interface HeaderProps {
   handleLogout: () => void;
   isMobileSidebarOpen: boolean;
   toggleMobileSidebar: () => void;
+  hasActiveFilters: boolean;
 }
 
 export default function Header({
@@ -30,6 +31,7 @@ export default function Header({
   handleLogout,
   isMobileSidebarOpen,
   toggleMobileSidebar,
+  hasActiveFilters,
 }: HeaderProps) {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
@@ -103,15 +105,24 @@ export default function Header({
                   </svg>
                 </button>
               )}
+              <button
+                type="button"
+                onClick={() => setShowFilters(!showFilters)}
+                className={`mobile-search-filter ${showFilters || hasActiveFilters ? 'active' : ''}`}
+                aria-label={`${showFilters ? 'Hide' : 'Show'} filters`}
+                aria-expanded={showFilters}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+              </button>
             </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`filter-toggle-btn ${showFilters ? 'active' : ''}`}
+              className={`filter-toggle-btn desktop-filter-toggle ${showFilters ? 'active' : ''}`}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
               </svg>
-              Filters
+              <span className="filter-toggle-label">Filters</span>
             </button>
           </div>
         )}
