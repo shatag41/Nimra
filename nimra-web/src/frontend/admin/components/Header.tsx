@@ -67,7 +67,7 @@ export default function Header({
         <span className="profile-avatar" aria-hidden="true">{currentUser.name ? currentUser.name[0] : 'A'}</span>
       </button>
       <h1>
-        {isSuperAdminDashboard ? 'Super Admin Command Center' : `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Panel`}
+        {isSuperAdminDashboard ? 'Super Admin Dashboard' : `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Panel`}
       </h1>
       <div className="header-actions">
         {showSearchAndFilter && (
@@ -138,6 +138,25 @@ export default function Header({
           <span className="mobile-sync-label">{loading ? 'Syncing' : 'Sync'}</span>
           <span className={`mobile-sync-status-dot ${process.env.NEXT_PUBLIC_APPS_SCRIPT_URL ? 'connected' : 'fallback'}`} aria-hidden="true" />
         </button>
+        <div className="mobile-header-account-actions" aria-label="Admin account actions">
+          <div className="mobile-header-theme-action" aria-label="Theme">
+            <ThemeToggle />
+          </div>
+          <button
+            type="button"
+            className="mobile-header-logout"
+            onClick={handleLogout}
+            aria-label="Logout"
+            title="Logout"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span>Logout</span>
+          </button>
+        </div>
         <span className="db-indicator">
           <span className="dot active"></span>
           {connectionLabel}

@@ -229,6 +229,15 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
     filters.customerStatusFilter
   );
 
+  const adminUsers = users.filter(
+    (user) => ['ADMIN', 'SUPER_ADMIN'].includes(normalizeRole(user.Role))
+  );
+  const filteredAdmins = filterUsers(
+    adminUsers,
+    searchLower,
+    filters.customerStatusFilter
+  );
+
   const filteredNotifications = filterNotifications(
     notifications,
     searchLower,
@@ -351,6 +360,9 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                 filters.inquiryEndDate !== ''
               )) ||
               (activeTab === 'users' && (
+                filters.customerStatusFilter !== 'All'
+              )) ||
+              (activeTab === 'admins' && (
                 filters.customerStatusFilter !== 'All'
               ))
             }
@@ -485,7 +497,15 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
               )}
 
               {isSuperAdmin(currentUser.role) && activeTab === 'admins' && (
-                <AdminManagementTab users={users} currentUserId={currentUser.id} onSave={handleUserSubmit} onDelete={handleUserDelete} />
+                <AdminManagementTab
+                  users={filteredAdmins}
+                  currentUserId={currentUser.id}
+                  showFilters={filters.showFilters}
+                  adminStatusFilter={filters.customerStatusFilter}
+                  setAdminStatusFilter={filters.setCustomerStatusFilter}
+                  onSave={handleUserSubmit}
+                  onDelete={handleUserDelete}
+                />
               )}
 
 

@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { AdminUser, Inquiry, Notification, OrderRecord, Product } from '@/types/cms';
 import LogoutConfirmationModal from '@/frontend/customer/components/LogoutConfirmationModal';
 import { normalizeRole } from '../utils/accessControl';
+import CustomSelect from './CustomSelect';
 
 const formatAdminDate = (value?: string) => {
   if (!value) return '—';
@@ -31,7 +32,7 @@ export function SuperAdminOverview({ orders, users, products, inquiries, notific
   return <div className="enterprise-section"><div className="enterprise-heading"><div><span className="eyebrow">Enterprise overview</span><h2>Super Admin Command Center</h2></div><span className="badge badge-success">All systems operational</span></div><div className="enterprise-kpi-grid">{cards.map(([label, value]) => <div className="kpi-card glass" key={label}><span>{label}</span><strong>{value}</strong></div>)}</div></div>;
 }
 
-export function AdminManagementTab({ users, currentUserId, onSave, onDelete }: { users: AdminUser[]; currentUserId?: string | number; onSave: (user: Partial<AdminUser>) => Promise<boolean>; onDelete: (id: string | number) => Promise<boolean> }) {
+export function AdminManagementTab({ users, currentUserId, showFilters, adminStatusFilter, setAdminStatusFilter, onSave, onDelete }: { users: AdminUser[]; currentUserId?: string | number; showFilters: boolean; adminStatusFilter: string; setAdminStatusFilter: (value: string) => void; onSave: (user: Partial<AdminUser>) => Promise<boolean>; onDelete: (id: string | number) => Promise<boolean> }) {
   const admins = users.filter((user) =>
     ['ADMIN', 'SUPER_ADMIN'].includes(normalizeRole(user.Role)) &&
     String(user.ID) !== String(currentUserId)
@@ -84,12 +85,57 @@ export function AdminManagementTab({ users, currentUserId, onSave, onDelete }: {
     if (deleted) setDeleting(null);
   };
 
-  return <div className="enterprise-section">
-    <div className="enterprise-heading"><div><span className="eyebrow">Access control</span><h2>Admin Management</h2><p>Manage administrative identities and access.</p></div><button className="btn btn-primary" onClick={() => { setConfirmPassword(''); setEditing({ Role: 'ADMIN', Active: true, Permissions: 'orders:view,products:view,customers:view,inquiries:view' }); }}>+ Add Admin</button></div>
-    <div className="table-card glass table-responsive"><table className="admin-table"><thead><tr><th>Profile</th><th>Admin</th><th>Email</th><th>Mobile</th><th>Role</th><th>Status</th><th>Last Login</th><th>Joined</th><th>Actions</th></tr></thead><tbody>
+  return <div className="enterprise-section admin-management-tab">
+    <div className="enterprise-heading admin-management-heading"><div><span className="eyebrow">Access control</span><h2>Admin Management</h2><p>Manage administrative identities and access.</p></div><button className="btn btn-primary admin-add-btn" onClick={() => { setConfirmPassword(''); setEditing({ Role: 'ADMIN', Active: true, Permissions: 'orders:view,products:view,customers:view,inquiries:view' }); }}>+ Add Admin</button></div>
+    <div className={`filter-bar admins-filter-panel ${showFilters ? 'filters-open animate-fade-in' : 'filters-closed'}`} aria-hidden={!showFilters}>
+      <div className="filter-group">
+        <label>Status:</label>
+        <CustomSelect
+          value={adminStatusFilter}
+          onChange={setAdminStatusFilter}
+          clearable={true}
+          onClear={() => setAdminStatusFilter('All')}
+          options={[
+            { value: 'All', label: 'All Status' },
+            { value: 'Active', label: 'Active' },
+            { value: 'Inactive', label: 'Suspended' },
+          ]}
+        />
+      </div>
+    </div>
+    <div className="table-card glass table-responsive admin-management-table-wrap"><table className="admin-table"><thead><tr><th>Profile</th><th>Admin</th><th>Email</th><th>Mobile</th><th>Role</th><th>Status</th><th>Last Login</th><th>Joined</th><th>Actions</th></tr></thead><tbody>
       {admins.map((admin) => <tr key={admin.ID}><td><span className="user-avatar">{admin.Name?.[0] || 'A'}</span></td><td className="admin-name-cell">{admin.Name}</td><td>{admin.Email || admin.Username}</td><td>{admin.Mobile || '—'}</td><td><span className="badge badge-primary">{normalizeRole(admin.Role).replace('_', ' ')}</span></td><td>{String(admin.Active).toLowerCase() === 'false' ? 'Suspended' : 'Active'}</td><td>{admin.LastLogin ? formatAdminDate(admin.LastLogin) : 'Never'}</td><td>{formatAdminDate(admin.CreatedAt)}</td><td><div className="actions-flex admin-actions"><button className="btn-table admin-action-edit" onClick={() => setEditing(admin)}>View / Edit</button><button className="btn-table admin-action-delete" onClick={() => setDeleting(admin)}>Delete</button></div></td></tr>)}
       {!admins.length && <tr><td colSpan={9}>No admins found. Create the first admin account.</td></tr>}
     </tbody></table></div>
+    <div className="mobile-admin-management-list">
+      {admins.map((admin) => {
+        const role = normalizeRole(admin.Role).replace('_', ' ');
+        const isSuspended = String(admin.Active).toLowerCase() === 'false';
+        return (
+          <article className="mobile-admin-card" key={`mobile-admin-${admin.ID}`}>
+            <div className="mobile-admin-card-head">
+              <span className="user-avatar mobile-admin-avatar">{admin.Name?.[0] || 'A'}</span>
+              <div className="mobile-admin-title">
+                <h4>{admin.Name || 'Admin account'}</h4>
+                <span className="badge badge-primary">{role}</span>
+              </div>
+              <span className={`badge ${isSuspended ? 'badge-cancelled' : 'badge-success'}`}>{isSuspended ? 'Suspended' : 'Active'}</span>
+            </div>
+            <dl className="mobile-admin-details">
+              <div><dt>Email</dt><dd>{admin.Email || admin.Username || '—'}</dd></div>
+              <div><dt>Mobile</dt><dd>{admin.Mobile || '—'}</dd></div>
+              <div><dt>Last Login</dt><dd>{admin.LastLogin ? formatAdminDate(admin.LastLogin) : 'Never'}</dd></div>
+              <div><dt>Joined</dt><dd>{formatAdminDate(admin.CreatedAt)}</dd></div>
+            </dl>
+            <div className="mobile-admin-actions">
+              <button type="button" className="btn-table admin-action-edit" onClick={() => setEditing(admin)}>View / Edit</button>
+              <button type="button" className="btn-table admin-action-delete" onClick={() => setDeleting(admin)}>Delete</button>
+            </div>
+          </article>
+        );
+      })}
+      {!admins.length && <div className="mobile-admin-empty">No admins found. Create the first admin account.</div>}
+    </div>
     {editing && createPortal(
       <div className="modal-overlay admin-editor-overlay">
         <form role="dialog" aria-modal="true" aria-labelledby="admin-editor-title" className="modal-content glass admin-form-modal" onSubmit={submit}>
@@ -97,7 +143,7 @@ export function AdminManagementTab({ users, currentUserId, onSave, onDelete }: {
             <h2 id="admin-editor-title">{editing.ID ? 'Edit Admin' : 'Create Admin'}</h2>
             <button type="button" className="admin-modal-close" aria-label="Close" onClick={() => setEditing(null)}>×</button>
           </div>
-          <div className="form-grid admin-form-grid">
+          <div className="form-grid admin-form-grid admin-form-scroll">
             <label><span>Full Name <i className="required-mark" aria-hidden="true">*</i></span><input className="form-input" required minLength={2} maxLength={80} pattern=".*\S.*" title="Enter a valid full name" value={editing.Name || ''} onChange={(event) => setEditing({ ...editing, Name: event.target.value })}/></label>
             <label><span>Email <i className="required-mark" aria-hidden="true">*</i></span><input className="form-input" type="email" required value={editing.Email || editing.Username || ''} onChange={(event) => setEditing({ ...editing, Email: event.target.value, Username: event.target.value })}/></label>
             <label>Mobile<input className="form-input" type="tel" inputMode="numeric" pattern="[0-9]{10}" maxLength={10} title="Enter a valid 10-digit mobile number" value={editing.Mobile || ''} onChange={(event) => setEditing({ ...editing, Mobile: event.target.value.replace(/\D/g, '').slice(0, 10) })}/></label>

@@ -45,7 +45,7 @@ export default function FAQsTab({
               clearable={true}
               onClear={() => setFaqStatusFilter('All')}
               options={[
-                { value: 'All', label: 'All Statuses' },
+                { value: 'All', label: 'All Status' },
                 { value: 'Active', label: 'Active' },
                 { value: 'Inactive', label: 'Inactive' },
               ]}

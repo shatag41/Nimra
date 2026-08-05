@@ -313,7 +313,7 @@ export default React.memo(function OrdersTab({
               clearable={true}
               onClear={() => setOrderStatusFilter('All')}
               options={[
-                { value: 'All', label: 'All Statuses' },
+                { value: 'All', label: 'All Status' },
                 { value: 'Pending', label: 'Pending' },
                 { value: 'InTransit', label: 'In Transit Orders' },
                 { value: 'Confirmed', label: 'Confirmed' },

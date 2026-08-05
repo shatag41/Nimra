@@ -70,7 +70,7 @@ export default React.memo(function ProductsTab({
               clearable={true}
               onClear={() => setProductStatusFilter('All')}
               options={[
-                { value: 'All', label: 'All Statuses' },
+                { value: 'All', label: 'All Status' },
                 { value: 'Active', label: 'Active' },
                 { value: 'Inactive', label: 'Inactive' },
               ]}

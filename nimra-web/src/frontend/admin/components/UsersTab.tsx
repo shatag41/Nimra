@@ -68,7 +68,7 @@ export default React.memo(function UsersTab({
               clearable={true}
               onClear={() => setCustomerStatusFilter('All')}
               options={[
-                { value: 'All', label: 'All Statuses' },
+                { value: 'All', label: 'All Status' },
                 { value: 'Active', label: 'Active' },
                 { value: 'Inactive', label: 'Disabled' },
               ]}
