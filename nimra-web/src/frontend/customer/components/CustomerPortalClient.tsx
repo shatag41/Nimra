@@ -565,12 +565,6 @@ const portalStyles = `
     }
   }
 
-  @media (max-width: 640px) {
-    .metric-grid {
-      grid-template-columns: minmax(0, 1fr);
-    }
-  }
-
   .metric-card {
     --metric-accent: 37, 99, 235;
     position: relative;
@@ -871,7 +865,7 @@ const portalStyles = `
   }
   .panel { padding: 0.95rem; }
 
-  .portal-grid { max-width: 100%; margin: 1rem auto 0; padding: 0 1rem; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 1rem; align-items: start; }
+  .portal-grid { max-width: 100%; margin: 1rem auto 0; padding: 0 clamp(0.5rem, 3vw, 1rem); display: grid; grid-template-columns: minmax(0, 1fr) clamp(280px, 30vw, 360px); gap: 1rem; align-items: start; }
 
   .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
   .panel-head.compact { margin-bottom: 0.8rem; }
@@ -921,14 +915,14 @@ const portalStyles = `
   .empty-state { min-height: 240px; display: grid; place-items: center; align-content: center; gap: 0.85rem; color: var(--text-secondary); text-align: center; border: 1.5px dashed var(--border-color); border-radius: var(--radius-xl); background: var(--bg-primary); padding: 2.5rem 2rem; }
   .empty-state h3 { margin: 0; color: var(--text-primary); font-size: 1.2rem; }
 
-  .quick-section { max-width: 100%; margin: 1.5rem auto 0; padding: 0 2rem; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
+  .quick-section { max-width: 100%; margin: 1.5rem auto 0; padding: 0 clamp(0.5rem, 3vw, 2rem); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
   .quick-section.guest { margin-top: 2.5rem; }
-  .guest-checkout { max-width: 100%; margin: 1.5rem auto 0; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); }
+  .guest-checkout { max-width: 100%; margin: 1.5rem auto 0; padding: clamp(1rem, 3vw, 1.5rem) clamp(1rem, 4vw, 2rem); display: flex; justify-content: space-between; align-items: center; gap: 1rem; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); }
   .guest-checkout h2 { margin: 0.25rem 0 0.35rem; font-size: 1.35rem; }
   .guest-checkout p { color: var(--text-secondary); font-size: 0.9rem; }
-  .quick-card { padding: 1.35rem; color: var(--text-primary); display: block; transition: all var(--transition-normal); }
+  .quick-card { padding: clamp(1rem, 3vw, 1.35rem); color: var(--text-primary); display: block; transition: all var(--transition-normal); }
   .quick-card:hover { transform: translateY(-4px); border-color: var(--primary-color); box-shadow: var(--shadow-lg); }
-  .quick-icon { display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: var(--radius-md); margin-bottom: 0.85rem; background: rgba(0,150,58,0.08); font-size: 1.2rem; border: 1px solid rgba(0,150,58,0.15); }
+  .quick-icon { display: inline-flex; align-items: center; justify-content: center; width: clamp(36px, 10vw, 42px); height: clamp(36px, 10vw, 42px); border-radius: var(--radius-md); margin-bottom: 0.85rem; background: rgba(0,150,58,0.08); font-size: 1.2rem; border: 1px solid rgba(0,150,58,0.15); }
   .quick-card h3 { margin: 0 0 0.35rem; font-size: 1rem; font-weight: 700; }
   .quick-card p { color: var(--text-secondary); font-size: 0.875rem; line-height: 1.55; }
 
