@@ -230,13 +230,44 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
         @media (max-width: 1199px) {
           .recently-viewed-product-grid { grid-template-columns: repeat(3, 12.25rem) !important; }
         }
-        @media (max-width: 860px) {
+        @media (min-width: 769px) and (max-width: 860px) {
           .recently-viewed-product-grid { grid-template-columns: repeat(2, 12.25rem) !important; }
         }
-        @media (max-width: 520px) {
+        @media (max-width: 768px) {
           .recently-viewed-product-grid {
-            grid-template-columns: 12.25rem !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            gap: 0.75rem !important;
             justify-content: center !important;
+            justify-items: stretch !important;
+            overflow-x: hidden !important;
+          }
+          .recently-viewed-product-grid :global(.catalog-card) {
+            width: 100% !important;
+            max-width: none !important;
+            min-width: 0 !important;
+            height: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+          }
+          .recently-viewed-product-grid :global(.catalog-card:only-child) {
+            width: min(100%, var(--products-card-width, 220px)) !important;
+            justify-self: center !important;
+            grid-column: 1 / -1 !important;
+          }
+          .recently-viewed-product-grid :global(.catalog-card .product-img-wrap) {
+            aspect-ratio: 4 / 3 !important;
+          }
+          .recently-viewed-product-grid :global(.cat-info-box) {
+            display: flex !important;
+            flex: 1 1 auto !important;
+            flex-direction: column !important;
+            min-width: 0 !important;
+          }
+          .recently-viewed-product-grid :global(.cat-price-row) {
+            margin-top: auto !important;
+            min-width: 0 !important;
           }
         }
         
