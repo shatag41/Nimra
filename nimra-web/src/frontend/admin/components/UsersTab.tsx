@@ -59,7 +59,7 @@ export default React.memo(function UsersTab({
       </div>
 
       {showFilters && (
-        <div className="filter-bar animate-fade-in">
+        <div className="filter-bar users-filter-panel filters-open animate-fade-in">
           <div className="filter-group">
             <label>Status:</label>
             <CustomSelect

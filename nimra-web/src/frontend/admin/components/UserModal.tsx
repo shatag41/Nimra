@@ -19,14 +19,15 @@ export default function UserModal({
   saveLoading,
 }: UserModalProps) {
   return (
-    <div className="modal-backdrop glass">
-      <div className="modal-card animate-fade-in">
+    <div className="modal-backdrop glass user-modal-backdrop">
+      <div className="modal-card user-modal-card animate-fade-in">
         <div className="modal-header">
           <h2>{editingUser.ID ? 'Edit Account ID #' + editingUser.ID : 'Create System Account'}</h2>
           <button className="close-btn" onClick={onClose}>✕</button>
         </div>
         
-        <form onSubmit={onSubmit} className="modal-body">
+        <form onSubmit={onSubmit} className="modal-body user-modal-form">
+          <div className="user-modal-scroll">
           <div className="form-group">
             <label>Full Display Name</label>
             <input
@@ -82,7 +83,7 @@ export default function UserModal({
                 aria-label="Access Role Authority"
               />
             </div>
-            <div className="form-group">
+            <div className="form-group user-status-field">
               <label>Account Status</label>
               <CustomSelect
                 value={String(editingUser.Active ?? true).toLowerCase() !== 'false' ? 'true' : 'false'}
@@ -93,6 +94,8 @@ export default function UserModal({
                 ]}
               />
             </div>
+          </div>
+
           </div>
 
           <div className="modal-footer">
