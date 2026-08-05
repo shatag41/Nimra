@@ -10,6 +10,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import LoadingButton from '@/frontend/shared/LoadingButton';
 import AuthPageWrapper from '@/frontend/customer/components/AuthPageWrapper';
 import LogoutConfirmationModal from '@/frontend/customer/components/LogoutConfirmationModal';
+import { AUTH_ERROR_MESSAGES, isValidEmailAddress, isValidMobileNumber, normalizeAuthErrorMessage } from '@/utils/authMessages';
 import {
   persistCheckoutAuthHandoff,
   restoreGuestCartFromAuthHandoff,
@@ -57,8 +58,8 @@ function LoginPageContent() {
         setError('Mobile number is required');
         return false;
       }
-      if (!/^\d{10}$/.test(trimmedUsername)) {
-        setError('Please enter a valid 10-digit mobile number');
+      if (!isValidMobileNumber(trimmedUsername)) {
+        setError(AUTH_ERROR_MESSAGES.invalidMobile);
         return false;
       }
     } else {
@@ -67,8 +68,8 @@ function LoginPageContent() {
         setError('Email is required');
         return false;
       }
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-        setError('Please enter a valid email address');
+      if (!isValidEmailAddress(trimmedEmail)) {
+        setError(AUTH_ERROR_MESSAGES.invalidEmail);
         return false;
       }
     }
@@ -100,13 +101,14 @@ function LoginPageContent() {
         login(res.user);
         notify.success('Login Successful', `Welcome back, ${res.user.Name}!`);
       } else {
-        setError(res.message ?? 'Login failed. Please try again.');
-        notify.error('Login Failed', res.message ?? 'Login failed.');
+        const message = normalizeAuthErrorMessage(res, 'login');
+        setError(message);
+        notify.error('Login Failed', message);
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError('Login failed. Please try again.');
-      notify.error('Login Error', 'Login failed. Please try again.');
+      setError(AUTH_ERROR_MESSAGES.network);
+      notify.error('Login Error', AUTH_ERROR_MESSAGES.network);
     } finally {
       loginInFlightRef.current = false;
       setIsLoading(false);
@@ -155,12 +157,13 @@ function LoginPageContent() {
         setMissingGoogleEmail(selectedEmail);
         setError('');
       } else {
-        setError(res.message ?? 'Google Sign-In failed.');
-        notify.error('Login Failed', res.message ?? 'Google Sign-In failed.');
+        const message = normalizeAuthErrorMessage(res, 'login');
+        setError(message);
+        notify.error('Login Failed', message);
       }
     } catch {
-      setError('Google Sign-In failed.');
-      notify.error('Login Error', 'Google Sign-In failed.');
+      setError(AUTH_ERROR_MESSAGES.network);
+      notify.error('Login Error', AUTH_ERROR_MESSAGES.network);
     } finally {
       googleAuthInFlightRef.current = false;
       setIsGoogleLoading(false);

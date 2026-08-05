@@ -11,6 +11,7 @@ import LogoutConfirmationModal from '@/frontend/customer/components/LogoutConfir
 import LoadingButton from '@/frontend/shared/LoadingButton';
 import AuthPageWrapper from '@/frontend/customer/components/AuthPageWrapper';
 import type { User } from '@/frontend/customer/contexts/AuthContext';
+import { AUTH_ERROR_MESSAGES, isValidEmailAddress, isValidMobileNumber, normalizeAuthErrorMessage } from '@/utils/authMessages';
 import {
   hasGuestCartItems,
   mergeGuestCartIntoNewCustomer,
@@ -139,13 +140,13 @@ export default function RegisterPage() {
       isValid = false;
     }
 
-    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = 'Please enter a valid email address';
+    if (email.trim() && !isValidEmailAddress(email)) {
+      newErrors.email = AUTH_ERROR_MESSAGES.invalidEmail;
       isValid = false;
     }
 
-    if (mobile.trim() && !/^[0-9]{10}$/.test(mobile)) {
-      newErrors.mobile = 'Mobile number must be 10 digits';
+    if (mobile.trim() && !isValidMobileNumber(mobile)) {
+      newErrors.mobile = AUTH_ERROR_MESSAGES.invalidMobile;
       isValid = false;
     }
 
@@ -199,36 +200,17 @@ export default function RegisterPage() {
         res.code === 'ACCOUNT_ALREADY_REGISTERED'
         || /already (?:registered|exists)/i.test(res.message || '')
       ) {
-        setIsExistingAccountLoginLoading(true);
-        const loginResponse = await sendRequest({
-          type: 'login',
-          username: user.Username,
-          password: user.Password,
-        });
-
-        if (loginResponse.success && loginResponse.user) {
-          if (hasGuestCartItems()) {
-            const cartResult = await mergeGuestCartIntoNewCustomer(loginResponse.user.ID);
-            if (!cartResult.success) {
-              notify.warning('Cart Sync Pending', cartResult.message || 'Your cart is preserved and will sync shortly.');
-            }
-          }
-          sessionStorage.removeItem(REGISTRATION_CONTEXT_KEY);
-          notify.success('Login Successful', `Welcome back, ${loginResponse.user.Name}!`);
-          login(loginResponse.user, {
-            redirectTo: registrationSourceRef.current === 'cart' ? registrationRedirectRef.current : undefined,
-          });
-        } else {
-          setError(loginResponse.message ?? 'This account already exists. Please check your password and try again.');
-          notify.error('Login Failed', loginResponse.message ?? 'This account already exists. Please check your password.');
-        }
+        const message = normalizeAuthErrorMessage(res, 'register');
+        setError(message);
+        notify.error('Registration Failed', message);
       } else {
-        setError(res.message ?? 'Registration failed. Please try again.');
-        notify.error('Registration Failed', res.message ?? 'Registration failed.');
+        const message = normalizeAuthErrorMessage(res, 'register');
+        setError(message);
+        notify.error('Registration Failed', message);
       }
     } catch {
-      setError('Registration failed. Please try again.');
-      notify.error('Registration Error', 'Registration failed. Please try again.');
+      setError(AUTH_ERROR_MESSAGES.network);
+      notify.error('Registration Error', AUTH_ERROR_MESSAGES.network);
     } finally {
       registrationRequestInFlightRef.current = false;
       setIsExistingAccountLoginLoading(false);
@@ -247,9 +229,9 @@ export default function RegisterPage() {
         const nextExpiry = Number(res.expiresAt || Date.now() + 10 * 60 * 1000); const resendAt = Date.now() + 30000;
         setExpiresAt(nextExpiry); setResendSeconds(30); setOtp(''); setOtpExpired(false);
         sessionStorage.setItem(REGISTRATION_DRAFT_KEY, JSON.stringify({ name, email, mobile, password, confirmPassword, role, expiresAt: nextExpiry, resendAt }));
-      } else setOtpError(res.message || 'Unable to resend OTP.');
+      } else setOtpError(normalizeAuthErrorMessage(res, 'register'));
     } catch {
-      setOtpError('Unable to resend OTP. Please try again.');
+      setOtpError(AUTH_ERROR_MESSAGES.network);
     } finally {
       setIsLoading(false);
     }
@@ -298,7 +280,7 @@ export default function RegisterPage() {
       setOtpOpen(false);
       notify.custom({ type: 'success', title: 'Account created successfully', durationMs: 3000 });
       await continueAfterSuccess(created.user);
-    } else setOtpError(created.message || 'Account creation failed. Please try again.');
+    } else setOtpError(normalizeAuthErrorMessage(created, 'register'));
     setIsLoading(false);
   };
 
@@ -376,13 +358,14 @@ export default function RegisterPage() {
           setVerifiedGoogleAccount({ email: registeredEmail, name: selectedName });
           setError('');
         } else {
-          setError(res.message ?? 'Google Sign-In failed.');
-          notify.error('Registration Failed', res.message ?? 'Google Sign-In failed.');
+          const message = normalizeAuthErrorMessage(res, 'register');
+          setError(message);
+          notify.error('Registration Failed', message);
         }
       }
     } catch {
-      setError('Google Sign-In failed.');
-      notify.error('Registration Error', 'Google Sign-In failed.');
+      setError(AUTH_ERROR_MESSAGES.network);
+      notify.error('Registration Error', AUTH_ERROR_MESSAGES.network);
     } finally {
       googleAuthInFlightRef.current = false;
       setIsGoogleLoading(false);

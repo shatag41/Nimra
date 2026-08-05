@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
 import { discardLegacyRecentlyViewed, notifyRecentlyViewedChanged, recentlyViewedKey } from '../utils/recentlyViewed';
@@ -161,14 +161,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isNewAccountSession, setIsNewAccountSession] = useState(false);
+  const sessionMutationRef = useRef(0);
   const router = useRouter();
 
   useEffect(() => {
     let cancelled = false;
+    const restoreVersion = sessionMutationRef.current;
 
     queueMicrotask(() => {
-      if (cancelled) return;
+      if (cancelled || restoreVersion !== sessionMutationRef.current) return;
       const storedUser = readStoredUser();
+      if (cancelled || restoreVersion !== sessionMutationRef.current) return;
       setUser(storedUser);
       setIsNewAccountSession(Boolean(storedUser) && readNewAccountSessionFlag());
       setIsLoading(false);
@@ -197,16 +200,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       isNewAccount: options?.isNewAccount === true,
     };
 
-    setUser(userData);
-    setIsNewAccountSession(session.isNewAccount === true);
+    sessionMutationRef.current += 1;
     const secureCookie = typeof window !== 'undefined' && window.location.protocol === 'https:';
     Cookies.set(USER_COOKIE, JSON.stringify(userData), { path: '/', sameSite: 'lax', secure: secureCookie });
     Cookies.set(SESSION_COOKIE, JSON.stringify(session), { path: '/', sameSite: 'lax', secure: secureCookie });
 
     if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem(TAB_SESSION_KEY, session.token);
       resetNavigationHistory(userData.Role);
       discardLegacyRecentlyViewed();
-      window.sessionStorage.setItem(TAB_SESSION_KEY, session.token);
       notifyRecentlyViewedChanged();
 
       try {
@@ -251,11 +253,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } else {
       localStorage.removeItem('nimra_admin_user');
     }
+    setUser(userData);
+    setIsNewAccountSession(session.isNewAccount === true);
+    setIsLoading(false);
     router.replace(isAdminUser ? '/admin' : (safeNextPath || '/customer-portal'));
   }, [router]);
 
   const clearSession = useCallback(() => {
+    sessionMutationRef.current += 1;
     setUser(null);
+    setIsLoading(false);
     setIsNewAccountSession(false);
     clearBrowserSession();
     clearCheckoutAuthHandoff();
@@ -264,6 +271,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const updateUserSession = useCallback((userData: User) => {
+    sessionMutationRef.current += 1;
     setUser(userData);
     Cookies.set(USER_COOKIE, JSON.stringify(userData), { path: '/', sameSite: 'lax' });
   }, []);

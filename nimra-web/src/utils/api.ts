@@ -2,6 +2,7 @@ import { CMSData, InquirySubmission, OrderRecord, OrderSubmission, AdminUser, No
 import type { User } from '@/frontend/customer/contexts/AuthContext';
 import { isAbsoluteHttpUrl } from '@/utils/uploadImage';
 import { fallbackCompanyInfo, mergeCompanyInfo } from '@/utils/companyInfo';
+import { AUTH_ERROR_MESSAGES, isValidEmailAddress, isValidMobileNumber, normalizeAuthErrorMessage } from '@/utils/authMessages';
 
 export type AuthRequest =
   | { type: 'login'; username: string; password: string }
@@ -195,8 +196,27 @@ export const sendRequest = async (payload: AuthRequest): Promise<AuthResponse> =
       if (!username || !payload.password) {
         return { success: false, message: 'Enter your login ID and password.' };
       }
-      if (!/^\d{10}$/.test(username) && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username) && username.toLowerCase() !== 'admin') {
-        return { success: false, message: 'Enter a valid mobile number or email address.' };
+      if (!isValidMobileNumber(username) && !isValidEmailAddress(username) && username.toLowerCase() !== 'admin') {
+        return {
+          success: false,
+          message: username.includes('@') ? AUTH_ERROR_MESSAGES.invalidEmail : AUTH_ERROR_MESSAGES.invalidMobile,
+        };
+      }
+    }
+
+    if (
+      payload.type === 'register' ||
+      payload.type === 'sendRegistrationOTP' ||
+      payload.type === 'verifyRegistrationOTP' ||
+      payload.type === 'createVerifiedUser'
+    ) {
+      const email = String(payload.user.Username || '').trim();
+      const mobile = String(payload.user.Mobile || '').trim();
+      if (email && !isValidEmailAddress(email)) {
+        return { success: false, message: AUTH_ERROR_MESSAGES.invalidEmail };
+      }
+      if (mobile && !isValidMobileNumber(mobile)) {
+        return { success: false, message: AUTH_ERROR_MESSAGES.invalidMobile };
       }
     }
 
@@ -211,19 +231,26 @@ export const sendRequest = async (payload: AuthRequest): Promise<AuthResponse> =
     try {
       data = text ? JSON.parse(text) : data;
     } catch {
-      return { success: false, message: 'Authentication service returned an invalid response.' };
+      return { success: false, message: AUTH_ERROR_MESSAGES.network };
     }
 
     if (!res.ok) {
       return {
         ...data,
         success: false,
-        message: data.message || String(data.error || '') || 'Request failed.',
+        message: normalizeAuthErrorMessage(data, payload.type === 'login' ? 'login' : 'register'),
       };
     }
 
     if (data.success && (payload.type === 'login' || payload.type === 'googleSignIn' || payload.type === 'register' || payload.type === 'createVerifiedUser') && !data.user) {
-      return { success: false, message: 'Authentication succeeded but no user session was returned.' };
+      return { success: false, message: AUTH_ERROR_MESSAGES.network };
+    }
+
+    if (!data.success) {
+      return {
+        ...data,
+        message: normalizeAuthErrorMessage(data, payload.type === 'login' || payload.type === 'googleSignIn' ? 'login' : 'register'),
+      };
     }
 
     return data;
@@ -231,7 +258,7 @@ export const sendRequest = async (payload: AuthRequest): Promise<AuthResponse> =
     console.error('Auth request failed:', err);
     return {
       success: false,
-      message: 'Unable to reach authentication service. Please try again.',
+      message: AUTH_ERROR_MESSAGES.network,
     };
   }
 };

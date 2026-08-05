@@ -6,6 +6,7 @@ import { sendRequest } from '@/utils/api';
 import { useAuth } from '@/frontend/customer/contexts/AuthContext';
 import { isAdminRole } from '@/frontend/admin/utils/accessControl';
 import LoadingButton from '@/frontend/shared/LoadingButton';
+import { AUTH_ERROR_MESSAGES, normalizeAuthErrorMessage } from '@/utils/authMessages';
 
 export default function LoginClient() {
   const router = useRouter();
@@ -24,6 +25,11 @@ export default function LoginClient() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (loading) return;
+    if (!username.trim() || !password) {
+      setError(!username.trim() ? 'Username is required' : 'Password is required');
+      return;
+    }
     setLoading(true);
     setError('');
 
@@ -45,11 +51,11 @@ export default function LoginClient() {
         };
         login(userSession);
       } else {
-        setError(res.message || 'Invalid username or password. Please try again.');
+        setError(normalizeAuthErrorMessage(res, 'login'));
       }
     } catch (err) {
       console.error(err);
-      setError('Connection error. Please check backend sync settings.');
+      setError(AUTH_ERROR_MESSAGES.network);
     } finally {
       setLoading(false);
     }
