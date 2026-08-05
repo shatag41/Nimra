@@ -265,6 +265,7 @@ export async function handleGet(req: Request) {
   await syncLocalDB('load');
   const requestUrl = new URL(req.url);
   const action = requestUrl.searchParams.get('action');
+  const requireLiveData = requestUrl.searchParams.get('requireLive') === '1';
   const userId = requestUrl.searchParams.get('userId') || '';
   const mobile = requestUrl.searchParams.get('mobile') || '';
   const email = requestUrl.searchParams.get('email') || '';
@@ -335,7 +336,13 @@ export async function handleGet(req: Request) {
         // being cached and served as the catalog.
         const hasCMSShape = !action && (Array.isArray(data.banners) || Array.isArray(data.products));
         if (!action && !hasCMSShape) {
-          console.warn(`[CMS API Proxy] GET Request: action="main" -> Response did not have expected CMS shape, falling through to fallback.`);
+          console.warn(`[CMS API Proxy] GET Request: action="main" -> Response did not have expected CMS shape${requireLiveData ? '.' : ', falling through to fallback.'}`);
+          if (requireLiveData) {
+            return NextResponse.json(
+              { success: false, message: 'Unable to sync live dashboard data. Please retry.' },
+              { status: 502, headers: cacheHeaders }
+            );
+          }
           // Fall through to local fallback below
         } else {
           // Resolve CMS image records to files served from .storage/uploads.
@@ -358,6 +365,12 @@ export async function handleGet(req: Request) {
         }
       } else {
         console.warn(`[CMS API Proxy] GET Request: action="${action || 'main'}" -> Returned non-JSON/HTML error response.`);
+        if (requireLiveData) {
+          return NextResponse.json(
+            { success: false, message: 'Unable to sync live dashboard data. Please retry.' },
+            { status: 502, headers: cacheHeaders }
+          );
+        }
       }
     } catch (err: any) {
       // This is a Next.js rendering control signal, not an upstream failure.
@@ -369,6 +382,18 @@ export async function handleGet(req: Request) {
         console.error(`[CMS API Proxy] GET Request: action="${action || 'main'}" -> Google Sheets GET fetch failed:`, err);
       }
     }
+  }
+
+  if (requireLiveData) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: urlVal
+          ? 'Unable to sync live dashboard data. Please retry.'
+          : 'Google Sheets is not configured for live dashboard data.',
+      },
+      { status: 503, headers: cacheHeaders }
+    );
   }
 
   // Use fallback data

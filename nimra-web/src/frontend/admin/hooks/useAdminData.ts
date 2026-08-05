@@ -22,7 +22,7 @@ import {
   fetchAdminUpdates,
   fetchCustomerNotificationLog,
   saveNotification,
-  fetchCMSData,
+  fetchAdminCMSData,
   clearAdminDataCache,
   clearCMSDataCache,
   saveProduct,
@@ -78,14 +78,16 @@ export const useAdminData = (initialCMSData: CMSData) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [adminUpdates, setAdminUpdates] = useState<Notification[]>([]);
   const [cancellationRequests, setCancellationRequests] = useState<CancellationRequest[]>([]);
-  const [products, setProducts] = useState<Product[]>(initialCMSData.products || []);
-  const [banners, setBanners] = useState<Banner[]>(initialCMSData.banners || []);
-  const [faqs, setFaqs] = useState<FAQ[]>(initialCMSData.faqs || []);
-  const [companyInfo, setCompanyInfo] = useState<CompanyInfo>(initialCMSData.companyInfo || {} as CompanyInfo);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [companyInfo, setCompanyInfo] = useState<CompanyInfo>({} as CompanyInfo);
 
   // Loading and Notification UI
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
+  const [hasLoadedLiveData, setHasLoadedLiveData] = useState(false);
+  const [loadError, setLoadError] = useState('');
   // Alerts
   const showAlert = (text: string, type: 'success' | 'error' = 'success') => {
     if (type === 'success') {
@@ -131,33 +133,59 @@ export const useAdminData = (initialCMSData: CMSData) => {
         fetchCustomerNotificationLog(),
         fetchAdminUpdates(),
         fetchCancellationRequests(),
-        fetchCMSData(),
+        fetchAdminCMSData(),
     ]);
 
-    const valueOr = <T,>(index: number, fallback: T): T => {
-      const result = results[index];
-      if (result.status === 'fulfilled') return result.value as T;
-      console.warn(`Admin data request ${index + 1} failed; retaining the last available data.`, result.reason);
-      return fallback;
-    };
+    const failed = results.find((result) => result.status === 'rejected');
+    if (failed?.status === 'rejected') {
+      const message = failed.reason instanceof Error
+        ? failed.reason.message
+        : 'Unable to sync live dashboard data. Please retry.';
+      return {
+        liveError: message || 'Unable to sync live dashboard data. Please retry.',
+        fetchedOrders: [] as OrderRecord[],
+        fetchedInquiries: [] as Inquiry[],
+        fetchedUsers: [] as AdminUser[],
+        fetchedNotifs: [] as Notification[],
+        fetchedAdminUpdates: [] as Notification[],
+        fetchedCancellationRequests: [] as CancellationRequest[],
+        fetchedProducts: [] as Product[],
+        fetchedBanners: [] as Banner[],
+        fetchedFaqs: [] as FAQ[],
+        fetchedCompanyInfo: {} as CompanyInfo,
+      };
+    }
 
-    const fetchedCMSData = valueOr(6, {
-      products,
-      banners,
-      faqs,
-      companyInfo,
-    });
+    const [
+      fetchedOrders,
+      fetchedInquiries,
+      fetchedUsers,
+      fetchedNotifs,
+      fetchedAdminUpdates,
+      fetchedCancellationRequests,
+      fetchedCMSData,
+    ] = results.map((result) => result.status === 'fulfilled' ? result.value : null) as [
+      OrderRecord[],
+      Inquiry[],
+      AdminUser[],
+      Notification[],
+      Notification[],
+      CancellationRequest[],
+      CMSData,
+    ];
 
     return {
-        fetchedOrders: valueOr(0, orders),
-        fetchedInquiries: valueOr(1, inquiries),
-        fetchedUsers: valueOr(2, users),
-        fetchedNotifs: valueOr(3, notifications),
-        fetchedAdminUpdates: valueOr(4, adminUpdates),
-        fetchedCancellationRequests: valueOr(5, cancellationRequests),
+        liveError: '',
+        fetchedOrders,
+        fetchedInquiries,
+        fetchedUsers,
+        fetchedNotifs,
+        fetchedAdminUpdates,
+        fetchedCancellationRequests,
         fetchedProducts: fetchedCMSData.products,
         fetchedBanners: fetchedCMSData.banners,
         fetchedFaqs: fetchedCMSData.faqs,
+        fetchedCompanyInfo: fetchedCMSData.companyInfo,
     };
   };
 
@@ -170,6 +198,13 @@ export const useAdminData = (initialCMSData: CMSData) => {
 
   useEffect(() => {
     if (swrData) {
+      if (swrData.liveError) {
+        setLoadError(swrData.liveError);
+        setHasLoadedLiveData(false);
+        setLoading(false);
+        return;
+      }
+      setLoadError('');
       setOrders(swrData.fetchedOrders);
       setInquiries(swrData.fetchedInquiries);
       setUsers(swrData.fetchedUsers);
@@ -179,20 +214,32 @@ export const useAdminData = (initialCMSData: CMSData) => {
       setProducts(swrData.fetchedProducts);
       setBanners(swrData.fetchedBanners);
       setFaqs(swrData.fetchedFaqs);
+      setCompanyInfo(swrData.fetchedCompanyInfo);
+      setHasLoadedLiveData(true);
       setLoading(false);
     }
     if (swrError) {
       console.error('Failed to load admin databases', swrError);
-      showAlert('Error updating real-time databases. Local fallback remains active.', 'error');
+      setLoadError(swrError instanceof Error ? swrError.message : 'Unable to sync live dashboard data. Please retry.');
+      setHasLoadedLiveData(false);
+      if (hasLoadedLiveData) {
+        showAlert('Unable to refresh live dashboard data. Please retry.', 'error');
+      }
       setLoading(false);
     }
-  }, [swrData, swrError]);
+  }, [hasLoadedLiveData, swrData, swrError]);
 
   const refreshData = async () => {
     setLoading(true);
+    setLoadError('');
     clearAdminDataCache();
     clearCMSDataCache();
-    await refreshDataSWR();
+    try {
+      await refreshDataSWR();
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Unable to sync live dashboard data. Please retry.');
+      setLoading(false);
+    }
   };
 
 
@@ -625,6 +672,8 @@ export const useAdminData = (initialCMSData: CMSData) => {
     faqs,
     companyInfo,
     loading,
+    hasLoadedLiveData,
+    loadError,
     isLoggingOut,
     saveLoading,
     showAlert,

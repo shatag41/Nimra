@@ -23,7 +23,7 @@ const LocationIcon = () => (
   </svg>
 );
 
-const MobileFooterSeparator = () => <div className="mobile-footer-separator" aria-hidden="true" />;
+export const MobileFooterSeparator = () => <div className="mobile-footer-separator" aria-hidden="true" />;
 
 export default React.memo(function Footer({ companyInfo }: FooterProps) {
   const currentYear = new Date().getFullYear();

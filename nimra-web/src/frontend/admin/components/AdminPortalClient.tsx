@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 
 import { CMSData, OrderRecord, Product, Banner, FAQ, AdminUser } from '@/types/cms';
@@ -94,6 +94,8 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
     faqs,
     companyInfo,
     loading,
+    hasLoadedLiveData,
+    loadError,
     isLoggingOut,
     saveLoading,
     showAlert,
@@ -191,7 +193,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
   const [userFormOpen, setUserFormOpen] = useState(false);
 
   // Filtered collections
-  const filteredOrders = filterOrders(
+  const filteredOrders = useMemo(() => filterOrders(
     orders,
     searchLower,
     filters.orderStatusFilter,
@@ -199,50 +201,50 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
     filters.orderSort,
     filters.orderStartDate,
     filters.orderEndDate
-  );
+  ), [filters.orderEndDate, filters.orderPaymentFilter, filters.orderSort, filters.orderStartDate, filters.orderStatusFilter, orders, searchLower]);
 
-  const filteredProducts = filterProducts(
+  const filteredProducts = useMemo(() => filterProducts(
     products,
     searchLower,
     filters.productCategoryFilter,
     filters.productStatusFilter
-  );
+  ), [filters.productCategoryFilter, filters.productStatusFilter, products, searchLower]);
 
-  const filteredBanners = filterBanners(banners, searchLower, filters.bannerStatusFilter);
+  const filteredBanners = useMemo(() => filterBanners(banners, searchLower, filters.bannerStatusFilter), [banners, filters.bannerStatusFilter, searchLower]);
 
-  const filteredFaqs = filterFAQs(faqs, searchLower, filters.faqStatusFilter);
+  const filteredFaqs = useMemo(() => filterFAQs(faqs, searchLower, filters.faqStatusFilter), [faqs, filters.faqStatusFilter, searchLower]);
 
-  const filteredInquiries = filterInquiries(
+  const filteredInquiries = useMemo(() => filterInquiries(
     inquiries,
     searchLower,
     filters.inquirySort,
     filters.inquiryStartDate,
     filters.inquiryEndDate
-  );
+  ), [filters.inquiryEndDate, filters.inquirySort, filters.inquiryStartDate, inquiries, searchLower]);
 
-  const customerUsers = users.filter(
+  const customerUsers = useMemo(() => users.filter(
     (user) => !['ADMIN', 'SUPER_ADMIN'].includes(normalizeRole(user.Role))
-  );
-  const filteredCustomers = filterUsers(
+  ), [users]);
+  const filteredCustomers = useMemo(() => filterUsers(
     customerUsers,
     searchLower,
     filters.customerStatusFilter
-  );
+  ), [customerUsers, filters.customerStatusFilter, searchLower]);
 
-  const adminUsers = users.filter(
+  const adminUsers = useMemo(() => users.filter(
     (user) => ['ADMIN', 'SUPER_ADMIN'].includes(normalizeRole(user.Role))
-  );
-  const filteredAdmins = filterUsers(
+  ), [users]);
+  const filteredAdmins = useMemo(() => filterUsers(
     adminUsers,
     searchLower,
     filters.customerStatusFilter
-  );
+  ), [adminUsers, filters.customerStatusFilter, searchLower]);
 
-  const filteredNotifications = filterNotifications(
+  const filteredNotifications = useMemo(() => filterNotifications(
     notifications,
     searchLower,
     filters.notificationSort
-  );
+  ), [filters.notificationSort, notifications, searchLower]);
 
   // Submits callbacks mapping to states
   const onUpdateOrderStatus = async (e: React.FormEvent, customerMessage?: string) => {
@@ -292,6 +294,77 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
 
   if (!currentUser) return <LoadingState label="Verifying admin session" />;
 
+  const renderShell = (content: React.ReactNode) => (
+    <>
+      <div className="admin-container">
+        <Sidebar
+          currentUser={currentUser}
+          activeTab={activeTab}
+          setActiveTab={handleSidebarTabChange}
+          isProfilePanelOpen={profile.isProfilePanelOpen}
+          isMobileOpen={isMobileSidebarOpen}
+          onToggleMobile={() => setIsMobileSidebarOpen((open) => !open)}
+          onEditProfile={() => {
+            setIsMobileSidebarOpen(false);
+            profile.setIsProfilePanelOpen(true);
+          }}
+          onLogout={() => {
+            setIsMobileSidebarOpen(false);
+            setIsLogoutModalOpen(true);
+          }}
+        />
+        <button
+          type="button"
+          className={`admin-sidebar-backdrop ${isMobileSidebarOpen ? 'mobile-open' : ''}`}
+          onClick={() => setIsMobileSidebarOpen(false)}
+          aria-label="Close admin navigation"
+          tabIndex={isMobileSidebarOpen ? 0 : -1}
+        />
+        <main className={`admin-main admin-page-${activeTab} animate-fade-in fixed-page ${profile.isProfilePanelOpen ? 'blur-background' : ''}`}>
+          <Header
+            activeTab={activeTab}
+            globalSearch={filters.globalSearch}
+            setGlobalSearch={filters.setGlobalSearch}
+            showFilters={filters.showFilters}
+            setShowFilters={filters.setShowFilters}
+            refreshData={refreshData}
+            loading={loading}
+            currentUser={currentUser}
+            setIsProfilePanelOpen={profile.setIsProfilePanelOpen}
+            handleLogout={() => setIsLogoutModalOpen(true)}
+            isMobileSidebarOpen={isMobileSidebarOpen}
+            toggleMobileSidebar={() => setIsMobileSidebarOpen((open) => !open)}
+            hasActiveFilters={false}
+          />
+          <div className={`tab-viewport ${loading ? 'is-refreshing' : ''}`}>{content}</div>
+        </main>
+      </div>
+      <LogoutConfirmationModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => {
+          if (!isLoggingOut) setIsLogoutModalOpen(false);
+        }}
+        onConfirm={() => performLogout(() => setIsLogoutModalOpen(false))}
+        isProcessing={isLoggingOut}
+        stableFlowLayout
+      />
+    </>
+  );
+
+  if (!hasLoadedLiveData) {
+    return renderShell(loadError ? (
+      <div className="admin-live-data-error card glass" role="alert">
+        <h2>Unable to sync live dashboard data</h2>
+        <p>{loadError || 'Please check the Google Sheets connection and try again.'}</p>
+        <button type="button" className="btn btn-primary" onClick={() => void refreshData()} disabled={loading}>
+          {loading ? 'Retrying...' : 'Retry Sync'}
+        </button>
+      </div>
+    ) : (
+      <LoadingState label="Syncing live dashboard data" compact />
+    ));
+  }
+
   return (
     <>
       <div className="admin-container">
@@ -302,6 +375,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
           setActiveTab={handleSidebarTabChange}
           isProfilePanelOpen={profile.isProfilePanelOpen}
           isMobileOpen={isMobileSidebarOpen}
+          onToggleMobile={() => setIsMobileSidebarOpen((open) => !open)}
           onEditProfile={() => {
             setIsMobileSidebarOpen(false);
             profile.setIsProfilePanelOpen(true);

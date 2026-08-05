@@ -536,18 +536,37 @@ export const trackOrder = async (
 
 // Admin Portal API Methods
 
+const readStrictJsonResponse = async <T,>(res: Response, label: string): Promise<T> => {
+  const text = await res.text();
+  let data: unknown = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    throw new Error(`${label} returned an invalid response.`);
+  }
+  if (!res.ok) {
+    const message = typeof data === 'object' && data && 'message' in data
+      ? String((data as { message?: unknown }).message || '')
+      : '';
+    throw new Error(message || `${label} request failed.`);
+  }
+  return data as T;
+};
+
+const liveAdminParams = (action: string) => new URLSearchParams({ action, requireLive: '1' }).toString();
+
 export const fetchOrders = async (): Promise<OrderRecord[]> => {
   return cachedRead('orders', async () => {
-  const res = await fetch(`/api/cms?action=getOrders`, {
+  const res = await fetch(`/api/cms?${liveAdminParams('getOrders')}`, {
     method: 'GET', 
     cache: 'no-store',
     headers: {
       'Accept': 'application/json',
     },
   });
-  const data = await readJsonResponse<{ orders?: OrderRecord[] } | OrderRecord[]>(res, []);
+  const data = await readStrictJsonResponse<{ orders?: OrderRecord[] } | OrderRecord[]>(res, 'Orders');
   return Array.isArray(data) ? data : (data.orders || []);
-  });
+  }, 0);
 };
 
 export const fetchCustomerOrders = async (userId: string | number, email: string, mobile = ''): Promise<OrderRecord[]> => {
@@ -603,14 +622,14 @@ export const requestOrderCancellation = async (
 
 export const fetchCancellationRequests = async (): Promise<import('@/types/cms').CancellationRequest[]> => {
   return cachedRead('cancellations', async () => {
-  const res = await fetch(`/api/cms?action=getCancellationRequests`, {
+  const res = await fetch(`/api/cms?${liveAdminParams('getCancellationRequests')}`, {
     method: 'GET',
     cache: 'no-store',
     headers: { 'Accept': 'application/json' },
   });
-  const data = await readJsonResponse<{ requests?: import('@/types/cms').CancellationRequest[] } | import('@/types/cms').CancellationRequest[]>(res, []);
+  const data = await readStrictJsonResponse<{ requests?: import('@/types/cms').CancellationRequest[] } | import('@/types/cms').CancellationRequest[]>(res, 'Cancellation requests');
   return Array.isArray(data) ? data : (data.requests || []);
-  });
+  }, 0);
 };
 
 export const reviewCancellationRequest = async (
@@ -636,16 +655,16 @@ export const reviewCancellationRequest = async (
 
 export const fetchInquiries = async (): Promise<Inquiry[]> => {
   return cachedRead('inquiries', async () => {
-  const res = await fetch(`/api/cms?action=getInquiries`, {
+  const res = await fetch(`/api/cms?${liveAdminParams('getInquiries')}`, {
     method: 'GET', 
     cache: 'no-store',
     headers: {
       'Accept': 'application/json',
     },
   });
-  const data = await readJsonResponse<{ inquiries?: Inquiry[] } | Inquiry[]>(res, []);
+  const data = await readStrictJsonResponse<{ inquiries?: Inquiry[] } | Inquiry[]>(res, 'Inquiries');
   return Array.isArray(data) ? data : (data.inquiries || []);
-  });
+  }, 0);
 };
 
 export const markInquiryReviewed = async (
@@ -676,16 +695,16 @@ export const markInquiryReviewed = async (
 
 export const fetchUsers = async (): Promise<AdminUser[]> => {
   return cachedRead('users', async () => {
-  const res = await fetch(`/api/cms?action=getUsers`, {
+  const res = await fetch(`/api/cms?${liveAdminParams('getUsers')}`, {
     method: 'GET', 
     cache: 'no-store',
     headers: {
       'Accept': 'application/json',
     },
   });
-  const data = await readJsonResponse<{ users?: AdminUser[] } | AdminUser[]>(res, []);
+  const data = await readStrictJsonResponse<{ users?: AdminUser[] } | AdminUser[]>(res, 'Users');
   return Array.isArray(data) ? data : (data.users || []);
-  });
+  }, 0);
 };
 
 export const saveUser = async (user: Partial<AdminUser>, action: 'create' | 'update' | 'delete'): Promise<{ success: boolean; message: string; ID?: string | number }> => {
@@ -735,27 +754,27 @@ const normalizeNotifications = (notifications: Notification[]) => notifications.
 
 export const fetchAdminUpdates = async (): Promise<Notification[]> => {
   return cachedRead('admin-updates', async () => {
-  const res = await fetch(`/api/cms?action=getAdminUpdates`, {
+  const res = await fetch(`/api/cms?${liveAdminParams('getAdminUpdates')}`, {
     method: 'GET',
     cache: 'no-store',
     headers: { Accept: 'application/json' },
   });
-  const data = await readJsonResponse<{ events?: Notification[] } | Notification[]>(res, []);
+  const data = await readStrictJsonResponse<{ events?: Notification[] } | Notification[]>(res, 'Admin updates');
   return normalizeNotifications(Array.isArray(data) ? data : (data.events || []));
-  });
+  }, 0);
 };
 
 export const fetchCustomerNotificationLog = async (): Promise<Notification[]> => {
   return cachedRead('customer-notification-log', async () => {
-  const res = await fetch(`/api/cms?action=getCustomerNotificationLog`, {
+  const res = await fetch(`/api/cms?${liveAdminParams('getCustomerNotificationLog')}`, {
     method: 'GET',
     cache: 'no-store',
     headers: { Accept: 'application/json' },
   });
-  const data = await readJsonResponse<{ events?: Notification[] } | Notification[]>(res, []);
+  const data = await readStrictJsonResponse<{ events?: Notification[] } | Notification[]>(res, 'Customer notification log');
   return normalizeNotifications(Array.isArray(data) ? data : (data.events || []))
     .filter((notification) => notification.EventType === 'ADMIN_BROADCAST');
-  });
+  }, 0);
 };
 
 export const fetchNotifications = async (userId?: string | number, email?: string): Promise<Notification[]> => {
@@ -806,6 +825,16 @@ export const fetchProducts = async (): Promise<Product[]> => {
   const products = Array.isArray(data) ? data : (data.products || []);
   return products.map((product) => ({ ...product, ImageUrl: normalizeImageUrl(product.ImageUrl) }));
   }, 0);
+};
+
+export const fetchAdminCMSData = async (): Promise<CMSData> => {
+  const res = await fetch('/api/cms?requireLive=1', {
+    method: 'GET',
+    cache: 'no-store',
+    headers: { Accept: 'application/json' },
+  });
+  const data = await readStrictJsonResponse<Partial<CMSData>>(res, 'CMS catalog');
+  return normalizeCMSData(data);
 };
 
 export const fetchBanners = async (): Promise<Banner[]> => {
