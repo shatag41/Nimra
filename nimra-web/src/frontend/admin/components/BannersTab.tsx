@@ -36,8 +36,7 @@ export default function BannersTab({
         </button>
       </div>
 
-      {showFilters && (
-        <div className="filter-bar animate-fade-in">
+      <div className={`filter-bar banners-filter-panel ${showFilters ? 'filters-open animate-fade-in' : 'filters-closed'}`} aria-hidden={!showFilters}>
           <div className="filter-group">
             <label>Status:</label>
             <CustomSelect
@@ -53,9 +52,8 @@ export default function BannersTab({
             />
           </div>
         </div>
-      )}
 
-      <div className="table-responsive">
+      <div className="table-responsive banners-table-wrap">
         <table className="admin-table">
           <thead>
             <tr>
@@ -120,6 +118,48 @@ export default function BannersTab({
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="mobile-banners-list">
+        {filteredBanners.map((banner, index) => {
+          const imageUrl = String(banner.ImageUrl || '').trim();
+
+          return (
+            <article className="mobile-banner-card" key={`${banner.ID}-${banner.Title}-${index}`}>
+              <div className="mobile-banner-image-wrap">
+                {imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={imageUrl} alt={banner.Title} className="mobile-banner-image" loading="lazy" decoding="async" />
+                ) : (
+                  <span className="mobile-banner-image-placeholder">No image</span>
+                )}
+              </div>
+              <div className="mobile-banner-info">
+                <h4>{banner.Title}</h4>
+                <dl>
+                  <div><dt>Subtitle</dt><dd>{banner.Subtitle || 'Not set'}</dd></div>
+                  <div><dt>Button</dt><dd>{banner.ButtonText || 'Not set'}</dd></div>
+                  <div><dt>Link</dt><dd><code>{banner.ButtonLink || 'Not set'}</code></dd></div>
+                  <div><dt>Status</dt><dd><span className={`badge ${banner.Active !== false ? 'badge-primary' : 'badge-cancelled'}`}>{banner.Active !== false ? 'Active' : 'Inactive'}</span></dd></div>
+                </dl>
+              </div>
+              <div className="mobile-banner-actions">
+                <button
+                  type="button"
+                  className="btn-table btn-edit"
+                  onClick={() => {
+                    setEditingBanner(banner);
+                    setBannerFormOpen(true);
+                  }}
+                >
+                  Edit
+                </button>
+                <button type="button" className="btn-table btn-delete" onClick={() => void handleBannerDelete(banner.ID)}>Delete</button>
+              </div>
+            </article>
+          );
+        })}
+        {filteredBanners.length === 0 && <div className="mobile-banners-empty">No banners found.</div>}
       </div>
     </div>
   );

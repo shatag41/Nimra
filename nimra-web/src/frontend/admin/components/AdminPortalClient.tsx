@@ -339,6 +339,9 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                 filters.productCategoryFilter !== 'All' ||
                 filters.productStatusFilter !== 'All'
               )) ||
+              (activeTab === 'banners' && (
+                filters.bannerStatusFilter !== 'All'
+              )) ||
               (activeTab === 'users' && (
                 filters.customerStatusFilter !== 'All'
               ))

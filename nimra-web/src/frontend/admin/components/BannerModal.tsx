@@ -20,14 +20,15 @@ export default function BannerModal({
   saveLoading,
 }: BannerModalProps) {
   return (
-    <div className="modal-backdrop glass">
-      <div className="modal-card animate-fade-in">
+    <div className="modal-backdrop glass banner-modal-backdrop">
+      <div className="modal-card banner-modal-card animate-fade-in">
         <div className="modal-header">
           <h2>{editingBanner.ID ? 'Edit Slide ID #' + editingBanner.ID : 'Add Homepage Slide'}</h2>
           <button className="close-btn" onClick={onClose}>✕</button>
         </div>
         
-        <form onSubmit={onSubmit} className="modal-body">
+        <form onSubmit={onSubmit} className="modal-body banner-modal-form">
+          <div className="banner-modal-scroll">
           <div className="form-group">
             <label>Banner Slide Title</label>
             <input
@@ -84,7 +85,7 @@ export default function BannerModal({
                 disabled={saveLoading}
               />
             </div>
-            <div className="form-group">
+            <div className="form-group banner-status-field">
               <label>Banner Status</label>
               <CustomSelect
                 value={editingBanner.Active !== false ? 'true' : 'false'}
@@ -97,9 +98,11 @@ export default function BannerModal({
             </div>
           </div>
 
+          </div>
+
           <div className="modal-footer">
             <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
-            <LoadingButton type="submit" className="btn btn-primary" isLoading={saveLoading} loadingText="Saving...">Save Banner</LoadingButton>
+            <LoadingButton type="submit" className="btn btn-primary" isLoading={saveLoading} loadingText="Saving Banner...">Save Banner</LoadingButton>
           </div>
         </form>
       </div>
