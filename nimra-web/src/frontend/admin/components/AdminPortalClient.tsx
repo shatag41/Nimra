@@ -342,6 +342,14 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
               (activeTab === 'banners' && (
                 filters.bannerStatusFilter !== 'All'
               )) ||
+              (activeTab === 'faqs' && (
+                filters.faqStatusFilter !== 'All'
+              )) ||
+              (activeTab === 'inquiries' && (
+                filters.inquirySort !== 'latest' ||
+                filters.inquiryStartDate !== '' ||
+                filters.inquiryEndDate !== ''
+              )) ||
               (activeTab === 'users' && (
                 filters.customerStatusFilter !== 'All'
               ))

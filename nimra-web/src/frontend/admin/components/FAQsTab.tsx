@@ -36,8 +36,7 @@ export default function FAQsTab({
         </button>
       </div>
 
-      {showFilters && (
-        <div className="filter-bar animate-fade-in">
+      <div className={`filter-bar faqs-filter-panel ${showFilters ? 'filters-open animate-fade-in' : 'filters-closed'}`} aria-hidden={!showFilters}>
           <div className="filter-group">
             <label>Status:</label>
             <CustomSelect
@@ -53,9 +52,8 @@ export default function FAQsTab({
             />
           </div>
         </div>
-      )}
 
-      <div className="table-responsive">
+      <div className="table-responsive faqs-table-wrap">
         <table className="admin-table">
           <thead>
             <tr>
@@ -105,6 +103,35 @@ export default function FAQsTab({
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="mobile-faqs-list">
+        {filteredFaqs.map((faq) => (
+          <article className="mobile-faq-card" key={faq.ID}>
+            <div className="mobile-faq-topline">
+              <span className="mobile-faq-id">#{faq.ID}</span>
+              <span className={`badge ${faq.Active !== false ? 'badge-primary' : 'badge-cancelled'}`}>
+                {faq.Active !== false ? 'Active' : 'Inactive'}
+              </span>
+            </div>
+            <h4>{faq.Question}</h4>
+            <p>{faq.Answer}</p>
+            <div className="mobile-faq-actions">
+              <button
+                type="button"
+                className="btn-table btn-edit"
+                onClick={() => {
+                  setEditingFAQ(faq);
+                  setFAQFormOpen(true);
+                }}
+              >
+                Edit
+              </button>
+              <button type="button" className="btn-table btn-delete" onClick={() => void handleFAQDelete(faq.ID)}>Delete</button>
+            </div>
+          </article>
+        ))}
+        {filteredFaqs.length === 0 && <div className="mobile-faqs-empty">No FAQs found.</div>}
       </div>
 
       <style jsx>{`

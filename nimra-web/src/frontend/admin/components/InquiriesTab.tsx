@@ -45,8 +45,7 @@ export default function InquiriesTab({
 
   return (
     <div className="inquiries-tab card glass">
-      {showFilters && (
-        <div className="filter-bar animate-fade-in">
+      <div className={`filter-bar inquiries-filter-panel ${showFilters ? 'filters-open animate-fade-in' : 'filters-closed'}`} aria-hidden={!showFilters}>
           <div className="filter-group">
             <label>Date Sort:</label>
             <CustomSelect
@@ -84,8 +83,7 @@ export default function InquiriesTab({
             </div>
           </div>
         </div>
-      )}
-      <div className="table-responsive">
+      <div className="table-responsive inquiries-table-wrap">
         <table className="admin-table">
           <thead>
             <tr>
@@ -153,6 +151,59 @@ export default function InquiriesTab({
             )}
           </tbody>
         </table>
+      </div>
+      <div className="mobile-inquiries-list">
+        {filteredInquiries.map((inq, index) => {
+          const inquiryId = inq['Inquiry ID'] || inq.InquiryID || inq.ID;
+          const isReviewingThisInquiry = Boolean(inquiryId) && reviewingInquiryId === inquiryRowKey(inq);
+          const customerId = inq['Customer ID'] || inq.CustomerID || 'Guest';
+          const isNew = !inq.Status || inq.Status === 'New';
+          return (
+            <article className="mobile-inquiry-card" key={String(inquiryId || index)}>
+              <div className="mobile-inquiry-topline">
+                <span>{new Date(inq.Timestamp).toLocaleString()}</span>
+                <span className={`status-badge ${isNew ? 'status-pending' : 'status-delivered'}`}>
+                  {isNew ? 'New' : 'Reviewed'}
+                </span>
+              </div>
+              <div className="mobile-inquiry-customer">
+                <h4>{inq.Name}</h4>
+                <span>{inq.Phone}</span>
+                {inq.Email && <span>{inq.Email}</span>}
+                <span>Customer ID: {customerId}</span>
+              </div>
+              <dl className="mobile-inquiry-details">
+                <div><dt>Inquiry ID</dt><dd>{inquiryId || 'Legacy record'}</dd></div>
+                <div><dt>Subject</dt><dd>{inq.Subject}</dd></div>
+                <div><dt>Message</dt><dd>{inq.Message}</dd></div>
+              </dl>
+              <div className="mobile-inquiry-actions">
+                <a href={`tel:${inq.Phone}`} className="btn-table btn-call">
+                  Call
+                </a>
+                <a
+                  href={`https://wa.me/${String(inq.Phone || '').replace(/\D/g, '')}?text=${encodeURIComponent(`Hi ${inq.Name}, thank you for reaching out to NIMRA regarding "${inq.Subject}".`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-table btn-whatsapp"
+                >
+                  WhatsApp
+                </a>
+                {isNew && (
+                  <button
+                    type="button"
+                    className="btn-table btn-approve"
+                    disabled={isReviewingThisInquiry || !inquiryId}
+                    onClick={() => void reviewInquiry(inq)}
+                  >
+                    {isReviewingThisInquiry ? 'Marking...' : 'Mark Reviewed'}
+                  </button>
+                )}
+              </div>
+            </article>
+          );
+        })}
+        {filteredInquiries.length === 0 && <div className="mobile-inquiries-empty">No inquiries found.</div>}
       </div>
     </div>
   );

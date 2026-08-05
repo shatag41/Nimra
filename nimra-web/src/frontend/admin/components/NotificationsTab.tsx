@@ -61,7 +61,7 @@ export default function NotificationsTab({
   return (
     <div className="notifications-tab card glass" style={{ padding: '2rem' }}>
       <div className="notif-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '2rem' }}>
-        <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', padding: '1.5rem', borderRadius: 'var(--radius-lg)', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', height: 'fit-content' }}>
+        <form className="notification-compose-card" onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', padding: '1.5rem', borderRadius: 'var(--radius-lg)', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', height: 'fit-content' }}>
           <h3 style={{ margin: 0, fontSize: '1.2rem' }}>Customer Broadcast</h3>
           <div>
             <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>Title</label>
@@ -71,7 +71,7 @@ export default function NotificationsTab({
             <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>Message</label>
             <textarea required rows={4} value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Message for customers" style={fieldStyle} />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="notification-compose-options" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
               <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>Category</label>
               <select value={category} onChange={(event) => setCategory(event.target.value as NotificationCategory)} style={fieldStyle}>
@@ -88,9 +88,9 @@ export default function NotificationsTab({
           <button type="submit" className="btn btn-primary btn-full" disabled={saveLoading}>Send to Customers</button>
         </form>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+        <div className="notification-history-panel" style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
           <h3 style={{ margin: 0, fontSize: '1.2rem' }}>Customer Broadcast History</h3>
-          <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '0.5rem' }}>
+          <div className="notification-history-filters" style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '0.5rem' }}>
             <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search broadcasts" style={fieldStyle} />
             <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} style={fieldStyle}>
               <option value="All">All categories</option>{categories.map((item) => <option key={item}>{item}</option>)}
@@ -99,12 +99,12 @@ export default function NotificationsTab({
               <option value="All">All priorities</option><option>High</option><option>Medium</option><option>Low</option>
             </select>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '550px', overflowY: 'auto' }}>
+          <div className="notification-history-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '550px', overflowY: 'auto' }}>
             {broadcasts.map((notification) => (
-              <div key={String(notification.ID)} style={{ padding: '1.25rem', borderRadius: 'var(--radius-lg)', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
+              <div className="notification-broadcast-card" key={String(notification.ID)} style={{ padding: '1.25rem', borderRadius: 'var(--radius-lg)', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+                <div className="notification-broadcast-head" style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
                   <div>
-                    <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.4rem' }}>
+                    <div className="notification-broadcast-tags" style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.4rem' }}>
                       <span style={{ fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', background: 'var(--border-color)' }}>{notification.Category}</span>
                       <span style={{ fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', background: 'var(--bg-primary)' }}>{notification.Priority || 'Low'}</span>
                       <span style={{ fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', background: 'var(--bg-primary)' }}>Customers</span>
