@@ -38,7 +38,7 @@ const localPasswordMatches = (stored: unknown, supplied: string) => {
 const getAppsScriptUrl = () => {
   return process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || process.env.EXPO_PUBLIC_APPS_SCRIPT_URL || '';
 };
-const APPS_SCRIPT_TIMEOUT_MS = 45000;
+const APPS_SCRIPT_TIMEOUT_MS = 55000;
 type UploadScope = 'products' | 'banners';
 
 const isNextDynamicSignal = (error: unknown) => Boolean(
@@ -277,8 +277,10 @@ export async function handleGet(req: Request) {
 
   const now = Date.now();
   const liveCacheKey = getLiveCacheKey(action, userId, mobile, email);
-  // Bypass liveGetCache for CMS items to display updates instantly
-  const liveCached = !isPublicCMSRead && liveCacheKey ? liveGetCache.get(liveCacheKey) : null;
+  const staleLiveCached = liveCacheKey ? liveGetCache.get(liveCacheKey) : null;
+  // Bypass fresh liveGetCache for public CMS reads unless a live admin request
+  // explicitly needs already-synced real data. Mutations clear this cache.
+  const liveCached = (!isPublicCMSRead || requireLiveData) && staleLiveCached ? staleLiveCached : null;
   if (liveCached && liveCached.expiresAt > now) {
     return NextResponse.json(liveCached.data, {
       headers: { 'Cache-Control': 'no-store' },
@@ -338,6 +340,15 @@ export async function handleGet(req: Request) {
         if (!action && !hasCMSShape) {
           console.warn(`[CMS API Proxy] GET Request: action="main" -> Response did not have expected CMS shape${requireLiveData ? '.' : ', falling through to fallback.'}`);
           if (requireLiveData) {
+            if (staleLiveCached?.data) {
+              return NextResponse.json(staleLiveCached.data, {
+                headers: {
+                  ...cacheHeaders,
+                  'X-CMS-Data-Source': 'last-successful-live',
+                  'X-CMS-Live-Warning': 'invalid-live-shape',
+                },
+              });
+            }
             return NextResponse.json(
               { success: false, message: 'Unable to sync live dashboard data. Please retry.' },
               { status: 502, headers: cacheHeaders }
@@ -366,6 +377,15 @@ export async function handleGet(req: Request) {
       } else {
         console.warn(`[CMS API Proxy] GET Request: action="${action || 'main'}" -> Returned non-JSON/HTML error response.`);
         if (requireLiveData) {
+          if (staleLiveCached?.data) {
+            return NextResponse.json(staleLiveCached.data, {
+              headers: {
+                ...cacheHeaders,
+                'X-CMS-Data-Source': 'last-successful-live',
+                'X-CMS-Live-Warning': 'non-json-live-response',
+              },
+            });
+          }
           return NextResponse.json(
             { success: false, message: 'Unable to sync live dashboard data. Please retry.' },
             { status: 502, headers: cacheHeaders }
@@ -380,6 +400,16 @@ export async function handleGet(req: Request) {
         console.warn(`[CMS API Proxy] GET Request: action="${action || 'main'}" -> Google Sheets fetch timed out (${APPS_SCRIPT_TIMEOUT_MS / 1000}s limit).`);
       } else {
         console.error(`[CMS API Proxy] GET Request: action="${action || 'main'}" -> Google Sheets GET fetch failed:`, err);
+      }
+      if (requireLiveData && staleLiveCached?.data) {
+        console.warn(`[CMS API Proxy] GET Request: action="${action || 'main'}" -> Serving last successful live response after transient Google Sheets failure.`);
+        return NextResponse.json(staleLiveCached.data, {
+          headers: {
+            ...cacheHeaders,
+            'X-CMS-Data-Source': 'last-successful-live',
+            'X-CMS-Live-Warning': err.name === 'AbortError' ? 'live-timeout' : 'live-fetch-failed',
+          },
+        });
       }
     }
   }
