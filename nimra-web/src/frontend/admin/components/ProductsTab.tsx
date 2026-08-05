@@ -53,6 +53,7 @@ export default React.memo(function ProductsTab({
               onChange={setProductCategoryFilter}
               clearable={true}
               onClear={() => setProductCategoryFilter('All')}
+              portalMenu
               options={[
                 { value: 'All', label: 'All Categories' },
                 { value: 'Packaged Water', label: 'Packaged Water' },
@@ -69,6 +70,7 @@ export default React.memo(function ProductsTab({
               onChange={setProductStatusFilter}
               clearable={true}
               onClear={() => setProductStatusFilter('All')}
+              portalMenu
               options={[
                 { value: 'All', label: 'All Status' },
                 { value: 'Active', label: 'Active' },

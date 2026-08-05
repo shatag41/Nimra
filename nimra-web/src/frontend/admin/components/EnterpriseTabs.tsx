@@ -95,6 +95,7 @@ export function AdminManagementTab({ users, currentUserId, showFilters, adminSta
           onChange={setAdminStatusFilter}
           clearable={true}
           onClear={() => setAdminStatusFilter('All')}
+          portalMenu
           options={[
             { value: 'All', label: 'All Status' },
             { value: 'Active', label: 'Active' },
@@ -152,7 +153,7 @@ export function AdminManagementTab({ users, currentUserId, showFilters, adminSta
             {!editing.ID && <><label><span>Password <i className="required-mark" aria-hidden="true">*</i></span><input className="form-input" required minLength={6} type="password" title="Password must contain at least 6 characters" onChange={(event) => setEditing({ ...editing, Password: event.target.value })}/></label><label><span>Confirm Password <i className="required-mark" aria-hidden="true">*</i></span><input className="form-input" required minLength={6} type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)}/></label></>}
           </div>
           {!editing.ID && editing.Password !== confirmPassword && confirmPassword && <p className="error-box">Passwords do not match.</p>}
-          <div className="modal-actions"><button className="btn btn-primary" type="submit" disabled={isSubmitting}>{isSubmitting ? 'Saving...' : editing.ID ? 'Save Changes' : 'Create Admin'}</button></div>
+          <div className="modal-actions"><button className="btn admin-modal-cancel" type="button" onClick={() => setEditing(null)} disabled={isSubmitting}>Cancel</button><button className="btn btn-primary" type="submit" disabled={isSubmitting}>{isSubmitting ? 'Saving...' : editing.ID ? 'Save Changes' : 'Create Admin'}</button></div>
         </form>
       </div>,
       document.body

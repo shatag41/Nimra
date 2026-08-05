@@ -43,13 +43,13 @@ export default function CustomSelect({
     const rect = triggerRef.current.getBoundingClientRect();
     const viewportPadding = 8;
     const menuGap = 6;
-    const desiredHeight = Math.min(148, options.length * 34 + 8);
+    const desiredHeight = Math.min(180, options.length * 38 + 8);
     const spaceBelow = window.innerHeight - rect.bottom - menuGap - viewportPadding;
     const spaceAbove = rect.top - menuGap - viewportPadding;
     const openAbove = spaceBelow < desiredHeight && spaceAbove > spaceBelow;
     const availableHeight = openAbove ? spaceAbove : spaceBelow;
     const maxHeight = Math.max(48, Math.min(desiredHeight, availableHeight));
-    const width = Math.min(rect.width, window.innerWidth - viewportPadding * 2);
+    const width = Math.min(Math.max(rect.width, 168), window.innerWidth - viewportPadding * 2);
     const viewportLeft = Math.min(
       Math.max(rect.left, viewportPadding),
       window.innerWidth - width - viewportPadding

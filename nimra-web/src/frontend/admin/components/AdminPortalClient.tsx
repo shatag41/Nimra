@@ -336,6 +336,11 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
             toggleMobileSidebar={() => setIsMobileSidebarOpen((open) => !open)}
             hasActiveFilters={false}
           />
+          {activeTab === 'dashboard' && (
+            <div className="mobile-admin-page-heading">
+              {isSuperAdmin(currentUser.role) ? 'Super Admin Dashboard' : 'Dashboard Panel'}
+            </div>
+          )}
           <div className={`tab-viewport ${loading ? 'is-refreshing' : ''}`}>{content}</div>
         </main>
       </div>
@@ -441,6 +446,11 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
               ))
             }
           />
+          {activeTab === 'dashboard' && (
+            <div className="mobile-admin-page-heading">
+              {isSuperAdmin(currentUser.role) ? 'Super Admin Dashboard' : 'Dashboard Panel'}
+            </div>
+          )}
 
           {/* ALERTS DEPRECATED - now handled by sonner */}
 

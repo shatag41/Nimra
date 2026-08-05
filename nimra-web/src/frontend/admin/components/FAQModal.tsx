@@ -54,6 +54,7 @@ export default function FAQModal({
             <CustomSelect
               value={editingFAQ.Active !== false ? 'true' : 'false'}
               onChange={(val) => setEditingFAQ(prev => prev ? ({ ...prev, Active: val === 'true' }) : null)}
+              portalMenu
               options={[
                 { value: 'true', label: 'Active & Published' },
                 { value: 'false', label: 'Draft / Inactive' },

@@ -53,6 +53,7 @@ export default function InquiriesTab({
               onChange={setInquirySort}
               clearable={true}
               onClear={() => setInquirySort('latest')}
+              portalMenu
               options={[
                 { value: 'latest', label: 'Latest First' },
                 { value: 'earliest', label: 'Earliest First' },

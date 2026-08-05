@@ -88,6 +88,7 @@ export default function UserModal({
               <CustomSelect
                 value={String(editingUser.Active ?? true).toLowerCase() !== 'false' ? 'true' : 'false'}
                 onChange={(val) => setEditingUser(prev => prev ? ({ ...prev, Active: val === 'true' }) : null)}
+                portalMenu
                 options={[
                   { value: 'true', label: 'Enabled (Access Allowed)' },
                   { value: 'false', label: 'Disabled (Suspended)' },

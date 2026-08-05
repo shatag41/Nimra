@@ -44,6 +44,7 @@ export default function BannersTab({
               onChange={setBannerStatusFilter}
               clearable={true}
               onClear={() => setBannerStatusFilter('All')}
+              portalMenu
               options={[
                 { value: 'All', label: 'All Status' },
                 { value: 'Active', label: 'Active' },

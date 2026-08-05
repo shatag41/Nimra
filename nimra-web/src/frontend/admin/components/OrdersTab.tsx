@@ -312,6 +312,7 @@ export default React.memo(function OrdersTab({
               onChange={setOrderStatusFilter}
               clearable={true}
               onClear={() => setOrderStatusFilter('All')}
+              portalMenu
               options={[
                 { value: 'All', label: 'All Status' },
                 { value: 'Pending', label: 'Pending' },
@@ -332,6 +333,7 @@ export default React.memo(function OrdersTab({
               onChange={setOrderPaymentFilter}
               clearable={true}
               onClear={() => setOrderPaymentFilter('All')}
+              portalMenu
               options={[
                 { value: 'All', label: 'All Payments' },
                 { value: 'Cash on Delivery', label: 'Cash on Delivery' },
@@ -347,6 +349,7 @@ export default React.memo(function OrdersTab({
               onChange={setOrderSort}
               clearable={true}
               onClear={() => setOrderSort('latest')}
+              portalMenu
               options={[
                 { value: 'latest', label: 'Latest First' },
                 { value: 'earliest', label: 'Earliest First' },

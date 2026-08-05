@@ -90,6 +90,7 @@ export default function BannerModal({
               <CustomSelect
                 value={editingBanner.Active !== false ? 'true' : 'false'}
                 onChange={(val) => setEditingBanner(prev => prev ? ({ ...prev, Active: val === 'true' }) : null)}
+                portalMenu
                 options={[
                   { value: 'true', label: 'Active (Visible)' },
                   { value: 'false', label: 'Inactive (Hidden)' },

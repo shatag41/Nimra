@@ -67,6 +67,7 @@ export default React.memo(function UsersTab({
               onChange={setCustomerStatusFilter}
               clearable={true}
               onClear={() => setCustomerStatusFilter('All')}
+              portalMenu
               options={[
                 { value: 'All', label: 'All Status' },
                 { value: 'Active', label: 'Active' },

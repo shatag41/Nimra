@@ -44,6 +44,7 @@ export default function FAQsTab({
               onChange={setFaqStatusFilter}
               clearable={true}
               onClear={() => setFaqStatusFilter('All')}
+              portalMenu
               options={[
                 { value: 'All', label: 'All Status' },
                 { value: 'Active', label: 'Active' },
