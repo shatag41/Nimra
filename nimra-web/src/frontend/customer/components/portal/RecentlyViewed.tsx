@@ -20,6 +20,10 @@ interface RecentlyViewedProductsProps {
 export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps) {
   const [viewedProducts, setViewedProducts] = React.useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
+  const [mobilePage, setMobilePage] = React.useState(0);
+  const touchStartX = React.useRef<number | null>(null);
+  const autoplayTimerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+  const resumeTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const { user, isLoading } = useAuth();
   const { addProduct, updateQuantity, items } = useCart();
 
@@ -59,12 +63,129 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
     return viewedProducts;
   }, [viewedProducts]);
 
+  const mobilePages = React.useMemo(() => {
+    const pages: Product[][] = [];
+    for (let index = 0; index < displayedProducts.length; index += 2) {
+      pages.push(displayedProducts.slice(index, index + 2));
+    }
+    return pages;
+  }, [displayedProducts]);
+
+  const mobilePageCount = mobilePages.length;
+
+  React.useEffect(() => {
+    setMobilePage((page) => Math.min(page, Math.max(mobilePageCount - 1, 0)));
+  }, [mobilePageCount]);
+
   const getViewedTime = (index: number) => {
     const times = ["Viewed 10m ago", "Viewed 35m ago", "Viewed 2h ago", "Viewed Yesterday"];
     return times[index] || "Viewed recently";
   };
 
   const hasViewedProducts = displayedProducts.length > 0;
+  const hasMultipleMobilePages = mobilePageCount > 1;
+
+  const isMobileCarousel = React.useCallback(() => (
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
+  ), []);
+
+  const stopMobileAutoplay = React.useCallback(() => {
+    if (autoplayTimerRef.current) {
+      clearInterval(autoplayTimerRef.current);
+      autoplayTimerRef.current = null;
+    }
+  }, []);
+
+  const startMobileAutoplay = React.useCallback(() => {
+    stopMobileAutoplay();
+    if (!hasMultipleMobilePages || !isMobileCarousel()) return;
+
+    autoplayTimerRef.current = setInterval(() => {
+      setMobilePage((page) => (page + 1) % mobilePageCount);
+    }, 3000);
+  }, [hasMultipleMobilePages, isMobileCarousel, mobilePageCount, stopMobileAutoplay]);
+
+  const goToMobilePage = React.useCallback((page: number) => {
+    if (mobilePageCount < 1) return;
+    setMobilePage(((page % mobilePageCount) + mobilePageCount) % mobilePageCount);
+  }, [mobilePageCount]);
+
+  const registerMobileCarouselInteraction = React.useCallback(() => {
+    stopMobileAutoplay();
+
+    if (resumeTimerRef.current) {
+      clearTimeout(resumeTimerRef.current);
+      resumeTimerRef.current = null;
+    }
+
+    if (!hasMultipleMobilePages || !isMobileCarousel()) return;
+
+    resumeTimerRef.current = setTimeout(() => {
+      resumeTimerRef.current = null;
+      startMobileAutoplay();
+    }, 3000);
+  }, [hasMultipleMobilePages, isMobileCarousel, startMobileAutoplay, stopMobileAutoplay]);
+
+  React.useEffect(() => {
+    startMobileAutoplay();
+
+    const handleResize = () => {
+      if (resumeTimerRef.current) {
+        clearTimeout(resumeTimerRef.current);
+        resumeTimerRef.current = null;
+      }
+      startMobileAutoplay();
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      stopMobileAutoplay();
+      if (resumeTimerRef.current) {
+        clearTimeout(resumeTimerRef.current);
+        resumeTimerRef.current = null;
+      }
+    };
+  }, [startMobileAutoplay, stopMobileAutoplay]);
+
+  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    registerMobileCarouselInteraction();
+    touchStartX.current = event.touches[0]?.clientX ?? null;
+  };
+
+  const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (touchStartX.current === null) return;
+
+    const touchEndX = event.changedTouches[0]?.clientX;
+    if (touchEndX === undefined) {
+      touchStartX.current = null;
+      return;
+    }
+
+    registerMobileCarouselInteraction();
+
+    const deltaX = touchEndX - touchStartX.current;
+    touchStartX.current = null;
+
+    if (Math.abs(deltaX) < 42) return;
+    if (deltaX < 0) goToMobilePage(mobilePage + 1);
+    if (deltaX > 0) goToMobilePage(mobilePage - 1);
+  };
+
+  const renderProductCard = (product: Product, index: number) => (
+    <ProductCard
+      key={productId(product)}
+      product={product}
+      badgeText={getViewedTime(index)}
+      onViewMore={setSelectedProduct}
+      disableViewTracking={true}
+      index={index}
+      onAdd={addProduct}
+      cartQty={items.find((item) => String(item.productId) === productId(product))?.quantity || 0}
+      onUpdateQuantity={updateQuantity}
+    />
+  );
 
   return (
     <div className="panel recently-viewed-panel" style={{ marginTop: '0.5rem' }}>
@@ -84,19 +205,72 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
 
       <div className={`recently-viewed-content products-page ${hasViewedProducts ? 'has-products' : 'is-empty'}`}>
         <div className="catalog-grid recently-viewed-product-grid" aria-hidden={!hasViewedProducts}>
-          {displayedProducts.map((product, index) => (
-            <ProductCard
-              key={productId(product)}
-              product={product}
-              badgeText={getViewedTime(index)}
-              onViewMore={setSelectedProduct}
-              disableViewTracking={true}
-              index={index}
-              onAdd={addProduct}
-              cartQty={items.find((item) => String(item.productId) === productId(product))?.quantity || 0}
-              onUpdateQuantity={updateQuantity}
-            />
-          ))}
+          {displayedProducts.map((product, index) => renderProductCard(product, index))}
+        </div>
+        <div
+          className="recently-viewed-mobile-carousel"
+          aria-hidden={!hasViewedProducts}
+          onPointerDown={registerMobileCarouselInteraction}
+          onFocusCapture={registerMobileCarouselInteraction}
+        >
+          <div className={`recently-viewed-mobile-shell ${hasMultipleMobilePages ? 'has-nav' : 'single-page'}`}>
+            {hasMultipleMobilePages && (
+              <button
+                type="button"
+                className="recently-viewed-nav recently-viewed-nav-prev"
+                onClick={() => {
+                  registerMobileCarouselInteraction();
+                  goToMobilePage(mobilePage - 1);
+                }}
+                aria-label="Show previous recently viewed products"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
+              </button>
+            )}
+            <div className="recently-viewed-mobile-viewport" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+              <div className="recently-viewed-mobile-track" style={{ transform: `translateX(-${mobilePage * 100}%)` }}>
+                {mobilePages.map((pageProducts, pageIndex) => (
+                  <div className="recently-viewed-mobile-page" key={`recent-page-${pageIndex}`}>
+                    {pageProducts.map((product, index) => renderProductCard(product, pageIndex * 2 + index))}
+                  </div>
+                ))}
+              </div>
+            </div>
+            {hasMultipleMobilePages && (
+              <button
+                type="button"
+                className="recently-viewed-nav recently-viewed-nav-next"
+                onClick={() => {
+                  registerMobileCarouselInteraction();
+                  goToMobilePage(mobilePage + 1);
+                }}
+                aria-label="Show next recently viewed products"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </button>
+            )}
+          </div>
+          {hasMultipleMobilePages && (
+            <div className="recently-viewed-pagination" aria-label={`Recently viewed page ${mobilePage + 1} of ${mobilePageCount}`}>
+              {mobilePages.map((_, index) => (
+                <button
+                  type="button"
+                  key={`recent-dot-${index}`}
+                  className={`recently-viewed-dot ${index === mobilePage ? 'active' : ''}`}
+                  onClick={() => {
+                    registerMobileCarouselInteraction();
+                    goToMobilePage(index);
+                  }}
+                  aria-label={`Show recently viewed page ${index + 1}`}
+                  aria-current={index === mobilePage ? 'page' : undefined}
+                />
+              ))}
+            </div>
+          )}
         </div>
         <div className="premium-empty-state" aria-hidden={hasViewedProducts}>
           <div className="empty-icon-wrap" aria-hidden="true">
@@ -227,47 +401,218 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
           line-height: 1.12 !important;
           -webkit-line-clamp: 2 !important;
         }
+        .recently-viewed-mobile-carousel {
+          display: none;
+        }
         @media (max-width: 1199px) {
           .recently-viewed-product-grid { grid-template-columns: repeat(3, 12.25rem) !important; }
         }
-        @media (min-width: 769px) and (max-width: 860px) {
+        @media (max-width: 860px) {
           .recently-viewed-product-grid { grid-template-columns: repeat(2, 12.25rem) !important; }
         }
-        @media (max-width: 768px) {
+        @media (max-width: 520px) {
           .recently-viewed-product-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-            width: 100% !important;
-            max-width: 100% !important;
-            gap: 0.75rem !important;
+            grid-template-columns: 12.25rem !important;
             justify-content: center !important;
-            justify-items: stretch !important;
-            overflow-x: hidden !important;
           }
-          .recently-viewed-product-grid :global(.catalog-card) {
+        }
+
+        @media (max-width: 768px) {
+          .recently-viewed-panel {
+            min-height: 0;
+            overflow: hidden;
+          }
+          .recently-viewed-content {
+            min-height: 0;
+            overflow: hidden;
+          }
+          .has-products .recently-viewed-product-grid {
+            display: none !important;
+          }
+          .recently-viewed-mobile-carousel {
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(6px);
+            transition: opacity 240ms ease, transform 240ms ease, visibility 0s linear 240ms;
+          }
+          .has-products .recently-viewed-mobile-carousel {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            transition-delay: 100ms, 100ms, 0s;
+          }
+          .recently-viewed-mobile-shell {
+            display: grid;
+            grid-template-columns: 1.9rem minmax(0, 1fr) 1.9rem;
+            align-items: center;
+            gap: 0.35rem;
+            width: 100%;
+            max-width: 100%;
+          }
+          .recently-viewed-mobile-shell.single-page {
+            grid-template-columns: minmax(0, 1fr);
+          }
+          .recently-viewed-mobile-viewport {
+            min-width: 0;
+            overflow: hidden;
+            touch-action: pan-y;
+          }
+          .recently-viewed-mobile-track {
+            display: flex;
+            width: 100%;
+            will-change: transform;
+            transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1);
+          }
+          .recently-viewed-mobile-page {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.55rem;
+            min-width: 100%;
+            width: 100%;
+            align-items: stretch;
+          }
+          .recently-viewed-mobile-page :global(.catalog-card) {
             width: 100% !important;
             max-width: none !important;
             min-width: 0 !important;
             height: 100% !important;
             display: flex !important;
             flex-direction: column !important;
+            padding: 0.3rem !important;
+            border-radius: 0.62rem !important;
           }
-          .recently-viewed-product-grid :global(.catalog-card:only-child) {
-            width: min(100%, var(--products-card-width, 220px)) !important;
+          .recently-viewed-mobile-page :global(.catalog-card:only-child) {
+            width: min(100%, 12.25rem) !important;
             justify-self: center !important;
             grid-column: 1 / -1 !important;
           }
-          .recently-viewed-product-grid :global(.catalog-card .product-img-wrap) {
-            aspect-ratio: 4 / 3 !important;
+          .recently-viewed-mobile-page :global(.catalog-card .product-img-wrap) {
+            width: calc(100% + 0.6rem) !important;
+            margin: -0.3rem -0.3rem 0.22rem !important;
+            aspect-ratio: 1 / 1 !important;
           }
-          .recently-viewed-product-grid :global(.cat-info-box) {
+          .recently-viewed-mobile-page :global(.catalog-card .product-image-container) {
+            aspect-ratio: 1 / 1 !important;
+          }
+          .recently-viewed-mobile-page :global(.cat-info-box) {
             display: flex !important;
             flex: 1 1 auto !important;
             flex-direction: column !important;
             min-width: 0 !important;
           }
-          .recently-viewed-product-grid :global(.cat-price-row) {
+          .recently-viewed-mobile-page :global(.cat-meta) {
+            gap: 0.18rem !important;
+            margin-bottom: 0.12rem !important;
+          }
+          .recently-viewed-mobile-page :global(.cat-volume),
+          .recently-viewed-mobile-page :global(.cat-badge),
+          .recently-viewed-mobile-page :global(.prod-badge-best) {
+            padding: 0.12rem 0.34rem !important;
+            font-size: 0.58rem !important;
+            line-height: 1.05 !important;
+          }
+          .recently-viewed-mobile-page :global(.cat-info-box h3) {
+            min-height: 2.08em !important;
+            max-height: 2.08em !important;
+            margin-bottom: 0.12rem !important;
+            font-size: 0.72rem !important;
+            line-height: 1.04 !important;
+          }
+          .recently-viewed-mobile-page :global(.cat-info-box p),
+          .recently-viewed-mobile-page :global(.card-desc) {
+            min-height: 2.1em !important;
+            max-height: 2.1em !important;
+            margin-bottom: 0.2rem !important;
+            font-size: 0.62rem !important;
+            line-height: 1.05 !important;
+            -webkit-line-clamp: 2 !important;
+          }
+          .recently-viewed-mobile-page :global(.cat-price-row) {
+            min-height: 2rem !important;
             margin-top: auto !important;
-            min-width: 0 !important;
+            gap: 0.2rem !important;
+            padding-top: 0.28rem !important;
+          }
+          .recently-viewed-mobile-page :global(.price-lbl) {
+            font-size: 0.54rem !important;
+            line-height: 1 !important;
+          }
+          .recently-viewed-mobile-page :global(.price-val) {
+            font-size: 0.9rem !important;
+            line-height: 1.05 !important;
+          }
+          .recently-viewed-mobile-page :global(.add-cart-btn.btn-sm),
+          .recently-viewed-mobile-page :global(.cat-price-row .btn-sm) {
+            min-height: 1.65rem !important;
+            padding: 0.22rem 0.34rem !important;
+            gap: 0.18rem !important;
+            font-size: 0.58rem !important;
+            border-radius: 0.5rem !important;
+          }
+          .recently-viewed-mobile-page :global(.add-cart-btn svg) {
+            width: 0.68rem !important;
+            height: 0.68rem !important;
+          }
+          .recently-viewed-mobile-page :global(.qty-controls) {
+            min-height: 1.65rem !important;
+          }
+          .recently-viewed-nav {
+            width: 1.9rem;
+            height: 2.8rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px solid rgba(37, 99, 235, 0.18);
+            border-radius: 999px;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+            cursor: pointer;
+            transition: opacity 160ms ease, transform 160ms ease, background 160ms ease;
+          }
+          .recently-viewed-nav:active {
+            transform: scale(0.94);
+          }
+          .recently-viewed-nav:disabled {
+            opacity: 0.32;
+            cursor: default;
+            transform: none;
+          }
+          :global([data-theme="dark"]) .recently-viewed-nav {
+            background: rgba(15, 23, 42, 0.86);
+            border-color: rgba(96, 165, 250, 0.22);
+            color: #93c5fd;
+          }
+          .recently-viewed-pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.32rem;
+            min-height: 1.2rem;
+            margin-top: 0.55rem;
+          }
+          .recently-viewed-dot {
+            width: 0.38rem;
+            height: 0.38rem;
+            padding: 0;
+            border: 0;
+            border-radius: 999px;
+            background: rgba(37, 99, 235, 0.22);
+            cursor: pointer;
+            transition: width 180ms ease, background 180ms ease;
+          }
+          .recently-viewed-dot.active {
+            width: 1.05rem;
+            background: var(--primary-color);
+          }
+          :global([data-theme="dark"]) .recently-viewed-dot {
+            background: rgba(147, 197, 253, 0.25);
+          }
+          :global([data-theme="dark"]) .recently-viewed-dot.active {
+            background: #93c5fd;
           }
         }
         
