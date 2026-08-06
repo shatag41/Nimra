@@ -230,26 +230,23 @@ export default function CustomerPageHeader({
 
           .customer-page-header.customer-page-header .customer-page-header__badge-row {
             position: relative;
-            display: inline-flex;
+            display: flex !important;
             align-items: center;
             justify-content: center;
-            flex-wrap: nowrap;
-            width: auto;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            width: 100%;
             max-width: 100%;
-            min-width: 0;
           }
 
           :global(.customer-page-header .hero-actions-wrapper) {
-            position: absolute !important;
-            top: 50% !important;
-            left: calc(100% + 0.3rem) !important;
-            right: auto !important;
-            transform: translateY(-50%) !important;
-            display: flex !important;
-            justify-content: flex-start !important;
+            position: static !important;
+            display: inline-flex !important;
+            justify-content: center !important;
+            align-items: center !important;
             width: auto !important;
-            max-width: calc(50vw - 0.75rem) !important;
-            min-height: 0 !important;
+            max-width: 100% !important;
+            transform: none !important;
             margin: 0 !important;
             padding: 0 !important;
             z-index: 20 !important;
@@ -261,30 +258,32 @@ export default function CustomerPageHeader({
 
           :global(.customer-page-header .hero-action-finish) {
             display: inline-flex !important;
-            width: auto !important;
+            align-items: center !important;
+            width: fit-content !important;
             min-width: 0 !important;
-            min-height: 1.45rem !important;
-            height: 1.45rem !important;
-            padding: 0 0.38rem !important;
+            min-height: 36px !important;
+            height: auto !important;
+            padding: 0 12px !important;
             border: 1px solid rgba(37, 99, 235, 0.16) !important;
-            border-radius: 0.45rem !important;
+            border-radius: 8px !important;
             background: rgba(255, 255, 255, 0.72) !important;
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08) !important;
-            gap: 0.18rem !important;
-            font-size: clamp(0.48rem, 2.15vw, 0.56rem) !important;
-            line-height: 1.1 !important;
+            gap: 0.35rem !important;
+            font-size: clamp(12px, 3vw, 13px) !important;
+            font-weight: 700 !important;
+            line-height: 1 !important;
+            white-space: nowrap !important;
             touch-action: manipulation;
           }
 
           :global(.customer-page-header .hero-action-finish .hero-cart-icon) {
-            width: 0.62rem !important;
-            height: 0.62rem !important;
+            width: 14px !important;
+            height: 14px !important;
           }
 
           :global(.customer-page-header .hero-action-finish .hero-finish-text) {
             display: inline !important;
-            min-width: 0;
-            white-space: nowrap;
+            white-space: nowrap !important;
           }
 
           :global([data-theme="dark"] .customer-page-header .hero-action-finish) {
