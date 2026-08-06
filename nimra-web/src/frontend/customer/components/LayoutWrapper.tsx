@@ -142,8 +142,8 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
   return (
     <div className="ds-app-shell">
       <Header companyInfo={companyInfo} />
-      <main className={`ds-main with-site-header ${pathname === '/' ? 'home-main' : ''}`}>
-        <div className="route-transition">
+      <main className={`ds-main with-site-header ${pathname === '/' ? 'home-main' : ''} ${pathname === '/settings' || pathname?.startsWith('/settings/') ? 'settings-route-main' : ''}`}>
+        <div className={`route-transition ${pathname === '/settings' || pathname?.startsWith('/settings/') ? 'settings-route-transition' : ''}`}>
           {children}
         </div>
       </main>

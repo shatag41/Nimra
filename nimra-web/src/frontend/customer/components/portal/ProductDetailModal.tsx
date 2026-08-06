@@ -200,7 +200,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
   const modal = (
     <div className="pdm-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label={`Product details: ${product.Name}`}>
       <div
-        className="pdm-container"
+        className="pdm-container product-details-modal"
         onClick={(e) => e.stopPropagation()}
         ref={modalRef}
       >
@@ -223,7 +223,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
               <span className="pdm-detail-brand">NIMRA PREMIUM</span>
 
               {/* Product Name */}
-              <h2 className="pdm-detail-name">{product.Name}</h2>
+              <h2 className="pdm-detail-name product-title">{product.Name}</h2>
 
               {/* Category */}
               <span className="pdm-detail-category">{normalizeCategory(product.Category)}</span>
@@ -1053,6 +1053,228 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           .pdm-cart-hint-premium {
             font-size: .58rem;
             line-height: 1.2;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .pdm-overlay {
+            align-items: center;
+            box-sizing: border-box;
+            padding:
+              max(0.5rem, env(safe-area-inset-top))
+              max(0.5rem, env(safe-area-inset-right))
+              max(0.5rem, env(safe-area-inset-bottom))
+              max(0.5rem, env(safe-area-inset-left));
+            overflow: hidden;
+            overscroll-behavior: contain;
+            touch-action: none;
+          }
+
+          .pdm-container {
+            width: 100%;
+            max-width: 30rem;
+            height: auto;
+            max-height: calc(100dvh - max(1rem, env(safe-area-inset-top)) - max(1rem, env(safe-area-inset-bottom)));
+            border-radius: 1rem;
+            overflow: hidden;
+            overscroll-behavior: contain;
+          }
+
+          .pdm-body {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: auto;
+            max-height: inherit;
+            overflow-x: hidden;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
+            scrollbar-width: thin;
+          }
+
+          .pdm-details-column {
+            order: 1;
+            width: 100%;
+            min-width: 0;
+            padding: 1rem 1rem 0.75rem;
+            border: 0;
+          }
+
+          .pdm-details-scroll-content {
+            gap: 0.65rem;
+          }
+
+          .pdm-container.product-details-modal .pdm-detail-name.product-title {
+            max-width: calc(100% - 2.5rem);
+            margin: 0;
+            font-size: clamp(20px, 5.5vw, 26px) !important;
+            font-weight: 800 !important;
+            line-height: 1.15 !important;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            max-height: 2.3em;
+            overflow: hidden !important;
+            overflow-wrap: anywhere !important;
+            word-break: normal !important;
+          }
+
+          .pdm-detail-category {
+            margin-top: -0.2rem;
+            font-size: 0.72rem;
+            overflow-wrap: anywhere;
+          }
+
+          .pdm-detail-section {
+            min-width: 0;
+            gap: 0.25rem;
+          }
+
+          .pdm-section-title {
+            margin: 0;
+            font-size: 0.65rem;
+          }
+
+          .pdm-detail-description {
+            font-size: 0.76rem;
+            line-height: 1.45;
+            overflow-wrap: anywhere;
+          }
+
+          .pdm-spec-tags {
+            width: 100%;
+            min-width: 0;
+            gap: 0.35rem;
+          }
+
+          .pdm-spec-tag {
+            max-width: 100%;
+            min-width: 0;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.62rem;
+            line-height: 1.25;
+            white-space: normal;
+          }
+
+          .pdm-tag-text {
+            min-width: 0;
+            overflow-wrap: anywhere;
+          }
+
+          .pdm-image-column {
+            order: 2;
+            width: 100%;
+            min-width: 0;
+            height: auto;
+            padding: 0.75rem 1rem 1rem;
+            gap: 0.65rem;
+            border: 0;
+            border-top: 1px solid rgba(191, 219, 254, 0.3);
+            overflow: visible;
+          }
+
+          .pdm-image-wrapper {
+            width: min(100%, 10rem);
+            height: auto;
+            max-width: 10rem;
+            aspect-ratio: 3 / 4;
+            margin-inline: auto;
+          }
+
+          .pdm-image-zoom-container {
+            width: 94%;
+            height: 94%;
+          }
+
+          .pdm-purchase-block {
+            gap: 0.6rem;
+          }
+
+          .pdm-image-badges {
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+          }
+
+          .pdm-badge-premium {
+            width: auto;
+            max-width: 100%;
+            height: auto;
+            min-height: 1.5rem;
+            padding: 0.25rem 0.55rem;
+            font-size: 0.58rem;
+            line-height: 1.2;
+            white-space: normal;
+            text-align: center;
+            overflow-wrap: anywhere;
+          }
+
+          .pdm-price-row-left,
+          .pdm-qty-row-left {
+            width: 100%;
+            min-width: 0;
+            justify-content: center;
+          }
+
+          .pdm-price-row-left {
+            padding-top: 0.15rem;
+          }
+
+          .pdm-price-current {
+            font-size: 1.35rem;
+          }
+
+          .pdm-qty-control {
+            width: 7.5rem;
+            height: 2.5rem;
+            padding: 0.15rem;
+          }
+
+          .pdm-qty-btn-premium {
+            width: 2.1rem;
+            height: 2.1rem;
+          }
+
+          .pdm-actions-row-left {
+            width: 100%;
+            max-width: 20rem;
+            gap: 0.45rem;
+          }
+
+          .pdm-action-buttons {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+          }
+
+          .pdm-btn {
+            width: 100%;
+            min-height: 2.75rem;
+            height: 2.75rem;
+            padding-inline: 0.9rem;
+            font-size: 0.78rem;
+          }
+
+          .pdm-btn-primary-gradient {
+            box-shadow: 0 5px 14px rgba(37, 99, 235, 0.22);
+          }
+
+          .pdm-close-btn {
+            position: absolute;
+            top: 0.65rem;
+            right: 0.65rem;
+            width: 2.5rem;
+            height: 2.5rem;
+            z-index: 110;
+          }
+
+          .pdm-cart-hint-premium {
+            font-size: 0.65rem;
+            line-height: 1.35;
+            overflow-wrap: anywhere;
           }
         }
 

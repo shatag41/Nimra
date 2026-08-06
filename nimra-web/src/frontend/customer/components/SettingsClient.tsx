@@ -68,6 +68,12 @@ export default function SettingsClient() {
 
   useEffect(() => {
     setMounted(true);
+    document.documentElement.classList.add('settings-scroll-page');
+    document.body.classList.add('settings-scroll-page');
+    return () => {
+      document.documentElement.classList.remove('settings-scroll-page');
+      document.body.classList.remove('settings-scroll-page');
+    };
   }, []);
 
   useEffect(() => {
@@ -235,17 +241,19 @@ export default function SettingsClient() {
   return (
     <main className="settings-page">
       <div className="settings-shell">
-        <CustomerPageHeader
-          badge="SETTINGS"
-          title="Account Settings"
-          subtitle="Manage security, communication preferences, and your NIMRA account."
-        />
+        <div className="settings-hero">
+          <CustomerPageHeader
+            badge="SETTINGS"
+            title="Account Settings"
+            subtitle="Manage security, communication preferences, and your NIMRA account."
+          />
+        </div>
 
         <div className="settings-grid">
-          <section className="setting-card password-card">
+          <section className="setting-card settings-card password-card">
             <div className="card-heading">
-              <span className="card-icon"><SettingsIcon type="lock" /></span>
-              <div><h2>Change Password</h2><p>Update the password used to access your account.</p></div>
+              <span className="card-icon section-icon"><SettingsIcon type="lock" /></span>
+              <div><h2 className="section-title">Change Password</h2><p>Update the password used to access your account.</p></div>
             </div>
             <form onSubmit={handlePasswordChange} className="settings-form">
               <label>Current Password<input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} autoComplete="current-password" required /></label>
@@ -255,10 +263,10 @@ export default function SettingsClient() {
             </form>
           </section>
 
-          <section className="setting-card preferences-card">
+          <section className="setting-card settings-card preferences-card">
             <div className="card-heading preference-heading">
-              <span className="card-icon"><SettingsIcon type="mail" /></span>
-              <div><h2>Email Preferences</h2><p>Choose which messages you want to receive.</p></div>
+              <span className="card-icon section-icon"><SettingsIcon type="mail" /></span>
+              <div><h2 className="section-title">Email Preferences</h2><p>Choose which messages you want to receive.</p></div>
             </div>
             {preferencesError ? (
               <div className="load-error"><p>{preferencesError}</p><button onClick={() => window.location.reload()}>Try Again</button></div>
@@ -287,10 +295,10 @@ export default function SettingsClient() {
             )}
           </section>
 
-          <section className="setting-card danger-card">
+          <section className="setting-card settings-card danger-card">
             <div className="card-heading">
-              <span className="card-icon danger"><SettingsIcon type="trash" /></span>
-              <div><h2>Delete Account</h2><p>Permanently remove your profile and saved account information.</p></div>
+              <span className="card-icon section-icon danger"><SettingsIcon type="trash" /></span>
+              <div><h2 className="section-title">Delete Account</h2><p>Permanently remove your profile and saved account information.</p></div>
             </div>
             <button className="settings-btn danger-outline" onClick={() => setDeleteStep('confirm')}>Delete Account</button>
           </section>
@@ -385,13 +393,245 @@ export default function SettingsClient() {
           .preferences-card { grid-row: auto; }
         }
         @media (max-width: 560px) {
-          .settings-page { padding: 0.5rem .75rem 1.5rem; }
-          .setting-card { padding: 0.85rem; }
-          .preference-row { padding: .65rem; }
+          .settings-page {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            padding: 0.5rem 0.65rem calc(var(--mobile-nav-height, 4.25rem) + 5.5rem + env(safe-area-inset-bottom));
+            overflow-x: hidden;
+          }
+          .settings-shell,
+          .settings-grid,
+          .setting-card,
+          .card-heading,
+          .card-heading > div,
+          .settings-form,
+          .preference-list,
+          .preference-row,
+          .preference-row > span:first-child {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+          }
+          .settings-shell { gap: 0.8rem; }
+          .settings-grid { gap: 0.8rem; }
+          .settings-page .setting-card.settings-card {
+            padding: 0.75rem !important;
+            border-radius: 0.85rem;
+          }
+          .card-heading {
+            align-items: center;
+            gap: 0.38rem;
+            margin-bottom: 0.45rem;
+          }
+          .settings-page .settings-card .card-heading h2.section-title {
+            margin: 0 0 0.08rem;
+            font-size: clamp(18px, 4.8vw, 21px) !important;
+            line-height: 1.2 !important;
+            font-weight: 700 !important;
+            overflow-wrap: anywhere !important;
+          }
+          .card-heading p {
+            font-size: clamp(0.62rem, 2.8vw, 0.66rem);
+            line-height: 1.32;
+            overflow-wrap: anywhere;
+          }
+          .settings-page .settings-card .card-icon.section-icon {
+            width: 1.5rem !important;
+            height: 1.5rem !important;
+            flex-basis: 1.5rem !important;
+            border-radius: 0.36rem;
+          }
+          .settings-page .settings-card .card-icon.section-icon :global(svg) {
+            width: 0.72rem !important;
+            height: 0.72rem !important;
+          }
+          .settings-form {
+            gap: 0.45rem;
+          }
+          label {
+            min-width: 0;
+            gap: 0.22rem;
+            font-size: 0.72rem;
+            overflow-wrap: anywhere;
+          }
+          input[type='password'],
+          input[type='text'],
+          input[type='email'] {
+            max-width: 100%;
+            min-width: 0;
+            min-height: 2.75rem;
+            padding: 0.55rem 0.7rem;
+            font-size: 0.8rem;
+          }
+          .settings-btn {
+            min-height: 2.75rem;
+            padding: 0.55rem 0.8rem;
+            font-size: 0.75rem;
+            touch-action: manipulation;
+          }
+          .settings-form .settings-btn {
+            width: 100%;
+            justify-self: stretch;
+          }
+          .preference-row {
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 0.65rem;
+            min-height: 3.75rem;
+            padding: 0.6rem;
+          }
+          .preference-row strong,
+          .preference-row small,
+          .preference-footer > span,
+          .delete-confirmation p {
+            max-width: 100%;
+            white-space: normal;
+            overflow-wrap: anywhere;
+          }
+          .preference-row strong { font-size: 0.76rem; }
+          .preference-row small { font-size: 0.67rem; line-height: 1.35; }
+          .toggle { flex: 0 0 auto; }
           .preference-footer { align-items: stretch; flex-direction: column; }
           .preference-footer .settings-btn { width: 100%; }
           .delete-actions { flex-direction: column-reverse; }
           .delete-actions .settings-btn { width: 100%; }
+        }
+
+        @media (max-width: 768px) {
+          :global(html.settings-scroll-page),
+          :global(body.settings-scroll-page) {
+            height: auto !important;
+            min-height: 100% !important;
+            overflow-x: clip !important;
+            overflow-y: visible !important;
+          }
+
+          :global(.mobile-navbar) {
+            position: fixed !important;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+          }
+
+          :global(.ds-main.settings-route-main),
+          :global(.settings-route-main > .settings-route-transition) {
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+            transform: none !important;
+            filter: none !important;
+            contain: none !important;
+            will-change: auto !important;
+          }
+
+          :global(.ds-main.settings-route-main) {
+            padding-top: 0 !important;
+          }
+
+          .settings-page {
+            padding-top: var(--mobile-navbar-height, 64px) !important;
+            overflow: visible !important;
+            transform: none !important;
+            filter: none !important;
+            contain: none !important;
+          }
+
+          .settings-shell {
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+            transform: none !important;
+            filter: none !important;
+            contain: none !important;
+          }
+
+          .settings-hero {
+            position: relative !important;
+            top: auto !important;
+            z-index: auto !important;
+            display: block !important;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            height: auto !important;
+            max-height: none !important;
+            margin-top: 0;
+            overflow: hidden !important;
+            transform: none !important;
+            filter: none !important;
+            contain: none !important;
+            isolation: auto;
+            background: #f8fbff !important;
+            opacity: 1 !important;
+            border-bottom: 1px solid rgba(37, 99, 235, 0.18);
+            box-shadow: 0 7px 18px rgba(37, 99, 235, 0.1);
+          }
+
+          :global(.settings-page .settings-hero > .customer-page-header) {
+            position: relative !important;
+            top: auto !important;
+            z-index: auto !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding-top: 0.65rem !important;
+            padding-bottom: 0.7rem !important;
+            overflow: visible !important;
+            isolation: isolate;
+            background:
+              radial-gradient(circle at 18% 18%, rgba(147, 197, 253, 0.34), transparent 32%),
+              radial-gradient(circle at 83% 52%, rgba(125, 211, 252, 0.28), transparent 34%),
+              linear-gradient(110deg, #edf6ff 0%, #ffffff 49%, #dff5ff 100%) !important;
+            box-shadow: 0 8px 22px rgba(37, 99, 235, 0.1) !important;
+            transform: none !important;
+            -webkit-transform: none !important;
+            animation: none !important;
+          }
+
+          :global([data-theme="dark"] .settings-page .settings-hero > .customer-page-header) {
+            background:
+              radial-gradient(circle at 18% 18%, rgba(37, 99, 235, 0.24), transparent 34%),
+              radial-gradient(circle at 83% 52%, rgba(14, 165, 233, 0.18), transparent 34%),
+              linear-gradient(110deg, #081525 0%, #0f172a 48%, #0b2436 100%) !important;
+          }
+
+          .settings-page .settings-card .card-heading {
+            align-items: center !important;
+            gap: 0.34rem !important;
+            margin-bottom: 0.38rem !important;
+          }
+
+          .settings-page .settings-card .card-heading h2.section-title {
+            margin: 0.2rem 0 0.1rem !important;
+            font-size: 1.05rem !important;
+            font-weight: 700 !important;
+            line-height: 1.25 !important;
+            letter-spacing: normal !important;
+          }
+
+          .settings-page .settings-card .card-heading p {
+            margin: 0 !important;
+            font-size: 0.66rem !important;
+            line-height: 1.3 !important;
+          }
+
+          .settings-page .settings-card .card-icon.section-icon {
+            width: 1.375rem !important;
+            height: 1.375rem !important;
+            flex: 0 0 1.375rem !important;
+            border-radius: 0.35rem !important;
+          }
+
+          .settings-page .settings-card .card-icon.section-icon :global(svg) {
+            width: 0.68rem !important;
+            height: 0.68rem !important;
+          }
+
+          .settings-grid {
+            margin-top: 0 !important;
+          }
         }
       `}</style>
     </main>

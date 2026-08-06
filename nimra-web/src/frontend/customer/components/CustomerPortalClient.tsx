@@ -1798,6 +1798,23 @@ function EditProfileForm({ user, onUpdate }: { user: any; onUpdate: (user: any) 
         @keyframes spin {
           to { transform: rotate(360deg); }
         }
+
+        @media (max-width: 768px) {
+          .profile-edit-panel .profile-edit-header h2 {
+            margin: 0 0 0.25rem !important;
+            font-size: clamp(18px, 4.8vw, 21px) !important;
+            line-height: 1.2 !important;
+            font-weight: 700 !important;
+            overflow-wrap: anywhere !important;
+          }
+
+          .profile-edit-panel .profile-edit-header p {
+            margin: 0 !important;
+            font-size: 0.78rem !important;
+            line-height: 1.4 !important;
+            overflow-wrap: anywhere !important;
+          }
+        }
       `}</style>
     </div>
   );

@@ -49,6 +49,7 @@ function ProfileThemeToggle({ theme, onToggle }: { theme: AppTheme; onToggle: ()
 }
 
 export default React.memo(function Header({ companyInfo }: HeaderProps) {
+  const headerRef = useRef<HTMLElement>(null);
   const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState<AppTheme>('light');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -119,6 +120,26 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
       window.removeEventListener(THEME_CHANGE_EVENT, handleThemeChange);
 
       clearTimeout(transitionTimeout);
+    };
+  }, []);
+
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+
+    const publishRenderedHeight = () => {
+      document.documentElement.style.setProperty('--mobile-navbar-height', `${header.getBoundingClientRect().height}px`);
+    };
+
+    publishRenderedHeight();
+    const resizeObserver = new ResizeObserver(publishRenderedHeight);
+    resizeObserver.observe(header);
+    window.addEventListener('resize', publishRenderedHeight);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', publishRenderedHeight);
+      document.documentElement.style.removeProperty('--mobile-navbar-height');
     };
   }, []);
 
@@ -293,7 +314,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
 
   return (
     <>
-      <header className={`header ${pathname === '/' ? 'home-overlay' : ''} ${isAuthenticationRoute ? 'authentication-header' : ''}`}>
+      <header ref={headerRef} className={`header mobile-navbar ${pathname === '/' ? 'home-overlay' : ''} ${isAuthenticationRoute ? 'authentication-header' : ''}`}>
         {/* Top accent bar */}
         <div className="header-accent-bar" />
 
