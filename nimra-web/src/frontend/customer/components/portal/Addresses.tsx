@@ -75,7 +75,8 @@ export function Addresses() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const hasBlockingModal = Boolean(duplicateAddress);
+  const hasBlockingModal = Boolean(duplicateAddress)
+    || (isAdding && typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches);
 
   useEffect(() => {
     if (!hasBlockingModal || typeof document === 'undefined') return;
@@ -110,6 +111,16 @@ export function Addresses() {
       window.scrollTo(0, scrollY);
     };
   }, [hasBlockingModal]);
+
+  useEffect(() => {
+    if (!isAdding || typeof document === 'undefined') return;
+    document.documentElement.classList.add('address-form-modal-open');
+    document.body.classList.add('address-form-modal-open');
+    return () => {
+      document.documentElement.classList.remove('address-form-modal-open');
+      document.body.classList.remove('address-form-modal-open');
+    };
+  }, [isAdding]);
 
   useEffect(() => {
     if (!user) {
@@ -546,8 +557,13 @@ export function Addresses() {
         <div className="address-form-wrapper">
           <div className="address-form-panel glass animate-fade-in-up">
             <div className="form-header">
-              <h3>{editId ? 'Modify Saved Address' : 'Add New Address'}</h3>
-              <p>Ensure details match your shipping location accurately.</p>
+              <div className="form-header-copy">
+                <h3>{editId ? 'Modify Saved Address' : 'Add New Address'}</h3>
+                <p>Ensure details match your shipping location accurately.</p>
+              </div>
+              <button type="button" className="address-modal-close" onClick={handleCancelForm} aria-label="Close address form">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+              </button>
             </div>
             <form onSubmit={handleSave}>
             {/* Address Group */}
@@ -713,7 +729,7 @@ export function Addresses() {
                 Cancel
               </button>
               <LoadingButton type="submit" className="btn-submit address-footer-save" isLoading={saving} loadingText="Saving...">
-                Save Address
+                {editId ? 'Update Address' : 'Save Address'}
               </LoadingButton>
             </div>
           </form>
@@ -1140,6 +1156,8 @@ export function Addresses() {
           margin: 0;
           font-size: 0.85rem;
         }
+
+        .address-modal-close { display: none; }
  
         .form-fields-group {
           display: grid;
@@ -1562,9 +1580,102 @@ export function Addresses() {
  
         /* Mobile adaptation */
         @media (max-width: 640px) {
-          .addresses-container { margin-top: -2.5rem; }
-          .addresses-metrics, .addresses-grid { grid-template-columns: 1fr; }
-          .addresses-metrics { gap: .7rem; }
+          :global(html.address-form-modal-open),
+          :global(body.address-form-modal-open) {
+            overflow: hidden !important;
+            overscroll-behavior: none;
+          }
+
+          :global(body.address-form-modal-open .whatsapp-fab) {
+            display: none !important;
+          }
+
+          .addresses-container {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            margin-top: 0;
+            padding-bottom: calc(var(--mobile-nav-height, 4.25rem) + 4.5rem + env(safe-area-inset-bottom));
+            overflow-x: clip;
+            transform: none;
+          }
+
+          :global(.portal-page > .addresses-page-header) {
+            position: relative !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            transform: none !important;
+            animation: none !important;
+            opacity: 1 !important;
+          }
+
+          :global(.addresses-page-header .hero-actions-wrapper) {
+            position: static !important;
+            inset: auto !important;
+            transform: none !important;
+            flex: 0 0 var(--address-header-action-width) !important;
+            width: var(--address-header-action-width) !important;
+            max-width: var(--address-header-action-width) !important;
+            min-width: 0 !important;
+          }
+
+          :global(.addresses-page-header .customer-page-header__badge-row) {
+            position: static !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex-wrap: nowrap !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            min-height: 1.45rem;
+            gap: .3rem;
+            transform: none !important;
+            --address-header-action-width: clamp(6.4rem, 30vw, 7.4rem);
+          }
+
+          :global(.addresses-page-header .customer-page-header__badge-row::before) {
+            content: '';
+            display: block;
+            flex: 0 0 var(--address-header-action-width);
+            width: var(--address-header-action-width);
+          }
+
+          :global(.addresses-page-header .customer-page-header__badge) {
+            position: static !important;
+            flex: 0 0 auto !important;
+            min-width: 0 !important;
+          }
+
+          :global(.portal-page .addresses-tab-section) {
+            position: relative;
+            margin-top: clamp(.75rem, 3.5vw, 1rem) !important;
+            transform: none;
+          }
+
+          .addresses-metrics {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-auto-rows: 1fr;
+            gap: clamp(.45rem, 2.2vw, .65rem);
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+          }
+
+          .addresses-grid {
+            grid-template-columns: minmax(0, 1fr);
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+          }
+
+          .add-address-row {
+            width: 100%;
+            min-width: 0;
+            margin: .75rem 0 .8rem;
+          }
+
           .address-card { padding: .75rem; }
           .address-card-footer { grid-template-columns: 1fr; }
           .duplicate-modal { padding: 1.15rem; border-radius: 20px; }
@@ -1575,11 +1686,164 @@ export function Addresses() {
           .btn-add-address {
             width: 100%;
             justify-content: center;
+            min-width: 0;
+          }
+
+          .empty-state-card {
+            width: 100%;
+            min-width: 0;
+            min-height: clamp(13rem, 58vw, 17rem);
+            padding: clamp(1.25rem, 6vw, 2rem) clamp(.8rem, 4vw, 1.25rem);
+            gap: .7rem;
+            overflow: visible;
+          }
+
+          .empty-state-card h4,
+          .empty-state-card p {
+            width: 100%;
+            min-width: 0;
+            max-width: 22rem;
+            overflow-wrap: anywhere;
+          }
+
+          .empty-icon-wrapper { flex: 0 0 auto; }
+
+          .btn-add-address-empty {
+            width: min(100%, 15rem);
+            min-width: 0;
+            min-height: 44px;
+          }
+
+          .address-form-wrapper {
+            position: fixed;
+            top: var(--mobile-navbar-height, 64px);
+            right: 0;
+            bottom: calc(var(--mobile-nav-height, 64px) + env(safe-area-inset-bottom));
+            left: 0;
+            z-index: 1400;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            height: calc(100vh - var(--mobile-navbar-height, 64px) - var(--mobile-nav-height, 64px) - env(safe-area-inset-bottom));
+            height: calc(100dvh - var(--mobile-navbar-height, 64px) - var(--mobile-nav-height, 64px) - env(safe-area-inset-bottom));
+            margin: 0;
+            padding: .55rem;
+            overflow: hidden;
+            background: rgba(15, 23, 42, .58);
+            overscroll-behavior: contain;
+          }
+
+          .address-form-panel {
+            width: min(100%, 34rem);
+            max-width: 34rem;
+            min-width: 0;
+            height: 100%;
+            max-height: 52rem;
+            margin: 0;
+            padding: 0;
+            gap: 0;
+            overflow-x: hidden;
+            overflow-y: hidden;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 1.1rem 1.1rem .8rem .8rem;
+            background: var(--bg-secondary);
+            animation: none;
+          }
+
+          .form-header {
+            position: sticky;
+            top: 0;
+            z-index: 3;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: .75rem;
+            width: 100%;
+            min-width: 0;
+            padding: .9rem .9rem .75rem;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+          }
+
+          .form-header-copy { min-width: 0; }
+
+          .address-modal-close {
+            display: grid;
+            place-items: center;
+            flex: 0 0 40px;
+            width: 40px;
+            height: 40px;
+            min-height: 40px;
+            padding: 0;
+            color: var(--text-primary);
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            cursor: pointer;
+            touch-action: manipulation;
+          }
+
+          .address-modal-close svg {
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+          }
+
+          .address-form-panel > form {
+            display: flex;
+            flex: 1 1 auto;
+            min-height: 0;
+            min-width: 0;
+            flex-direction: column;
+            overflow: hidden;
+          }
+
+          .address-form-panel .form-fields-group {
+            flex: 1 1 auto;
+            min-height: 0;
+            min-width: 0;
+            padding: .8rem .9rem 1rem;
+            overflow-x: hidden;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+            scroll-padding-bottom: 1rem;
           }
  
           .form-fields-group {
             grid-template-columns: 1fr;
-            gap: 1rem;
+            gap: .72rem;
+          }
+
+          .form-group,
+          .form-label,
+          .label-row-header,
+          .type-selectors-wrapper,
+          .save-future-checkbox-label,
+          .error-message {
+            min-width: 0;
+            max-width: 100%;
+            overflow-wrap: anywhere;
+          }
+
+          .form-input,
+          .form-select,
+          .btn-use-location {
+            min-width: 0;
+            max-width: 100%;
+            box-sizing: border-box;
+          }
+
+          .label-row-header {
+            gap: .6rem;
+            flex-wrap: wrap;
           }
  
           .type-selectors-wrapper {
@@ -1588,9 +1852,15 @@ export function Addresses() {
           }
  
           .form-actions-footer {
+            position: sticky;
+            bottom: 0;
+            z-index: 3;
             flex-direction: column-reverse;
-            gap: 16px;
-            padding: 16px 20px 20px;
+            gap: .6rem;
+            flex: 0 0 auto;
+            padding: .7rem .9rem;
+            background: var(--bg-secondary);
+            box-shadow: 0 -8px 20px rgba(15, 23, 42, .08);
           }
  
           .address-footer-button,
