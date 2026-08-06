@@ -272,12 +272,32 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
             )}
           </div>
           {hasMultipleMobilePages && (
-            <div className="recently-viewed-pagination" aria-label={`Recently viewed page ${mobilePage + 1} of ${mobilePageCount}`}>
+            <div 
+              aria-label={`Recently viewed page ${mobilePage + 1} of ${mobilePageCount}`}
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '8px',
+                marginTop: '10px',
+                width: '100%',
+                padding: '0'
+              }}
+            >
               {mobilePages.map((_, index) => (
-                <button
-                  type="button"
+                <div
                   key={`recent-dot-${index}`}
-                  className={`recently-viewed-dot ${index === mobilePage ? 'active' : ''}`}
+                  style={{
+                    width: '7px',
+                    height: '7px',
+                    borderRadius: '50%',
+                    backgroundColor: index === mobilePage ? '#2563EB' : '#D1D5DB',
+                    margin: '0',
+                    padding: '0',
+                    flex: '0 0 7px',
+                    cursor: 'pointer',
+                    transition: 'background-color 150ms ease'
+                  }}
                   onClick={() => {
                     registerMobileCarouselInteraction();
                     goToMobilePage(index);
@@ -666,29 +686,32 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.32rem;
-            min-height: 1.2rem;
-            margin-top: 0.55rem;
+            gap: 8px;
+            width: fit-content;
+            margin: 10px auto 0;
+            padding: 0;
           }
           .recently-viewed-dot {
-            width: 0.38rem;
-            height: 0.38rem;
+            width: 7px;
+            height: 7px;
+            flex: 0 0 7px;
+            min-width: 7px;
+            max-width: 7px;
             padding: 0;
             border: 0;
-            border-radius: 999px;
-            background: rgba(37, 99, 235, 0.22);
+            border-radius: 50%;
+            background: rgba(150, 150, 150, 0.45);
             cursor: pointer;
-            transition: width 180ms ease, background 180ms ease;
+            transition: background 180ms ease;
           }
           .recently-viewed-dot.active {
-            width: 1.05rem;
-            background: var(--primary-color);
+            background: #2563EB;
           }
           :global([data-theme="dark"]) .recently-viewed-dot {
-            background: rgba(147, 197, 253, 0.25);
+            background: rgba(150, 150, 150, 0.45);
           }
           :global([data-theme="dark"]) .recently-viewed-dot.active {
-            background: #93c5fd;
+            background: var(--primary-color, #3B82F6);
           }
         }
         
