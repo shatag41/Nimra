@@ -50,17 +50,55 @@ export default function OrderDetailsModal({
   formatDate,
 }: OrderDetailsModalProps) {
   const router = useRouter();
+  const [itemsExpanded, setItemsExpanded] = React.useState(() => typeof window !== 'undefined' && !window.matchMedia('(max-width: 768px)').matches);
+  const [addressExpanded, setAddressExpanded] = React.useState(() => typeof window !== 'undefined' && !window.matchMedia('(max-width: 768px)').matches);
+  const [orderIdCopied, setOrderIdCopied] = React.useState(false);
+
+  const copyOrderId = async () => {
+    try {
+      await navigator.clipboard.writeText(selectedOrder.orderId);
+      setOrderIdCopied(true);
+      window.setTimeout(() => setOrderIdCopied(false), 1600);
+    } catch {
+      // The complete ID remains available through the button title if clipboard access is unavailable.
+    }
+  };
   React.useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
+    const body = document.body;
+    const root = document.documentElement;
+    const scrollY = window.scrollY;
+    const isMobileViewport = window.matchMedia('(max-width: 768px)').matches;
+    const previousBodyStyles = {
+      overflow: body.style.overflow,
+      position: body.style.position,
+      top: body.style.top,
+      width: body.style.width,
+    };
+    const previousRootOverflow = root.style.overflow;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setSelectedOrder(null);
     };
 
-    document.body.style.overflow = 'hidden';
+    root.classList.add('order-details-modal-open');
+    body.classList.add('order-details-modal-open');
+    root.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    if (isMobileViewport) {
+      body.style.position = 'fixed';
+      body.style.top = `-${scrollY}px`;
+      body.style.width = '100%';
+    }
     window.addEventListener('keydown', handleKeyDown);
     return () => {
-      document.body.style.overflow = previousOverflow;
+      root.classList.remove('order-details-modal-open');
+      body.classList.remove('order-details-modal-open');
+      root.style.overflow = previousRootOverflow;
+      body.style.overflow = previousBodyStyles.overflow;
+      body.style.position = previousBodyStyles.position;
+      body.style.top = previousBodyStyles.top;
+      body.style.width = previousBodyStyles.width;
       window.removeEventListener('keydown', handleKeyDown);
+      if (isMobileViewport) window.scrollTo(0, scrollY);
     };
   }, [setSelectedOrder]);
 
@@ -117,8 +155,13 @@ export default function OrderDetailsModal({
 
           <span className="order-modal-label">Order Details</span>
           <div className="order-modal-title-row">
-            <h2>#{selectedOrder.orderId || 'N/A'}</h2>
+            <h2>
+              <button type="button" className="order-id-copy" onClick={copyOrderId} title={`Copy full Order ID: ${selectedOrder.orderId || 'N/A'}`} aria-label={`Copy full Order ID ${selectedOrder.orderId || 'N/A'}`}>
+                #{selectedOrder.orderId || 'N/A'}
+              </button>
+            </h2>
             <span className={`order-header-status status-${status.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}>{status}</span>
+            {orderIdCopied && <span className="order-id-copied" role="status">Copied</span>}
           </div>
         </div>
 
@@ -135,16 +178,22 @@ export default function OrderDetailsModal({
                 <div><span className="meta-label">{label}</span><span className={valueClass || 'meta-value'}>{value}</span></div>
               </div>
             ))}
+            <div className="summary-item mobile-quantity-summary">
+              <span className="summary-icon"><ModalIcon name="package" /></span>
+              <div><span className="meta-label">Total Quantity</span><span className="meta-value">{items.reduce((sum, item) => sum + Number(item.quantity || 0), 0)}</span></div>
+            </div>
           </div>
         </div>
 
         <div className="modal-scroll-area">
 
           <div className="items-section">
-            <div className="section-header-compact">
-              <h3>Items</h3>
-              <span className="item-count-badge">{items.length}</span>
-            </div>
+            <button type="button" className="section-header-compact collapsible-section-trigger" onClick={() => setItemsExpanded((expanded) => !expanded)} aria-expanded={itemsExpanded} aria-controls="order-details-items">
+              <span className="collapsible-title"><span>Items</span><span className="item-count-badge">{items.length}</span></span>
+              <svg className="section-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+            </button>
+            <div id="order-details-items" className={`collapsible-section-content ${itemsExpanded ? 'is-expanded' : ''}`}>
+            <div className="collapsible-section-inner">
             <div className={`details-items-list ${items.length > 2 ? 'is-scrollable' : ''}`}>
               {items.length ? (
                 items.map((item, index) => (
@@ -170,10 +219,17 @@ export default function OrderDetailsModal({
                 <div className="empty-details-row">No item details are available.</div>
               )}
             </div>
+            </div>
+            </div>
           </div>
 
           <div className="delivery-section">
-            <h3><ModalIcon name="location" /> Delivery Address</h3>
+            <button type="button" className="collapsible-section-trigger delivery-section-trigger" onClick={() => setAddressExpanded((expanded) => !expanded)} aria-expanded={addressExpanded} aria-controls="order-delivery-address">
+              <span className="collapsible-title"><ModalIcon name="location" /><span>Delivery Address</span></span>
+              <svg className="section-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+            </button>
+            <div id="order-delivery-address" className={`collapsible-section-content ${addressExpanded ? 'is-expanded' : ''}`}>
+            <div className="collapsible-section-inner">
             <div className="delivery-address-box">
               <div className="address-icon-wrap">
                 <ModalIcon name="location" />
@@ -186,6 +242,8 @@ export default function OrderDetailsModal({
                 </p>
                 <p className="delivery-phone"><ModalIcon name="phone" /> {customerMobile || 'Not available'}</p>
               </div>
+            </div>
+            </div>
             </div>
           </div>
         </div>
@@ -258,6 +316,9 @@ export default function OrderDetailsModal({
 
         .order-modal-title-row { display:flex;align-items:center;gap:.65rem;min-width:0;margin:0; }
         .order-modal-title-row h2 { min-width:0;margin:0;color:var(--text-primary);font-size:clamp(.9rem,2.2vw,1.15rem);font-weight:800;line-height:1.2;white-space:nowrap; }
+        .order-id-copy { display:block;max-width:100%;margin:0;padding:0;overflow:hidden;border:0;background:transparent;color:inherit;font:inherit;font-weight:inherit;line-height:inherit;text-align:left;text-overflow:ellipsis;white-space:nowrap;cursor:pointer; }
+        .order-id-copy:focus-visible { outline:2px solid var(--primary-color);outline-offset:3px;border-radius:4px; }
+        .order-id-copied { flex:0 0 auto;color:#15803d;font-size:.62rem;font-weight:800; }
         .order-header-status { flex:0 0 auto;display:inline-flex;align-items:center;min-height:24px;padding:.22rem .55rem;border:1px solid currentColor;border-radius:999px;font-size:.65rem;font-weight:800;line-height:1;text-transform:uppercase;letter-spacing:.04em; }
         .order-header-status.status-pending,
         .order-header-status.status-confirmed { color:#c2410c;background:#fff7ed;border-color:#fdba74; }
@@ -306,6 +367,8 @@ export default function OrderDetailsModal({
           gap: 0.15rem;
         }
 
+        .mobile-quantity-summary { display: none; }
+
         .modal-scroll-area {
           overflow-y: auto;
           padding: 1rem 1.15rem;
@@ -353,6 +416,12 @@ export default function OrderDetailsModal({
           gap: 0.5rem;
           margin-bottom: 0.5rem;
         }
+
+        .collapsible-section-trigger { width:100%;min-width:0;margin:0 0 .5rem;padding:0;display:flex;align-items:center;justify-content:space-between;gap:.5rem;border:0;background:transparent;color:var(--text-primary);font:inherit;font-size:.85rem;font-weight:700;text-align:left;pointer-events:none; }
+        .collapsible-title { min-width:0;display:flex;align-items:center;gap:.45rem; }
+        .section-chevron { display:none;width:18px;height:18px;flex:0 0 18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform 220ms ease; }
+        .collapsible-section-content { display:grid;grid-template-rows:1fr;transition:grid-template-rows 240ms ease,opacity 180ms ease; }
+        .collapsible-section-inner { min-height:0;overflow:hidden; }
         
         .section-header-compact h3 { margin: 0; }
         
@@ -609,7 +678,86 @@ export default function OrderDetailsModal({
         .btn-track { color: #fff; border: 1px solid #2563eb; background: linear-gradient(135deg,#3b82f6,#1d4ed8); box-shadow: 0 6px 16px rgba(37,99,235,.22); }
 
         @media (max-width: 768px) {
+          :global(html.order-details-modal-open),
+          :global(body.order-details-modal-open) { overflow: hidden !important; overscroll-behavior: none; }
+          :global(body.order-details-modal-open .whatsapp-fab) { display: none !important; }
+
+          .order-details-overlay {
+            top: max(.4rem, env(safe-area-inset-top));
+            right: 0;
+            bottom: calc(var(--mobile-nav-height, 64px) + env(safe-area-inset-bottom));
+            left: 0;
+            height: calc(100vh - var(--mobile-nav-height, 64px) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - .4rem);
+            height: calc(100dvh - var(--mobile-nav-height, 64px) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - .4rem);
+            padding: .4rem;
+            overflow: hidden;
+            overscroll-behavior: none;
+          }
+
+          .order-details-modal {
+            width: min(calc(100% - .35rem), 34rem);
+            height: min(calc(100% - .35rem), 40rem);
+            max-height: calc(100% - .35rem);
+            min-width: 0;
+            border-radius: 1.15rem;
+          }
+
+          .modal-title-header,
+          .summary-card,
+          .modal-footer-actions { flex: 0 0 auto; }
+
+          .modal-title-header { min-height:0;padding:.42rem .58rem .46rem; }
+          .order-modal-label { margin:0 0 .12rem;font-size:.52rem;line-height:1; }
+          .order-modal-title-row { display:grid;grid-template-columns:minmax(0,1fr) 32px;align-items:center;min-width:0;gap:.22rem .4rem;padding:0; }
+          .order-modal-title-row h2 { grid-column:1 / -1;grid-row:1;min-width:0;max-width:100%;margin:0;overflow:hidden;font-size:18px !important;font-weight:700 !important;line-height:1.08 !important;white-space:nowrap !important; }
+          .order-id-copy { width:100%;max-width:100%;overflow:hidden;font-size:inherit !important;font-weight:inherit !important;line-height:inherit !important;text-overflow:ellipsis;white-space:nowrap !important; }
+          .order-header-status { grid-column:1;grid-row:2;justify-self:start;max-width:calc(100% - .25rem);min-width:0;min-height:21px;padding:.16rem .42rem;overflow:hidden;font-size:.58rem;text-overflow:ellipsis;white-space:nowrap; }
+          .order-id-copied { grid-column:1;grid-row:2;justify-self:end;margin-right:.25rem; }
+          .close-modal-btn.top-right { position:absolute;top:auto;right:.58rem;bottom:.46rem;width:30px;height:30px; }
+
           .summary-card-details { grid-template-columns: repeat(2,minmax(0,1fr)); }
+          .summary-card { padding: .42rem .55rem; }
+          .summary-item { min-height: 2.8rem; padding: .34rem .42rem; align-items: center; }
+          .mobile-quantity-summary { display: flex; }
+          .summary-item > div, .meta-value, .meta-value-price { min-width: 0; max-width: 100%; overflow-wrap: anywhere; word-break: break-word; }
+          .summary-icon { width: 24px; height: 24px; flex-basis: 24px; }
+
+          .modal-scroll-area {
+            flex: 1 1 auto;
+            min-height: 0;
+            min-width: 0;
+            padding: .55rem;
+            gap: .62rem;
+            overflow-x: hidden;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+            scroll-padding-bottom: 1rem;
+          }
+
+          .details-items-list.is-scrollable { max-height: none; overflow: visible; padding-right: 0; scrollbar-gutter: auto; }
+          .details-item-row { min-width: 0; }
+          .item-row-left, .item-row-info, .item-row-right { min-width: 0; }
+          .item-row-name, .item-row-category { max-width: 100%; overflow-wrap: anywhere; word-break: break-word; }
+          .delivery-address-box, .address-text-wrap { min-width: 0; }
+          .address-text-wrap strong, .address-text-wrap p { overflow-wrap: anywhere; word-break: break-word; }
+          .collapsible-section-trigger { min-height:40px;margin:0;padding:.42rem .55rem;pointer-events:auto;border:1px solid var(--border-color);border-radius:.7rem;background:color-mix(in srgb,var(--bg-secondary) 94%,var(--primary-color) 3%);font-size:.76rem;cursor:pointer;touch-action:manipulation; }
+          .collapsible-section-trigger:focus-visible { outline:2px solid var(--primary-color);outline-offset:2px; }
+          .section-chevron { display:block; }
+          .collapsible-section-trigger[aria-expanded="true"] .section-chevron { transform:rotate(180deg); }
+          .collapsible-section-content { grid-template-rows:0fr;opacity:0; }
+          .collapsible-section-content.is-expanded { grid-template-rows:1fr;opacity:1; }
+          .collapsible-section-content.is-expanded .collapsible-section-inner { padding-top:.45rem; }
+
+          .modal-footer-actions {
+            position: relative;
+            z-index: 2;
+            padding: .5rem .58rem max(.5rem, env(safe-area-inset-bottom));
+            background: color-mix(in srgb, var(--bg-secondary) 96%, transparent);
+            box-shadow: 0 -8px 22px rgba(15,23,42,.08);
+          }
+
+          .modal-footer-actions .btn { min-height: 44px; min-width: 0; }
           .summary-card-details.single-row {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -618,28 +766,38 @@ export default function OrderDetailsModal({
         }
         
         @media (max-width: 540px) {
-          .order-details-overlay { padding: .5rem; }
-          .order-details-modal { border-radius: 20px; max-height: 94vh; }
-          .modal-title-header { padding:.85rem 2.75rem .75rem .75rem; }
-          .summary-card { padding:.65rem .75rem; }
+          .order-details-overlay { padding: .3rem; }
+          .order-details-modal { border-radius: 1rem; max-height: 100%; }
+          .modal-title-header { padding:.68rem 2.8rem .58rem .68rem; }
+          .summary-card { padding:.48rem .58rem; }
           .order-modal-title-row { gap:.4rem; }
-          .order-modal-title-row h2 { font-size:.82rem; }
-          .summary-card-details { grid-template-columns: 1fr; gap: .4rem; }
+          .order-modal-title-row h2 { font-size:18px !important; }
+          .summary-card-details { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .36rem; }
           .summary-item { padding: .4rem .5rem; }
           .summary-card-details.single-row {
             grid-template-columns: repeat(2, 1fr);
           }
 
           .modal-footer-actions {
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
             align-items: stretch;
-            gap: 0.75rem;
+            gap: .45rem;
           }
+
+          .modal-footer-actions > .btn,
+          .modal-footer-actions > div:not(.footer-right-actions) .btn { width: 100%; }
+
+          .modal-footer-actions > div:not(.footer-right-actions) { min-width: 0; }
+          .pending-cancel-notice { max-width: 100%; overflow-wrap: anywhere; }
           
           .footer-right-actions {
             display: grid;
             grid-template-columns: 1fr 1fr;
             width: 100%;
+            min-width: 0;
+            margin-left: 0;
+            gap: .45rem;
           }
 
           .details-item-row {
@@ -659,6 +817,16 @@ export default function OrderDetailsModal({
             padding-top: 0.5rem;
             margin-top: 0.2rem;
           }
+        }
+
+        @media (max-width: 360px) {
+          .summary-card-details { grid-template-columns: 1fr 1fr; }
+          .summary-item { min-height: 2.9rem; padding: .35rem .4rem; gap: .35rem; }
+          .summary-icon { display: none; }
+          .meta-label { font-size: .52rem; }
+          .meta-value, .meta-value-price { font-size: .68rem; }
+          .item-row-img-wrapper { width: 44px; height: 44px; flex-basis: 44px; }
+          .modal-footer-actions .btn { padding-inline: .4rem; font-size: .7rem; }
         }
       `}</style>
     </div>,
