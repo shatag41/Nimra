@@ -52,6 +52,16 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
     return 'cancelled';
   };
 
+  const handleActionPointerDown = (event: React.PointerEvent<HTMLButtonElement>) => {
+    const button = event.currentTarget;
+    const bounds = button.getBoundingClientRect();
+    button.style.setProperty('--orders-ripple-x', `${event.clientX - bounds.left}px`);
+    button.style.setProperty('--orders-ripple-y', `${event.clientY - bounds.top}px`);
+    button.classList.remove('is-rippling');
+    void button.offsetWidth;
+    button.classList.add('is-rippling');
+  };
+
   return (
     <div className="panel orders-panel">
       <div className="panel-head">
@@ -71,21 +81,23 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
           <button 
             type="button" 
             onClick={() => router.push('/orders')}
-            className="btn-portal-secondary"
+            onPointerDown={handleActionPointerDown}
+            className="btn-portal-secondary orders-action--view"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg className="orders-action-icon" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
               <circle cx="12" cy="12" r="3"></circle>
             </svg>
             View All Orders
           </button>
           <button 
-            className={`btn-portal-secondary ${loadingOrders ? 'loading' : ''}`} 
+            className={`btn-portal-secondary orders-action--refresh ${loadingOrders ? 'loading' : ''}`}
             type="button" 
             onClick={onRefresh} 
+            onPointerDown={handleActionPointerDown}
             disabled={loadingOrders}
           >
-            <svg className={loadingOrders ? 'spin' : ''} xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg className={`orders-action-icon ${loadingOrders ? 'spin' : ''}`} xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
             </svg>
             <span>{loadingOrders ? 'Refreshing...' : 'Refresh'}</span>
@@ -308,6 +320,110 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
         @keyframes spin-anim {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+
+        /* Mobile-only affordances for the Orders panel action icons. */
+        @media (max-width: 768px) {
+          .orders-panel .orders-action--view,
+          .orders-panel .orders-action--refresh {
+            position: relative;
+            isolation: isolate;
+            min-height: 38px !important;
+            height: 38px !important;
+            padding: 0.35rem 0.65rem !important;
+            overflow: hidden;
+            border-color: rgba(37, 99, 235, 0.48);
+            cursor: pointer;
+            transform: translateZ(0);
+            transition: transform 150ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out, color 180ms ease-out;
+          }
+          .orders-action--view:hover:not(:disabled),
+          .orders-action--refresh:hover:not(:disabled) {
+            border-color: rgba(37, 99, 235, 0.48);
+            color: var(--text-primary);
+            background: var(--bg-secondary);
+            transform: translateZ(0);
+            box-shadow: none;
+          }
+          .orders-action--view::after,
+          .orders-action--refresh::after {
+            position: absolute;
+            top: var(--orders-ripple-y, 50%);
+            left: var(--orders-ripple-x, 50%);
+            z-index: 0;
+            width: 12px;
+            height: 12px;
+            content: '';
+            border-radius: 50%;
+            background: rgba(37, 99, 235, 0.2);
+            opacity: 0;
+            pointer-events: none;
+            transform: translate(-50%, -50%) scale(0);
+          }
+          .orders-action--view.is-rippling::after,
+          .orders-action--refresh.is-rippling::after {
+            animation: orders-action-ripple 420ms ease-out;
+          }
+          .orders-action--view:active:not(:disabled),
+          .orders-action--refresh:active:not(:disabled) {
+            border-color: #1d4ed8;
+            color: #1d4ed8;
+            box-shadow: 0 3px 12px rgba(37, 99, 235, 0.24);
+            transform: scale(0.96);
+            transition-duration: 120ms;
+          }
+          .orders-action--view > *,
+          .orders-action--refresh > * {
+            position: relative;
+            z-index: 1;
+          }
+          .orders-action-icon {
+            color: #2563eb;
+            filter: drop-shadow(0 0 3px rgba(37, 99, 235, 0.3));
+            transform-origin: center;
+            will-change: transform, opacity;
+            transition: transform 180ms ease, filter 180ms ease;
+          }
+          .orders-action--view .orders-action-icon {
+            animation: orders-view-icon-pulse 3s ease-in-out infinite;
+          }
+          .orders-action--refresh .orders-action-icon {
+            animation: orders-refresh-icon-rotate 3s ease-in-out infinite;
+          }
+          /* Preserve the existing faster spinner while a refresh is in progress. */
+          .orders-action--refresh .orders-action-icon.spin {
+            animation: spin-anim 1s linear infinite;
+          }
+          .orders-action--view:active:not(:disabled) .orders-action-icon,
+          .orders-action--refresh:active:not(:disabled) .orders-action-icon {
+            color: #1d4ed8;
+            filter: drop-shadow(0 0 5px rgba(37, 99, 235, 0.65));
+          }
+
+          @keyframes orders-action-ripple {
+            0% { opacity: 0.35; transform: translate(-50%, -50%) scale(0); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(14); }
+          }
+          @keyframes orders-view-icon-pulse {
+            0%, 82%, 100% { transform: scale(1); opacity: 0.88; }
+            91% { transform: scale(1.06); opacity: 1; }
+          }
+          @keyframes orders-refresh-icon-rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .orders-action--view .orders-action-icon,
+          .orders-action--refresh .orders-action-icon,
+          .orders-action--refresh .orders-action-icon.spin {
+            animation: none;
+          }
+          .orders-action--view.is-rippling::after,
+          .orders-action--refresh.is-rippling::after {
+            animation: none;
+          }
         }
 
         /* ── Table wrapper: never overflow viewport ── */
