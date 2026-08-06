@@ -212,7 +212,7 @@ function CustomerPortalClient({ initialTab }: CustomerPortalClientProps) {
   return (
     <>
       <div className="portal-page">
-      <CustomerPageHeader {...portalHeader} className={tab === 'addresses' ? 'addresses-page-header' : ''} showCartCTA={true} />
+      <CustomerPageHeader {...portalHeader} className={tab === 'addresses' ? 'addresses-page-header' : ''} />
 
       {tab === 'addresses' ? (
         <section className="portal-tab-section addresses-tab-section" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1rem', width: '100%' }}>

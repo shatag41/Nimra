@@ -6,7 +6,7 @@ import { useCart } from '@/frontend/customer/hooks/useCart';
 import { useAuth } from '@/frontend/customer/contexts/AuthContext';
 import { consumeBackDestination, meaningfulPath, useNavigationHistory } from '@/frontend/customer/navigation/navigationHistory';
 
-export default function HeroActionButtons({ hideBackButton, pageTitle, mobileBackDestination, showCartCTA = true }: { hideBackButton?: boolean; pageTitle: string; mobileBackDestination?: { label: string; path: string }, showCartCTA?: boolean }) {
+export default function HeroActionButtons({ hideBackButton, pageTitle, mobileBackDestination }: { hideBackButton?: boolean; pageTitle: string; mobileBackDestination?: { label: string; path: string } }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -31,7 +31,7 @@ export default function HeroActionButtons({ hideBackButton, pageTitle, mobileBac
   const cartItemCount = items.length;
   const isCartPage = pathname === '/cart';
   const isCheckoutPage = pathname === '/checkout';
-  const showFinishOrderButton = showCartCTA && cartItemCount > 0 && !isCartPage && !isCheckoutPage;
+  const showFinishOrderButton = cartItemCount > 0 && !isCartPage && !isCheckoutPage;
 
   const currentPath = meaningfulPath(pathname, searchParams.toString());
   let currentIndex = -1;
@@ -64,7 +64,7 @@ export default function HeroActionButtons({ hideBackButton, pageTitle, mobileBac
 
   return (
     <>
-      <div className={`hero-actions-wrapper ${hasHydrated && !user ? 'hero-actions-guest' : ''} ${!showFinishOrderButton ? 'no-mobile-cta' : ''}`}>
+      <div className={`hero-actions-wrapper ${hasHydrated && !user ? 'hero-actions-guest' : ''}`}>
         {showBackButton ? (
           <button className="hero-action-btn hero-action-back" onClick={handleBack} aria-label={backText}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
