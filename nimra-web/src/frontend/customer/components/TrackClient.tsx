@@ -117,6 +117,7 @@ export default function TrackClient() {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [copiedOrderId, setCopiedOrderId] = useState(false);
   
   useEffect(() => {
     setMounted(true);
@@ -198,6 +199,17 @@ export default function TrackClient() {
   const inputsDisabled = mounted ? (loading || authLoading || (Boolean(user) && loadingOrders)) : true;
   const showingSkeleton = loading || authLoading || (Boolean(user) && loadingOrders);
   const isGuestView = mounted && !authLoading && !user;
+
+  const copyTrackedOrderId = async () => {
+    if (!order?.orderId) return;
+    try {
+      await navigator.clipboard.writeText(order.orderId);
+      setCopiedOrderId(true);
+      window.setTimeout(() => setCopiedOrderId(false), 1600);
+    } catch {
+      // The complete ID remains available through the control's title.
+    }
+  };
 
   return (
     <section className={`track-page ${isGuestView ? 'guest-view' : ''}`}>
@@ -310,7 +322,8 @@ export default function TrackClient() {
                 <div className="info-grid">
                   <div className="order-id-field">
                     <span>Order ID</span>
-                    <strong>{order.orderId}</strong>
+                    <button type="button" className="tracked-order-id" onClick={copyTrackedOrderId} title={`Copy full Order ID: ${order.orderId}`} aria-label={`Copy full Order ID ${order.orderId}`}>{order.orderId}</button>
+                    {copiedOrderId && <small className="tracked-id-copied" role="status">Copied</small>}
                   </div>
                   <div>
                     <span>Order Date</span>
@@ -929,6 +942,28 @@ export default function TrackClient() {
           font-size: clamp(1rem, 0.92rem + 0.35vw, 1.15rem);
         }
 
+        .tracked-order-id {
+          display:block;
+          width:100%;
+          min-width:0;
+          margin:.18rem 0 0;
+          padding:0;
+          overflow:hidden;
+          border:0;
+          background:transparent;
+          color:var(--track-text);
+          font:inherit;
+          font-size:clamp(1rem,.92rem + .35vw,1.15rem);
+          font-weight:850;
+          line-height:1.25;
+          text-align:left;
+          text-overflow:ellipsis;
+          white-space:nowrap;
+          cursor:pointer;
+        }
+        .tracked-order-id:focus-visible { outline:2px solid var(--track-accent);outline-offset:3px;border-radius:4px; }
+        .tracked-id-copied { display:block;margin-top:.16rem;color:var(--track-success);font-size:.62rem;font-weight:800; }
+
         .timeline {
           position: relative;
           display: grid;
@@ -1235,7 +1270,11 @@ export default function TrackClient() {
         @media (max-width: 760px) {
           .track-page {
             padding-top: 0;
+            padding-bottom:calc(var(--mobile-nav-height,64px) + 1rem + env(safe-area-inset-bottom));
+            overflow-x:hidden;
           }
+
+          :global(body:has(.track-page .results-dashboard) .whatsapp-fab) { display:none !important; }
 
           .tracking-flow {
             margin-top: 0.65rem;
@@ -1285,12 +1324,32 @@ export default function TrackClient() {
           .timeline-card,
           .products-card,
           .pricing-card {
-            padding: 1.15rem;
+            padding:.78rem;
           }
 
           .info-grid {
             grid-template-columns: 1fr 1fr;
+            gap:.48rem;
           }
+
+          .results-dashboard { min-width:0;gap:.72rem; }
+          .order-info-card,.timeline-card { min-width:0;border-radius:1rem; }
+          .card-heading { gap:.5rem;margin-bottom:.62rem; }
+          .results-dashboard .card-heading h2 { margin-top:.06rem;font-size:16px !important;line-height:1.1 !important;font-weight:750;letter-spacing:-.01em; }
+          .eyebrow { font-size:.56rem;letter-spacing:.08em; }
+          .status-pill,.progress-percent { min-height:1.65rem;padding:.2rem .52rem;font-size:.66rem; }
+          .info-grid div { min-width:0;padding:.58rem .62rem;border-radius:.72rem; }
+          .info-grid span { font-size:.58rem; }
+          .info-grid strong,.tracked-order-id { min-width:0;max-width:100%;font-size:.78rem;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+          .info-grid .order-id-field { grid-column:1 / -1;padding:.62rem; }
+          .tracked-order-id { font-size:.82rem;font-weight:700; }
+
+          .timeline { gap:.55rem !important;padding-left:0 !important; }
+          .timeline-step { min-height:2.75rem;column-gap:.62rem; }
+          .step-dot { width:2rem;height:2rem; }
+          .timeline-track { left:.92rem; }
+          .timeline-step strong { font-size:.76rem; }
+          .timeline-step p { margin-top:.05rem;font-size:.63rem;line-height:1.28; }
 
           .timeline,
           .timeline.timeline-cancelled {
@@ -1370,23 +1429,32 @@ export default function TrackClient() {
           }
 
           .info-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: minmax(0,1fr) minmax(4.5rem,.42fr);
           }
 
           .card-heading {
-            align-items: flex-start;
-            flex-direction: column;
+            align-items:center;
+            flex-direction:row;
           }
 
           .status-pill,
           .progress-percent,
           .item-count {
-            align-self: flex-start;
+            align-self:center;
           }
 
           .skeleton-row {
             grid-template-columns: 1fr;
           }
+        }
+
+        @media (max-width:360px) {
+          .track-shell { width:calc(100% - .5rem); }
+          .order-info-card,.timeline-card { padding:.62rem; }
+          .info-grid { gap:.38rem; }
+          .info-grid div { padding:.5rem; }
+          .results-dashboard .card-heading h2 { font-size:15px !important; }
+          .tracked-order-id { font-size:.75rem; }
         }
 
         @media (max-width: 760px) and (max-height: 700px) {
