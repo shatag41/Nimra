@@ -10,6 +10,7 @@ interface CustomerPageHeaderProps {
   hideBackButton?: boolean;
   children?: React.ReactNode;
   mobileBackDestination?: { label: string; path: string };
+  showCartCTA?: boolean;
 }
 
 export default function CustomerPageHeader({
@@ -21,6 +22,7 @@ export default function CustomerPageHeader({
   hideBackButton = false,
   children,
   mobileBackDestination,
+  showCartCTA = false,
 }: CustomerPageHeaderProps) {
   const headingId = React.useId();
   const resolvedHeight = typeof height === 'number' ? `${height}px` : height;
@@ -37,7 +39,7 @@ export default function CustomerPageHeader({
       <div className="customer-page-header__content">
         <div className="customer-page-header__badge-row">
           <span className="customer-page-header__badge">{badge}</span>
-          <HeroActionButtons hideBackButton={hideBackButton} pageTitle={title} mobileBackDestination={mobileBackDestination} />
+          <HeroActionButtons hideBackButton={hideBackButton} pageTitle={title} mobileBackDestination={mobileBackDestination} showCartCTA={showCartCTA} />
         </div>
         <h1 id={headingId}>{title}</h1>
         <p>{subtitle}</p>
@@ -224,27 +226,30 @@ export default function CustomerPageHeader({
 
           .customer-page-header.customer-page-header .customer-page-header__content {
             display: flex !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            text-align: left !important;
             width: min(100% - 0.5rem, 35rem) !important;
             padding: 0 !important;
           }
 
           .customer-page-header.customer-page-header .customer-page-header__badge-row {
-            position: relative;
             display: flex !important;
-            align-items: center;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            width: 100%;
-            max-width: 100%;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            justify-content: flex-start !important;
+            gap: 12px !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin-bottom: 16px !important;
           }
 
           :global(.customer-page-header .hero-actions-wrapper) {
             position: static !important;
-            display: inline-flex !important;
+            display: flex !important;
             justify-content: center !important;
             align-items: center !important;
-            width: auto !important;
+            width: 100% !important;
             max-width: 100% !important;
             transform: none !important;
             margin: 0 !important;
@@ -252,24 +257,29 @@ export default function CustomerPageHeader({
             z-index: 20 !important;
           }
 
+          :global(.customer-page-header .hero-actions-wrapper.no-mobile-cta) {
+            display: none !important;
+          }
+
           :global(.customer-page-header .hero-actions-wrapper > :not(.hero-action-finish)) {
             display: none !important;
           }
 
           :global(.customer-page-header .hero-action-finish) {
-            display: inline-flex !important;
+            display: flex !important;
+            justify-content: center !important;
             align-items: center !important;
-            width: fit-content !important;
+            width: 100% !important;
             min-width: 0 !important;
-            min-height: 36px !important;
-            height: auto !important;
-            padding: 0 12px !important;
+            height: 42px !important;
+            min-height: 42px !important;
+            padding: 0 16px !important;
             border: 1px solid rgba(37, 99, 235, 0.16) !important;
             border-radius: 8px !important;
             background: rgba(255, 255, 255, 0.72) !important;
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08) !important;
-            gap: 0.35rem !important;
-            font-size: clamp(12px, 3vw, 13px) !important;
+            gap: 0.4rem !important;
+            font-size: clamp(13px, 3.5vw, 14px) !important;
             font-weight: 700 !important;
             line-height: 1 !important;
             white-space: nowrap !important;
@@ -304,12 +314,13 @@ export default function CustomerPageHeader({
             display: block !important;
             width: 100%;
             max-width: 100% !important;
-            margin: 0.3rem 0 0.2rem !important;
+            margin: 0 0 0.2rem !important;
             overflow: visible !important;
             font-size: clamp(0.86rem, 3.65vw, 1.02rem) !important;
             line-height: 1.12 !important;
             text-overflow: clip !important;
             white-space: normal !important;
+            text-align: left !important;
           }
 
           .customer-page-header.customer-page-header p {
@@ -322,6 +333,7 @@ export default function CustomerPageHeader({
             line-height: 1.38 !important;
             text-overflow: clip !important;
             white-space: normal !important;
+            text-align: left !important;
           }
 
           .customer-page-header__children {

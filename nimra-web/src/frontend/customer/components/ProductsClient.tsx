@@ -120,6 +120,7 @@ export default function ProductsClient({ products: initialProducts }: ProductsCl
         badge="PRODUCTS"
         title="Explore Our Products"
         subtitle="Premium packaged drinking water for every need."
+        showCartCTA={true}
       />
 
       <div className="products-layout-grid">
