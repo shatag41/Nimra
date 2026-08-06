@@ -1274,7 +1274,14 @@ export default function TrackClient() {
             overflow-x:hidden;
           }
 
-          :global(body:has(.track-page .results-dashboard) .whatsapp-fab) { display:none !important; }
+          :global(body:has(.track-page .results-dashboard) .whatsapp-fab) {
+            display:flex !important;
+            right:.6rem !important;
+            bottom:calc(var(--mobile-nav-height,64px) + .65rem + env(safe-area-inset-bottom)) !important;
+            width:40px !important;
+            height:40px !important;
+            z-index:1250 !important;
+          }
 
           .tracking-flow {
             margin-top: 0.65rem;
@@ -1326,6 +1333,20 @@ export default function TrackClient() {
           .pricing-card {
             padding:.78rem;
           }
+
+          .tracking-flow:not(.guest-view) .search-card {
+            gap:.5rem;
+            padding:.58rem .62rem;
+            border-radius:.9rem;
+          }
+          .tracking-flow:not(.guest-view) .field-group { gap:.22rem; }
+          .tracking-flow:not(.guest-view) .field-group > span { font-size:.6rem;letter-spacing:.065em; }
+          .tracking-flow:not(.guest-view) .input-shell,
+          .tracking-flow:not(.guest-view) .input-shell input { min-height:42px; }
+          .tracking-flow:not(.guest-view) .input-shell { border-radius:.72rem; }
+          .tracking-flow:not(.guest-view) .input-shell :global(svg) { left:.82rem;width:.9rem;height:.9rem; }
+          .tracking-flow:not(.guest-view) .input-shell input { padding:.48rem .7rem .48rem 2.35rem;font-size:.78rem; }
+          .tracking-flow:not(.guest-view) .track-button { min-height:42px;padding-inline:.75rem;font-size:.75rem;box-shadow:0 8px 20px rgba(37,99,235,.24); }
 
           .info-grid {
             grid-template-columns: 1fr 1fr;
@@ -1425,7 +1446,7 @@ export default function TrackClient() {
           .input-shell,
           .input-shell input,
           .track-button {
-            min-height: 48px;
+            min-height:44px;
           }
 
           .info-grid {
