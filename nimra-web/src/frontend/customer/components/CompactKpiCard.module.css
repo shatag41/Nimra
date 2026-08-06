@@ -92,3 +92,67 @@
   text-overflow: ellipsis;
 }
 
+@media (max-width: 768px) {
+  .card {
+    width: 100%;
+    min-width: 0;
+    align-items: flex-start;
+    gap: clamp(0.35rem, 1.8vw, 0.55rem);
+    padding: clamp(0.58rem, 2.5vw, 0.75rem);
+    border-radius: 14px;
+  }
+
+  .icon {
+    flex-basis: clamp(30px, 9vw, 36px);
+    width: clamp(30px, 9vw, 36px);
+    height: clamp(30px, 9vw, 36px);
+    border-radius: 10px;
+  }
+
+  .icon svg { width: 17px; height: 17px; }
+
+  .copy {
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+    column-gap: 0.3rem;
+  }
+
+  .value {
+    overflow: visible;
+    font-size: clamp(1rem, 4.5vw, 1.2rem);
+    line-height: 1.15;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+  }
+
+  .title,
+  .subtitle {
+    min-width: 0;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  .title { font-size: clamp(0.68rem, 3vw, 0.78rem); line-height: 1.2; }
+  .subtitle { font-size: clamp(0.61rem, 2.7vw, 0.68rem); line-height: 1.3; }
+
+  .red .copy {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    row-gap: 0.18rem;
+  }
+
+  .red .value,
+  .red .title,
+  .red .subtitle {
+    grid-column: 1;
+  }
+
+  .red .title,
+  .red .subtitle {
+    margin-top: 0;
+  }
+}

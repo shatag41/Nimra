@@ -35,8 +35,10 @@ export default function CustomerPageHeader({
       <div className="customer-page-header__glow customer-page-header__glow--right" aria-hidden="true" />
 
       <div className="customer-page-header__content">
-        <HeroActionButtons hideBackButton={hideBackButton} pageTitle={title} mobileBackDestination={mobileBackDestination} />
-        <span className="customer-page-header__badge">{badge}</span>
+        <div className="customer-page-header__badge-row">
+          <span className="customer-page-header__badge">{badge}</span>
+          <HeroActionButtons hideBackButton={hideBackButton} pageTitle={title} mobileBackDestination={mobileBackDestination} />
+        </div>
         <h1 id={headingId}>{title}</h1>
         <p>{subtitle}</p>
         {children && <div className="customer-page-header__children">{children}</div>}
@@ -143,6 +145,10 @@ export default function CustomerPageHeader({
           text-transform: uppercase;
         }
 
+        .customer-page-header__badge-row {
+          display: contents;
+        }
+
         .customer-page-header h1 {
           margin: 0.08rem 0 0.04rem;
           background: linear-gradient(135deg, #0f2a55 0%, #1e3a8a 50%, #2563eb 100%);
@@ -222,8 +228,68 @@ export default function CustomerPageHeader({
             padding: 0 !important;
           }
 
+          .customer-page-header.customer-page-header .customer-page-header__badge-row {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: nowrap;
+            width: auto;
+            max-width: 100%;
+            min-width: 0;
+          }
+
           :global(.customer-page-header .hero-actions-wrapper) {
+            position: absolute !important;
+            top: 50% !important;
+            left: calc(100% + 0.3rem) !important;
+            right: auto !important;
+            transform: translateY(-50%) !important;
+            display: flex !important;
+            justify-content: flex-start !important;
+            width: auto !important;
+            max-width: calc(50vw - 0.75rem) !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            z-index: 20 !important;
+          }
+
+          :global(.customer-page-header .hero-actions-wrapper > :not(.hero-action-finish)) {
             display: none !important;
+          }
+
+          :global(.customer-page-header .hero-action-finish) {
+            display: inline-flex !important;
+            width: auto !important;
+            min-width: 0 !important;
+            min-height: 1.45rem !important;
+            height: 1.45rem !important;
+            padding: 0 0.38rem !important;
+            border: 1px solid rgba(37, 99, 235, 0.16) !important;
+            border-radius: 0.45rem !important;
+            background: rgba(255, 255, 255, 0.72) !important;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08) !important;
+            gap: 0.18rem !important;
+            font-size: clamp(0.48rem, 2.15vw, 0.56rem) !important;
+            line-height: 1.1 !important;
+            touch-action: manipulation;
+          }
+
+          :global(.customer-page-header .hero-action-finish .hero-cart-icon) {
+            width: 0.62rem !important;
+            height: 0.62rem !important;
+          }
+
+          :global(.customer-page-header .hero-action-finish .hero-finish-text) {
+            display: inline !important;
+            min-width: 0;
+            white-space: nowrap;
+          }
+
+          :global([data-theme="dark"] .customer-page-header .hero-action-finish) {
+            background: rgba(30, 41, 59, 0.78) !important;
+            border-color: rgba(96, 165, 250, 0.24) !important;
           }
 
           .customer-page-header.customer-page-header .customer-page-header__badge {

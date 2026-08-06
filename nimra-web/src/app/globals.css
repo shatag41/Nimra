@@ -14923,6 +14923,207 @@ body:has(.products-page-skeleton) {
   }
 }
 
+/* Customer portal: final mobile layout guardrails. Desktop cascade is unchanged. */
+@media (max-width: 768px) {
+  html,
+  body {
+    max-width: 100%;
+    overflow-x: hidden;
+    overflow-x: clip;
+  }
+
+  .portal-page {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 100svh;
+    padding-bottom: calc(var(--mobile-nav-height, 4.25rem) + 2rem + env(safe-area-inset-bottom)) !important;
+    scroll-padding-top: calc(1rem + env(safe-area-inset-top));
+    scroll-padding-bottom: calc(var(--mobile-nav-height, 4.25rem) + 1rem + env(safe-area-inset-bottom));
+    overflow-x: hidden;
+    overflow-x: clip;
+  }
+
+  .portal-page .customer-page-header.customer-page-header {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-top: calc(0.85rem + env(safe-area-inset-top)) !important;
+    margin-bottom: 0 !important;
+  }
+
+  .portal-page .metric-grid,
+  .portal-page .portal-grid,
+  .portal-page .portal-tab-section {
+    box-sizing: border-box;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin-inline: 0 !important;
+    padding-inline: clamp(0.65rem, 3.5vw, 1rem) !important;
+  }
+
+  .portal-page .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: clamp(0.55rem, 2.5vw, 0.8rem) !important;
+    margin-top: clamp(0.9rem, 4vw, 1.25rem) !important;
+  }
+
+  .portal-page .portal-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: clamp(1rem, 4vw, 1.35rem) !important;
+    margin-top: clamp(1rem, 4vw, 1.35rem) !important;
+  }
+
+  .portal-page .portal-grid > *,
+  .portal-page .portal-grid > * > *,
+  .portal-page .side-stack,
+  .portal-page .side-stack > *,
+  .portal-page .panel,
+  .portal-page .recently-viewed-content,
+  .portal-page .recently-viewed-mobile-carousel,
+  .portal-page .recently-viewed-mobile-shell,
+  .portal-page .profile-identity,
+  .portal-page .profile-info-text,
+  .portal-page .quick-control-left,
+  .portal-page .quick-control-text {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .portal-page .side-stack {
+    gap: clamp(1rem, 4vw, 1.35rem) !important;
+  }
+
+  .portal-page .panel {
+    padding: clamp(0.8rem, 3.5vw, 1rem) !important;
+  }
+
+  .portal-page .panel-head,
+  .portal-page .section-header-row,
+  .portal-page .profile-header,
+  .portal-page .next-card-header,
+  .portal-page .quick-control-row,
+  .portal-page .order-card-top-row,
+  .portal-page .order-card-actions-row {
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  .portal-page .panel-head {
+    gap: 0.75rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .portal-page .orders-panel .panel-head h2,
+  .portal-page .recently-viewed-panel .section-header-left h2 {
+    margin: 0.2rem 0 0.1rem !important;
+    font-size: 1.05rem !important;
+    line-height: 1.25 !important;
+    font-weight: 700 !important;
+  }
+
+  .portal-page .panel-head > div:last-child,
+  .portal-page .order-card-actions-row {
+    display: flex;
+    width: 100%;
+    gap: 0.55rem;
+  }
+
+  .portal-page button:not(.hero-action-finish),
+  .portal-page a.btn,
+  .portal-page .btn-next-step,
+  .portal-page .btn-portal-secondary,
+  .portal-page .empty-cta-btn {
+    min-height: 44px !important;
+    touch-action: manipulation;
+  }
+
+  .portal-page h1,
+  .portal-page h2,
+  .portal-page h3,
+  .portal-page p,
+  .portal-page dd,
+  .portal-page .profile-name,
+  .portal-page .profile-detail-value,
+  .portal-page .quick-control-text,
+  .portal-page .quick-control-text p,
+  .portal-page .order-card-id-value,
+  .portal-page .full-address,
+  .portal-page .city-pin-text {
+    max-width: 100%;
+    min-width: 0;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  .portal-page .profile-detail-item {
+    display: grid !important;
+    grid-template-columns: minmax(3.75rem, auto) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .portal-page .profile-completion {
+    min-width: 3rem;
+    flex: 0 0 auto;
+  }
+
+  .portal-page .next-progress-steps {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+    width: 100%;
+    min-width: 0;
+    gap: clamp(0.2rem, 1.6vw, 0.4rem) !important;
+    font-size: clamp(0.58rem, 2.5vw, 0.72rem) !important;
+    text-align: center;
+  }
+
+  .portal-page .next-progress-steps .step-node { min-width: 0; overflow-wrap: anywhere; }
+
+  .portal-page .empty-state,
+  .portal-page .premium-empty-state,
+  .portal-page .empty-state-card {
+    min-height: clamp(12rem, 44vw, 16rem) !important;
+    height: auto !important;
+    padding: clamp(1.25rem, 5vw, 2rem) !important;
+    align-content: center;
+    overflow: visible !important;
+  }
+
+  .portal-page .empty-state p,
+  .portal-page .premium-empty-state p,
+  .portal-page .empty-state-card p {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .portal-page .table-wrap {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .portal-page .cart-toast-banner {
+    bottom: calc(var(--mobile-nav-height, 4.25rem) + 0.75rem + env(safe-area-inset-bottom)) !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .portal-page .metric-grid,
+  .portal-page .portal-grid,
+  .portal-page .portal-tab-section {
+    padding-inline: 0.5rem !important;
+  }
+
+  .portal-page .metric-grid { gap: 0.5rem !important; }
+  .portal-page .panel { padding: 0.7rem !important; }
+}
+
 @media (max-width:340px) {
   .admin-container .admin-management-heading {
     gap:.4rem !important;

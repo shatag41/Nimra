@@ -232,7 +232,13 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
           </div>
         </div>
       ) : (
-        <div className="empty-state">
+        <div className="empty-state orders-empty-state">
+          <div className="orders-empty-icon" aria-hidden="true">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+              <path d="M3 6h18M16 10a4 4 0 0 1-8 0" />
+            </svg>
+          </div>
           <h3>No orders yet</h3>
           <p>Your NIMRA order history will appear here after checkout.</p>
           <Link href="/products" className="btn btn-primary">Browse Products</Link>
@@ -567,6 +573,10 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
           gap: 0.6rem;
         }
 
+        .orders-empty-icon {
+          display: none;
+        }
+
         /* ── Mobile breakpoint: hide table, show cards ── */
         @media (max-width: 639px) {
           .panel-head {
@@ -590,6 +600,51 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
           }
           .orders-mobile-cards {
             display: flex;
+          }
+          .orders-empty-state {
+            min-height: clamp(18.5rem, 82vw, 21rem) !important;
+            display: flex !important;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(0.65rem, 2.8vw, 0.9rem) !important;
+            padding: clamp(1.35rem, 6vw, 2rem) !important;
+            text-align: center;
+            overflow: visible !important;
+          }
+          .orders-empty-icon {
+            width: 54px;
+            height: 54px;
+            display: flex;
+            flex: 0 0 auto;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.15rem;
+            border-radius: 50%;
+            color: var(--primary-color);
+            background: rgba(37, 99, 235, 0.06);
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.05);
+          }
+          .orders-empty-state h3,
+          .orders-empty-state p {
+            width: 100%;
+            max-width: 22rem;
+            height: auto;
+            margin: 0;
+            overflow: visible;
+            white-space: normal;
+            overflow-wrap: anywhere;
+          }
+          .orders-empty-state h3 {
+            font-size: 1.05rem;
+          }
+          .orders-empty-state p {
+            font-size: 0.82rem;
+            line-height: 1.45;
+            color: var(--text-secondary);
+          }
+          .orders-empty-state .btn {
+            margin-top: 0.25rem;
           }
         }
 

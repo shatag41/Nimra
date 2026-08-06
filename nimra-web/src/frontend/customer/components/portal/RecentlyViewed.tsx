@@ -25,7 +25,7 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
   const autoplayTimerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
   const resumeTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const { user, isLoading } = useAuth();
-  const { addProduct, updateQuantity, items } = useCart();
+  const { addProduct } = useCart();
 
   const loadViewedProducts = React.useCallback(() => {
     try {
@@ -64,11 +64,7 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
   }, [viewedProducts]);
 
   const mobilePages = React.useMemo(() => {
-    const pages: Product[][] = [];
-    for (let index = 0; index < displayedProducts.length; index += 2) {
-      pages.push(displayedProducts.slice(index, index + 2));
-    }
-    return pages;
+    return displayedProducts.map((product) => [product]);
   }, [displayedProducts]);
 
   const mobilePageCount = mobilePages.length;
@@ -126,6 +122,23 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
     }, 3000);
   }, [hasMultipleMobilePages, isMobileCarousel, startMobileAutoplay, stopMobileAutoplay]);
 
+  const pauseMobileCarouselInteraction = React.useCallback(() => {
+    stopMobileAutoplay();
+    if (resumeTimerRef.current) {
+      clearTimeout(resumeTimerRef.current);
+      resumeTimerRef.current = null;
+    }
+  }, [stopMobileAutoplay]);
+
+  const resumeMobileCarouselInteraction = React.useCallback(() => {
+    pauseMobileCarouselInteraction();
+    if (!hasMultipleMobilePages || !isMobileCarousel()) return;
+    resumeTimerRef.current = setTimeout(() => {
+      resumeTimerRef.current = null;
+      startMobileAutoplay();
+    }, 3000);
+  }, [hasMultipleMobilePages, isMobileCarousel, pauseMobileCarouselInteraction, startMobileAutoplay]);
+
   React.useEffect(() => {
     startMobileAutoplay();
 
@@ -150,7 +163,7 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
   }, [startMobileAutoplay, stopMobileAutoplay]);
 
   const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
-    registerMobileCarouselInteraction();
+    pauseMobileCarouselInteraction();
     touchStartX.current = event.touches[0]?.clientX ?? null;
   };
 
@@ -163,14 +176,16 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
       return;
     }
 
-    registerMobileCarouselInteraction();
-
     const deltaX = touchEndX - touchStartX.current;
     touchStartX.current = null;
 
-    if (Math.abs(deltaX) < 42) return;
+    if (Math.abs(deltaX) < 42) {
+      resumeMobileCarouselInteraction();
+      return;
+    }
     if (deltaX < 0) goToMobilePage(mobilePage + 1);
     if (deltaX > 0) goToMobilePage(mobilePage - 1);
+    resumeMobileCarouselInteraction();
   };
 
   const renderProductCard = (product: Product, index: number) => (
@@ -182,8 +197,8 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
       disableViewTracking={true}
       index={index}
       onAdd={addProduct}
-      cartQty={items.find((item) => String(item.productId) === productId(product))?.quantity || 0}
-      onUpdateQuantity={updateQuantity}
+      showCartBadge={false}
+      cartQty={0}
     />
   );
 
@@ -210,7 +225,9 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
         <div
           className="recently-viewed-mobile-carousel"
           aria-hidden={!hasViewedProducts}
-          onPointerDown={registerMobileCarouselInteraction}
+          onPointerDown={pauseMobileCarouselInteraction}
+          onPointerUp={resumeMobileCarouselInteraction}
+          onPointerCancel={resumeMobileCarouselInteraction}
           onFocusCapture={registerMobileCarouselInteraction}
         >
           <div className={`recently-viewed-mobile-shell ${hasMultipleMobilePages ? 'has-nav' : 'single-page'}`}>
@@ -233,7 +250,7 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
               <div className="recently-viewed-mobile-track" style={{ transform: `translateX(-${mobilePage * 100}%)` }}>
                 {mobilePages.map((pageProducts, pageIndex) => (
                   <div className="recently-viewed-mobile-page" key={`recent-page-${pageIndex}`}>
-                    {pageProducts.map((product, index) => renderProductCard(product, pageIndex * 2 + index))}
+                    {pageProducts.map((product, index) => renderProductCard(product, pageIndex + index))}
                   </div>
                 ))}
               </div>
@@ -421,10 +438,41 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
           .recently-viewed-panel {
             min-height: 0;
             overflow: hidden;
+            background: var(--bg-secondary);
           }
           .recently-viewed-content {
             min-height: 0;
             overflow: hidden;
+            padding: 0 !important;
+            background: transparent !important;
+          }
+          .recently-viewed-content.is-empty {
+            min-height: clamp(18.5rem, 82vw, 21rem);
+          }
+          .recently-viewed-content.is-empty .premium-empty-state {
+            box-sizing: border-box;
+            width: 100%;
+            min-width: 0;
+            min-height: 100%;
+            padding: clamp(1.35rem, 6vw, 2rem);
+            gap: clamp(0.65rem, 2.8vw, 0.9rem);
+            overflow: visible;
+          }
+          .recently-viewed-content.is-empty .empty-icon-wrap {
+            flex: 0 0 auto;
+            margin-bottom: 0.15rem;
+          }
+          .recently-viewed-content.is-empty .premium-empty-state h3,
+          .recently-viewed-content.is-empty .premium-empty-state p {
+            width: 100%;
+            max-width: 22rem;
+            height: auto;
+            overflow: visible;
+            white-space: normal;
+            overflow-wrap: anywhere;
+          }
+          .recently-viewed-content.is-empty .premium-empty-state p {
+            margin: 0 0 0.25rem;
           }
           .has-products .recently-viewed-product-grid {
             display: none !important;
@@ -446,9 +494,9 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
           }
           .recently-viewed-mobile-shell {
             display: grid;
-            grid-template-columns: 1.9rem minmax(0, 1fr) 1.9rem;
+            grid-template-columns: 2rem minmax(0, 1fr) 2rem;
             align-items: center;
-            gap: 0.35rem;
+            gap: clamp(0.25rem, 1.8vw, 0.55rem);
             width: 100%;
             max-width: 100%;
           }
@@ -456,6 +504,8 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
             grid-template-columns: minmax(0, 1fr);
           }
           .recently-viewed-mobile-viewport {
+            width: 100%;
+            max-width: 100%;
             min-width: 0;
             overflow: hidden;
             touch-action: pan-y;
@@ -468,34 +518,51 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
           }
           .recently-viewed-mobile-page {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 0.55rem;
+            grid-template-columns: minmax(0, 1fr);
             min-width: 100%;
             width: 100%;
             align-items: stretch;
+            justify-items: center;
+            padding: 0.15rem;
+            box-sizing: border-box;
           }
           .recently-viewed-mobile-page :global(.catalog-card) {
-            width: 100% !important;
-            max-width: none !important;
+            width: min(100%, 18rem) !important;
+            max-width: 18rem !important;
             min-width: 0 !important;
-            height: 100% !important;
+            height: auto !important;
             display: flex !important;
             flex-direction: column !important;
-            padding: 0.3rem !important;
-            border-radius: 0.62rem !important;
+            padding: 0.55rem !important;
+            border-radius: 0.85rem !important;
+            background: var(--bg-secondary) !important;
+            border: 1px solid var(--border-color) !important;
+            box-shadow: var(--shadow-sm) !important;
+            overflow: hidden !important;
           }
           .recently-viewed-mobile-page :global(.catalog-card:only-child) {
-            width: min(100%, 12.25rem) !important;
+            width: min(100%, 18rem) !important;
             justify-self: center !important;
-            grid-column: 1 / -1 !important;
           }
           .recently-viewed-mobile-page :global(.catalog-card .product-img-wrap) {
-            width: calc(100% + 0.6rem) !important;
-            margin: -0.3rem -0.3rem 0.22rem !important;
-            aspect-ratio: 1 / 1 !important;
+            width: calc(100% + 1.1rem) !important;
+            max-width: none !important;
+            margin: -0.55rem -0.55rem 0.55rem !important;
+            aspect-ratio: 4 / 3 !important;
+            background: #ffffff !important;
+            overflow: hidden !important;
           }
           .recently-viewed-mobile-page :global(.catalog-card .product-image-container) {
-            aspect-ratio: 1 / 1 !important;
+            width: 100% !important;
+            height: 100% !important;
+            aspect-ratio: 4 / 3 !important;
+            background: #ffffff !important;
+          }
+          .recently-viewed-mobile-page :global(.catalog-card .product-img) {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain !important;
+            object-position: center !important;
           }
           .recently-viewed-mobile-page :global(.cat-info-box) {
             display: flex !important;
@@ -504,60 +571,69 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
             min-width: 0 !important;
           }
           .recently-viewed-mobile-page :global(.cat-meta) {
-            gap: 0.18rem !important;
-            margin-bottom: 0.12rem !important;
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 0.3rem !important;
+            margin-bottom: 0.35rem !important;
           }
           .recently-viewed-mobile-page :global(.cat-volume),
           .recently-viewed-mobile-page :global(.cat-badge),
           .recently-viewed-mobile-page :global(.prod-badge-best) {
-            padding: 0.12rem 0.34rem !important;
-            font-size: 0.58rem !important;
-            line-height: 1.05 !important;
+            max-width: 100% !important;
+            padding: 0.16rem 0.45rem !important;
+            font-size: 0.64rem !important;
+            line-height: 1.15 !important;
+            white-space: normal !important;
+            overflow-wrap: anywhere;
           }
           .recently-viewed-mobile-page :global(.cat-info-box h3) {
-            min-height: 2.08em !important;
-            max-height: 2.08em !important;
-            margin-bottom: 0.12rem !important;
-            font-size: 0.72rem !important;
-            line-height: 1.04 !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            margin-bottom: 0.3rem !important;
+            font-size: 0.92rem !important;
+            line-height: 1.25 !important;
+            white-space: normal !important;
+            overflow-wrap: anywhere;
           }
           .recently-viewed-mobile-page :global(.cat-info-box p),
           .recently-viewed-mobile-page :global(.card-desc) {
-            min-height: 2.1em !important;
-            max-height: 2.1em !important;
-            margin-bottom: 0.2rem !important;
-            font-size: 0.62rem !important;
-            line-height: 1.05 !important;
-            -webkit-line-clamp: 2 !important;
+            min-height: 0 !important;
+            max-height: 3.9em !important;
+            margin-bottom: 0.55rem !important;
+            font-size: 0.75rem !important;
+            line-height: 1.3 !important;
+            -webkit-line-clamp: 3 !important;
+            overflow: hidden !important;
           }
           .recently-viewed-mobile-page :global(.cat-price-row) {
-            min-height: 2rem !important;
+            min-height: 2.75rem !important;
             margin-top: auto !important;
-            gap: 0.2rem !important;
-            padding-top: 0.28rem !important;
+            gap: 0.55rem !important;
+            padding-top: 0.55rem !important;
+            align-items: center !important;
           }
           .recently-viewed-mobile-page :global(.price-lbl) {
-            font-size: 0.54rem !important;
+            font-size: 0.62rem !important;
             line-height: 1 !important;
           }
           .recently-viewed-mobile-page :global(.price-val) {
-            font-size: 0.9rem !important;
+            font-size: 1.05rem !important;
             line-height: 1.05 !important;
           }
           .recently-viewed-mobile-page :global(.add-cart-btn.btn-sm),
           .recently-viewed-mobile-page :global(.cat-price-row .btn-sm) {
-            min-height: 1.65rem !important;
-            padding: 0.22rem 0.34rem !important;
-            gap: 0.18rem !important;
-            font-size: 0.58rem !important;
-            border-radius: 0.5rem !important;
+            min-height: 2.5rem !important;
+            padding: 0.45rem 0.7rem !important;
+            gap: 0.3rem !important;
+            font-size: 0.72rem !important;
+            border-radius: 0.65rem !important;
           }
           .recently-viewed-mobile-page :global(.add-cart-btn svg) {
             width: 0.68rem !important;
             height: 0.68rem !important;
           }
           .recently-viewed-mobile-page :global(.qty-controls) {
-            min-height: 1.65rem !important;
+            min-height: 2.5rem !important;
           }
           .recently-viewed-nav {
             width: 1.9rem;
