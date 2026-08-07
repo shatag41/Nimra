@@ -407,11 +407,13 @@ export default function HomeClient({ banners: initialBanners, products: initialP
       <UpcomingProducts upcomingProducts={upcomingProducts} />
 
       {/* ─── 6. FAQ ─────────────────────────────────────────────────────────── */}
-      <section className="faq-section home-deferred-section">
-        <div className="container">
-          <FAQSection faqs={faqs} />
-        </div>
-      </section>
+      {faqs && faqs.length > 0 && (
+        <section className="faq-section home-deferred-section">
+          <div className="container">
+            <FAQSection faqs={faqs} />
+          </div>
+        </section>
+      )}
 
       <style jsx>{`
         /* ── Hero ───────────────────────────────────────────────────────────── */

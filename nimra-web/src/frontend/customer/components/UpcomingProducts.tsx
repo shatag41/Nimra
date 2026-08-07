@@ -89,8 +89,9 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
   return (
     <section
       ref={sectionRef}
-      className="rush-section home-deferred-section"
+      className="rush-section"
       aria-label="Upcoming product launches"
+      style={{ height: 'auto', marginBottom: '16px' }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       onFocusCapture={() => setIsPaused(true)}
