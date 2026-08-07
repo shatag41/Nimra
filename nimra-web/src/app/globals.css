@@ -10502,8 +10502,13 @@ table {
   }
 
   .checkout-page .info-grid-2x2 {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 0.65rem 0.6rem !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 0.6rem 0.75rem !important;
+  }
+
+  /* Right column — right-aligned for visual separation */
+  .checkout-page .info-grid-2x2 > .info-block:nth-child(even) {
+    text-align: right !important;
   }
 
   .checkout-page .info-grid-2x2 .info-block {
@@ -10540,6 +10545,10 @@ table {
   .checkout-page .info-grid-2x2 {
     grid-template-columns: 1fr !important;
     gap: 0.6rem 0 !important;
+  }
+  /* Reset right-alignment when stacked in a single column */
+  .checkout-page .info-grid-2x2 > .info-block:nth-child(even) {
+    text-align: left !important;
   }
 }
 

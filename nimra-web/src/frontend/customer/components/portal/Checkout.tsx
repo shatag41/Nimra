@@ -679,9 +679,14 @@ export function CheckoutForm({
 
         .info-grid-2x2 {
           display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 0.5rem 0.85rem;
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+          gap: 0.5rem 0.9rem;
           align-items: start;
+        }
+
+        /* Right column — visually anchored to the right edge */
+        .info-grid-2x2 > .info-block:nth-child(even) {
+          text-align: right;
         }
 
         .info-block {
@@ -1140,8 +1145,8 @@ export function CheckoutForm({
           .detail-section-heading { align-items: center; flex-wrap: wrap; }
           .address-header-actions { justify-content: flex-start; }
           .info-grid-2x2 {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 0.65rem 0.6rem;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 0.6rem 0.75rem;
           }
           .form-grid-three, .form-grid-two {
             grid-template-columns: 1fr;
@@ -1174,6 +1179,10 @@ export function CheckoutForm({
           .info-grid-2x2 {
             grid-template-columns: 1fr;
             gap: 0.6rem 0;
+          }
+          /* Reset right-alignment when stacked */
+          .info-grid-2x2 > .info-block:nth-child(even) {
+            text-align: left;
           }
         }
       `}</style>
