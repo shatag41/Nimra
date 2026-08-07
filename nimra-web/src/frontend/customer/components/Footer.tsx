@@ -1242,6 +1242,10 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
           }
 
           .footer .contact-list li {
+            display: grid !important;
+            grid-template-columns: 1rem minmax(0, 1fr) !important;
+            align-items: start !important;
+            column-gap: 0.35rem !important;
             width: auto !important;
             min-width: 0 !important;
             margin: 0 !important;
@@ -1253,8 +1257,16 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
 
           .footer .contact-list li > div {
             display: block !important;
-            max-width: calc(100% - 1.5rem) !important;
+            min-width: 0 !important;
+            max-width: none !important;
             text-align: left !important;
+          }
+
+          .footer .contact-list .footer-icon {
+            width: 1rem !important;
+            height: 1rem !important;
+            min-width: 1rem !important;
+            margin-top: 0.05rem !important;
           }
 
           .footer .contact-label {
@@ -1269,6 +1281,7 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
             line-height: 1.25 !important;
             white-space: normal !important;
             overflow-wrap: anywhere !important;
+            word-break: normal !important;
           }
 
           .footer .locations-list {

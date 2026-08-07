@@ -177,7 +177,7 @@ export function CheckoutForm({
               </div>
               <div className={`info-block ${errors.email ? 'info-error' : ''}`} data-checkout-field="email" tabIndex={-1}>
                 <span className="info-label">Email Address</span>
-                <span className="info-email">{user?.Username || selectedAddress.email || 'Not provided'}</span>
+                <span className="info-email receiver-email-value">{user?.Username || selectedAddress.email || 'Not provided'}</span>
                 {errors.email && <span className="error-hint">{errors.email}</span>}
               </div>
               <div className={`info-block ${errors.altMobile ? 'info-error' : ''}`} data-checkout-field="altMobile" tabIndex={-1}>
@@ -1151,6 +1151,40 @@ export function CheckoutForm({
           .info-grid-2x2 {
             grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
             gap: 0.6rem 1rem;
+            overflow: visible !important;
+          }
+          .info-grid-2x2 .info-block {
+            min-width: 0;
+            min-height: 2.8rem;
+            height: auto !important;
+            max-height: none !important;
+          }
+          .info-grid-2x2 > .info-block[data-checkout-field="email"] {
+            min-width: 0 !important;
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+          }
+          .info-grid-2x2 > .info-block[data-checkout-field="email"] .receiver-email-value {
+            display: block !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            min-height: 1.25rem !important;
+            height: auto !important;
+            max-height: none !important;
+            white-space: nowrap !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+            overflow-wrap: normal !important;
+            word-break: normal !important;
+            font-size: 12px !important;
+            letter-spacing: -0.015em !important;
+            line-height: 1.25 !important;
+          }
+          .info-grid-2x2 > .info-block[data-checkout-field="mobile"] .info-sub,
+          .info-grid-2x2 > .info-block[data-checkout-field="altMobile"] .info-sub {
+            font-size: 0.75rem;
           }
           .form-grid-three, .form-grid-two {
             grid-template-columns: 1fr;
