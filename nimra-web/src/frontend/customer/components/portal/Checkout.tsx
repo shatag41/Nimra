@@ -680,7 +680,7 @@ export function CheckoutForm({
         .info-grid-2x2 {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 0.5rem 0.75rem;
+          gap: 0.5rem 0.85rem;
           align-items: start;
         }
 
@@ -688,6 +688,8 @@ export function CheckoutForm({
           display: flex;
           flex-direction: column;
           gap: 0.15rem;
+          align-self: start;
+          min-width: 0;
         }
 
         .info-label {
@@ -713,6 +715,8 @@ export function CheckoutForm({
         .info-email {
           font-size: 0.78rem;
           color: var(--text-muted);
+          word-break: break-word;
+          overflow-wrap: anywhere;
         }
 
         .address-text-display {
@@ -1137,7 +1141,7 @@ export function CheckoutForm({
           .address-header-actions { justify-content: flex-start; }
           .info-grid-2x2 {
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 0.65rem 0.5rem;
+            gap: 0.65rem 0.6rem;
           }
           .form-grid-three, .form-grid-two {
             grid-template-columns: 1fr;
@@ -1162,6 +1166,14 @@ export function CheckoutForm({
           .btn-cancel-edit, .btn-use-address-form {
             width: 100%;
             text-align: center;
+          }
+        }
+
+        /* Ultra-small screens: collapse receiver detail grid to single column */
+        @media (max-width: 360px) {
+          .info-grid-2x2 {
+            grid-template-columns: 1fr;
+            gap: 0.6rem 0;
           }
         }
       `}</style>
