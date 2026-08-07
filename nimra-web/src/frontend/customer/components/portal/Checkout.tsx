@@ -1135,7 +1135,11 @@ export function CheckoutForm({
         @media (max-width: 640px) {
           .detail-section-heading { align-items: center; flex-wrap: wrap; }
           .address-header-actions { justify-content: flex-start; }
-          .info-grid-2x2, .form-grid-three, .form-grid-two {
+          .info-grid-2x2 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.65rem 0.5rem;
+          }
+          .form-grid-three, .form-grid-two {
             grid-template-columns: 1fr;
             gap: 0.75rem;
           }
