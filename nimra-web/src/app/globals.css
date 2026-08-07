@@ -14936,10 +14936,8 @@ body:has(.products-page-skeleton) {
     width: 100%;
     max-width: 100%;
     min-width: 0;
-    min-height: 100svh;
-    padding-bottom: calc(var(--mobile-nav-height, 4.25rem) + 2rem + env(safe-area-inset-bottom)) !important;
+    padding-bottom: 1rem !important;
     scroll-padding-top: calc(1rem + env(safe-area-inset-top));
-    scroll-padding-bottom: calc(var(--mobile-nav-height, 4.25rem) + 1rem + env(safe-area-inset-bottom));
     overflow-x: hidden;
     overflow-x: clip;
   }
