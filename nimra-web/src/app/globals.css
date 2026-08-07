@@ -10503,7 +10503,8 @@ table {
 
   .checkout-page .info-grid-2x2 {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
-    gap: 0.6rem 0.75rem !important;
+    gap: 0.6rem 1rem !important;
+    overflow: hidden !important;
   }
 
   /* Right column — right-aligned for visual separation */
@@ -10517,8 +10518,11 @@ table {
   }
 
   .checkout-page .info-email {
-    word-break: break-word !important;
-    overflow-wrap: anywhere !important;
+    display: block !important;
+    width: 100% !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 
 
@@ -10540,17 +10544,7 @@ table {
   }
 }
 
-/* Ultra-small screens (≤360px): collapse receiver details grid to single column */
-@media (max-width: 360px) {
-  .checkout-page .info-grid-2x2 {
-    grid-template-columns: 1fr !important;
-    gap: 0.6rem 0 !important;
-  }
-  /* Reset right-alignment when stacked in a single column */
-  .checkout-page .info-grid-2x2 > .info-block:nth-child(even) {
-    text-align: left !important;
-  }
-}
+
 
 
 /* Admin console restoration: preserve its compact desktop composition. */
