@@ -390,9 +390,11 @@ function CustomerPortalClient({ initialTab }: CustomerPortalClientProps) {
         </>
       )}
 
-      <div style={{ marginTop: '16px', position: 'relative', width: '100vw', left: '50%', transform: 'translateX(-50%)' }}>
-        <UpcomingProducts upcomingProducts={upcomingProductsList} />
-      </div>
+      {upcomingProductsList.length > 0 && (
+        <div style={{ marginTop: '16px', position: 'relative', width: '100vw', left: '50%', transform: 'translateX(-50%)' }}>
+          <UpcomingProducts upcomingProducts={upcomingProductsList} />
+        </div>
+      )}
       </div>
 
       <style jsx global>{portalStyles}</style>
