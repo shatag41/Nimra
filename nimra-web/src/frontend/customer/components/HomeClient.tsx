@@ -218,7 +218,18 @@ export default function HomeClient({ banners: initialBanners, products: initialP
                     {banner.ButtonText}
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                   </Link>
-                  <Link href="/about" className="btn btn-ghost">
+                  <Link
+                    href="/about"
+                    className="btn hero-story-cta"
+                    style={{
+                      background: 'rgba(15, 23, 42, 0.65)',
+                      backdropFilter: 'blur(12px)',
+                      WebkitBackdropFilter: 'blur(12px)',
+                      border: '1.5px solid rgba(96, 165, 250, 0.75)',
+                      color: '#FFFFFF',
+                      fontWeight: 600,
+                    }}
+                  >
                     Our Story
                   </Link>
                 </div>
@@ -587,6 +598,9 @@ export default function HomeClient({ banners: initialBanners, products: initialP
         .btn-hero-primary:hover::after, .btn-ghost:hover::after { transform:scale(2); opacity:.22; }
         .btn-ghost { position:relative; overflow:hidden; transition:transform .25s ease,box-shadow .25s ease; }
         .btn-ghost:hover { background:linear-gradient(135deg,rgba(255,255,255,.24),rgba(96,165,250,.2)) !important; color:#fff !important; border-color:rgba(191,219,254,.72) !important; transform:translateY(-3px); box-shadow:0 10px 28px rgba(37,99,235,.24),inset 0 1px 0 rgba(255,255,255,.2) !important; }
+        .hero-story-cta { position:relative; overflow:hidden; transition:transform .25s ease,box-shadow .25s ease,background .25s ease,border-color .25s ease; }
+        .hero-story-cta:hover { background:rgba(30,64,175,.22) !important; border-color:rgba(147,197,253,.95) !important; color:#fff !important; transform:translateY(-3px); box-shadow:0 10px 28px rgba(59,130,246,.34),inset 0 1px 0 rgba(255,255,255,.18) !important; }
+        .hero-story-cta:focus-visible { outline:2px solid #93c5fd; outline-offset:3px; box-shadow:0 0 0 4px rgba(59,130,246,.28),0 10px 28px rgba(59,130,246,.34); }
 
         .hero-trust-bar {
           display: flex;

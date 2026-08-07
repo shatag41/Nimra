@@ -316,8 +316,8 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
           .footer {
             position: relative;
             overflow: visible;
-            background: var(--surface-2);
-            border-top: 1px solid var(--border-color);
+            background: #0f172a;
+            border-top: 1px solid rgba(147, 197, 253, 0.3);
           }
           .footer-container {
             width: 100% !important;
@@ -340,7 +340,7 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
             grid-column: auto;
             padding: 14px 0;
             border: none;
-            border-top: 1px solid var(--border-color);
+            border-top: 1px solid rgba(147, 197, 253, 0.22);
             border-radius: 0;
             background: transparent;
             box-shadow: none;
@@ -362,7 +362,7 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
             line-height: 1;
             margin-bottom: 8px;
             text-decoration: none;
-            color: var(--text-primary);
+            color: #f8fafc;
           }
           .footer-logo-icon {
             width: 26px;
@@ -376,7 +376,7 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
             margin: 0 0 10px;
             font-size: 13px;
             line-height: 1.45;
-            color: var(--text-secondary);
+            color: #cbd5e1;
           }
 
           /* ── Cert badges ── */
@@ -403,7 +403,7 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
             letter-spacing: 0.1em;
             text-transform: uppercase;
             line-height: 1.2;
-            color: var(--text-muted);
+            color: #94a3b8;
           }
 
           /* ── Explore nav links ── */
@@ -424,11 +424,11 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
             font-size: 14px;
             font-weight: 500;
             line-height: 1.3;
-            color: var(--text-secondary);
+            color: #cbd5e1;
             text-decoration: none;
             transition: color 150ms ease;
           }
-          :global(.footer-links a:hover) { color: var(--primary-color); }
+          :global(.footer-links a:hover) { color: #ffffff; }
 
           /* ── Contact list: compact horizontal rows ── */
           .contact-list {
@@ -444,9 +444,9 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
             align-items: center;
             gap: 10px;
             padding: 7px 10px;
-            border: 1px solid rgba(var(--primary-rgb), 0.1);
+            border: 1px solid rgba(147, 197, 253, 0.22);
             border-radius: 10px;
-            background: rgba(var(--primary-rgb), 0.035);
+            background: rgba(59, 130, 246, 0.12);
             min-width: 0;
           }
           .contact-list li > div {
@@ -464,18 +464,18 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
             font-weight: 700;
             letter-spacing: 0.05em;
             text-transform: uppercase;
-            color: var(--text-muted);
+            color: #94a3b8;
           }
           .contact-list a {
             font-size: 13px;
             font-weight: 500;
             line-height: 1.3;
-            color: var(--text-primary);
+            color: #f8fafc;
             text-decoration: none;
             overflow-wrap: anywhere;
             min-width: 0;
           }
-          .contact-list a:hover { color: var(--primary-color); }
+          .contact-list a:hover { color: #ffffff; }
 
           /* ── Location list: compact rows ── */
           .locations-list {
@@ -490,9 +490,9 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
             align-items: flex-start;
             gap: 10px;
             padding: 7px 10px;
-            border: 1px solid rgba(var(--primary-rgb), 0.1);
+            border: 1px solid rgba(147, 197, 253, 0.22);
             border-radius: 10px;
-            background: rgba(var(--primary-rgb), 0.035);
+            background: rgba(59, 130, 246, 0.12);
             min-width: 0;
           }
           .location-item > div {
@@ -506,13 +506,13 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
             font-weight: 700;
             letter-spacing: 0.05em;
             text-transform: uppercase;
-            color: var(--text-muted);
+            color: #94a3b8;
             font-style: normal;
           }
           .location-item span:last-child {
             font-size: 13px;
             line-height: 1.4;
-            color: var(--text-secondary);
+            color: #cbd5e1;
             overflow-wrap: anywhere;
             word-break: normal;
           }
@@ -526,9 +526,9 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
             align-items: center;
             justify-content: center;
             border-radius: 7px;
-            border: 1px solid rgba(var(--primary-rgb), 0.15);
+            border: 1px solid rgba(147, 197, 253, 0.28);
             background: rgba(37, 99, 235, 0.08);
-            color: var(--primary-color);
+            color: #93c5fd;
             margin-top: 0;
           }
           .footer-icon :global(svg) { width: 13px; height: 13px; }
@@ -536,7 +536,7 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
           /* ── Footer bottom bar ── */
           .footer-bottom {
             padding: 12px 0 calc(56px + env(safe-area-inset-bottom));
-            border-top: 1px solid var(--border-color);
+            border-top: 1px solid rgba(147, 197, 253, 0.22);
             text-align: center;
           }
           .footer-bottom p { margin: 0; font-size: 11px; line-height: 1.4; }
@@ -564,7 +564,7 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
             position: absolute;
             top: 0; left: 0; right: 0;
             height: 1px;
-            background: var(--border-color);
+            background: rgba(147, 197, 253, 0.22);
             transform-origin: left center;
             transform: scaleX(0);
             animation: mFooterExpand 0.7s cubic-bezier(0.22,1,0.36,1) forwards;
@@ -608,7 +608,7 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
             position: absolute;
             top: 0; left: 0; right: 0;
             height: 1px;
-            background: var(--border-color);
+            background: rgba(147, 197, 253, 0.22);
             transform-origin: left center;
             transform: scaleX(0);
             animation: mFooterExpand 0.7s cubic-bezier(0.22,1,0.36,1) forwards 0.56s;
@@ -644,19 +644,19 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
 
           /* Premium NIMRA mobile footer skin. */
           .footer {
-            --m-footer-bg: #e8f2ff;
-            --m-footer-primary: #173b67;
-            --m-footer-secondary: #475569;
-            --m-footer-detail: #334155;
-            --m-footer-accent: #2563eb;
-            --m-footer-accent-soft: #315f91;
-            --m-footer-divider: #a9c9ee;
-            --m-footer-marquee: rgba(37, 99, 235, 0.58);
-            --m-footer-highlight: rgba(37, 99, 235, 0.78);
+            --m-footer-bg: #0f172a;
+            --m-footer-primary: #f8fafc;
+            --m-footer-secondary: #cbd5e1;
+            --m-footer-detail: #e2e8f0;
+            --m-footer-accent: #93c5fd;
+            --m-footer-accent-soft: #bfdbfe;
+            --m-footer-divider: #475569;
+            --m-footer-marquee: #93c5fd;
+            --m-footer-highlight: #bfdbfe;
             color: var(--m-footer-detail) !important;
             background: var(--m-footer-bg) !important;
             border-top-color: var(--m-footer-divider) !important;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            box-shadow: none;
             font-family: var(--font-body);
             text-align: center;
             margin-bottom: 0;
@@ -1044,6 +1044,48 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
         }
       `}</style>
       <style jsx global>{`
+        /* Override legacy global footer tokens in every viewport. */
+        .footer {
+          background: #0f172a !important;
+          color: #e2e8f0 !important;
+          border-color: rgba(147, 197, 253, 0.3) !important;
+          opacity: 1 !important;
+        }
+
+        .footer .footer-section-title,
+        .footer .footer-logo,
+        .footer .contact-list a,
+        .footer .footer-bottom strong {
+          color: #f8fafc !important;
+          opacity: 1 !important;
+        }
+
+        .footer .brand-pitch,
+        .footer .footer-links a,
+        .footer .location-item span:last-child,
+        .footer .footer-bottom {
+          color: #cbd5e1 !important;
+          opacity: 1 !important;
+        }
+
+        .footer .contact-label,
+        .footer .location-item strong {
+          color: #bfdbfe !important;
+          opacity: 1 !important;
+        }
+
+        .footer .footer-icon,
+        .footer .footer-logo-icon,
+        .footer .footer-certs span {
+          color: #93c5fd !important;
+          opacity: 1 !important;
+        }
+
+        .footer .footer-col + .footer-col,
+        .footer .footer-bottom {
+          border-color: rgba(147, 197, 253, 0.22) !important;
+        }
+
         .mobile-footer-separator {
           display: none;
         }
@@ -1107,6 +1149,162 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
             animation: none;
             display: none;
           }
+        }
+
+        /* Compact mobile footer: content groups are separated by space, not repeated rules. */
+        @media (max-width: 768px) {
+          .footer .mobile-footer-separator {
+            display: none !important;
+          }
+
+          .footer .footer-container {
+            padding: 1.25rem 1rem 0 !important;
+          }
+
+          .footer .footer-grid {
+            gap: 0 !important;
+          }
+
+          .footer .footer-col,
+          .footer .footer-col + .footer-col,
+          .footer .footer-brand,
+          .footer .footer-grid > :last-child {
+            padding: 0.8rem 0 !important;
+            border: 0 !important;
+            text-align: left !important;
+          }
+
+          .footer .footer-brand {
+            padding-top: 0 !important;
+          }
+
+          .footer .footer-logo {
+            justify-content: flex-start !important;
+            margin-bottom: 0.35rem !important;
+          }
+
+          .footer .brand-pitch {
+            margin: 0 0 0.55rem !important;
+            font-size: 0.72rem !important;
+            line-height: 1.4 !important;
+            text-align: left !important;
+          }
+
+          .footer .footer-certs {
+            justify-content: flex-start !important;
+            flex-wrap: nowrap !important;
+            gap: 0.35rem !important;
+          }
+
+          .footer .footer-certs span {
+            padding: 0.22rem 0.35rem !important;
+            border: 1px solid rgba(147, 197, 253, 0.3) !important;
+            border-radius: 999px !important;
+            background: #16233a !important;
+            font-size: 0.58rem !important;
+            white-space: nowrap !important;
+          }
+
+          .footer .footer-section-title {
+            margin: 0 0 0.35rem !important;
+            font-size: 0.62rem !important;
+            color: #bfdbfe !important;
+            text-align: left !important;
+          }
+
+          .footer .footer-links {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 0.1rem 1rem !important;
+          }
+
+          .footer .footer-links li {
+            width: auto !important;
+          }
+
+          .footer .footer-links a {
+            justify-content: flex-start !important;
+            min-height: 1.9rem !important;
+            padding: 0 !important;
+            font-size: 0.76rem !important;
+          }
+
+          .footer .footer-grid > :nth-child(5) .footer-section-title,
+          .footer .footer-grid > :nth-child(7) .footer-section-title {
+            display: none !important;
+          }
+
+          .footer .contact-list {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 0.45rem !important;
+            max-width: none !important;
+          }
+
+          .footer .contact-list li {
+            width: auto !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            padding: 0.35rem 0.4rem !important;
+            background: #16233a !important;
+            border: 1px solid rgba(147, 197, 253, 0.2) !important;
+            border-radius: 0.4rem !important;
+          }
+
+          .footer .contact-list li > div {
+            display: block !important;
+            max-width: calc(100% - 1.5rem) !important;
+            text-align: left !important;
+          }
+
+          .footer .contact-label {
+            display: block !important;
+            margin-bottom: 0.05rem !important;
+            font-size: 0.52rem !important;
+          }
+
+          .footer .contact-list a {
+            display: block !important;
+            font-size: 0.67rem !important;
+            line-height: 1.25 !important;
+            white-space: normal !important;
+            overflow-wrap: anywhere !important;
+          }
+
+          .footer .locations-list {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 0.45rem !important;
+            max-width: none !important;
+          }
+
+          .footer .location-item {
+            display: grid !important;
+            grid-template-columns: 1rem minmax(0, 1fr) !important;
+            grid-template-rows: auto auto !important;
+            gap: 0.12rem 0.3rem !important;
+            width: auto !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0.35rem 0.4rem !important;
+            background: #16233a !important;
+            border: 1px solid rgba(147, 197, 253, 0.2) !important;
+            border-radius: 0.4rem !important;
+          }
+
+          .footer .location-item > div { display: contents !important; }
+          .footer .location-item strong { grid-column: 1 / -1 !important; grid-row: 1 !important; text-align: left !important; font-size: 0.52rem !important; }
+          .footer .location-item .footer-icon { grid-column: 1 !important; grid-row: 2 !important; width: 1rem !important; height: 1rem !important; }
+          .footer .location-item span:last-child { grid-column: 2 !important; grid-row: 2 !important; max-width: none !important; font-size: 0.62rem !important; line-height: 1.25 !important; text-align: left !important; overflow-wrap: anywhere !important; }
+
+          .footer .footer-bottom {
+            padding: 0.7rem 0 calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + 0.7rem) !important;
+            margin-top: 0.1rem !important;
+            border: 0 !important;
+            text-align: center !important;
+          }
+
+          .footer .footer-bottom p { font-size: 0.56rem !important; line-height: 1.3 !important; }
         }
       `}</style>
     </>
