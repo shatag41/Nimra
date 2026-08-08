@@ -503,13 +503,10 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
           font-weight: 700;
           color: var(--text-primary) !important;
           border-right: 0 !important;
-          max-width: 160px;
         }
         .order-id-text {
           font-family: var(--font-heading);
           font-weight: 700;
-          overflow: hidden;
-          text-overflow: ellipsis;
           white-space: nowrap;
         }
         .copy-btn {
