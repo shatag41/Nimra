@@ -21,9 +21,13 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
   const [viewedProducts, setViewedProducts] = React.useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
   const [mobilePage, setMobilePage] = React.useState(0);
+  const [desktopPage, setDesktopPage] = React.useState(0);
+  const [isDesktopHovered, setIsDesktopHovered] = React.useState(false);
   const touchStartX = React.useRef<number | null>(null);
   const autoplayTimerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
   const resumeTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const desktopAutoplayRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+  const desktopResumeRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const { user, isLoading } = useAuth();
   const { addProduct } = useCart();
 
@@ -72,6 +76,62 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
   React.useEffect(() => {
     setMobilePage((page) => Math.min(page, Math.max(mobilePageCount - 1, 0)));
   }, [mobilePageCount]);
+
+  // Desktop carousel: groups of 4
+  const DESKTOP_PAGE_SIZE = 4;
+  const desktopPages = React.useMemo(() => {
+    const pages: Product[][] = [];
+    for (let i = 0; i < displayedProducts.length; i += DESKTOP_PAGE_SIZE) {
+      pages.push(displayedProducts.slice(i, i + DESKTOP_PAGE_SIZE));
+    }
+    return pages;
+  }, [displayedProducts]);
+  const desktopPageCount = desktopPages.length;
+  const hasMultipleDesktopPages = desktopPageCount > 1;
+
+  React.useEffect(() => {
+    setDesktopPage((page) => Math.min(page, Math.max(desktopPageCount - 1, 0)));
+  }, [desktopPageCount]);
+
+  const stopDesktopAutoplay = React.useCallback(() => {
+    if (desktopAutoplayRef.current) {
+      clearInterval(desktopAutoplayRef.current);
+      desktopAutoplayRef.current = null;
+    }
+    if (desktopResumeRef.current) {
+      clearTimeout(desktopResumeRef.current);
+      desktopResumeRef.current = null;
+    }
+  }, []);
+
+  const startDesktopAutoplay = React.useCallback(() => {
+    if (desktopAutoplayRef.current) clearInterval(desktopAutoplayRef.current);
+    if (!hasMultipleDesktopPages) return;
+    desktopAutoplayRef.current = setInterval(() => {
+      setDesktopPage((p) => (p + 1) % desktopPageCount);
+    }, 4000);
+  }, [hasMultipleDesktopPages, desktopPageCount]);
+
+  React.useEffect(() => {
+    if (isDesktopHovered) {
+      stopDesktopAutoplay();
+    } else {
+      startDesktopAutoplay();
+    }
+    return () => stopDesktopAutoplay();
+  }, [isDesktopHovered, startDesktopAutoplay, stopDesktopAutoplay]);
+
+  const goToDesktopPage = React.useCallback((page: number) => {
+    if (desktopPageCount < 1) return;
+    setDesktopPage(((page % desktopPageCount) + desktopPageCount) % desktopPageCount);
+    // Restart autoplay after manual nav
+    stopDesktopAutoplay();
+    if (!isDesktopHovered && hasMultipleDesktopPages) {
+      desktopResumeRef.current = setTimeout(() => {
+        startDesktopAutoplay();
+      }, 5000);
+    }
+  }, [desktopPageCount, hasMultipleDesktopPages, isDesktopHovered, startDesktopAutoplay, stopDesktopAutoplay]);
 
   const getViewedTime = (index: number) => {
     const times = ["Viewed 10m ago", "Viewed 35m ago", "Viewed 2h ago", "Viewed Yesterday"];
@@ -219,8 +279,69 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
       </div>
 
       <div className={`recently-viewed-content products-page ${hasViewedProducts ? 'has-products' : 'is-empty'}`}>
-        <div className="catalog-grid recently-viewed-product-grid" aria-hidden={!hasViewedProducts}>
-          {displayedProducts.map((product, index) => renderProductCard(product, index))}
+        {/* ── Desktop / Tablet Carousel ── */}
+        <div
+          className={`rv-desktop-carousel-wrap ${hasViewedProducts ? 'rv-dc-visible' : ''}`}
+          onMouseEnter={() => setIsDesktopHovered(true)}
+          onMouseLeave={() => setIsDesktopHovered(false)}
+          aria-hidden={!hasViewedProducts}
+        >
+          <div className="rv-desktop-carousel-outer">
+            <div
+              className="rv-desktop-carousel-track"
+              style={{ transform: `translateX(-${desktopPage * 100}%)` }}
+            >
+              {desktopPages.map((pageProducts, pageIndex) => (
+                <div className="rv-desktop-carousel-page" key={`rv-dpage-${pageIndex}`}>
+                  <div className="rv-desktop-grid">
+                    {pageProducts.map((product, index) => renderProductCard(product, pageIndex * DESKTOP_PAGE_SIZE + index))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Desktop Nav Arrows */}
+          {hasMultipleDesktopPages && (
+            <button
+              type="button"
+              className="rv-dc-nav rv-dc-nav-prev"
+              onClick={() => goToDesktopPage(desktopPage - 1)}
+              aria-label="Show previous recently viewed products"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+          )}
+          {hasMultipleDesktopPages && (
+            <button
+              type="button"
+              className="rv-dc-nav rv-dc-nav-next"
+              onClick={() => goToDesktopPage(desktopPage + 1)}
+              aria-label="Show next recently viewed products"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </button>
+          )}
+
+          {/* Desktop Dots */}
+          {hasMultipleDesktopPages && (
+            <div className="rv-dc-dots" aria-label={`Recently viewed page ${desktopPage + 1} of ${desktopPageCount}`}>
+              {desktopPages.map((_, i) => (
+                <button
+                  key={`rv-dc-dot-${i}`}
+                  type="button"
+                  className={`rv-dc-dot${i === desktopPage ? ' active' : ''}`}
+                  onClick={() => goToDesktopPage(i)}
+                  aria-label={`Go to page ${i + 1}`}
+                  aria-current={i === desktopPage ? 'page' : undefined}
+                />
+              ))}
+            </div>
+          )}
         </div>
         <div
           className="recently-viewed-mobile-carousel"
@@ -339,8 +460,7 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
         .recently-viewed-panel {
           display: flex;
           flex-direction: column;
-          gap: 1rem;
-          min-height: 390px;
+          gap: 0.4rem;
           background: rgba(255, 255, 255, 0.85);
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
@@ -364,93 +484,205 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
 
         .recently-viewed-content {
           position: relative;
-          min-height: 290px;
           flex: 1;
           width: 100% !important;
           max-width: none !important;
         }
-        .recently-viewed-product-grid {
-          display: grid;
-          grid-template-columns: repeat(4, 12.25rem) !important;
-          gap: clamp(0.5rem, 0.8vw, 0.7rem) !important;
-          justify-content: start !important;
-          align-items: stretch !important;
+
+        /* ── Desktop Carousel ── */
+        .rv-desktop-carousel-wrap {
+          display: none;
+          position: relative;
+          width: 100%;
           opacity: 0;
           visibility: hidden;
           transform: translateY(6px);
           transition: opacity 240ms ease, transform 240ms ease, visibility 0s linear 240ms;
         }
-        .has-products .recently-viewed-product-grid {
+        .rv-dc-visible {
           opacity: 1;
           visibility: visible;
           transform: translateY(0);
           transition-delay: 100ms, 100ms, 0s;
         }
-        .recently-viewed-product-grid :global(.catalog-card) {
-          width: 12.25rem !important;
+        .rv-desktop-carousel-outer {
+          width: 100%;
+          overflow: hidden;
+          border-radius: 0.65rem;
+        }
+        .rv-desktop-carousel-track {
+          display: flex;
+          will-change: transform;
+          transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .rv-desktop-carousel-page {
+          min-width: 100%;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        .rv-desktop-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 0.55rem;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        /* Compact card overrides for desktop carousel */
+        .rv-desktop-grid :global(.catalog-card) {
+          width: 100% !important;
           max-width: none !important;
-          min-width: 12.25rem !important;
+          min-width: 0 !important;
           min-height: 0 !important;
-          padding: 0.34rem !important;
-          border-radius: 0.65rem !important;
+          padding: 0.3rem !important;
+          border-radius: 0.6rem !important;
+          box-sizing: border-box !important;
         }
-        .recently-viewed-product-grid :global(.catalog-card .product-img-wrap) {
-          width: calc(100% + 0.68rem) !important;
+        .rv-desktop-grid :global(.catalog-card .product-img-wrap) {
+          width: calc(100% + 0.6rem) !important;
           height: auto !important;
-          margin: -0.34rem -0.34rem 0.28rem !important;
-          aspect-ratio: 3 / 4 !important;
-          border-bottom: 1px solid rgba(150, 150, 150, 0.15) !important;
+          margin: -0.3rem -0.3rem 0.22rem !important;
+          aspect-ratio: 4 / 3 !important;
+          border-bottom: 1px solid rgba(150, 150, 150, 0.13) !important;
         }
-        .recently-viewed-product-grid :global(.catalog-card .product-image-container) {
+        .rv-desktop-grid :global(.catalog-card .product-image-container) {
           width: 100% !important;
           height: 100% !important;
-          aspect-ratio: 3 / 4 !important;
+          aspect-ratio: 4 / 3 !important;
           display: flex !important;
           align-items: center !important;
           justify-content: center !important;
           overflow: hidden !important;
         }
-        .recently-viewed-product-grid :global(.catalog-card .product-img) {
+        .rv-desktop-grid :global(.catalog-card .product-img) {
           width: 100% !important;
           height: 100% !important;
           object-fit: contain !important;
           object-position: center !important;
           display: block !important;
         }
-        .recently-viewed-product-grid :global(.cat-meta) {
-          gap: 0.25rem !important;
-          margin-bottom: 0.16rem !important;
+        .rv-desktop-grid :global(.cat-meta) {
+          gap: 0.2rem !important;
+          margin-bottom: 0.12rem !important;
         }
-        .recently-viewed-product-grid :global(.cat-volume),
-        .recently-viewed-product-grid :global(.cat-badge),
-        .recently-viewed-product-grid :global(.prod-badge-best) {
+        .rv-desktop-grid :global(.cat-volume),
+        .rv-desktop-grid :global(.cat-badge),
+        .rv-desktop-grid :global(.prod-badge-best) {
           max-width: 100% !important;
-          padding: 0.14rem 0.42rem !important;
-          font-size: 0.62rem !important;
+          padding: 0.12rem 0.38rem !important;
+          font-size: 0.6rem !important;
           line-height: 1.05 !important;
         }
-        .recently-viewed-product-grid :global(.cat-info-box h3) {
-          min-height: 2.24em !important;
-          max-height: 2.24em !important;
-          margin-bottom: 0.16rem !important;
+        .rv-desktop-grid :global(.cat-info-box h3) {
+          min-height: 2.1em !important;
+          max-height: 2.1em !important;
+          margin-bottom: 0.12rem !important;
           overflow: hidden !important;
-          font-size: 0.78rem !important;
-          line-height: 1.12 !important;
+          font-size: 0.74rem !important;
+          line-height: 1.05 !important;
           -webkit-line-clamp: 2 !important;
         }
+        .rv-desktop-grid :global(.cat-price-row) {
+          padding-top: 0.3rem !important;
+          gap: 0.3rem !important;
+        }
+        .rv-desktop-grid :global(.price-val) {
+          font-size: 0.88rem !important;
+        }
+        .rv-desktop-grid :global(.add-cart-btn.btn-sm),
+        .rv-desktop-grid :global(.cat-price-row .btn-sm) {
+          padding: 0.28rem 0.55rem !important;
+          font-size: 0.66rem !important;
+          min-height: 0 !important;
+          border-radius: 0.5rem !important;
+        }
+
+        /* Desktop Nav Arrows */
+        .rv-dc-nav {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 10;
+          width: 2rem;
+          height: 2rem;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--primary-color);
+          background: rgba(255, 255, 255, 0.92);
+          border: 1px solid rgba(37, 99, 235, 0.2);
+          border-radius: 50%;
+          box-shadow: 0 2px 10px rgba(37, 99, 235, 0.12);
+          cursor: pointer;
+          transition: opacity 160ms ease, transform 160ms ease, background 160ms ease, box-shadow 160ms ease;
+          opacity: 0.7;
+        }
+        .rv-desktop-carousel-wrap:hover .rv-dc-nav {
+          opacity: 1;
+        }
+        .rv-dc-nav:hover {
+          background: rgba(255, 255, 255, 1);
+          box-shadow: 0 4px 16px rgba(37, 99, 235, 0.22);
+          transform: translateY(-50%) scale(1.07);
+        }
+        .rv-dc-nav:active {
+          transform: translateY(-50%) scale(0.95);
+        }
+        :global([data-theme="dark"]) .rv-dc-nav {
+          background: rgba(15, 23, 42, 0.9);
+          border-color: rgba(96, 165, 250, 0.25);
+          color: #93c5fd;
+        }
+        .rv-dc-nav-prev { left: -0.9rem; }
+        .rv-dc-nav-next { right: -0.9rem; }
+
+        /* Desktop Dots */
+        .rv-dc-dots {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          margin-top: 0.55rem;
+        }
+        .rv-dc-dot {
+          width: 6px;
+          height: 6px;
+          flex: 0 0 6px;
+          border: none;
+          padding: 0;
+          border-radius: 50%;
+          background: #D1D5DB;
+          cursor: pointer;
+          transition: background 180ms ease, transform 180ms ease;
+        }
+        .rv-dc-dot.active {
+          background: #2563EB;
+          transform: scale(1.25);
+        }
+        :global([data-theme="dark"]) .rv-dc-dot { background: rgba(150,150,150,0.45); }
+        :global([data-theme="dark"]) .rv-dc-dot.active { background: #3B82F6; }
+
         .recently-viewed-mobile-carousel {
           display: none;
         }
-        @media (max-width: 1199px) {
-          .recently-viewed-product-grid { grid-template-columns: repeat(3, 12.25rem) !important; }
-        }
-        @media (max-width: 860px) {
-          .recently-viewed-product-grid { grid-template-columns: repeat(2, 12.25rem) !important; }
-        }
-        @media (max-width: 520px) {
-          .recently-viewed-product-grid {
-            grid-template-columns: 12.25rem !important;
-            justify-content: center !important;
+
+        /* Show desktop carousel on non-mobile */
+        @media (min-width: 769px) {
+          .rv-desktop-carousel-wrap {
+            display: block;
+          }
+          /* Compact panel padding on desktop — overrides global .panel padding */
+          .recently-viewed-panel {
+            padding: 0.65rem 0.9rem 0.75rem !important;
+          }
+          /* Tighten the header row bottom spacing */
+          .section-header-row {
+            padding-bottom: 0.35rem !important;
+            margin-bottom: 0.2rem !important;
+          }
+          /* Extra horizontal padding so nav arrows don't clip */
+          .recently-viewed-content {
+            padding-left: 1rem;
+            padding-right: 1rem;
           }
         }
 
@@ -494,7 +726,8 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
           .recently-viewed-content.is-empty .premium-empty-state p {
             margin: 0 0 0.25rem;
           }
-          .has-products .recently-viewed-product-grid {
+          /* Hide desktop carousel on mobile */
+          .rv-desktop-carousel-wrap {
             display: none !important;
           }
           .recently-viewed-mobile-carousel {
