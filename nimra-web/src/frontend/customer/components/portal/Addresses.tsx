@@ -10,6 +10,7 @@ import { getUserSavedAddresses, migrateLegacyLocalAddresses, normalizeSavedAddre
 import { CompactKpiCard } from '../CompactKpiCard';
 import AddressDeleteConfirmation from '../AddressDeleteConfirmation';
 import LoadingButton from '@/frontend/shared/LoadingButton';
+import CustomSelect from '@/frontend/admin/components/CustomSelect';
 
 interface Address {
   id: string;
@@ -33,6 +34,28 @@ interface Address {
 
 type AddressFormData = Omit<Address, 'id' | 'fullAddress'>;
 type Coordinates = { latitude: number | null; longitude: number | null };
+
+function MobileViewportPortal({ children }: { children: React.ReactNode }) {
+  const [usePortal, setUsePortal] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    const updatePortalTarget = () => setUsePortal(mediaQuery.matches);
+    updatePortalTarget();
+    if (mediaQuery.addEventListener) mediaQuery.addEventListener('change', updatePortalTarget);
+    else mediaQuery.addListener(updatePortalTarget);
+    return () => {
+      if (mediaQuery.removeEventListener) mediaQuery.removeEventListener('change', updatePortalTarget);
+      else mediaQuery.removeListener(updatePortalTarget);
+    };
+  }, []);
+
+  if (usePortal && typeof document !== 'undefined') {
+    return createPortal(children, document.body);
+  }
+
+  return children;
+}
 
 export function Addresses() {
   const { user, updateUserSession } = useAuth();
@@ -76,39 +99,24 @@ export function Addresses() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const hasBlockingModal = Boolean(duplicateAddress)
-    || (isAdding && typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches);
+    || (isAdding && typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches);
 
   useEffect(() => {
     if (!hasBlockingModal || typeof document === 'undefined') return;
 
-    const scrollY = window.scrollY;
     const body = document.body;
     const root = document.documentElement;
     const previousBodyStyles = {
       overflow: body.style.overflow,
-      position: body.style.position,
-      top: body.style.top,
-      width: body.style.width,
-      paddingRight: body.style.paddingRight,
     };
     const previousRootOverflow = root.style.overflow;
-    const scrollbarWidth = window.innerWidth - root.clientWidth;
 
     root.style.overflow = 'hidden';
     body.style.overflow = 'hidden';
-    body.style.position = 'fixed';
-    body.style.top = `-${scrollY}px`;
-    body.style.width = '100%';
-    if (scrollbarWidth > 0) body.style.paddingRight = `${scrollbarWidth}px`;
 
     return () => {
       root.style.overflow = previousRootOverflow;
       body.style.overflow = previousBodyStyles.overflow;
-      body.style.position = previousBodyStyles.position;
-      body.style.top = previousBodyStyles.top;
-      body.style.width = previousBodyStyles.width;
-      body.style.paddingRight = previousBodyStyles.paddingRight;
-      window.scrollTo(0, scrollY);
     };
   }, [hasBlockingModal]);
 
@@ -554,11 +562,12 @@ export function Addresses() {
       )}
 
       {isAdding ? (
-        <div className="address-form-wrapper">
+        <MobileViewportPortal>
+        <div className="address-form-wrapper" role="dialog" aria-modal="true" aria-labelledby="address-form-title">
           <div className="address-form-panel glass animate-fade-in-up">
             <div className="form-header">
               <div className="form-header-copy">
-                <h3>{editId ? 'Modify Saved Address' : 'Add New Address'}</h3>
+                <h3 id="address-form-title">{editId ? 'Modify Saved Address' : 'Add New Address'}</h3>
                 <p>Ensure details match your shipping location accurately.</p>
               </div>
               <button type="button" className="address-modal-close" onClick={handleCancelForm} aria-label="Close address form">
@@ -591,10 +600,18 @@ export function Addresses() {
                     onChange={(e) => {
                       setFormData(prev => ({ ...prev, country: e.target.value, state: '', city: '' }));
                     }}
-                    className="form-select"
+                    className="form-select address-desktop-native-select"
                   >
                     {countries.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
+                  <div className="address-mobile-custom-select">
+                    <CustomSelect
+                      value={formData.country}
+                      onChange={(value) => setFormData(prev => ({ ...prev, country: value, state: '', city: '' }))}
+                      options={countries.map(country => ({ value: country, label: country }))}
+                      portalMenu
+                    />
+                  </div>
                 </div>
 
                 <div className="form-group">
@@ -604,12 +621,22 @@ export function Addresses() {
                     onChange={(e) => {
                       setFormData(prev => ({ ...prev, state: e.target.value, city: '' }));
                     }}
-                    className={`form-select ${errors.state ? 'error-state' : ''}`}
+                    className={`form-select address-desktop-native-select ${errors.state ? 'error-state' : ''}`}
                     disabled={!formData.country}
                   >
                     <option value="">Select state...</option>
                     {states.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
+                  <div className={`address-mobile-custom-select ${errors.state ? 'error-state' : ''}`}>
+                    <CustomSelect
+                      value={formData.state}
+                      onChange={(value) => setFormData(prev => ({ ...prev, state: value, city: '' }))}
+                      options={[{ value: '', label: 'Select state...' }, ...states.map(state => ({ value: state, label: state }))]}
+                      placeholder="Select state..."
+                      portalMenu
+                      disabled={!formData.country}
+                    />
+                  </div>
                   {errors.state && <span className="error-message">{errors.state}</span>}
                 </div>
 
@@ -618,12 +645,22 @@ export function Addresses() {
                   <select
                     value={formData.city}
                     onChange={(e) => updateField('city', e.target.value)}
-                    className={`form-select ${errors.city ? 'error-state' : ''}`}
+                    className={`form-select address-desktop-native-select ${errors.city ? 'error-state' : ''}`}
                     disabled={!formData.state}
                   >
                     <option value="">Select city...</option>
                     {cities.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
+                  <div className={`address-mobile-custom-select ${errors.city ? 'error-state' : ''}`}>
+                    <CustomSelect
+                      value={formData.city}
+                      onChange={(value) => updateField('city', value)}
+                      options={[{ value: '', label: 'Select city...' }, ...cities.map(city => ({ value: city, label: city }))]}
+                      placeholder="Select city..."
+                      portalMenu
+                      disabled={!formData.state}
+                    />
+                  </div>
                   {errors.city && <span className="error-message">{errors.city}</span>}
                 </div>
               </div>
@@ -734,7 +771,8 @@ export function Addresses() {
             </div>
           </form>
         </div>
-      </div>
+        </div>
+        </MobileViewportPortal>
       ) : (
         <div className="addresses-grid">
           {addresses.length === 0 ? (
@@ -1158,6 +1196,8 @@ export function Addresses() {
         }
 
         .address-modal-close { display: none; }
+
+        .address-mobile-custom-select { display: none; }
  
         .form-fields-group {
           display: grid;
@@ -1579,7 +1619,7 @@ export function Addresses() {
         }
  
         /* Mobile adaptation */
-        @media (max-width: 640px) {
+        @media (max-width: 768px) {
           :global(html.address-form-modal-open),
           :global(body.address-form-modal-open) {
             overflow: hidden !important;
@@ -1716,32 +1756,35 @@ export function Addresses() {
 
           .address-form-wrapper {
             position: fixed;
-            top: var(--mobile-navbar-height, 64px);
-            right: 0;
-            bottom: calc(var(--mobile-nav-height, 64px) + env(safe-area-inset-bottom));
-            left: 0;
-            z-index: 1400;
+            inset: 0;
+            z-index: 2147482000;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 100%;
+            width: 100vw;
             max-width: 100%;
             min-width: 0;
-            height: calc(100vh - var(--mobile-navbar-height, 64px) - var(--mobile-nav-height, 64px) - env(safe-area-inset-bottom));
-            height: calc(100dvh - var(--mobile-navbar-height, 64px) - var(--mobile-nav-height, 64px) - env(safe-area-inset-bottom));
+            height: 100vh;
+            height: 100dvh;
             margin: 0;
-            padding: .55rem;
+            padding:
+              max(8px, env(safe-area-inset-top))
+              8px
+              max(8px, env(safe-area-inset-bottom));
+            box-sizing: border-box;
             overflow: hidden;
-            background: rgba(15, 23, 42, .58);
-            overscroll-behavior: contain;
+            background: rgba(0, 0, 0, .6);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            overscroll-behavior: none;
           }
 
           .address-form-panel {
-            width: min(100%, 34rem);
-            max-width: 34rem;
+            width: min(100%, 26rem);
+            max-width: 26rem;
             min-width: 0;
-            height: 100%;
-            max-height: 52rem;
+            height: auto;
+            max-height: min(500px, calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom)));
             margin: 0;
             padding: 0;
             gap: 0;
@@ -1841,6 +1884,40 @@ export function Addresses() {
             box-sizing: border-box;
           }
 
+          .address-desktop-native-select { display: none; }
+
+          .address-mobile-custom-select {
+            display: block;
+            width: 100%;
+            min-width: 0;
+          }
+
+          .address-mobile-custom-select :global(.custom-select-container),
+          .address-mobile-custom-select :global(.custom-select-trigger) {
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;
+          }
+
+          .address-mobile-custom-select.error-state :global(.custom-select-trigger) {
+            border-color: #ef4444;
+            background-color: rgba(239, 68, 68, .05);
+          }
+
+          .address-mobile-custom-select :global(.custom-select-trigger[aria-disabled="true"]) {
+            cursor: not-allowed;
+            opacity: .6;
+            pointer-events: none;
+          }
+
+          :global(body.address-form-modal-open .custom-select-options-list-portal) {
+            z-index: 2147482500 !important;
+            max-width: calc(100vw - 16px) !important;
+            overflow-x: hidden !important;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+          }
+
           .label-row-header {
             gap: .6rem;
             flex-wrap: wrap;
@@ -1855,7 +1932,8 @@ export function Addresses() {
             position: sticky;
             bottom: 0;
             z-index: 3;
-            flex-direction: column-reverse;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
             gap: .6rem;
             flex: 0 0 auto;
             padding: .7rem .9rem;
@@ -1866,8 +1944,18 @@ export function Addresses() {
           .address-footer-button,
           .form-actions-footer :global(.address-footer-save) {
             width: 100%;
-            flex-basis: 48px;
+            height: 44px;
+            min-height: 44px;
+            flex-basis: auto;
             text-align: center;
+          }
+
+          .address-footer-cancel { display: none; }
+        }
+
+        @media (max-width: 340px) {
+          .form-actions-footer {
+            grid-template-columns: 1fr;
           }
         }
       `}</style>

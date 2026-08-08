@@ -14,6 +14,7 @@ export interface CustomSelectProps {
   clearable?: boolean;
   onClear?: () => void;
   portalMenu?: boolean;
+  disabled?: boolean;
 }
 
 interface PortalMenuPosition {
@@ -31,6 +32,7 @@ export default function CustomSelect({
   clearable = false,
   onClear,
   portalMenu = false,
+  disabled = false,
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [portalPosition, setPortalPosition] = useState<PortalMenuPosition | null>(null);
@@ -127,10 +129,12 @@ export default function CustomSelect({
       <div
         ref={triggerRef}
         onClick={() => {
+          if (disabled) return;
           if (!isOpen && portalMenu) updatePortalPosition();
           setIsOpen(!isOpen);
         }}
         className={`custom-select-trigger ${isOpen ? 'open' : ''}`}
+        aria-disabled={disabled}
       >
         <span className="custom-select-text">{selectedOpt ? selectedOpt.label : placeholder}</span>
         <div className="custom-select-actions">
