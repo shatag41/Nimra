@@ -8,6 +8,7 @@ import { deleteFile, fileExists } from '@/backend/storage/storage';
 import { isAdminStorageRequest } from '@/backend/storage/storageAuth';
 import { mergeCompanyInfo } from '@/utils/companyInfo';
 import { getCustomerDeletionEligibility } from '@/utils/customerDeletion';
+import { cancellationRestrictionMessage } from '@/utils/orderStatus';
 
 const EMAIL_PREFERENCE_DEFAULTS = {
   orderConfirmation: true,
@@ -961,7 +962,10 @@ export async function handlePost(req: NextRequest) {
       if (orderIndex < 0) return NextResponse.json({ success: false, message: 'Order not found.' }, { status: 404 });
       const currentStatus = String(fallbackData.orders[orderIndex].status || '').toLowerCase();
       if (!['pending', 'confirmed'].includes(currentStatus)) {
-        return NextResponse.json({ success: false, message: 'This order is already being prepared and can no longer be cancelled.' }, { status: 400 });
+        return NextResponse.json({
+          success: false,
+          message: cancellationRestrictionMessage(fallbackData.orders[orderIndex].status),
+        }, { status: 400 });
       }
       if (fallbackData.orders[orderIndex].cancellationStatus === 'Pending') {
         return NextResponse.json({ success: false, message: 'A cancellation request is already pending for this order.' }, { status: 400 });

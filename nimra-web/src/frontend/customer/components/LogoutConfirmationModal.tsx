@@ -131,7 +131,12 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
           .legacy-modal-actions { display: flex; gap: 1rem; justify-content: flex-end; }
           @keyframes legacyFadeIn { from { opacity: 0; } to { opacity: 1; } }
           @keyframes legacyScaleIn { from { opacity: 0; transform: translate(-50%,-50%) scale(.9); } to { opacity: 1; transform: translate(-50%,-50%) scale(1); } }
-          @media (max-width:480px) { .legacy-modal-content { width:95%; padding:1.5rem; } .legacy-modal-actions { flex-direction:column-reverse; } }
+          @media (max-width:768px) {
+            .legacy-modal-content { width:95%; padding:1.5rem; }
+            .legacy-modal-actions { display:block; }
+            .legacy-modal-actions > .btn-secondary { display:none; }
+            .legacy-modal-actions :global(button:last-child) { width:100%; }
+          }
         `}</style>
       </>,
       document.body
@@ -317,9 +322,12 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
           @keyframes scaleIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
           @keyframes stepIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-          @media (max-width: 480px) {
+          @media (max-width: 768px) {
             .modal-overlay { padding: .75rem; }
             .modal-content { width: 520px; max-width: 92vw; min-height: 200px; height: auto; padding: 1rem; }
+            .modal-actions { display: block; }
+            .modal-actions > .btn-secondary { display: none; }
+            .modal-actions :global(button:last-child) { width: 100%; }
           }
         `}</style>
       </div>,

@@ -44,6 +44,10 @@ export default function AddressDeleteConfirmation({ addressType, isDeleting, onC
         button:disabled { opacity:.6;cursor:not-allowed; }
         @keyframes modal-fade { from { opacity:0; } to { opacity:1; } }
         @keyframes modal-scale { from { opacity:0;transform:scale(.96) translateY(8px); } to { opacity:1;transform:scale(1) translateY(0); } }
+        @media (max-width: 768px) {
+          .btn-cancel-delete { display:none; }
+          .delete-modal-actions :global(.btn-confirm-delete) { width:100%; }
+        }
       `}</style>
     </div>,
     document.body

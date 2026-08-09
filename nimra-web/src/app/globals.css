@@ -19780,3 +19780,26 @@ body:has(.products-page-skeleton) {
   pointer-events: none;
   opacity: 0.58;
 }
+
+/* Mobile modal action rows keep one clear, full-width primary action. These
+   selectors are deliberately scoped to dialog containers so page buttons are
+   unaffected. */
+@media (max-width: 768px) {
+  .modal-card .modal-footer > .btn-secondary,
+  .admin-modal .modal-footer > .btn-secondary,
+  .admin-form-modal .modal-actions > .admin-modal-cancel,
+  .profile-panel .profile-actions > .btn-secondary,
+  .duplicate-modal .duplicate-modal-actions > .duplicate-cancel-button {
+    display: none !important;
+  }
+
+  .modal-card .modal-footer > :not(.btn-secondary),
+  .admin-modal .modal-footer > :not(.btn-secondary),
+  .admin-form-modal .modal-actions > :not(.admin-modal-cancel),
+  .profile-panel .profile-actions > :not(.btn-secondary),
+  .duplicate-modal .duplicate-modal-actions > :not(.duplicate-cancel-button) {
+    width: 100% !important;
+    flex: 1 1 100% !important;
+    justify-content: center !important;
+  }
+}

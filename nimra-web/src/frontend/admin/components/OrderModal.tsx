@@ -120,6 +120,7 @@ export default function OrderModal({
       {showSequenceWarning && (
         <div className="status-warning-backdrop" role="presentation">
           <form className="status-warning-dialog" onSubmit={confirmExceptionalUpdate} role="dialog" aria-modal="true" aria-labelledby="status-warning-title">
+            <button type="button" className="status-warning-close" aria-label="Close" onClick={() => setShowSequenceWarning(false)} disabled={saveLoading}>&times;</button>
             <h3 id="status-warning-title">Confirm Out-of-Sequence Update</h3>
             <p className="status-warning-copy">This status change requires a customer notification before it can be saved.</p>
             <div className="status-transition">
@@ -151,7 +152,8 @@ export default function OrderModal({
 
       <style jsx>{`
         .status-warning-backdrop { position: fixed; inset: 0; z-index: 10020; display: grid; place-items: center; padding: 1rem; background: rgba(2, 6, 23, .58); backdrop-filter: blur(5px); }
-        .status-warning-dialog { width: min(100%, 560px); padding: 1.35rem; border: 1px solid var(--border-color); border-radius: var(--radius-lg); background: var(--bg-secondary); color: var(--text-primary); box-shadow: var(--shadow-xl); }
+        .status-warning-dialog { position: relative; width: min(100%, 560px); padding: 1.35rem; border: 1px solid var(--border-color); border-radius: var(--radius-lg); background: var(--bg-secondary); color: var(--text-primary); box-shadow: var(--shadow-xl); }
+        .status-warning-close { display: none; }
         .status-warning-dialog h3 { margin: 0; font-size: 1.15rem; }
         .status-warning-copy { margin: .45rem 0 1rem; color: var(--text-secondary); font-size: .85rem; line-height: 1.45; }
         .status-transition { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: .75rem; margin-bottom: 1rem; }
@@ -165,7 +167,14 @@ export default function OrderModal({
         .status-warning-dialog textarea:focus { outline: 3px solid rgba(37, 99, 235, .16); border-color: var(--primary-color); }
         .status-message-error { margin: .4rem 0 0; color: #ef4444; font-size: .75rem; }
         .status-warning-actions { display: flex; justify-content: flex-end; gap: .75rem; margin-top: 1rem; }
-        @media (max-width: 520px) { .status-transition { grid-template-columns: 1fr; } .status-transition > b { display: none; } .status-warning-actions { flex-direction: column-reverse; } }
+        @media (max-width: 520px) {
+          .status-warning-close { position:absolute;top:.6rem;right:.6rem;display:grid;place-items:center;width:2rem;height:2rem;padding:0;border:0;border-radius:50%;background:var(--bg-primary);color:var(--text-primary);font-size:1.3rem;cursor:pointer; }
+          .status-transition { grid-template-columns: 1fr; }
+          .status-transition > b { display: none; }
+          .status-warning-actions { display:block; }
+          .status-warning-actions > .btn-secondary { display:none; }
+          .status-warning-actions :global(button:last-child) { width:100%; }
+        }
       `}</style>
     </div>
   );

@@ -547,6 +547,7 @@ export default function CheckoutClient() {
       {showConfirmModal && (
         <div className="co-confirm-modal-overlay">
           <div className="co-confirm-modal card animate-scale-in">
+            <button type="button" className="co-confirm-modal-close" onClick={() => setShowConfirmModal(false)} aria-label="Close">&times;</button>
             <h3>Confirm Your Order</h3>
             <p className="modal-desc">Please review your order details before placing it.</p>
             
@@ -649,6 +650,7 @@ const styles = `
     padding: 1rem;
   }
   .co-confirm-modal {
+    position: relative;
     width: 100%;
     max-width: 480px;
     background: var(--glass-bg, rgba(30, 41, 59, 0.85));
@@ -657,6 +659,9 @@ const styles = `
     padding: 1.5rem;
     box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5);
     color: var(--text-primary);
+  }
+  .co-confirm-modal-close {
+    display: none;
   }
   .co-confirm-modal h3 {
     margin-top: 0;
@@ -749,5 +754,26 @@ const styles = `
     padding: 0.6rem;
     font-size: 0.9rem;
     font-weight: 600;
+  }
+  @media (max-width: 768px) {
+    .co-confirm-modal-close {
+      position: absolute;
+      top: 0.65rem;
+      right: 0.65rem;
+      display: grid;
+      place-items: center;
+      width: 2rem;
+      height: 2rem;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 1.35rem;
+      cursor: pointer;
+    }
+    .co-confirm-modal .modal-actions { grid-template-columns: 1fr; }
+    .co-confirm-modal .modal-actions > .btn-secondary { display: none; }
+    .co-confirm-modal .modal-actions > .btn-primary { width: 100%; }
   }
 `;

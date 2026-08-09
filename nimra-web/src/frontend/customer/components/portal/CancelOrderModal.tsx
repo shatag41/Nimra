@@ -139,10 +139,9 @@ export default function CancelOrderModal({
             transform: scale(1) translateY(0);
           }
         }
-        @media (max-width: 480px) {
-          .cancel-modal-actions {
-            flex-direction: column-reverse;
-          }
+        @media (max-width: 768px) {
+          .cancel-modal-button-secondary { display: none; }
+          .cancel-modal-actions :global(.cancel-modal-button-danger) { width: 100%; flex-basis: 100%; }
         }
       `}</style>
     </div>

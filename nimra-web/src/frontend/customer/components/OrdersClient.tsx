@@ -15,6 +15,7 @@ import dynamic from 'next/dynamic';
 import ProductImage from './ProductImage';
 import CustomerPageHeader from './CustomerPageHeader';
 import LogoutConfirmationModal from './LogoutConfirmationModal';
+import { cancellationRestrictionMessage } from '@/utils/orderStatus';
 
 const OrderDetailsModal = dynamic(() => import('./portal/OrderDetailsModal'), { ssr: false });
 const CancelOrderModal = dynamic(() => import('./portal/CancelOrderModal'), { ssr: false });
@@ -500,7 +501,7 @@ export default function OrdersClient() {
                           {cancellationClosed && (
                             <>
                               <button className="amazon-action-btn danger-action" disabled>Cancel Order</button>
-                              <span className="status-desc-text">This order is already being prepared and can no longer be cancelled.</span>
+                              <span className="status-desc-text">{cancellationRestrictionMessage(order.status)}</span>
                             </>
                           )}
                           {hasPendingCancellation && (

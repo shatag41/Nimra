@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { OrderRecord } from '@/types/cms';
 import { formatCurrency } from '../../utils/commerce';
 import ProductImage from '../ProductImage';
+import { cancellationRestrictionMessage } from '@/utils/orderStatus';
 
 interface TimelineStep {
   key: string;
@@ -258,7 +259,7 @@ export default function OrderDetailsModal({
           ) : ['processing', 'dispatched', 'out for delivery', 'delivered'].includes(status.toLowerCase()) ? (
             <div>
               <button type="button" className="btn btn-outline-danger" disabled>Cancel Order</button>
-              <div className="pending-cancel-notice">This order is already being prepared and can no longer be cancelled.</div>
+              <div className="pending-cancel-notice">{cancellationRestrictionMessage(selectedOrder.status)}</div>
             </div>
           ) : null}
           <div className="footer-right-actions">
