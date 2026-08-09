@@ -490,8 +490,13 @@ export default function OrdersClient() {
                           <button onClick={() => handleReorder(order)} className="amazon-action-btn primary-action">
                             <span aria-hidden="true">&#8635;</span> Reorder
                           </button>
-                          <button onClick={(e) => { e.stopPropagation(); setSelectedOrder(order); }} className="amazon-action-btn">
-                            <span aria-hidden="true">&#128065;</span> View Details
+                          <button onClick={(e) => { e.stopPropagation(); setSelectedOrder(order); }} className="amazon-action-btn view-details-btn">
+                            <span aria-hidden="true" className="desktop-eye-icon">&#128065;</span>
+                            <svg className="mobile-eye-icon" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                              <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            View Details
                           </button>
                           {isCancelable && (
                             <button onClick={(e) => { e.stopPropagation(); setOrderToCancel(order); }} className="amazon-action-btn danger-action">
@@ -1918,6 +1923,35 @@ export default function OrdersClient() {
           }
           .ccp-summary {
             padding: 1rem;
+          }
+        }
+
+        /* Mobile-only View Details eye icon styling */
+        .mobile-eye-icon {
+          display: none;
+        }
+        @media (max-width: 640px) {
+          .desktop-eye-icon {
+            display: none;
+          }
+          .mobile-eye-icon {
+            display: inline-block;
+            color: #2563eb;
+            filter: drop-shadow(0 0 3px rgba(37, 99, 235, 0.3));
+            transform-origin: center;
+            will-change: transform, opacity;
+            transition: transform 180ms ease, filter 180ms ease;
+            animation: view-details-pulse 3s ease-in-out infinite;
+            vertical-align: middle;
+            margin-right: 0.15rem;
+          }
+          .view-details-btn:active .mobile-eye-icon {
+            color: #1d4ed8;
+            filter: drop-shadow(0 0 5px rgba(37, 99, 235, 0.65));
+          }
+          @keyframes view-details-pulse {
+            0%, 82%, 100% { transform: scale(1); opacity: 0.88; }
+            91% { transform: scale(1.06); opacity: 1; }
           }
         }
       `}</style>
