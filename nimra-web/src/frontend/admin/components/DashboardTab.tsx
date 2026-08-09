@@ -276,19 +276,14 @@ const DashboardTab = React.memo(function DashboardTab({
     newInquiriesAlertCount + 
     pendingCancellationRequests.length;
 
-  const initiateReview = (request: CancellationRequest, decision: 'Approved' | 'Rejected') => {
-    if (lockedRequestIds.has(request.requestId)) return;
-    setConfirmAction({ request, decision });
-  };
-
-  const executeReview = async () => {
-    if (!confirmAction) return;
+  const processReview = async (request: CancellationRequest, decision: 'Approved' | 'Rejected') => {
+    const adminRemarks = decision === 'Rejected' ? (remarksByRequest[request.requestId] || '').trim() : 'Approved by admin.';
+    if (decision === 'Rejected' && !adminRemarks) return;
     setIsProcessingAction(true);
     try {
-      const { request, decision } = confirmAction;
       if (lockedRequestIds.has(request.requestId)) return;
       setLockedRequestIds((prev) => new Set(prev).add(request.requestId));
-      const success = await onReviewCancellation(request.requestId, decision, decision === 'Rejected' ? remarksByRequest[request.requestId] || '' : 'Approved by admin.');
+      const success = await onReviewCancellation(request.requestId, decision, adminRemarks);
       if (success) {
         setRemarksByRequest((prev) => {
           const next = { ...prev };
@@ -305,18 +300,30 @@ const DashboardTab = React.memo(function DashboardTab({
         notify.error('Request Failed', `Failed to process request.`);
       }
     } catch (e) {
-      if (confirmAction) {
-        setLockedRequestIds((prev) => {
-          const next = new Set(prev);
-          next.delete(confirmAction.request.requestId);
-          return next;
-        });
-      }
+      setLockedRequestIds((prev) => {
+        const next = new Set(prev);
+        next.delete(request.requestId);
+        return next;
+      });
       notify.error('Request Error', `Error processing request.`);
     } finally {
       setIsProcessingAction(false);
       setConfirmAction(null);
     }
+  };
+
+  const initiateReview = (request: CancellationRequest, decision: 'Approved' | 'Rejected') => {
+    if (lockedRequestIds.has(request.requestId)) return;
+    if (decision === 'Rejected') {
+      setConfirmAction({ request, decision });
+      return;
+    }
+    void processReview(request, decision);
+  };
+
+  const executeReview = async () => {
+    if (!confirmAction) return;
+    await processReview(confirmAction.request, confirmAction.decision);
   };
 
   const getStatusBadge = (status: string) => {
@@ -989,12 +996,14 @@ const DashboardTab = React.memo(function DashboardTab({
         isOpen={confirmAction !== null}
         onClose={() => setConfirmAction(null)}
         onConfirm={executeReview}
-        title="Confirm Action"
-        description={confirmAction ? `Are you sure you want to ${confirmAction.decision === 'Approved' ? 'approve' : 'reject'} this cancellation request?` : ''}
-        confirmText="Confirm"
+        title="Reject Cancellation Request"
+        description="Please add a remark for rejecting the cancellation request"
+        confirmText="Confirm Rejection"
         cancelText="Cancel"
-        confirmButtonClass={confirmAction?.decision === 'Approved' ? 'btn btn-primary' : 'btn btn-error'}
+        confirmButtonClass="btn btn-error"
         isProcessing={isProcessingAction}
+        processingText="Rejecting..."
+        confirmDisabled={!confirmAction || !(remarksByRequest[confirmAction.request.requestId] || '').trim()}
         stableFlowLayout
       >
         {confirmAction?.decision === 'Rejected' ? (
@@ -1006,6 +1015,7 @@ const DashboardTab = React.memo(function DashboardTab({
               onChange={(event) => setRemarksByRequest((prev) => ({ ...prev, [confirmAction.request.requestId]: event.target.value }))}
               placeholder="Reason for rejecting this cancellation request"
               rows={3}
+              required
             />
           </label>
         ) : null}

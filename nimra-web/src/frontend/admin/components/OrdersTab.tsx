@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CancellationRequest, OrderRecord } from '@/types/cms';
 import { formatCurrency } from '@/frontend/customer/utils/commerce';
 import CustomSelect from './CustomSelect';
+import LogoutConfirmationModal from '@/frontend/customer/components/LogoutConfirmationModal';
 
 interface OrdersTabProps {
   filteredOrders: OrderRecord[];
@@ -47,7 +48,8 @@ export default React.memo(function OrdersTab({
   setOrdersView,
 }: OrdersTabProps) {
   const [remarksByRequest, setRemarksByRequest] = useState<Record<string, string>>({});
-  const [rejectingRequestId, setRejectingRequestId] = useState<string | null>(null);
+  const [rejectingRequest, setRejectingRequest] = useState<CancellationRequest | null>(null);
+  const [isRejecting, setIsRejecting] = useState(false);
   const [lockedRequestIds, setLockedRequestIds] = useState<Set<string>>(() => new Set());
 
   const getStatusBadge = (status: string) => {
@@ -98,19 +100,21 @@ export default React.memo(function OrdersTab({
 
   const reviewCancellation = async (request: CancellationRequest, decision: 'Approved' | 'Rejected') => {
     if (lockedRequestIds.has(request.requestId)) return;
+    const adminRemarks = decision === 'Rejected' ? (remarksByRequest[request.requestId] || '').trim() : 'Approved by admin.';
+    if (decision === 'Rejected' && !adminRemarks) return;
     setLockedRequestIds((prev) => new Set(prev).add(request.requestId));
     let success = false;
     try {
       success = await onReviewCancellation(
         request.requestId,
         decision,
-        decision === 'Rejected' ? remarksByRequest[request.requestId] || '' : 'Approved by admin.'
+        adminRemarks
       );
     } catch {
       success = false;
     }
     if (success) {
-      setRejectingRequestId((current) => current === request.requestId ? null : current);
+      setRejectingRequest((current) => current?.requestId === request.requestId ? null : current);
       setRemarksByRequest((prev) => {
         const next = { ...prev };
         delete next[request.requestId];
@@ -222,22 +226,14 @@ export default React.memo(function OrdersTab({
                     </td>
                     <td className="reason-col">{request.reason || 'Not specified'}</td>
                     <td className="remarks-col">
-                      {isPending && rejectingRequestId === request.requestId ? (
-                        <textarea
-                          className="form-input remarks-textarea"
-                          value={remarksByRequest[request.requestId] || ''}
-                          onChange={(event) => setRemarksByRequest((prev) => ({ ...prev, [request.requestId]: event.target.value }))}
-                          placeholder="Audit remarks"
-                          rows={2}
-                        />
-                      ) : request.status === 'Rejected' ? (
+                      {request.status === 'Rejected' ? (
                         <small>{request.adminRemarks || 'No remarks recorded'}</small>
                       ) : <small aria-label="Not applicable">&mdash;</small>}
                     </td>
                     <td className="sticky-action-col cancellation-actions-cell">
                       {isPending ? (
                         <div className="actions-flex row-wrap">
-                          <button type="button" className="btn-table btn-reject" disabled={lockedRequestIds.has(request.requestId)} onClick={() => rejectingRequestId === request.requestId ? reviewCancellation(request, 'Rejected') : setRejectingRequestId(request.requestId)}>
+                          <button type="button" className="btn-table btn-reject" disabled={lockedRequestIds.has(request.requestId)} onClick={() => setRejectingRequest(request)}>
                             ✗ Reject
                           </button>
                           <button type="button" className="btn-table btn-approve" disabled={lockedRequestIds.has(request.requestId)} onClick={() => reviewCancellation(request, 'Approved')}>
@@ -286,7 +282,7 @@ export default React.memo(function OrdersTab({
                   <div><dt>Payment / Refund</dt><dd>{request.paymentMethod || 'Cash on Delivery'}<small>{request.refundStatus || 'Pending approval'}</small></dd></div>
                   <div><dt>Reason</dt><dd>{request.reason || 'Not specified'}</dd></div>
                   <div className="mobile-cancellation-remarks"><dt>Admin Remarks</dt><dd>
-                    {isPending && rejectingRequestId === request.requestId ? (
+                    {false && rejectingRequest?.requestId === request.requestId ? (
                       <textarea
                         className="form-input remarks-textarea"
                         value={remarksByRequest[request.requestId] || ''}
@@ -301,9 +297,9 @@ export default React.memo(function OrdersTab({
                   className={`mobile-cancellation-actions ${lockedRequestIds.has(request.requestId) ? 'is-disabled' : ''}`}
                   aria-busy={lockedRequestIds.has(request.requestId)}
                   onClickCapture={(event) => {
-                    if ((event.target as HTMLElement).closest('.btn-reject') && rejectingRequestId !== request.requestId) {
+                    if ((event.target as HTMLElement).closest('.btn-reject')) {
                       event.stopPropagation();
-                      setRejectingRequestId(request.requestId);
+                      setRejectingRequest(request);
                     }
                   }}
                 >
@@ -498,6 +494,43 @@ export default React.memo(function OrdersTab({
       </div>
         </>
       )}
+      <LogoutConfirmationModal
+        isOpen={rejectingRequest !== null}
+        onClose={() => { if (!isRejecting) setRejectingRequest(null); }}
+        onConfirm={async () => {
+          if (!rejectingRequest || !(remarksByRequest[rejectingRequest.requestId] || '').trim()) return;
+          setIsRejecting(true);
+          try {
+            await reviewCancellation(rejectingRequest, 'Rejected');
+          } finally {
+            setIsRejecting(false);
+          }
+        }}
+        title="Reject Cancellation Request"
+        description="Please add a remark for rejecting the cancellation request"
+        confirmText="Confirm Rejection"
+        cancelText="Cancel"
+        confirmButtonClass="btn btn-error"
+        isProcessing={isRejecting}
+        processingText="Rejecting..."
+        confirmDisabled={!rejectingRequest || !(remarksByRequest[rejectingRequest.requestId] || '').trim()}
+        stableFlowLayout
+      >
+        {rejectingRequest ? (
+          <label style={{ display: 'grid', gap: '.4rem', marginTop: '.35rem', color: 'var(--text-secondary)', fontSize: '.78rem', fontWeight: 700 }}>
+            Admin Remark
+            <textarea
+              className="form-input remarks-textarea"
+              value={remarksByRequest[rejectingRequest.requestId] || ''}
+              onChange={(event) => setRemarksByRequest((prev) => ({ ...prev, [rejectingRequest.requestId]: event.target.value }))}
+              placeholder="Reason for rejecting this cancellation request"
+              rows={3}
+              required
+            />
+          </label>
+        ) : null}
+      </LogoutConfirmationModal>
+
       <style jsx>{`
         .cancellation-requests-table-wrap {
           width: 100%;
