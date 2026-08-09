@@ -636,7 +636,7 @@ export const updateOrderDeliveryAddress = async (
   orderId: string,
   address: OrderSubmission['customer'],
   userId: string | number
-): Promise<{ success: boolean; message: string; order?: OrderRecord }> => {
+): Promise<{ success: boolean; message: string; order?: OrderRecord; addresses?: unknown[] }> => {
   try {
     const res = await fetch('/api/cms', {
       method: 'POST',

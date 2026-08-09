@@ -13,7 +13,7 @@ import LoadingButton from '@/frontend/shared/LoadingButton';
 import CustomSelect from '@/frontend/admin/components/CustomSelect';
 import { updateOrderDeliveryAddress } from '@/utils/api';
 import { canEditOrderDeliveryAddress, deliveryAddressRestrictionMessage } from '@/utils/orderStatus';
-import { clearCustomerOrdersCache, useCustomerOrders } from '@/frontend/customer/hooks/useCustomerOrders';
+import { primeCustomerOrderCache, useCustomerOrders } from '@/frontend/customer/hooks/useCustomerOrders';
 
 interface Address {
   id: string;
@@ -67,7 +67,7 @@ export function Addresses() {
   const requestedEditAddressId = searchParams.get('editAddressId');
   const requestedOrderId = searchParams.get('orderId');
   const isCheckoutReturn = searchParams.get('returnContext') === 'checkout';
-  const { orders, refreshOrders } = useCustomerOrders();
+  const { orders } = useCustomerOrders();
   const requestedOrder = requestedOrderId ? orders.find((order) => String(order.orderId) === requestedOrderId) : undefined;
 
   const [addresses, setAddresses] = useState<Address[]>(() => getUserSavedAddresses(user) as Address[]);
@@ -314,6 +314,7 @@ export function Addresses() {
   ));
 
   const persistCurrentAddress = async () => {
+    if (saving) return;
     if (requestedOrder && !canEditOrderDeliveryAddress(requestedOrder.status)) {
       setErrors({ form: deliveryAddressRestrictionMessage(requestedOrder.status) });
       return;
@@ -326,6 +327,40 @@ export function Addresses() {
       fullAddress: compositeAddress,
       id: editId || Date.now().toString()
     };
+
+    if (requestedOrderId && user) {
+      setSaving(true);
+      try {
+        const updatedCustomer = {
+          ...newSavedAddr,
+          savedAddressId: requestedOrder?.customer?.savedAddressId || newSavedAddr.id,
+          addressType: newSavedAddr.type,
+          address: newSavedAddr.fullAddress,
+        };
+        const result = await updateOrderDeliveryAddress(requestedOrderId, updatedCustomer, user.ID);
+        if (!result.success) {
+          setErrors({ form: result.message || 'Failed to update the order delivery address.' });
+          return;
+        }
+        if (Array.isArray(result.addresses)) {
+          const normalizedAddresses = normalizeSavedAddresses(result.addresses as Address[]) as Address[];
+          setAddresses(normalizedAddresses);
+          updateUserSession({ ...user, SavedAddresses: JSON.stringify(normalizedAddresses) });
+        }
+        const updatedOrder = result.order || (requestedOrder ? {
+          ...requestedOrder,
+          customer: { ...requestedOrder.customer, ...updatedCustomer },
+          updatedAt: new Date().toISOString(),
+        } : undefined);
+        if (updatedOrder) primeCustomerOrderCache(updatedOrder, [user.ID, user.Username]);
+        setDuplicateAddress(null);
+        setIsRedirecting(true);
+        router.replace('/orders');
+        return;
+      } finally {
+        setSaving(false);
+      }
+    }
 
     let updatedList: Address[];
     if (formData.isDefault) {
@@ -343,20 +378,6 @@ export function Addresses() {
     const saved = await saveAddressList(updatedList);
     if (!saved) return;
 
-    if (requestedOrderId && user) {
-      const result = await updateOrderDeliveryAddress(requestedOrderId, {
-        ...newSavedAddr,
-        savedAddressId: newSavedAddr.id,
-        addressType: newSavedAddr.type,
-        address: newSavedAddr.fullAddress,
-      }, user.ID);
-      if (!result.success) {
-        setErrors({ form: result.message || 'Failed to update the order delivery address.' });
-        return;
-      }
-      clearCustomerOrdersCache(user.ID);
-      await refreshOrders();
-    }
     setDuplicateAddress(null);
 
     const redirectPath = searchParams.get('redirect');
@@ -791,7 +812,7 @@ export function Addresses() {
               <button type="button" onClick={handleCancelForm} className="address-footer-button address-footer-cancel">
                 Cancel
               </button>
-              <LoadingButton type="submit" className="btn-submit address-footer-save" isLoading={saving} loadingText="Saving...">
+              <LoadingButton type="submit" className="btn-submit address-footer-save" isLoading={saving} loadingText={requestedOrderId ? 'Updating...' : 'Saving...'}>
                 {editId ? 'Update Address' : 'Save Address'}
               </LoadingButton>
             </div>

@@ -760,7 +760,6 @@ function saveOrder(spreadsheet, params) {
     savedAddressId = savedResult.address.id;
     addressType = savedResult.address.type || addressType;
   }
-
   Logger.log("Handler Execution: saveOrder handler is executing.");
   var sheet = ensureOrdersSheet(spreadsheet);
   Logger.log("Sheet Selection: Selected sheet name is: " + sheet.getName());
@@ -1073,7 +1072,7 @@ function updateOrderAddress(spreadsheet, params) {
   var orderId = String(params.orderId || '').trim();
   var userId = String(params.userId || '').trim();
   var address = params.address || {};
-  var sheet = SpreadsheetService.getInstance().getSheet('Orders');
+  var sheet = ensureOrdersSheet(spreadsheet);
   if (!sheet || !orderId || !userId) return { success: false, message: 'Order and customer details are required.' };
 
   var data = sheet.getDataRange().getValues();
@@ -1092,20 +1091,14 @@ function updateOrderAddress(spreadsheet, params) {
       return { success: false, message: 'The delivery address cannot be changed because this order is currently ' + formattedStatus + '.' };
     }
 
+    var normalizedAddress = normalizeSavedAddressRecord(address);
+    normalizedAddress.id = String(address.savedAddressId || normalizedAddress.id || '').trim();
+    normalizedAddress.instructions = String(address.instructions || '').trim();
+    normalizedAddress.fullAddress = String(address.address || normalizedAddress.fullAddress || '').trim();
+    var savedAddressResult = upsertUserSavedAddress(spreadsheet, userId, normalizedAddress);
+    if (!savedAddressResult.success) return savedAddressResult;
     var valuesByHeader = {
-      'Saved Address ID': address.savedAddressId || '',
-      'Customer Name': address.name || '',
-      'Mobile Number': address.mobile || '',
-      'Alternate Mobile Number': address.altMobile || '',
-      'Email': address.email || '',
-      'House/Flat No.': address.flatNo || '',
-      'Building/Society Name': address.buildingName || '',
-      'Area/Locality': address.locality || '',
-      'Landmark': address.landmark || '',
-      'Full Address': address.address || '',
-      'City': address.city || '',
-      'State': address.state || '',
-      'Pincode': address.pincode || '',
+      'Saved Address ID': savedAddressResult.address.id,
       'Address Type': address.addressType || 'Home',
       'Delivery Instructions': address.instructions || '',
       'Updated At': new Date().toISOString()
@@ -1115,7 +1108,9 @@ function updateOrderAddress(spreadsheet, params) {
       if (columnIndex >= 0) sheet.getRange(i + 1, columnIndex + 1).setValue(valuesByHeader[header]);
     });
     CacheService.getScriptCache().remove('orders_data');
-    return { success: true, message: 'Delivery address updated successfully.' };
+    var updatedRow = sheet.getRange(i + 1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var updatedHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    return { success: true, message: 'Delivery address updated successfully.', addresses: savedAddressResult.addresses, order: rowToOrder(updatedHeaders, updatedRow, spreadsheet, getUsersData(spreadsheet)) };
   }
   return { success: false, message: 'Order not found.' };
 }
@@ -3514,7 +3509,7 @@ function normalizeSavedAddressRecord(address) {
     state: String(address.state || '').trim(),
     city: String(address.city || '').trim(),
     country: String(address.country || 'India').trim() || 'India',
-    instructions: '',
+    instructions: String(address.instructions || '').trim(),
     fullAddress: buildFullAddress(address),
     isDefault: address.isDefault === true
   };
