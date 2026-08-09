@@ -946,7 +946,11 @@ export const saveFAQ = async (faq: Partial<FAQ>, action: 'create' | 'update' | '
     });
     const data = await res.json();
     if (data.success) clearCMSDataCache();
-    return { success: data.success, message: data.message || 'FAQ saved successfully', ID: data.ID };
+    return {
+      success: data.success === true,
+      message: data.message || data.error || (data.success === true ? 'FAQ saved successfully' : 'Failed to save FAQ'),
+      ID: data.ID,
+    };
   } catch (err) {
     console.error('Error saving FAQ:', err);
     return { success: false, message: 'Failed to save FAQ' };

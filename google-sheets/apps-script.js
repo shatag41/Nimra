@@ -147,7 +147,7 @@ function doPost(e) {
       'reviewCancellationRequest': function() { return reviewCancellationRequest(spreadsheet, data.payload || data); },
       'productCRUD': function() { return handleProductCRUD(spreadsheet, data.payload || data); },
       'bannerCRUD': function() { return handleBannerCRUD(spreadsheet, data.payload || data); },
-      'faqCRUD': function() { return handleFAQCRUD(spreadsheet, data.payload || data); },
+      'faqCRUD': function() { return handleFaqCRUD(spreadsheet, data.payload || data); },
       'inquiryCRUD': function() { return handleInquiryCRUD(spreadsheet, data.payload || data); },
       'userCRUD': function() { return handleUserCRUD(spreadsheet, data.payload || data); },
       'eventCRUD': function() { return handleEventCRUD(spreadsheet, data.payload || data); },
@@ -1252,7 +1252,7 @@ function reviewCancellationRequest(spreadsheet, params) {
   if (!requestId || (decision !== 'Approved' && decision !== 'Rejected')) {
     return { success: false, message: 'Valid request ID and decision are required.' };
   }
-  if (!adminRemarks) return { success: false, message: 'Admin remarks are required.' };
+  if (decision === 'Rejected' && !adminRemarks) return { success: false, message: 'Admin remarks are required when rejecting a cancellation request.' };
 
   var requestSheet = ensureCancellationRequestsSheet(spreadsheet);
   var requestData = requestSheet.getDataRange().getValues();

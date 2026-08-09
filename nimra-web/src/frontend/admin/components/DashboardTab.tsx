@@ -49,6 +49,7 @@ const DashboardTab = React.memo(function DashboardTab({
   // Confirmation Modal State
   const [confirmAction, setConfirmAction] = useState<{request: CancellationRequest, decision: 'Approved' | 'Rejected'} | null>(null);
   const [isProcessingAction, setIsProcessingAction] = useState(false);
+  const [lockedRequestIds, setLockedRequestIds] = useState<Set<string>>(() => new Set());
 
   // Time-filtering calculation setup
   const now = new Date();
@@ -276,6 +277,7 @@ const DashboardTab = React.memo(function DashboardTab({
     pendingCancellationRequests.length;
 
   const initiateReview = (request: CancellationRequest, decision: 'Approved' | 'Rejected') => {
+    if (lockedRequestIds.has(request.requestId)) return;
     setConfirmAction({ request, decision });
   };
 
@@ -284,7 +286,9 @@ const DashboardTab = React.memo(function DashboardTab({
     setIsProcessingAction(true);
     try {
       const { request, decision } = confirmAction;
-      const success = await onReviewCancellation(request.requestId, decision, remarksByRequest[request.requestId] || '');
+      if (lockedRequestIds.has(request.requestId)) return;
+      setLockedRequestIds((prev) => new Set(prev).add(request.requestId));
+      const success = await onReviewCancellation(request.requestId, decision, decision === 'Rejected' ? remarksByRequest[request.requestId] || '' : 'Approved by admin.');
       if (success) {
         setRemarksByRequest((prev) => {
           const next = { ...prev };
@@ -293,9 +297,21 @@ const DashboardTab = React.memo(function DashboardTab({
         });
         notify.success('Request Processed', `Successfully ${decision.toLowerCase()} request.`);
       } else {
+        setLockedRequestIds((prev) => {
+          const next = new Set(prev);
+          next.delete(request.requestId);
+          return next;
+        });
         notify.error('Request Failed', `Failed to process request.`);
       }
     } catch (e) {
+      if (confirmAction) {
+        setLockedRequestIds((prev) => {
+          const next = new Set(prev);
+          next.delete(confirmAction.request.requestId);
+          return next;
+        });
+      }
       notify.error('Request Error', `Error processing request.`);
     } finally {
       setIsProcessingAction(false);
@@ -917,16 +933,10 @@ const DashboardTab = React.memo(function DashboardTab({
                         <small>{request.refundStatus || 'Pending approval'}</small>
                       </td>
                       <td className="remarks-col">
-                        <textarea
-                          className="form-input remarks-textarea"
-                          value={remarksByRequest[request.requestId] || ''}
-                          onChange={(event) => setRemarksByRequest((prev) => ({ ...prev, [request.requestId]: event.target.value }))}
-                          placeholder="Audit remarks"
-                          rows={2}
-                        />
+                        <small aria-label="Not applicable">&mdash;</small>
                       </td>
                       <td className="sticky-action-col">
-                        <div className="actions-flex row-wrap">
+                        <div className={`actions-flex row-wrap ${lockedRequestIds.has(request.requestId) ? 'is-disabled' : ''}`} aria-busy={lockedRequestIds.has(request.requestId)}>
                           <button type="button" className="btn-table btn-reject" onClick={() => initiateReview(request, 'Rejected')}>✗ Reject</button>
                           <button type="button" className="btn-table btn-approve" onClick={() => initiateReview(request, 'Approved')}>✓ Approve</button>
                         </div>
@@ -959,14 +969,7 @@ const DashboardTab = React.memo(function DashboardTab({
                     <span>Requested</span>
                     <strong>{new Date(request.requestDate).toLocaleDateString('en-IN')}</strong>
                   </div>
-                  <textarea
-                    className="form-input"
-                    value={remarksByRequest[request.requestId] || ''}
-                    onChange={(event) => setRemarksByRequest((prev) => ({ ...prev, [request.requestId]: event.target.value }))}
-                    placeholder="Audit remarks"
-                    rows={2}
-                  />
-                  <div className="cancellation-mobile-actions">
+                  <div className={`cancellation-mobile-actions ${lockedRequestIds.has(request.requestId) ? 'is-disabled' : ''}`} aria-busy={lockedRequestIds.has(request.requestId)}>
                     <button type="button" className="btn-table btn-reject" onClick={() => initiateReview(request, 'Rejected')}>✗ Reject</button>
                     <button type="button" className="btn-table btn-approve" onClick={() => initiateReview(request, 'Approved')}>✓ Approve</button>
                   </div>
@@ -992,7 +995,21 @@ const DashboardTab = React.memo(function DashboardTab({
         cancelText="Cancel"
         confirmButtonClass={confirmAction?.decision === 'Approved' ? 'btn btn-primary' : 'btn btn-error'}
         isProcessing={isProcessingAction}
-      />
+        stableFlowLayout
+      >
+        {confirmAction?.decision === 'Rejected' ? (
+          <label style={{ display: 'grid', gap: '.4rem', marginTop: '.35rem', color: 'var(--text-secondary)', fontSize: '.78rem', fontWeight: 700 }}>
+            Admin Remarks
+            <textarea
+              className="form-input remarks-textarea"
+              value={remarksByRequest[confirmAction.request.requestId] || ''}
+              onChange={(event) => setRemarksByRequest((prev) => ({ ...prev, [confirmAction.request.requestId]: event.target.value }))}
+              placeholder="Reason for rejecting this cancellation request"
+              rows={3}
+            />
+          </label>
+        ) : null}
+      </LogoutConfirmationModal>
     </div>
   );
 });

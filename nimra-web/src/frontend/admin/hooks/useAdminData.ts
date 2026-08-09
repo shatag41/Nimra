@@ -278,8 +278,8 @@ export const useAdminData = (initialCMSData: CMSData) => {
     decision: 'Approved' | 'Rejected',
     adminRemarks: string
   ) => {
-    if (!adminRemarks.trim()) {
-      showAlert('Admin remarks are required for the cancellation audit trail.', 'error');
+    if (decision === 'Rejected' && !adminRemarks.trim()) {
+      showAlert('Admin remarks are required when rejecting a cancellation request.', 'error');
       return false;
     }
     setSaveLoading(true);

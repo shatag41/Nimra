@@ -47,6 +47,8 @@ export default React.memo(function OrdersTab({
   setOrdersView,
 }: OrdersTabProps) {
   const [remarksByRequest, setRemarksByRequest] = useState<Record<string, string>>({});
+  const [rejectingRequestId, setRejectingRequestId] = useState<string | null>(null);
+  const [lockedRequestIds, setLockedRequestIds] = useState<Set<string>>(() => new Set());
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -95,11 +97,29 @@ export default React.memo(function OrdersTab({
   const pendingCancellationCount = cancellationRequests.filter((request) => request.status === 'Pending').length;
 
   const reviewCancellation = async (request: CancellationRequest, decision: 'Approved' | 'Rejected') => {
-    const success = await onReviewCancellation(request.requestId, decision, remarksByRequest[request.requestId] || '');
+    if (lockedRequestIds.has(request.requestId)) return;
+    setLockedRequestIds((prev) => new Set(prev).add(request.requestId));
+    let success = false;
+    try {
+      success = await onReviewCancellation(
+        request.requestId,
+        decision,
+        decision === 'Rejected' ? remarksByRequest[request.requestId] || '' : 'Approved by admin.'
+      );
+    } catch {
+      success = false;
+    }
     if (success) {
+      setRejectingRequestId((current) => current === request.requestId ? null : current);
       setRemarksByRequest((prev) => {
         const next = { ...prev };
         delete next[request.requestId];
+        return next;
+      });
+    } else {
+      setLockedRequestIds((prev) => {
+        const next = new Set(prev);
+        next.delete(request.requestId);
         return next;
       });
     }
@@ -202,7 +222,7 @@ export default React.memo(function OrdersTab({
                     </td>
                     <td className="reason-col">{request.reason || 'Not specified'}</td>
                     <td className="remarks-col">
-                      {isPending ? (
+                      {isPending && rejectingRequestId === request.requestId ? (
                         <textarea
                           className="form-input remarks-textarea"
                           value={remarksByRequest[request.requestId] || ''}
@@ -210,17 +230,17 @@ export default React.memo(function OrdersTab({
                           placeholder="Audit remarks"
                           rows={2}
                         />
-                      ) : (
+                      ) : request.status === 'Rejected' ? (
                         <small>{request.adminRemarks || 'No remarks recorded'}</small>
-                      )}
+                      ) : <small aria-label="Not applicable">&mdash;</small>}
                     </td>
                     <td className="sticky-action-col cancellation-actions-cell">
                       {isPending ? (
                         <div className="actions-flex row-wrap">
-                          <button type="button" className="btn-table btn-reject" onClick={() => reviewCancellation(request, 'Rejected')}>
+                          <button type="button" className="btn-table btn-reject" disabled={lockedRequestIds.has(request.requestId)} onClick={() => rejectingRequestId === request.requestId ? reviewCancellation(request, 'Rejected') : setRejectingRequestId(request.requestId)}>
                             ✗ Reject
                           </button>
-                          <button type="button" className="btn-table btn-approve" onClick={() => reviewCancellation(request, 'Approved')}>
+                          <button type="button" className="btn-table btn-approve" disabled={lockedRequestIds.has(request.requestId)} onClick={() => reviewCancellation(request, 'Approved')}>
                             ✓ Approve
                           </button>
                         </div>
@@ -266,7 +286,7 @@ export default React.memo(function OrdersTab({
                   <div><dt>Payment / Refund</dt><dd>{request.paymentMethod || 'Cash on Delivery'}<small>{request.refundStatus || 'Pending approval'}</small></dd></div>
                   <div><dt>Reason</dt><dd>{request.reason || 'Not specified'}</dd></div>
                   <div className="mobile-cancellation-remarks"><dt>Admin Remarks</dt><dd>
-                    {isPending ? (
+                    {isPending && rejectingRequestId === request.requestId ? (
                       <textarea
                         className="form-input remarks-textarea"
                         value={remarksByRequest[request.requestId] || ''}
@@ -274,10 +294,19 @@ export default React.memo(function OrdersTab({
                         placeholder="Audit remarks"
                         rows={2}
                       />
-                    ) : request.adminRemarks || 'No remarks recorded'}
+                    ) : request.status === 'Rejected' ? request.adminRemarks || 'No remarks recorded' : 'â€”'}
                   </dd></div>
                 </dl>
-                <div className="mobile-cancellation-actions">
+                <div
+                  className={`mobile-cancellation-actions ${lockedRequestIds.has(request.requestId) ? 'is-disabled' : ''}`}
+                  aria-busy={lockedRequestIds.has(request.requestId)}
+                  onClickCapture={(event) => {
+                    if ((event.target as HTMLElement).closest('.btn-reject') && rejectingRequestId !== request.requestId) {
+                      event.stopPropagation();
+                      setRejectingRequestId(request.requestId);
+                    }
+                  }}
+                >
                   {isPending ? (
                     <>
                       <button type="button" className="btn-table btn-reject" onClick={() => reviewCancellation(request, 'Rejected')}>✕ Reject</button>
@@ -601,6 +630,10 @@ export default React.memo(function OrdersTab({
           padding: .38rem .42rem !important;
           font-size: .66rem !important;
           line-height: 1.25 !important;
+        }
+        .mobile-cancellation-actions.is-disabled {
+          pointer-events: none;
+          opacity: .58;
         }
       `}</style>
     </div>

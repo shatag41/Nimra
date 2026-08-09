@@ -27,15 +27,16 @@
       "Name": "NIMRA 250ml Bottle",
       "Category": "Packaged Drinking Water",
       "Volume": "250ml",
-      "Price": "10",
+      "Price": "20",
       "Description": "Perfect pocket-sized pure drinking water for short trips, conferences, and quick refreshments.",
-      "ImageUrl": "products/1784657878717-33e2913b-8110-4f1c-866a-49251b56e71b.png",
-      "Active": true,
+      "ImageUrl": "https://xlxwvpkw8ujt3edx.public.blob.vercel-storage.com/products/1784744606790-5a9d3c4a-b11c-46f6-8a10-77ed89e5ec95.png",
+      "Active": "",
       "Specifications": "RO purified, mineral balanced, food-grade PET bottle",
       "StockStatus": "In Stock",
       "DiscountPercent": "",
       "ComboPack": "",
-      "oldImagePath": "/uploads/products/1784657750490-cd467464-75f5-4d73-97a8-dce8b7d6e71a.png"
+      "oldImagePath": "https://xlxwvpkw8ujt3edx.public.blob.vercel-storage.com/products/1784744606790-5a9d3c4a-b11c-46f6-8a10-77ed89e5ec95.png",
+      "": true
     },
     {
       "ID": 2,
@@ -353,6 +354,7 @@
       "source": "Mobile App"
     }
   ],
+  "cancellationRequests": [],
   "inquiries": [
     {
       "Timestamp": "2026-06-10T14:35:00.000Z",

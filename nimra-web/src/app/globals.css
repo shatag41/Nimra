@@ -19713,3 +19713,9 @@ body:has(.products-page-skeleton) {
     line-height:1.12 !important;
   }
 }
+/* Prevent duplicate cancellation-review submissions across responsive admin views. */
+.admin-container .actions-flex.is-disabled,
+.admin-container .cancellation-mobile-actions.is-disabled {
+  pointer-events: none;
+  opacity: 0.58;
+}
