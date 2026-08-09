@@ -260,8 +260,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       },
       removeItem(productId) {
         const targetProductId = String(productId);
+        const removedItem = itemsRef.current.find((item) => String(item.productId) === targetProductId);
+        const removedQty = removedItem?.quantity ?? 1;
         updateCartItems((current) => current.filter((item) => String(item.productId) !== targetProductId));
-        notify.info('Item Removed', 'Item removed from cart');
+        const label = removedQty === 1 ? 'Item Removed' : 'Items Removed';
+        notify.info(label, `${removedQty} ${removedQty === 1 ? 'item' : 'items'} removed from cart`);
       },
       clearCart() {
         updateCartItems(() => []);

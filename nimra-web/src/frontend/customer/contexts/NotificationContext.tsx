@@ -265,7 +265,6 @@ function NotificationBanner() {
             {type === 'success' || type === 'order' || type === 'profile' || type === 'cart' || type === 'login' ? '✓ ' : ''}
             {type === 'error' ? '✕ ' : ''}
             {type === 'warning' ? '⚠ ' : ''}
-            {type === 'info' ? 'ℹ ' : ''}
             {title}
           </h4>
           
