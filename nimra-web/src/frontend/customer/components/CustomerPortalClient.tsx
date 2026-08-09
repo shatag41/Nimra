@@ -312,12 +312,12 @@ function CustomerPortalClient({ initialTab }: CustomerPortalClientProps) {
 
               <div className="panel next-card" tabIndex={0}>
                 <div className="next-card-header">
-                  <span className="eyebrow" style={{ color: 'var(--primary-color)', background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.15)', borderRadius: '999px', padding: '0.2rem 0.65rem', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', marginBottom: 0 }}>
+                  <span className="eyebrow content-section-badge" style={{ color: 'var(--primary-color)', background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.15)', borderRadius: '999px', padding: '0.2rem 0.65rem', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.05em', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', marginBottom: 0 }}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <circle cx="12" cy="12" r="10"></circle>
                       <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
-                    <span>Next Step</span>
+                    <span>Next step</span>
                   </span>
                   <div className="next-card-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -360,7 +360,7 @@ function CustomerPortalClient({ initialTab }: CustomerPortalClientProps) {
 
               <div className="panel portal-quick-controls-card" tabIndex={0}>
                 <div className="quick-controls-head">
-                  <span className="eyebrow quick-controls-eyebrow">QUICK CONTROLS</span>
+                  <span className="eyebrow quick-controls-eyebrow content-section-badge">Quick controls</span>
                   <h2>Quick Access</h2>
                   <p className="quick-controls-sub">Manage your account and support in one place.</p>
                 </div>

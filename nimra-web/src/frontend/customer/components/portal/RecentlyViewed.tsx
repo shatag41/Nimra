@@ -266,7 +266,7 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
     <div className="panel recently-viewed-panel" style={{ marginTop: '0.5rem' }}>
       <div className="section-header-row">
         <div className="section-header-left">
-          <span className="badge badge-primary premium-history-badge">
+          <span className="badge badge-primary premium-history-badge content-section-badge">
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ marginRight: '4px' }}>
               <circle cx="12" cy="12" r="10"></circle>
               <polyline points="12 6 12 12 16 14"></polyline>
@@ -980,7 +980,6 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
           padding: 0.15rem 0.5rem;
           font-size: 0.65rem;
           font-weight: 700;
-          text-transform: uppercase;
           letter-spacing: 0.05em;
         }
         :global([data-theme="dark"]) .premium-history-badge {
