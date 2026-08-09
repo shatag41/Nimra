@@ -514,7 +514,9 @@ export default function CheckoutClient() {
 
 
         {status.kind === 'success' ? (
-          <CheckoutSuccess message={status.message} orderId={status.orderId} />
+          <div className="checkout-success-viewport">
+            <CheckoutSuccess message={status.message} orderId={status.orderId} />
+          </div>
         ) : (
           <div className="checkout-content-wrap">
             <form className="checkout-grid animate-fade-in" onSubmit={handlePlaceOrderClick} noValidate>
@@ -640,6 +642,8 @@ const styles = `
   .checkout-actions-top { margin-top: 1rem; margin-bottom: 1rem; display: flex; justify-content: flex-start; }
 
   .checkout-grid { display: grid; grid-template-columns: 1fr 340px; gap: 1.25rem; align-items: start; }
+
+  .checkout-success-viewport { width: 100%; }
 
   @media (max-width: 900px) { .checkout-grid { grid-template-columns: 1fr; } }
 
@@ -786,6 +790,12 @@ const styles = `
     font-weight: 600;
   }
   @media (max-width: 768px) {
+    .checkout-success-viewport {
+      display: grid;
+      place-items: center;
+      min-height: calc(100dvh - var(--ds-header-offset) - var(--mobile-nav-height, 4.25rem) - 7.25rem - env(safe-area-inset-bottom));
+      padding: 0.5rem 0 calc(0.5rem + env(safe-area-inset-bottom));
+    }
     .co-confirm-modal-overlay { padding: max(0.75rem, env(safe-area-inset-top)) 0.75rem max(0.75rem, env(safe-area-inset-bottom)); }
     .co-confirm-modal { max-width: 380px; max-height: calc(100dvh - 5.5rem); }
     .co-confirm-modal-header { padding-right: 3rem; }

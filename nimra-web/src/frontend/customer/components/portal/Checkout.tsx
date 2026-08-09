@@ -1146,6 +1146,13 @@ export function CheckoutForm({
 
         /* Mobile Adjustments */
         @media (max-width: 640px) {
+          .header-title-box h3 {
+            font-size: 0.95rem;
+            font-weight: 800;
+          }
+          .address-text-display {
+            font-weight: 400;
+          }
           .detail-section-heading { align-items: center; flex-wrap: wrap; }
           .address-header-actions { justify-content: flex-start; }
           .info-grid-2x2 {
@@ -1462,6 +1469,7 @@ export function CheckoutSummary({ status, items, subtotal, deliveryCharge, grand
             position: static;
           }
         }
+
       `}</style>
     </aside>
   );
@@ -1539,8 +1547,45 @@ export function CheckoutSuccess({ message, orderId }: CheckoutSuccessProps) {
         }
 
         @media (max-width: 640px) {
+          .co-success {
+            width: min(100%, 320px);
+            max-height: calc(100dvh - var(--ds-header-offset) - var(--mobile-nav-height, 4.25rem) - 8rem - env(safe-area-inset-bottom));
+            margin: 0 auto;
+            padding: 0.85rem;
+            overflow-y: auto;
+          }
+
+          .co-success-icon {
+            font-size: 1.55rem;
+            margin-bottom: 0.25rem;
+          }
+
+          .co-success h2 {
+            font-size: 0.88rem !important;
+            line-height: 1.15;
+            margin-bottom: 0.18rem;
+          }
+
+          .co-success p {
+            margin-bottom: 0.45rem;
+            font-size: 0.76rem;
+            line-height: 1.35;
+          }
+
+          .co-success strong {
+            padding: 0.34rem 0.5rem;
+            margin-bottom: 0.55rem;
+            font-size: 0.74rem;
+          }
+
           .success-actions {
-            gap: 0.45rem;
+            gap: 0.4rem;
+          }
+
+          .success-actions :global(.btn) {
+            min-height: 2rem;
+            padding: 0.35rem 0.55rem;
+            font-size: 0.72rem;
           }
         }
       `}</style>

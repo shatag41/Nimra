@@ -28,8 +28,9 @@ export function CartItemsList() {
         <span className="cart-item-count">{items.length} {items.length === 1 ? 'product' : 'products'}</span>
       </div>
 
-      {items.map((item, index) => (
-        <article key={item.productId} className="cart-row" style={{ '--cart-index': index } as React.CSSProperties}>
+      <div className="cart-items-scroll">
+        {items.map((item, index) => (
+          <article key={item.productId} className="cart-row" style={{ '--cart-index': index } as React.CSSProperties}>
           <div className="cart-thumb product-img-wrap">
             <ProductImage src={item.imageUrl} alt={item.name} />
           </div>
@@ -70,8 +71,9 @@ export function CartItemsList() {
               <span>Remove</span>
             </button>
           </div>
-        </article>
-      ))}
+          </article>
+        ))}
+      </div>
     </div>
   );
 }
@@ -114,8 +116,6 @@ export function CartSummary() {
       <div className="summary-lines">
         <div><span>Subtotal</span><strong>{formatCurrency(subtotal)}</strong></div>
         <div><span>Delivery</span><strong className={!deliveryCharge ? 'free-value' : ''}>{deliveryCharge ? formatCurrency(deliveryCharge) : 'Free'}</strong></div>
-        <div><span>Discount</span><strong>{formatCurrency(0)}</strong></div>
-        <div><span>Tax</span><strong>Included</strong></div>
       </div>
 
       <div className="total"><span>Grand Total</span><strong>{formatCurrency(grandTotal)}</strong></div>
