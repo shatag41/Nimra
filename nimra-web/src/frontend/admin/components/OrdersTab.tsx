@@ -24,6 +24,7 @@ interface OrdersTabProps {
   onReviewCancellation: (requestId: string, decision: 'Approved' | 'Rejected', adminRemarks: string) => Promise<boolean>;
   ordersView: 'active' | 'cancellations';
   setOrdersView: (view: 'active' | 'cancellations') => void;
+  highlightedOrderId?: string;
 }
 
 export default React.memo(function OrdersTab({
@@ -46,11 +47,23 @@ export default React.memo(function OrdersTab({
   onReviewCancellation,
   ordersView,
   setOrdersView,
+  highlightedOrderId = '',
 }: OrdersTabProps) {
   const [remarksByRequest, setRemarksByRequest] = useState<Record<string, string>>({});
   const [rejectingRequest, setRejectingRequest] = useState<CancellationRequest | null>(null);
   const [isRejecting, setIsRejecting] = useState(false);
   const [lockedRequestIds, setLockedRequestIds] = useState<Set<string>>(() => new Set());
+
+  React.useEffect(() => {
+    if (!highlightedOrderId) return;
+    const frame = window.requestAnimationFrame(() => {
+      const orderIds = Array.from(document.querySelectorAll<HTMLElement>('[data-highlighted-order-id]'));
+      const target = orderIds.find((element) => element.dataset.highlightedOrderId === highlightedOrderId && element.offsetParent !== null)
+        || orderIds.find((element) => element.dataset.highlightedOrderId === highlightedOrderId);
+      target?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [highlightedOrderId]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -418,7 +431,7 @@ export default React.memo(function OrdersTab({
           </div>
         </div>
       <div className="table-responsive active-orders-table-wrap">
-        <table className="admin-table">
+        <table className="admin-table active-orders-table">
           <thead>
             <tr>
               <th>Order ID</th>
@@ -433,7 +446,14 @@ export default React.memo(function OrdersTab({
           <tbody>
             {visibleOrders.map((o, idx) => (
               <tr key={o.orderId || idx}>
-                <td><strong>{o.orderId}</strong></td>
+                <td>
+                  <strong
+                    className={`active-order-id ${highlightedOrderId === String(o.orderId) ? 'targeted-order-id-blink' : ''}`}
+                    data-highlighted-order-id={o.orderId}
+                  >
+                    {o.orderId}
+                  </strong>
+                </td>
                 <td>{o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'N/A'}</td>
                 <td>
                   <div>{o.customer?.name || 'N/A'}</div>
@@ -469,7 +489,12 @@ export default React.memo(function OrdersTab({
         {visibleOrders.map((order, index) => (
           <article className="mobile-order-card" key={order.orderId || index}>
             <div className="mobile-order-primary">
-              <strong className="mobile-order-id">{renderWithSafeBreaks(order.orderId || `Order ${index + 1}`)}</strong>
+              <strong
+                className={`mobile-order-id active-order-id ${highlightedOrderId === String(order.orderId) ? 'targeted-order-id-blink' : ''}`}
+                data-highlighted-order-id={order.orderId}
+              >
+                {renderWithSafeBreaks(order.orderId || `Order ${index + 1}`)}
+              </strong>
               <time className="mobile-order-date" dateTime={order.createdAt || undefined}>
                 {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Date unavailable'}
               </time>

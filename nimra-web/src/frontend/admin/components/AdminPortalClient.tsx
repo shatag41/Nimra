@@ -130,6 +130,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
   const [orderStatusVal, setOrderStatusVal] = useState('');
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [ordersView, setOrdersView] = useState<'active' | 'cancellations'>('active');
+  const [highlightedOrderId, setHighlightedOrderId] = useState('');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   React.useEffect(() => {
@@ -157,6 +158,13 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
       filters.setOrderEndDate('');
     }
     setActiveTab('orders');
+  };
+
+  const handleNavigateToBlockingOrder = (orderId: string) => {
+    setOrdersView('active');
+    setHighlightedOrderId(orderId);
+    setActiveTab('orders');
+    setIsMobileSidebarOpen(false);
   };
 
   const handleSidebarTabChange = (tab: any) => {
@@ -508,6 +516,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                   onReviewCancellation={handleCancellationReview}
                   ordersView={ordersView}
                   setOrdersView={setOrdersView}
+                  highlightedOrderId={highlightedOrderId}
                 />
               )}
 
@@ -577,6 +586,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
                   setEditingUser={setEditingUser}
                   setUserFormOpen={setUserFormOpen}
                   handleUserDelete={handleUserDelete}
+                  onNavigateToOrder={handleNavigateToBlockingOrder}
                 />
               )}
 

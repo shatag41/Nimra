@@ -16,6 +16,7 @@ interface UsersTabProps {
   setEditingUser: (u: Partial<AdminUser> | null) => void;
   setUserFormOpen: (open: boolean) => void;
   handleUserDelete: (id: string | number) => Promise<boolean>;
+  onNavigateToOrder: (orderId: string) => void;
 }
 
 export default React.memo(function UsersTab({
@@ -29,6 +30,7 @@ export default React.memo(function UsersTab({
   setEditingUser,
   setUserFormOpen,
   handleUserDelete,
+  onNavigateToOrder,
 }: UsersTabProps) {
   const [customerToDelete, setCustomerToDelete] = useState<AdminUser | null>(null);
   const [deletePending, setDeletePending] = useState(false);
@@ -126,7 +128,20 @@ export default React.memo(function UsersTab({
                     >
                       Delete
                     </button>
-                    {!deletion.eligible && <span className="customer-delete-blocker">Order {deletion.orderId}: {deletion.status}</span>}
+                    {!deletion.eligible && (
+                      <span className="customer-delete-blocker" role="status">
+                        Cannot delete: Order{' '}
+                        <button
+                          type="button"
+                          className="customer-delete-order-link"
+                          onClick={() => deletion.orderId && onNavigateToOrder(deletion.orderId)}
+                          title={`View order ${deletion.orderId}`}
+                        >
+                          {deletion.orderId}
+                        </button>{' '}
+                        is currently <strong className="customer-delete-status">{deletion.status}</strong>.
+                      </span>
+                    )}
                   </div>
                 </td>
               </tr>;
