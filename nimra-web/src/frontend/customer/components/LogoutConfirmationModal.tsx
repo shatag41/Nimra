@@ -326,6 +326,10 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
             .modal-content { width: 520px; max-width: 92vw; min-height: 200px; height: auto; padding: 1rem; }
             .modal-actions { display: flex; flex-direction: column; gap: 0.75rem; }
             .modal-actions :global(button) { width: 100%; min-height: 44px; padding: 0.75rem; border-radius: 8px; justify-content: center; }
+            .auth-verification-modal .modal-title {
+              font-size: clamp(1.05rem, 5vw, 1.25rem) !important;
+              line-height: 1.2 !important;
+            }
           }
         `}</style>
       </div>,
