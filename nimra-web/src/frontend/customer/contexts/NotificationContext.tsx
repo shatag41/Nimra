@@ -249,7 +249,7 @@ function NotificationBanner({ progress }: { progress: number }) {
 
   return (
     <div 
-      className={`nm-toast-container ${isVisible ? 'nm-visible' : 'nm-hidden'}`}
+      className={`nm-toast-container nm-type-${type} ${isVisible ? 'nm-visible' : 'nm-hidden'}`}
       onMouseEnter={pauseTimer}
       onMouseLeave={resumeTimer}
       role="alert"
@@ -611,10 +611,32 @@ function NotificationBanner({ progress }: { progress: number }) {
 
         @media (max-width: 640px) {
           .nm-toast-container {
-            top: 1.5rem;
+            top: max(4.5rem, calc(env(safe-area-inset-top) + 3.75rem));
             left: 50%;
+            right: auto;
+            width: min(320px, calc(100vw - 1.5rem));
+            max-height: calc(100dvh - 5.5rem - env(safe-area-inset-bottom));
             transform: translateX(-50%) scale(1);
             transform-origin: center;
+          }
+
+          .nm-toast-container.nm-type-info .nm-toast-content {
+            padding: 0.9rem 1rem;
+            gap: 0.7rem;
+          }
+
+          .nm-toast-container.nm-type-info .nm-icon-wrapper {
+            width: 2.15rem;
+            height: 2.15rem;
+          }
+
+          .nm-toast-container.nm-type-info .nm-title {
+            font-size: 0.88rem;
+          }
+
+          .nm-toast-container.nm-type-info .nm-message {
+            font-size: 0.76rem;
+            line-height: 1.4;
           }
           
           .nm-hidden {

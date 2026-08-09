@@ -459,8 +459,13 @@ export default function CheckoutClient() {
       }
       setForm(initialForm);
       setStatus({ kind: 'success', message: result.message, orderId: result.orderId });
-      if (result.emailError) {
-        notify.warning('Email Failed', `Order placed, but confirmation email failed: ${result.emailError}`);
+      if (result.emailError && /opted out|disabled|preferences?/i.test(result.emailError)) {
+        notify.info(
+          'Confirmation email not sent',
+          'Your order was placed successfully. The confirmation email was not sent because order emails are disabled in your notification preferences.'
+        );
+      } else if (result.emailError) {
+        notify.warning('Email delivery failed', `Your order was placed successfully, but the confirmation email could not be delivered: ${result.emailError}`);
       } else {
         notify.success('Order Placed', 'Order placed successfully! 🎉');
       }
@@ -548,10 +553,13 @@ export default function CheckoutClient() {
         <div className="co-confirm-modal-overlay">
           <div className="co-confirm-modal card animate-scale-in">
             <button type="button" className="co-confirm-modal-close" onClick={() => setShowConfirmModal(false)} aria-label="Close">&times;</button>
-            <h3>Confirm Your Order</h3>
-            <p className="modal-desc">Please review your order details before placing it.</p>
-            
-            <div className="modal-summary-section">
+            <header className="co-confirm-modal-header">
+              <h3>Confirm Your Order</h3>
+              <p className="modal-desc">Please review your order details before placing it.</p>
+            </header>
+
+            <div className="co-confirm-modal-body">
+              <div className="modal-summary-section">
               <h4>Delivery Address</h4>
               <p>
                 {form.flatNo && `${form.flatNo}, `}
@@ -561,9 +569,9 @@ export default function CheckoutClient() {
                 {form.state && `${form.state}`}
               </p>
               <p className="modal-phone">📞 {form.mobile} {form.altMobile ? `/ ${form.altMobile}` : ''}</p>
-            </div>
+              </div>
 
-            <div className="modal-summary-section">
+              <div className="modal-summary-section">
               <h4>Items</h4>
               <div className="modal-items-list">
                 {checkoutItems.map((item) => (
@@ -574,9 +582,9 @@ export default function CheckoutClient() {
                   </div>
                 ))}
               </div>
-            </div>
+              </div>
 
-            <div className="modal-total-section">
+              <div className="modal-total-section">
               <div className="modal-total-row">
                 <span>Subtotal</span>
                 <span>{formatCurrency(checkoutTotals.subtotal)}</span>
@@ -588,6 +596,7 @@ export default function CheckoutClient() {
               <div className="modal-total-row grand-total">
                 <span>Total Amount</span>
                 <strong>{formatCurrency(checkoutTotals.grandTotal)}</strong>
+              </div>
               </div>
             </div>
 
@@ -652,35 +661,51 @@ const styles = `
   .co-confirm-modal {
     position: relative;
     width: 100%;
-    max-width: 480px;
+    max-width: 400px;
+    max-height: min(34rem, calc(100dvh - 5rem));
     background: var(--glass-bg, rgba(30, 41, 59, 0.85));
     border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
     border-radius: var(--radius-xl, 20px);
-    padding: 1.5rem;
+    padding: 0;
     box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5);
     color: var(--text-primary);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
   .co-confirm-modal-close {
     display: none;
   }
+  .co-confirm-modal-header {
+    flex: 0 0 auto;
+    padding: 1rem 1.1rem 0.7rem;
+    border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+  }
   .co-confirm-modal h3 {
     margin-top: 0;
     margin-bottom: 0.25rem;
-    font-size: 1.25rem;
+    font-size: 1.08rem;
     font-weight: 700;
   }
   .modal-desc {
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     color: var(--text-secondary);
-    margin-bottom: 1.25rem;
+    margin: 0;
+  }
+  .co-confirm-modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0 1.1rem;
+    overscroll-behavior: contain;
   }
   .modal-summary-section {
     border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
-    padding: 0.75rem 0;
+    padding: 0.58rem 0;
   }
   .modal-summary-section h4 {
     margin: 0 0 0.4rem 0;
-    font-size: 0.85rem;
+    font-size: 0.76rem;
     font-weight: 600;
     color: var(--primary-color, #2563eb);
     text-transform: uppercase;
@@ -688,25 +713,25 @@ const styles = `
   }
   .modal-summary-section p {
     margin: 0;
-    font-size: 0.88rem;
-    line-height: 1.4;
+    font-size: 0.8rem;
+    line-height: 1.32;
   }
   .modal-phone {
-    font-size: 0.8rem;
+    font-size: 0.74rem;
     color: var(--text-secondary);
     margin-top: 0.25rem !important;
   }
   .modal-items-list {
-    max-height: 140px;
+    max-height: 105px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
+    gap: 0.3rem;
   }
   .modal-item-row {
     display: flex;
     justify-content: space-between;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
   }
   .modal-item-name {
     flex: 1;
@@ -717,45 +742,53 @@ const styles = `
   }
   .modal-item-qty {
     color: var(--text-secondary);
-    margin-right: 1rem;
+    margin-right: 0.7rem;
   }
   .modal-total-section {
     border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
-    padding-top: 0.75rem;
+    padding: 0.58rem 0;
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0.25rem;
   }
   .modal-total-row {
     display: flex;
     justify-content: space-between;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     color: var(--text-secondary);
   }
   .modal-total-row.grand-total {
     border-top: 1px dashed var(--border-color, rgba(255, 255, 255, 0.08));
-    padding-top: 0.5rem;
-    margin-top: 0.25rem;
-    font-size: 1rem;
+    padding-top: 0.4rem;
+    margin-top: 0.15rem;
+    font-size: 0.9rem;
     color: var(--text-primary);
   }
   .modal-total-row.grand-total strong {
     color: var(--primary-color, #2563eb);
   }
   .modal-actions {
+    flex: 0 0 auto;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0.75rem;
-    margin-top: 1.25rem;
+    gap: 0.55rem;
+    margin-top: 0;
+    padding: 0.75rem 1.1rem 0.9rem;
+    border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+    background: var(--glass-bg, rgba(30, 41, 59, 0.92));
   }
   .modal-actions .btn {
     width: 100%;
     justify-content: center;
-    padding: 0.6rem;
-    font-size: 0.9rem;
+    min-height: 2.35rem;
+    padding: 0.42rem 0.65rem;
+    font-size: 0.8rem;
     font-weight: 600;
   }
   @media (max-width: 768px) {
+    .co-confirm-modal-overlay { padding: max(0.75rem, env(safe-area-inset-top)) 0.75rem max(0.75rem, env(safe-area-inset-bottom)); }
+    .co-confirm-modal { max-width: 380px; max-height: calc(100dvh - 5.5rem); }
+    .co-confirm-modal-header { padding-right: 3rem; }
     .co-confirm-modal-close {
       position: absolute;
       top: 0.65rem;

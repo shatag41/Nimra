@@ -430,5 +430,21 @@
       "Read": false
     }
   ],
-  "carts": []
+  "carts": [
+    {
+      "userId": "35698dbb-0e1a-4cab-a9db-2af9d05632db",
+      "items": [
+        {
+          "productId": "2",
+          "name": "NIMRA 500ml Bottle",
+          "category": "Packaged Drinking Water",
+          "volume": "500ml",
+          "price": 20,
+          "imageUrl": "https://xlxwvpkw8ujt3edx.public.blob.vercel-storage.com/products/1784744633460-bc89d131-f63a-40f9-aed1-b8eae25f0d5d.png",
+          "quantity": 1
+        }
+      ],
+      "updatedAt": "2026-08-09T18:22:34.823Z"
+    }
+  ]
 }

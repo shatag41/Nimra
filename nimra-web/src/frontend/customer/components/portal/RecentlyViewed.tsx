@@ -295,6 +295,20 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
                 <div className="rv-desktop-carousel-page" key={`rv-dpage-${pageIndex}`}>
                   <div className="rv-desktop-grid">
                     {pageProducts.map((product, index) => renderProductCard(product, pageIndex * DESKTOP_PAGE_SIZE + index))}
+                    {pageProducts.length < DESKTOP_PAGE_SIZE && (
+                      <article className="rv-browse-card">
+                        <div className="rv-browse-icon" aria-hidden="true">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                            <path d="M3 6h18" />
+                            <path d="M16 10a4 4 0 0 1-8 0" />
+                          </svg>
+                        </div>
+                        <h3>Explore more products</h3>
+                        <p>Discover more refreshing NIMRA beverages.</p>
+                        <Link href="/products" className="rv-browse-button">Browse Products</Link>
+                      </article>
+                    )}
                   </div>
                 </div>
               ))}
@@ -536,6 +550,67 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
           padding: 0.3rem !important;
           border-radius: 0.6rem !important;
           box-sizing: border-box !important;
+        }
+        .rv-browse-card {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          min-width: 0;
+          min-height: 100%;
+          padding: 0.85rem 0.65rem;
+          box-sizing: border-box;
+          text-align: center;
+          border: 1px dashed rgba(37, 99, 235, 0.28);
+          border-radius: 0.6rem;
+          background: linear-gradient(145deg, rgba(37, 99, 235, 0.08), rgba(255, 255, 255, 0.42));
+          color: var(--text-primary);
+        }
+        .rv-browse-icon {
+          display: grid;
+          place-items: center;
+          width: 2.15rem;
+          height: 2.15rem;
+          margin-bottom: 0.45rem;
+          border-radius: 50%;
+          background: rgba(37, 99, 235, 0.12);
+          color: var(--primary-color);
+        }
+        .rv-browse-card h3 {
+          margin: 0 0 0.3rem;
+          font-size: 0.8rem;
+          line-height: 1.2;
+          font-weight: 800;
+        }
+        .rv-browse-card p {
+          max-width: 11rem;
+          margin: 0 0 0.65rem;
+          color: var(--text-secondary);
+          font-size: 0.67rem;
+          line-height: 1.35;
+        }
+        .rv-browse-button {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 1.85rem;
+          padding: 0.28rem 0.62rem;
+          border-radius: 0.5rem;
+          background: var(--primary-color);
+          color: #fff !important;
+          font-size: 0.66rem;
+          font-weight: 750;
+          text-decoration: none;
+          transition: transform 180ms ease, box-shadow 180ms ease;
+        }
+        .rv-browse-button:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 5px 14px rgba(37, 99, 235, 0.24);
+        }
+        :global([data-theme="dark"]) .rv-browse-card {
+          border-color: rgba(96, 165, 250, 0.28);
+          background: linear-gradient(145deg, rgba(37, 99, 235, 0.14), rgba(15, 23, 42, 0.48));
         }
         .rv-desktop-grid :global(.catalog-card .product-img-wrap) {
           width: calc(100% + 0.6rem) !important;

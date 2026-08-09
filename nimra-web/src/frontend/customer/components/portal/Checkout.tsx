@@ -1486,10 +1486,10 @@ export function CheckoutSuccess({ message, orderId }: CheckoutSuccessProps) {
       <style jsx>{`
         .co-success {
           text-align: center;
-          max-width: 440px;
-          margin: 1.5rem auto;
-          padding: 2.25rem 1.5rem;
-          border-radius: var(--radius-2xl);
+          width: min(100%, 370px);
+          margin: 1rem auto;
+          padding: 1.25rem 1.1rem;
+          border-radius: var(--radius-xl);
           border: 1px solid var(--glass-border);
           box-shadow: var(--shadow-2xl);
           background: var(--glass-bg);
@@ -1497,20 +1497,21 @@ export function CheckoutSuccess({ message, orderId }: CheckoutSuccessProps) {
         }
 
         .co-success-icon {
-          font-size: 2.75rem;
-          margin-bottom: 0.75rem;
+          font-size: 2rem;
+          line-height: 1;
+          margin-bottom: 0.4rem;
         }
 
         .co-success h2 {
-          font-size: 1.50rem;
-          margin-bottom: 0.5rem;
+          font-size: 1.2rem;
+          margin: 0 0 0.3rem;
           font-weight: 800;
         }
 
         .co-success p {
           color: var(--text-secondary);
-          margin-bottom: 1rem;
-          font-size: 0.92rem;
+          margin: 0 0 0.65rem;
+          font-size: 0.82rem;
         }
 
         .co-success strong {
@@ -1518,22 +1519,28 @@ export function CheckoutSuccess({ message, orderId }: CheckoutSuccessProps) {
           background: rgba(148, 163, 184, 0.06);
           border: 1.5px solid var(--border-color);
           border-radius: var(--radius-md);
-          padding: 0.5rem 0.85rem;
+          padding: 0.42rem 0.7rem;
           font-family: var(--font-heading);
           color: var(--text-primary);
-          font-size: 0.95rem;
-          margin-bottom: 1.5rem;
+          font-size: 0.82rem;
+          margin-bottom: 0.85rem;
         }
 
         .success-actions {
           display: flex;
-          gap: 0.75rem;
+          gap: 0.55rem;
           justify-content: center;
+        }
+
+        .success-actions :global(.btn) {
+          min-height: 2.25rem;
+          padding: 0.45rem 0.75rem;
+          font-size: 0.78rem;
         }
 
         @media (max-width: 640px) {
           .success-actions {
-            flex-direction: column;
+            gap: 0.45rem;
           }
         }
       `}</style>
