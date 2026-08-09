@@ -11,6 +11,9 @@ import { CompactKpiCard } from '../CompactKpiCard';
 import AddressDeleteConfirmation from '../AddressDeleteConfirmation';
 import LoadingButton from '@/frontend/shared/LoadingButton';
 import CustomSelect from '@/frontend/admin/components/CustomSelect';
+import { updateOrderDeliveryAddress } from '@/utils/api';
+import { canEditOrderDeliveryAddress, deliveryAddressRestrictionMessage } from '@/utils/orderStatus';
+import { clearCustomerOrdersCache, useCustomerOrders } from '@/frontend/customer/hooks/useCustomerOrders';
 
 interface Address {
   id: string;
@@ -62,7 +65,10 @@ export function Addresses() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedEditAddressId = searchParams.get('editAddressId');
+  const requestedOrderId = searchParams.get('orderId');
   const isCheckoutReturn = searchParams.get('returnContext') === 'checkout';
+  const { orders, refreshOrders } = useCustomerOrders();
+  const requestedOrder = requestedOrderId ? orders.find((order) => String(order.orderId) === requestedOrderId) : undefined;
 
   const [addresses, setAddresses] = useState<Address[]>(() => getUserSavedAddresses(user) as Address[]);
   const [addressesLoading, setAddressesLoading] = useState(true);
@@ -308,6 +314,10 @@ export function Addresses() {
   ));
 
   const persistCurrentAddress = async () => {
+    if (requestedOrder && !canEditOrderDeliveryAddress(requestedOrder.status)) {
+      setErrors({ form: deliveryAddressRestrictionMessage(requestedOrder.status) });
+      return;
+    }
     const compositeAddress = [formData.flatNo, formData.buildingName, formData.locality, formData.landmark]
       .filter(Boolean).join(', ');
 
@@ -332,6 +342,21 @@ export function Addresses() {
     updatedList = normalizeSavedAddresses(updatedList) as Address[];
     const saved = await saveAddressList(updatedList);
     if (!saved) return;
+
+    if (requestedOrderId && user) {
+      const result = await updateOrderDeliveryAddress(requestedOrderId, {
+        ...newSavedAddr,
+        savedAddressId: newSavedAddr.id,
+        addressType: newSavedAddr.type,
+        address: newSavedAddr.fullAddress,
+      }, user.ID);
+      if (!result.success) {
+        setErrors({ form: result.message || 'Failed to update the order delivery address.' });
+        return;
+      }
+      clearCustomerOrdersCache(user.ID);
+      await refreshOrders();
+    }
     setDuplicateAddress(null);
 
     const redirectPath = searchParams.get('redirect');
@@ -761,6 +786,7 @@ export function Addresses() {
               </label>
             </div>
 
+            {errors.form && <p className="order-address-error" role="status">{errors.form}</p>}
             <div className="form-actions-footer">
               <button type="button" onClick={handleCancelForm} className="address-footer-button address-footer-cancel">
                 Cancel
@@ -1492,6 +1518,7 @@ export function Addresses() {
           cursor: pointer;
         }
  
+        .order-address-error { margin:.5rem 0 0;padding:.5rem .65rem;border-radius:10px;background:color-mix(in srgb,#f59e0b 10%,transparent);color:var(--text-secondary);font-size:.72rem;line-height:1.35; }
         .form-actions-footer {
           position: static;
           display: flex;

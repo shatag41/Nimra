@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { OrderRecord } from '@/types/cms';
 import { formatCurrency } from '../../utils/commerce';
 import ProductImage from '../ProductImage';
-import { cancellationRestrictionMessage } from '@/utils/orderStatus';
+import { canEditOrderDeliveryAddress, cancellationRestrictionMessage, deliveryAddressRestrictionMessage } from '@/utils/orderStatus';
 
 interface TimelineStep {
   key: string;
@@ -54,6 +54,7 @@ export default function OrderDetailsModal({
   const [itemsExpanded, setItemsExpanded] = React.useState(() => typeof window !== 'undefined' && !window.matchMedia('(max-width: 768px)').matches);
   const [addressExpanded, setAddressExpanded] = React.useState(() => typeof window !== 'undefined' && !window.matchMedia('(max-width: 768px)').matches);
   const [orderIdCopied, setOrderIdCopied] = React.useState(false);
+  const [addressLockMessage, setAddressLockMessage] = React.useState('');
 
   const copyOrderId = async () => {
     try {
@@ -139,6 +140,18 @@ export default function OrderDetailsModal({
     ? addressParts.join(', ')
     : firstText(customer.address, rawOrder.deliveryAddress, rawOrder.DeliveryAddress, rawOrder.address, rawOrder.Address);
   const customerPincode = firstText(customer.pincode, rawOrder.pincode, rawOrder.Pincode, rawOrder.PinCode);
+  const savedAddressId = firstText(customer.savedAddressId, rawOrder.savedAddressId);
+  const editDeliveryAddress = () => {
+    if (!canEditOrderDeliveryAddress(status)) {
+      setAddressLockMessage(deliveryAddressRestrictionMessage(status));
+      return;
+    }
+    const params = new URLSearchParams({ tab: 'addresses', orderId: selectedOrder.orderId });
+    if (savedAddressId) params.set('editAddressId', savedAddressId);
+    else params.set('add', 'true');
+    setSelectedOrder(null);
+    router.push(`/customer-portal?${params.toString()}`);
+  };
 
   return createPortal(
     <div className="order-details-overlay" onClick={() => setSelectedOrder(null)}>
@@ -243,7 +256,9 @@ export default function OrderDetailsModal({
                 </p>
                 <p className="delivery-phone"><ModalIcon name="phone" /> {customerMobile || 'Not available'}</p>
               </div>
+              <button type="button" className="edit-delivery-address" onClick={editDeliveryAddress}>Edit Address</button>
             </div>
+            {addressLockMessage && <p className="address-lock-message" role="status">{addressLockMessage}</p>}
             </div>
             </div>
           </div>
@@ -539,6 +554,7 @@ export default function OrderDetailsModal({
         }
 
         .address-text-wrap {
+          flex: 1;
           display: flex;
           flex-direction: column;
           gap: 0.2rem;
@@ -741,6 +757,8 @@ export default function OrderDetailsModal({
           .item-row-left, .item-row-info, .item-row-right { min-width: 0; }
           .item-row-name, .item-row-category { max-width: 100%; overflow-wrap: anywhere; word-break: break-word; }
           .delivery-address-box, .address-text-wrap { min-width: 0; }
+          .delivery-address-box { flex-wrap: wrap; }
+          .edit-delivery-address { width: 100%; }
           .address-text-wrap strong, .address-text-wrap p { overflow-wrap: anywhere; word-break: break-word; }
           .collapsible-section-trigger { min-height:40px;margin:0;padding:.42rem .55rem;pointer-events:auto;border:1px solid var(--border-color);border-radius:.7rem;background:color-mix(in srgb,var(--bg-secondary) 94%,var(--primary-color) 3%);font-size:.76rem;cursor:pointer;touch-action:manipulation; }
           .collapsible-section-trigger:focus-visible { outline:2px solid var(--primary-color);outline-offset:2px; }
@@ -819,6 +837,9 @@ export default function OrderDetailsModal({
             margin-top: 0.2rem;
           }
         }
+
+        .edit-delivery-address { align-self:center;flex:0 0 auto;padding:.42rem .65rem;border:1px solid var(--primary-color);border-radius:var(--radius-md);background:transparent;color:var(--primary-color);font:inherit;font-size:.72rem;font-weight:750;cursor:pointer; }
+        .address-lock-message { margin:.45rem 0 0;padding:.45rem .6rem;border-radius:var(--radius-md);background:color-mix(in srgb,#f59e0b 10%,transparent);color:var(--text-secondary);font-size:.72rem;line-height:1.35; }
 
         @media (max-width: 360px) {
           .summary-card-details { grid-template-columns: 1fr 1fr; }

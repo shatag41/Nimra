@@ -137,6 +137,7 @@ function doPost(e) {
       'createOrder': function() { return saveOrder(spreadsheet, data.payload || data); },
       'order': function() { return saveOrder(spreadsheet, data.payload || data); },
       'updateOrder': function() { return updateOrder(spreadsheet, data.payload || data); },
+      'updateOrderAddress': function() { return updateOrderAddress(spreadsheet, data.payload || data); },
       'registerUser': function() { return registerUser(spreadsheet, data.payload || data); },
       'userAction': function() { return handleUserAction(spreadsheet, data.payload || data); },
       'saveAddress': function() { return saveAddress(spreadsheet, data.payload || data); },
@@ -1066,6 +1067,57 @@ function trackOrder(spreadsheet, orderId, mobile, userId, email) {
   }
 
   return { success: false, message: 'No matching order found.' };
+}
+
+function updateOrderAddress(spreadsheet, params) {
+  var orderId = String(params.orderId || '').trim();
+  var userId = String(params.userId || '').trim();
+  var address = params.address || {};
+  var sheet = SpreadsheetService.getInstance().getSheet('Orders');
+  if (!sheet || !orderId || !userId) return { success: false, message: 'Order and customer details are required.' };
+
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0] || [];
+  var orderIdIndex = headers.indexOf('Order ID');
+  var userIdIndex = headers.indexOf('Customer User ID');
+  var statusIndex = headers.indexOf('Order Status');
+  var statusLabels = { pending: 'Pending', confirmed: 'Confirmed', processing: 'Processing', dispatched: 'Dispatched', 'out for delivery': 'Out for Delivery', delivered: 'Delivered', cancelled: 'Cancelled' };
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][orderIdIndex] || '').trim() !== orderId) continue;
+    if (String(data[i][userIdIndex] || '').trim() !== userId) return { success: false, message: 'Order not found.' };
+    var currentStatus = String(data[i][statusIndex] || '').trim();
+    if (['pending', 'confirmed'].indexOf(currentStatus.toLowerCase()) === -1) {
+      var formattedStatus = statusLabels[currentStatus.toLowerCase()] || currentStatus;
+      return { success: false, message: 'The delivery address cannot be changed because this order is currently ' + formattedStatus + '.' };
+    }
+
+    var valuesByHeader = {
+      'Saved Address ID': address.savedAddressId || '',
+      'Customer Name': address.name || '',
+      'Mobile Number': address.mobile || '',
+      'Alternate Mobile Number': address.altMobile || '',
+      'Email': address.email || '',
+      'House/Flat No.': address.flatNo || '',
+      'Building/Society Name': address.buildingName || '',
+      'Area/Locality': address.locality || '',
+      'Landmark': address.landmark || '',
+      'Full Address': address.address || '',
+      'City': address.city || '',
+      'State': address.state || '',
+      'Pincode': address.pincode || '',
+      'Address Type': address.addressType || 'Home',
+      'Delivery Instructions': address.instructions || '',
+      'Updated At': new Date().toISOString()
+    };
+    Object.keys(valuesByHeader).forEach(function(header) {
+      var columnIndex = headers.indexOf(header);
+      if (columnIndex >= 0) sheet.getRange(i + 1, columnIndex + 1).setValue(valuesByHeader[header]);
+    });
+    CacheService.getScriptCache().remove('orders_data');
+    return { success: true, message: 'Delivery address updated successfully.' };
+  }
+  return { success: false, message: 'Order not found.' };
 }
 
 function updateOrderStatus(spreadsheet, params) {

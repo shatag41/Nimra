@@ -632,6 +632,26 @@ export const fetchCancellationRequests = async (): Promise<import('@/types/cms')
   }, 0);
 };
 
+export const updateOrderDeliveryAddress = async (
+  orderId: string,
+  address: OrderSubmission['customer'],
+  userId: string | number
+): Promise<{ success: boolean; message: string; order?: OrderRecord }> => {
+  try {
+    const res = await fetch('/api/cms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'updateOrderAddress', orderId, address, userId }),
+    });
+    const data = await res.json();
+    if (data.success) invalidateReadCache(['orders', 'customer-orders']);
+    return data;
+  } catch (err) {
+    console.error('Error updating order delivery address:', err);
+    return { success: false, message: 'Failed to update the delivery address.' };
+  }
+};
+
 export const reviewCancellationRequest = async (
   requestId: string,
   decision: 'Approved' | 'Rejected',

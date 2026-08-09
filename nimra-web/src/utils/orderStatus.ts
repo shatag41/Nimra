@@ -21,3 +21,9 @@ export const cancellationRestrictionMessage = (status: unknown): string => {
     ? 'This order has been Delivered and can no longer be cancelled.'
     : `This order is ${formattedStatus} and can no longer be cancelled.`;
 };
+
+export const canEditOrderDeliveryAddress = (status: unknown): boolean =>
+  ['pending', 'confirmed'].includes(String(status || '').trim().toLowerCase());
+
+export const deliveryAddressRestrictionMessage = (status: unknown): string =>
+  `The delivery address cannot be changed because this order is currently ${formatOrderStatus(status)}.`;

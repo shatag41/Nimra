@@ -8,7 +8,7 @@ import { deleteFile, fileExists } from '@/backend/storage/storage';
 import { isAdminStorageRequest } from '@/backend/storage/storageAuth';
 import { mergeCompanyInfo } from '@/utils/companyInfo';
 import { getCustomerDeletionEligibility } from '@/utils/customerDeletion';
-import { cancellationRestrictionMessage } from '@/utils/orderStatus';
+import { canEditOrderDeliveryAddress, cancellationRestrictionMessage, deliveryAddressRestrictionMessage } from '@/utils/orderStatus';
 
 const EMAIL_PREFERENCE_DEFAULTS = {
   orderConfirmation: true,
@@ -216,7 +216,7 @@ const localDeletionOTPCache = new Map<string, { otp: string; email: string; expi
 function invalidateCMSCache(type?: string) {
   const cmsTypes = ['productCRUD', 'bannerCRUD', 'faqCRUD', 'companyInfoUpdate'];
   const dataMutations = [
-    'createOrder', 'order', 'updateOrder', 'cancelRequest', 'requestOrderCancellation',
+    'createOrder', 'order', 'updateOrder', 'updateOrderAddress', 'cancelRequest', 'requestOrderCancellation',
     'updateCancellation', 'reviewCancellationRequest', 'updateOrderStatus', 'registerUser',
     'userAction', 'saveAddress', 'accountSettings', 'userAddresses', 'login', 'register',
     'verifyRegistrationOTP', 'createVerifiedUser', 'googleSignIn', 'cartSync', 'notificationCRUD',
@@ -561,6 +561,27 @@ export async function handlePost(req: NextRequest) {
   try {
     const body = await req.json();
     const payload = { ...body };
+    if (payload.type === 'updateOrderAddress') {
+      let sessionUser: { ID?: string | number; Username?: string; Active?: boolean | string } | null = null;
+      try {
+        const cookieValue = req.cookies.get('nimra_user')?.value || '';
+        sessionUser = JSON.parse(cookieValue ? decodeURIComponent(cookieValue) : 'null');
+      } catch {}
+      if (!sessionUser?.ID || String(sessionUser.ID) !== String(payload.userId || '') || String(sessionUser.Active).toLowerCase() === 'false') {
+        return NextResponse.json({ success: false, message: 'Customer authentication is required.' }, { status: 401 });
+      }
+
+      const availableOrders = getAppsScriptUrl()
+        ? await fetchAppsScriptData('getOrders', { userId: String(sessionUser.ID) })
+        : fallbackData.orders;
+      const order = (Array.isArray(availableOrders) ? availableOrders : []).find(
+        (item: CustomerOrderIdentity & { orderId?: unknown }) => String(item.orderId) === String(payload.orderId || '')
+      ) as (CustomerOrderIdentity & { orderId?: unknown; status?: unknown }) | undefined;
+      if (!order) return NextResponse.json({ success: false, message: 'Order not found.' }, { status: 404 });
+      if (!canEditOrderDeliveryAddress(order.status)) {
+        return NextResponse.json({ success: false, message: deliveryAddressRestrictionMessage(order.status) }, { status: 409 });
+      }
+    }
     if (['googleSignIn', 'requestOTP', 'resetPassword'].includes(String(payload.type || '')) && payload.email) {
       payload.email = String(payload.email).trim().toLowerCase();
     }
@@ -954,6 +975,20 @@ export async function handlePost(req: NextRequest) {
         orderId: orderId,
         orders: customerOrders,
       });
+    } else if (payload.type === 'updateOrderAddress') {
+      const orderIndex = fallbackData.orders.findIndex((order: CustomerOrderIdentity & { orderId?: unknown }) =>
+        String(order.orderId) === String(payload.orderId || '')
+      );
+      if (orderIndex < 0) return NextResponse.json({ success: false, message: 'Order not found.' }, { status: 404 });
+      const order = fallbackData.orders[orderIndex];
+      if (!canEditOrderDeliveryAddress(order.status)) {
+        return NextResponse.json({ success: false, message: deliveryAddressRestrictionMessage(order.status) }, { status: 409 });
+      }
+      order.customer = { ...order.customer, ...payload.address };
+      order.updatedAt = new Date().toISOString();
+      await syncLocalDB('save');
+      invalidateCMSCache('updateOrderAddress');
+      return NextResponse.json({ success: true, message: 'Delivery address updated successfully.', order });
     } else if (payload.type === 'requestOrderCancellation') {
       const { orderId, reason } = payload;
       const orderIndex = fallbackData.orders.findIndex((o: any) => String(o.orderId) === String(orderId));
