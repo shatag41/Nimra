@@ -713,6 +713,21 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
           }
           .orders-mobile-cards {
             display: flex;
+            gap: 0.75rem;
+            padding: 0.1rem;
+          }
+          .order-mobile-card {
+            padding: 0.78rem;
+            border-color: rgba(148, 163, 184, 0.24);
+            background: rgba(248, 250, 252, 0.92);
+            background: color-mix(in srgb, var(--bg-secondary) 88%, var(--primary-color) 4%);
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.07);
+          }
+          :global([data-theme="dark"]) .order-mobile-card {
+            border-color: rgba(148, 163, 184, 0.16);
+            background: rgba(15, 23, 42, 0.5);
+            background: color-mix(in srgb, var(--bg-secondary) 90%, var(--primary-color) 6%);
+            box-shadow: 0 5px 16px rgba(0, 0, 0, 0.2);
           }
           .orders-empty-state {
             min-height: clamp(18.5rem, 82vw, 21rem) !important;

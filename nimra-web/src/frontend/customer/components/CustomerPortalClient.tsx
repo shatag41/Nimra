@@ -60,10 +60,39 @@ function CustomerPortalClient({ initialTab }: CustomerPortalClientProps) {
   const tab = initialTab ?? searchParams.get('tab');
   const [mounted, setMounted] = React.useState(false);
   const [portalLoadedAt] = React.useState(() => Date.now());
+  const [summaryCardsVisible, setSummaryCardsVisible] = React.useState(false);
+  const summaryCardsRef = React.useRef<HTMLElement>(null);
 
   React.useEffect(() => {
     setMounted(true);
   }, []);
+
+  React.useEffect(() => {
+    if (summaryCardsVisible || !summaryCardsRef.current) return;
+
+    const summaryGrid = summaryCardsRef.current;
+    if (!('IntersectionObserver' in window)) {
+      setSummaryCardsVisible(true);
+      return;
+    }
+
+    let firstFrame = 0;
+    let secondFrame = 0;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      observer.disconnect();
+      firstFrame = requestAnimationFrame(() => {
+        secondFrame = requestAnimationFrame(() => setSummaryCardsVisible(true));
+      });
+    }, { threshold: 0.15 });
+
+    observer.observe(summaryGrid);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(firstFrame);
+      cancelAnimationFrame(secondFrame);
+    };
+  }, [isAuthenticated, isLoading, mounted, summaryCardsVisible, tab]);
 
   React.useEffect(() => {
     if (mounted && !isLoading && !isAuthenticated) {
@@ -228,7 +257,7 @@ function CustomerPortalClient({ initialTab }: CustomerPortalClientProps) {
         </section>
       ) : (
         <>
-          <section className="metric-grid" aria-label="Account summary">
+          <section ref={summaryCardsRef} className={`metric-grid ${summaryCardsVisible ? 'summary-cards-visible' : ''}`} aria-label="Account summary">
             <CompactKpiCard
               title="Total Orders"
               value={orders.length}
@@ -955,11 +984,32 @@ const portalStyles = `
   @media (max-width: 700px) {
     .portal-grid, .quick-section, .recommendations-grid { grid-template-columns: 1fr; padding: 0 1rem; }
     .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0 1rem; margin-top: 1.25rem; }
+    .metric-grid > * {
+      opacity: 0;
+      transform: scale(0.75);
+    }
+    .metric-grid.summary-cards-visible > * {
+      animation: mobileSummaryCardPop 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    @keyframes mobileSummaryCardPop {
+      0% { opacity: 0; transform: scale(0.75); }
+      68% { opacity: 1; transform: scale(1.06); }
+      100% { opacity: 1; transform: scale(1); }
+    }
     .recommendations-section { padding: 0 1rem; }
     .metric-grid { margin-top: 1.25rem; }
     .panel-head { align-items: flex-start; flex-direction: column; }
     .guest-checkout { align-items: flex-start; flex-direction: column; padding: 1.25rem; }
     .portal-page { overflow-x: hidden; }
+  }
+
+  @media (max-width: 700px) and (prefers-reduced-motion: reduce) {
+    .metric-grid > *,
+    .metric-grid.summary-cards-visible > * {
+      opacity: 1;
+      transform: none;
+      animation: none;
+    }
   }
 
   @media (max-width: 480px) {
