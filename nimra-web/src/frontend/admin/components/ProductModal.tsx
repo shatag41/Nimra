@@ -3,6 +3,7 @@ import { Product } from '@/types/cms';
 import CustomSelect from './CustomSelect';
 import ImageUploadField from './ImageUploadField';
 import LoadingButton from '@/frontend/shared/LoadingButton';
+import ProductModalShell from './ProductModalShell';
 
 interface ProductModalProps {
   editingProduct: Partial<Product>;
@@ -23,13 +24,11 @@ export default function ProductModal({
     || /coming|soon|pre.?launch/i.test(String(editingProduct.StockStatus || ''));
 
   return (
-    <div className="modal-backdrop glass product-modal-backdrop">
-      <div className="modal-card product-modal-card animate-fade-in">
-        <div className="modal-header">
-          <h2>{editingProduct.ID ? 'Edit Product ID #' + editingProduct.ID : 'Add New Product'}</h2>
-          <button className="close-btn" onClick={onClose}>✕</button>
-        </div>
-        
+    <ProductModalShell
+      title={editingProduct.ID ? 'Edit Product ID #' + editingProduct.ID : 'Add New Product'}
+      titleId="product-modal-title"
+      onClose={onClose}
+    >
         <form onSubmit={onSubmit} className="product-modal-form">
           <div className="modal-body product-modal-scroll">
             <div className="form-group">
@@ -144,7 +143,6 @@ export default function ProductModal({
             <LoadingButton type="submit" className="btn btn-primary" isLoading={saveLoading} loadingText="Saving Product...">Save Product</LoadingButton>
           </div>
         </form>
-      </div>
-    </div>
+    </ProductModalShell>
   );
 }

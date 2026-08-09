@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { Notification, NotificationCategory } from '@/types/cms';
+import CustomSelect from './CustomSelect';
+import LoadingButton from '@/frontend/shared/LoadingButton';
+import ProductModalShell from './ProductModalShell';
 
 interface NotificationsTabProps {
   filteredNotifications: Notification[];
@@ -23,6 +26,8 @@ export default function NotificationsTab({
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const broadcasts = filteredNotifications.filter((notification) => {
     if (notification.TargetAudience !== 'CUSTOMER_NOTIFICATION' || notification.EventType !== 'ADMIN_BROADCAST') return false;
@@ -34,22 +39,34 @@ export default function NotificationsTab({
     return true;
   });
 
+  const closeModal = () => {
+    if (!isSubmitting && !saveLoading) setIsModalOpen(false);
+  };
+
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!title.trim() || !message.trim()) return;
-    const success = await handleSendNotif(title.trim(), message.trim(), {
-      Category: category,
-      Priority: priority,
-      Role: 'Customer',
-      TargetAudience: 'CUSTOMER_NOTIFICATION',
-      EventType: 'ADMIN_BROADCAST',
-      ActionLink: '',
-    });
-    if (success) {
-      setTitle('');
-      setMessage('');
-      setCategory('Offers/Promotions');
-      setPriority('Medium');
+    const cleanTitle = title.trim();
+    const cleanMessage = message.trim();
+    if (!cleanTitle || !cleanMessage || !category || isSubmitting || saveLoading) return;
+    setIsSubmitting(true);
+    try {
+      const success = await handleSendNotif(cleanTitle, cleanMessage, {
+        Category: category,
+        Priority: priority,
+        Role: 'Customer',
+        TargetAudience: 'CUSTOMER_NOTIFICATION',
+        EventType: 'ADMIN_BROADCAST',
+        ActionLink: '',
+      });
+      if (success) {
+        setTitle('');
+        setMessage('');
+        setCategory('Offers/Promotions');
+        setPriority('Medium');
+        setIsModalOpen(false);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -61,46 +78,64 @@ export default function NotificationsTab({
   return (
     <div className="notifications-tab card glass" style={{ padding: '2rem' }}>
       <div className="notif-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '2rem' }}>
-        <form className="notification-compose-card" onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', padding: '1.5rem', borderRadius: 'var(--radius-lg)', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', height: 'fit-content' }}>
+        <form className="notification-compose-card broadcast-desktop-compose" onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', padding: '1.5rem', borderRadius: 'var(--radius-lg)', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', height: 'fit-content' }}>
           <h3 style={{ margin: 0, fontSize: '1.2rem' }}>Customer Broadcast</h3>
           <div>
             <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>Title</label>
-            <input required value={title} onChange={(event) => setTitle(event.target.value)} placeholder="e.g. Summer Offer, Product News" style={fieldStyle} />
+            <input required value={title} onChange={(event) => setTitle(event.target.value)} placeholder="e.g. Summer Offer, Product News" style={fieldStyle} disabled={isSubmitting || saveLoading} />
           </div>
           <div>
             <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>Message</label>
-            <textarea required rows={4} value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Message for customers" style={fieldStyle} />
+            <textarea required rows={4} value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Message for customers" style={fieldStyle} disabled={isSubmitting || saveLoading} />
           </div>
           <div className="notification-compose-options" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
               <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>Category</label>
-              <select value={category} onChange={(event) => setCategory(event.target.value as NotificationCategory)} style={fieldStyle}>
-                {categories.map((item) => <option key={item}>{item}</option>)}
-              </select>
+              <CustomSelect value={category} onChange={(value) => setCategory(value as NotificationCategory)} portalMenu options={categories.map((item) => ({ value: item, label: item }))} />
             </div>
             <div>
               <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>Priority</label>
-              <select value={priority} onChange={(event) => setPriority(event.target.value as typeof priority)} style={fieldStyle}>
-                <option>High</option><option>Medium</option><option>Low</option>
-              </select>
+              <CustomSelect value={priority} onChange={(value) => setPriority(value as typeof priority)} portalMenu options={[{ value: 'High', label: 'High' }, { value: 'Medium', label: 'Medium' }, { value: 'Low', label: 'Low' }]} />
             </div>
           </div>
-          <button type="submit" className="btn btn-primary btn-full" disabled={saveLoading}>Send to Customers</button>
+          <LoadingButton type="submit" className="btn btn-primary btn-full" isLoading={isSubmitting || saveLoading} loadingText="Sending..." disabled={!title.trim() || !message.trim() || !category}>
+            Send to Customers
+          </LoadingButton>
         </form>
 
         <div className="notification-history-panel" style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+        <div className="section-head-btn">
           <h3 style={{ margin: 0, fontSize: '1.2rem' }}>Customer Broadcast History</h3>
-          <div className="notification-history-filters" style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '0.5rem' }}>
-            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search broadcasts" style={fieldStyle} />
-            <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} style={fieldStyle}>
-              <option value="All">All categories</option>{categories.map((item) => <option key={item}>{item}</option>)}
-            </select>
-            <select value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value)} style={fieldStyle}>
-              <option value="All">All priorities</option><option>High</option><option>Medium</option><option>Low</option>
-            </select>
-          </div>
-          <div className="notification-history-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '550px', overflowY: 'auto' }}>
-            {broadcasts.map((notification) => (
+          <button type="button" className="btn btn-primary btn-add broadcast-mobile-add" onClick={() => setIsModalOpen(true)}>
+            ＋ Add New Broadcast
+          </button>
+        </div>
+        <div className="notification-history-filters" style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '0.5rem' }}>
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search broadcasts" style={fieldStyle} />
+          <CustomSelect
+            value={categoryFilter}
+            onChange={setCategoryFilter}
+            portalMenu
+            options={[
+              { value: 'All', label: 'All categories' },
+              ...categories.map((item) => ({ value: item, label: item })),
+            ]}
+          />
+          <CustomSelect
+            value={priorityFilter}
+            onChange={setPriorityFilter}
+            portalMenu
+            options={[
+              { value: 'All', label: 'All priorities' },
+              { value: 'High', label: 'High' },
+              { value: 'Medium', label: 'Medium' },
+              { value: 'Low', label: 'Low' },
+            ]}
+          />
+        </div>
+        <div className="notification-history-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '650px', overflowY: 'auto' }}>
+          {broadcasts.map((notification) => {
+            return (
               <div className="notification-broadcast-card" key={String(notification.ID)} style={{ padding: '1.25rem', borderRadius: 'var(--radius-lg)', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
                 <div className="notification-broadcast-head" style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
                   <div>
@@ -111,16 +146,71 @@ export default function NotificationsTab({
                     </div>
                     <strong>{notification.Title}</strong>
                   </div>
-                  <button aria-label="Delete broadcast" onClick={() => void handleNotifDelete(notification.ID)} style={{ background: 'none', border: 0, color: 'var(--text-muted)', cursor: 'pointer' }}>X</button>
+                  <button type="button" aria-label="Delete broadcast" onClick={() => void handleNotifDelete(notification.ID)} style={{ background: 'none', border: 0, color: 'var(--text-muted)', cursor: 'pointer' }}>X</button>
                 </div>
                 <span style={{ display: 'block', marginTop: '0.35rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{new Date(notification.Timestamp || notification.CreatedAt || '').toLocaleString()}</span>
                 <p style={{ margin: '0.6rem 0 0', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{notification.Message}</p>
               </div>
-            ))}
-            {!broadcasts.length && <p className="empty" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem 0' }}>No customer broadcasts found.</p>}
-          </div>
+            );
+          })}
+          {!broadcasts.length && <p className="empty" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem 0' }}>No customer broadcasts found.</p>}
         </div>
       </div>
+      </div>
+
+      {isModalOpen && (
+        <ProductModalShell title="Add New Broadcast" titleId="broadcast-modal-title" onClose={closeModal}>
+            <form onSubmit={onSubmit} className="product-modal-form">
+              <div className="modal-body product-modal-scroll">
+                <div className="form-group">
+                  <label>Title</label>
+                  <input required value={title} onChange={(event) => setTitle(event.target.value)} placeholder="e.g. Summer Offer, Product News" disabled={isSubmitting || saveLoading} />
+                </div>
+                <div className="form-group">
+                  <label>Message</label>
+                  <textarea required rows={5} value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Message for customers" disabled={isSubmitting || saveLoading} />
+                </div>
+                <div className="form-row form-row-relative">
+                  <div className="form-group">
+                    <label>Category</label>
+                    <CustomSelect
+                      value={category}
+                      onChange={(value) => setCategory(value as NotificationCategory)}
+                      portalMenu
+                      options={categories.map((item) => ({ value: item, label: item }))}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Priority</label>
+                    <CustomSelect
+                      value={priority}
+                      onChange={(value) => setPriority(value as typeof priority)}
+                      portalMenu
+                      options={[
+                        { value: 'High', label: 'High' },
+                        { value: 'Medium', label: 'Medium' },
+                        { value: 'Low', label: 'Low' },
+                      ]}
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={closeModal} disabled={isSubmitting || saveLoading}>Cancel</button>
+                <LoadingButton type="submit" className="btn btn-primary" isLoading={isSubmitting || saveLoading} loadingText="Sending..." disabled={!title.trim() || !message.trim() || !category}>
+                  Send to Customers
+                </LoadingButton>
+              </div>
+            </form>
+        </ProductModalShell>
+      )}
+      <style jsx>{`
+        .broadcast-mobile-add { display: none; }
+        @media (max-width: 768px) {
+          .broadcast-desktop-compose { display: none !important; }
+          .broadcast-mobile-add { display: inline-flex; }
+        }
+      `}</style>
     </div>
   );
 }

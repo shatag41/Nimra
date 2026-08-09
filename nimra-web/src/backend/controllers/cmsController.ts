@@ -39,6 +39,7 @@ const getAppsScriptUrl = () => {
   return process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || process.env.EXPO_PUBLIC_APPS_SCRIPT_URL || '';
 };
 const APPS_SCRIPT_TIMEOUT_MS = 55000;
+const APPS_SCRIPT_FETCH_ATTEMPTS = 3;
 type UploadScope = 'products' | 'banners';
 
 const isNextDynamicSignal = (error: unknown) => Boolean(
@@ -52,22 +53,50 @@ const uploadFileExists = async (storagePath: string, scope: UploadScope) => {
   return fileExists(storagePath, scope);
 };
 
+const isTransientAppsScriptFetchError = (error: unknown) => {
+  let current: unknown = error;
+  while (current && typeof current === 'object') {
+    const candidate = current as { code?: unknown; name?: unknown; cause?: unknown };
+    const code = String(candidate.code || '');
+    const name = String(candidate.name || '');
+    if (
+      ['UND_ERR_CONNECT_TIMEOUT', 'UND_ERR_HEADERS_TIMEOUT', 'UND_ERR_SOCKET', 'ECONNRESET', 'ETIMEDOUT', 'EAI_AGAIN'].includes(code) ||
+      name === 'TimeoutError' ||
+      name === 'AbortError'
+    ) return true;
+    current = candidate.cause;
+  }
+  return false;
+};
+
+const waitForAppsScriptRetry = (attempt: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, 200 * attempt));
+
 async function fetchAppsScriptData(action: string, params: Record<string, string> = {}) {
   const baseUrl = getAppsScriptUrl();
   if (!baseUrl) return null;
   const url = new URL(baseUrl);
   url.searchParams.set('action', action);
   Object.entries(params).forEach(([key, value]) => { if (value) url.searchParams.set(key, value); });
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    redirect: 'follow',
-    cache: 'no-store',
-    headers: { Accept: 'application/json' },
-    signal: AbortSignal.timeout(APPS_SCRIPT_TIMEOUT_MS),
-  });
-  const text = await response.text();
-  if (!response.ok || text.trim().startsWith('<')) throw new Error(`Unable to validate ${action}.`);
-  return JSON.parse(text);
+  for (let attempt = 1; attempt <= APPS_SCRIPT_FETCH_ATTEMPTS; attempt += 1) {
+    try {
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        redirect: 'follow',
+        cache: 'no-store',
+        headers: { Accept: 'application/json' },
+        signal: AbortSignal.timeout(APPS_SCRIPT_TIMEOUT_MS),
+      });
+      const text = await response.text();
+      if (!response.ok || text.trim().startsWith('<')) throw new Error(`Unable to validate ${action}.`);
+      return JSON.parse(text);
+    } catch (error) {
+      if (attempt === APPS_SCRIPT_FETCH_ATTEMPTS || !isTransientAppsScriptFetchError(error)) throw error;
+      console.warn(`[CMS Apps Script] ${action} transient fetch failure; retrying (${attempt}/${APPS_SCRIPT_FETCH_ATTEMPTS - 1}).`);
+      await waitForAppsScriptRetry(attempt);
+    }
+  }
+  return null;
 }
 
 async function postAppsScriptData(payload: Record<string, unknown>) {
@@ -662,7 +691,7 @@ export async function handlePost(req: NextRequest) {
         if (getAppsScriptUrl()) {
           const [liveUsers, liveOrders, liveRequests] = await Promise.all([
             fetchAppsScriptData('getUsers'),
-            fetchAppsScriptData('getOrders'),
+            fetchAppsScriptData('getOrders', { userId: requestedId }),
             fetchAppsScriptData('getCancellationRequests'),
           ]);
           users = Array.isArray(liveUsers) ? liveUsers : [];
