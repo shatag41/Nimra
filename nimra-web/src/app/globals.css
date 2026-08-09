@@ -16113,6 +16113,251 @@ body:has(.products-page-skeleton) {
   }
 }
 
+/* Keep Sign Up in normal flow when browser chrome, zoom, landscape mode, or
+   the on-screen keyboard reduces the available viewport height. */
+@media (max-width: 768px) {
+  html:has(.register-page),
+  body:has(.register-page) {
+    width: 100% !important;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: hidden !important;
+    overscroll-behavior: none !important;
+  }
+
+  .auth-route-shell:has(.register-page) {
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
+  }
+
+  .auth-route-main:has(.register-page) {
+    width: 100% !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
+  }
+
+  .auth-page.auth-flow.auth-mobile-flow.register-page {
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: 100dvh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    padding: clamp(0.4rem, 1.5dvh, 0.8rem) clamp(0.75rem, 4vw, 1rem) calc(clamp(0.45rem, 1.5dvh, 0.8rem) + env(safe-area-inset-bottom)) !important;
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
+  }
+
+  .register-page .auth-flow-stage {
+    flex: 0 0 auto;
+    max-height: 100% !important;
+    margin-block: auto !important;
+    padding-block: 0 !important;
+  }
+
+  .register-page .auth-shell,
+  .register-page .auth-shell.glass {
+    flex: 0 0 auto;
+    margin-top: clamp(1.45rem, 5dvh, 1.7rem) !important;
+  }
+
+  .register-page .auth-card {
+    padding: clamp(2.2rem, 7dvh, 2.65rem) clamp(0.8rem, 4vw, 1rem) clamp(0.65rem, 2dvh, 0.85rem) !important;
+  }
+
+  .register-page .auth-form {
+    gap: clamp(0.24rem, 1dvh, 0.35rem) !important;
+  }
+
+  .register-page .auth-input,
+  .register-page .auth-select,
+  .register-page .auth-submit,
+  .register-page .auth-google-button {
+    min-height: clamp(2.05rem, 5.5dvh, 2.5rem) !important;
+    height: clamp(2.05rem, 5.5dvh, 2.5rem) !important;
+    font-size: clamp(0.68rem, 2.5vw, 0.72rem) !important;
+  }
+
+  .register-page .auth-footer-link {
+    position: static !important;
+    margin: clamp(0.28rem, 1.2dvh, 0.5rem) 0 0 !important;
+  }
+
+  .register-page .auth-benefits {
+    position: static !important;
+    flex: 0 0 auto;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    margin: clamp(0.7rem, 2.2dvh, 1rem) auto 0 !important;
+  }
+}
+
+@media (min-width: 769px) and (max-height: 820px) {
+  .auth-page.auth-flow.register-page {
+    height: calc(100dvh - var(--ds-header-offset)) !important;
+    min-height: calc(100dvh - var(--ds-header-offset)) !important;
+    overflow-x: hidden !important;
+    overflow-y: hidden !important;
+  }
+
+  .register-page .auth-flow-stage {
+    max-height: none;
+    margin-block: auto;
+    align-self: auto;
+  }
+
+  .register-page .auth-footer-link,
+  .register-page .auth-benefits {
+    position: static !important;
+  }
+
+  .register-page .auth-benefits {
+    margin-top: clamp(0.55rem, 1.5dvh, 0.8rem);
+  }
+}
+
+/* Desktop Sign Up: keep the card and all four benefits inside one viewport. */
+@media (min-width: 769px) {
+  .auth-page.auth-flow.register-page {
+    width: 100% !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: 100dvh !important;
+    padding: clamp(0.4rem, 1.4dvh, 0.9rem) clamp(1rem, 3vw, 1.5rem) !important;
+    overflow: hidden !important;
+  }
+
+  .register-page .auth-flow-stage {
+    width: min(100%, 32rem);
+    max-height: calc(100dvh - clamp(0.8rem, 2.8dvh, 1.8rem));
+    align-self: center;
+    justify-content: center;
+    margin-block: auto;
+  }
+
+  .register-page .auth-shared-mark {
+    width: clamp(2.65rem, 7dvh, 3.75rem);
+    margin-bottom: clamp(-1.85rem, -3.4dvh, -1.35rem);
+    padding: clamp(0.35rem, 0.8dvh, 0.52rem);
+  }
+
+  .register-page .auth-card {
+    padding: clamp(1.75rem, 4.8dvh, 2.4rem) clamp(1.35rem, 3vw, 2rem) clamp(0.55rem, 1.4dvh, 0.85rem) !important;
+  }
+
+  .register-page .auth-card-header {
+    margin-bottom: clamp(0.18rem, 0.75dvh, 0.45rem) !important;
+  }
+
+  .register-page .auth-kicker {
+    margin-bottom: clamp(0.08rem, 0.35dvh, 0.2rem) !important;
+    padding: clamp(0.1rem, 0.3dvh, 0.16rem) clamp(0.42rem, 1vw, 0.55rem) !important;
+    font-size: clamp(0.52rem, 1.15dvh, 0.61rem) !important;
+  }
+
+  .register-page .auth-card-header h2 {
+    margin-bottom: clamp(0.08rem, 0.4dvh, 0.25rem) !important;
+    padding-bottom: 0 !important;
+    font-size: clamp(1rem, 2.5dvh, 1.32rem) !important;
+  }
+
+  .register-page .auth-card-header p {
+    font-size: clamp(0.63rem, 1.4dvh, 0.76rem) !important;
+    line-height: 1.2 !important;
+  }
+
+  .register-page .auth-form {
+    gap: clamp(0.15rem, 0.55dvh, 0.32rem) !important;
+  }
+
+  .register-page .auth-field {
+    gap: clamp(0.02rem, 0.18dvh, 0.08rem) !important;
+  }
+
+  .register-page .auth-field label {
+    margin-bottom: 0 !important;
+    font-size: clamp(0.62rem, 1.25dvh, 0.71rem) !important;
+    line-height: 1.1 !important;
+  }
+
+  .register-page .auth-input,
+  .register-page .auth-select,
+  .register-page .auth-submit,
+  .register-page .auth-google-button {
+    min-height: clamp(1.85rem, 4.4dvh, 2.25rem) !important;
+    height: clamp(1.85rem, 4.4dvh, 2.25rem) !important;
+    padding-block: clamp(0.18rem, 0.5dvh, 0.3rem) !important;
+    font-size: clamp(0.7rem, 1.45dvh, 0.8rem) !important;
+  }
+
+  .register-page .auth-divider {
+    margin-block: clamp(0.02rem, 0.3dvh, 0.14rem) !important;
+    gap: clamp(0.3rem, 0.8vw, 0.5rem) !important;
+    font-size: clamp(0.58rem, 1.2dvh, 0.66rem) !important;
+  }
+
+  .register-page .auth-divider span {
+    padding-inline: clamp(0.3rem, 0.8vw, 0.65rem) !important;
+  }
+
+  .register-page .auth-footer-link {
+    position: static !important;
+    margin-top: clamp(0.1rem, 0.45dvh, 0.28rem) !important;
+    font-size: clamp(0.66rem, 1.35dvh, 0.76rem) !important;
+    line-height: 1.15 !important;
+  }
+
+  .register-page .auth-benefits {
+    position: static !important;
+    width: calc(100% - clamp(0.5rem, 2vw, 1rem));
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    min-height: 0;
+    margin-top: clamp(0.3rem, 0.9dvh, 0.58rem) !important;
+    padding: clamp(0.22rem, 0.7dvh, 0.42rem) 0.3rem !important;
+    border-radius: clamp(0.7rem, 1.8dvh, 0.95rem);
+  }
+
+  .register-page .auth-benefits > div {
+    gap: clamp(0.01rem, 0.12dvh, 0.05rem);
+    padding: clamp(0.04rem, 0.2dvh, 0.1rem) clamp(0.18rem, 0.6vw, 0.3rem);
+  }
+
+  .register-page .auth-benefits span {
+    font-size: clamp(0.72rem, 1.8dvh, 0.92rem);
+  }
+
+  .register-page .auth-benefits strong {
+    font-size: clamp(0.52rem, 1.18dvh, 0.62rem);
+    line-height: 1.1;
+  }
+
+  .register-page .auth-benefits small {
+    font-size: clamp(0.45rem, 1dvh, 0.53rem);
+    line-height: 1.1;
+  }
+}
+
+@media (min-width: 769px) and (max-height: 650px) {
+  .register-page .auth-flow-stage {
+    width: min(100%, 30rem);
+  }
+
+  .register-page .auth-card {
+    padding-inline: clamp(1.15rem, 3vw, 1.6rem) !important;
+  }
+}
+
 @media (max-width: 768px) and (max-height: 700px) {
   .auth-mobile-flow .auth-shell,
   .auth-mobile-flow .auth-shell.glass {
@@ -16152,12 +16397,12 @@ body:has(.products-page-skeleton) {
   }
 
   .register-page .auth-footer-link {
-    margin-top: 0.08rem !important;
+    margin-top: clamp(0.18rem, 1dvh, 0.35rem) !important;
   }
 
   .register-page .auth-benefits {
-    margin-top: 0.35rem;
-    padding-block: 0.2rem;
+    margin-top: clamp(0.65rem, 2dvh, 0.85rem);
+    padding-block: clamp(0.25rem, 1dvh, 0.4rem);
   }
 }
 
