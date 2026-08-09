@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
@@ -69,9 +69,28 @@ export function PortalNotifications() {
   const [statusFilter, setStatusFilter] = useState<'All' | 'Unread'>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+  const [showCategoryFilters, setShowCategoryFilters] = useState(false);
+  const categoryFilterRef = useRef<HTMLDivElement>(null);
   
   const { user } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!showCategoryFilters) return;
+
+    const closeOnOutsideClick = (event: MouseEvent | TouchEvent) => {
+      if (categoryFilterRef.current && !categoryFilterRef.current.contains(event.target as Node)) {
+        setShowCategoryFilters(false);
+      }
+    };
+
+    document.addEventListener('mousedown', closeOnOutsideClick);
+    document.addEventListener('touchstart', closeOnOutsideClick);
+    return () => {
+      document.removeEventListener('mousedown', closeOnOutsideClick);
+      document.removeEventListener('touchstart', closeOnOutsideClick);
+    };
+  }, [showCategoryFilters]);
 
   const loadNotifications = useCallback(() => {
     import('@/utils/api').then((api) => {
@@ -326,6 +345,80 @@ export function PortalNotifications() {
           background: var(--primary-color);
           color: #ffffff;
         }
+        .notification-filter-wrap {
+          position: relative;
+          flex: 1;
+          min-width: 200px;
+        }
+        .notification-search-input {
+          width: 100%;
+          box-sizing: border-box;
+          padding: 0.45rem 3rem 0.45rem 2.2rem;
+          border-radius: 50px;
+          border: 1px solid var(--border-color);
+          background: var(--bg-primary);
+          color: var(--text-primary);
+          font-size: 0.85rem;
+          outline: none;
+        }
+        .notification-filter-toggle {
+          position: absolute;
+          z-index: 2;
+          top: 50%;
+          right: 0.42rem;
+          display: grid;
+          place-items: center;
+          width: 2rem;
+          height: 2rem;
+          padding: 0;
+          transform: translateY(-50%);
+          border: 1px solid transparent;
+          border-radius: 50%;
+          background: transparent;
+          color: var(--text-secondary);
+          cursor: pointer;
+          transition: border-color 180ms ease, background 180ms ease, color 180ms ease, transform 180ms ease;
+        }
+        .notification-filter-toggle:hover,
+        .notification-filter-toggle:focus-visible,
+        .notification-filter-toggle.active {
+          border-color: color-mix(in srgb, var(--primary-color) 24%, transparent);
+          background: color-mix(in srgb, var(--primary-color) 12%, transparent);
+          color: var(--primary-color);
+          outline: none;
+        }
+        .notification-category-panel {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+          max-height: 8rem;
+          margin-top: 1rem;
+          opacity: 1;
+          transform: translateY(0);
+          overflow: hidden;
+          transition: max-height 220ms ease, margin 220ms ease, opacity 180ms ease, transform 220ms ease;
+        }
+        .notification-category-panel.filters-closed {
+          pointer-events: none;
+          max-height: 0;
+          margin-top: 0;
+          opacity: 0;
+          transform: translateY(-0.35rem);
+        }
+        @media (max-width: 600px) {
+          .notification-filter-wrap {
+            flex-basis: 100%;
+            min-width: 0;
+          }
+          .notification-category-panel {
+            gap: 0.4rem;
+            max-height: 12rem;
+          }
+          .notification-category-panel .filter-chip {
+            padding: 0.32rem 0.68rem;
+            font-size: 0.74rem;
+          }
+        }
         .group-header {
           display: flex;
           align-items: center;
@@ -376,7 +469,7 @@ export function PortalNotifications() {
       </div>
 
       {/* Filters Toolbar */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
+      <div ref={categoryFilterRef} style={{ display: 'flex', flexDirection: 'column', marginBottom: '2rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           
           {/* Status Toggles */}
@@ -386,20 +479,36 @@ export function PortalNotifications() {
           </div>
 
           {/* Search */}
-          <div style={{ flex: '1', minWidth: '200px', position: 'relative' }}>
+          <div className="notification-filter-wrap">
             <input 
               type="text" 
               placeholder="Search notifications..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ width: '100%', padding: '0.45rem 1rem 0.45rem 2.2rem', borderRadius: '50px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }}
+              className="notification-search-input"
             />
             <svg style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <button
+              type="button"
+              onClick={() => setShowCategoryFilters(open => !open)}
+              className={`notification-filter-toggle ${showCategoryFilters || categoryFilter !== 'All' ? 'active' : ''}`}
+              aria-label={`${showCategoryFilters ? 'Hide' : 'Show'} notification category filters`}
+              aria-expanded={showCategoryFilters}
+              aria-controls="notification-category-filters"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+              </svg>
+            </button>
           </div>
         </div>
 
         {/* Category Chips */}
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <div
+          id="notification-category-filters"
+          className={`notification-category-panel ${showCategoryFilters ? 'filters-open animate-fade-in' : 'filters-closed'}`}
+          aria-hidden={!showCategoryFilters}
+        >
           {categories.map(cat => (
             <button
               key={cat}
