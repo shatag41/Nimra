@@ -1,20 +1,28 @@
 'use client';
 
+import { useCallback, useMemo } from 'react';
 import useSWR from 'swr';
 import { fetchCMSData, clearCMSDataCache } from '@/utils/api';
 import type { CMSData } from '@/types/cms';
 
 export function useCMSData(initialData?: Partial<CMSData>) {
-  const fallbackData = initialData ? {
-    banners: initialData.banners || [],
-    products: initialData.products || [],
-    faqs: initialData.faqs || [],
-    companyInfo: initialData.companyInfo || {},
-  } : undefined;
+  const hasInitialData = initialData !== undefined;
+  const initialBanners = initialData?.banners;
+  const initialProducts = initialData?.products;
+  const initialFaqs = initialData?.faqs;
+  const initialCompanyInfo = initialData?.companyInfo;
+  const fallbackData = useMemo(() => hasInitialData ? {
+    banners: initialBanners || [],
+    products: initialProducts || [],
+    faqs: initialFaqs || [],
+    companyInfo: initialCompanyInfo || {},
+  } : undefined, [hasInitialData, initialBanners, initialProducts, initialFaqs, initialCompanyInfo]);
 
   const { data, error, isLoading, mutate } = useSWR('cmsData', fetchCMSData, {
     fallbackData,
-    revalidateOnMount: true,
+    // Server-rendered routes already carry the current CMS snapshot. Avoid an
+    // identical hydration request; client-only consumers still fetch normally.
+    revalidateOnMount: !hasInitialData,
     revalidateOnFocus: true,
     dedupingInterval: 10000,
   });
@@ -31,10 +39,10 @@ export function useCMSData(initialData?: Partial<CMSData>) {
     WhatsAppNumber: '',
   };
 
-  const refreshCMSData = async () => {
+  const refreshCMSData = useCallback(async () => {
     clearCMSDataCache();
     await mutate();
-  };
+  }, [mutate]);
 
   return { banners, products, faqs, companyInfo, loading: isLoading, error, refreshCMSData };
 }

@@ -40,7 +40,6 @@ interface NotificationContextValue {
   dismiss: () => void;
   pauseTimer: () => void;
   resumeTimer: () => void;
-  progress: number;
 }
 
 const NotificationContext = createContext<NotificationContextValue | null>(null);
@@ -170,10 +169,19 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     custom: showNotification
   }), [showNotification]);
 
+  const contextValue = useMemo(() => ({
+    notification,
+    isVisible,
+    notify,
+    dismiss,
+    pauseTimer,
+    resumeTimer,
+  }), [notification, isVisible, notify, dismiss, pauseTimer, resumeTimer]);
+
   return (
-    <NotificationContext.Provider value={{ notification, isVisible, notify, dismiss, pauseTimer, resumeTimer, progress }}>
+    <NotificationContext.Provider value={contextValue}>
       {children}
-      <NotificationBanner />
+      <NotificationBanner progress={progress} />
     </NotificationContext.Provider>
   );
 }
@@ -184,8 +192,8 @@ export const useNotification = () => {
   return context;
 };
 
-function NotificationBanner() {
-  const { notification, isVisible, dismiss, pauseTimer, resumeTimer, progress } = useNotification();
+function NotificationBanner({ progress }: { progress: number }) {
+  const { notification, isVisible, dismiss, pauseTimer, resumeTimer } = useNotification();
   
   if (!notification && !isVisible) return null;
 

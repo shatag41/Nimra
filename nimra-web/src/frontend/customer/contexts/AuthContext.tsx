@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
 import { discardLegacyRecentlyViewed, notifyRecentlyViewedChanged, recentlyViewedKey } from '../utils/recentlyViewed';
@@ -443,8 +443,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [user, updateUserSession]);
 
+  const contextValue = useMemo(() => ({
+    user,
+    isAuthenticated: !!user,
+    isLoading,
+    isLoggingOut,
+    isNewAccountSession,
+    login,
+    logout,
+    clearSession,
+    updateUserSession,
+  }), [user, isLoading, isLoggingOut, isNewAccountSession, login, logout, clearSession, updateUserSession]);
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, isLoggingOut, isNewAccountSession, login, logout, clearSession, updateUserSession }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,9 +1,10 @@
 import type { CMSData } from '@/types/cms';
+import { cache } from 'react';
 import { mergeCompanyInfo } from '@/utils/companyInfo';
 import { handleGet } from '@/backend/controllers/cmsController';
 
 /** Load CMS data in-process for Server Components, without a Vercel self-fetch. */
-export async function loadServerCMSData(): Promise<CMSData> {
+export const loadServerCMSData = cache(async (): Promise<CMSData> => {
   const response = await handleGet(new Request('http://nimra.internal/api/cms'));
   if (!response.ok) throw new Error(`CMS loader returned ${response.status}`);
 
@@ -14,4 +15,4 @@ export async function loadServerCMSData(): Promise<CMSData> {
     faqs: Array.isArray(data.faqs) ? data.faqs : [],
     companyInfo: mergeCompanyInfo(data.companyInfo),
   };
-}
+});
