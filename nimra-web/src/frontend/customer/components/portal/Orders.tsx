@@ -15,6 +15,7 @@ interface OrdersProps {
   orders: OrderRecord[];
   loadingOrders: boolean;
   onRefresh: () => void;
+  mobileSummary?: React.ReactNode;
 }
 
 const formatDate = (value?: string) => {
@@ -24,7 +25,7 @@ const formatDate = (value?: string) => {
   return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
-export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
+export function Orders({ orders, loadingOrders, onRefresh, mobileSummary }: OrdersProps) {
   const router = useRouter();
   const { notify } = useNotification();
   const [mobileOrderIndex, setMobileOrderIndex] = React.useState(0);
@@ -109,6 +110,7 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
 
   return (
     <div className="panel orders-panel">
+      {mobileSummary && <div className="orders-mobile-summary">{mobileSummary}</div>}
       <div className="panel-head">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
           <span className="eyebrow-badge content-section-badge">
@@ -334,6 +336,9 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
         .panel-head h2 {
           margin: 0 !important;
           color: var(--text-primary);
+        }
+        .orders-mobile-summary {
+          display: none;
         }
         @media (min-width: 640px) {
           .panel-head h2 {
@@ -758,6 +763,34 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
         }
 
         /* ── Mobile breakpoint: hide table, show cards ── */
+        @media (max-width: 768px) {
+          .orders-mobile-summary {
+            display: block;
+          }
+          .orders-mobile-summary,
+          .orders-mobile-summary :global(.metric-grid) {
+            box-shadow: none !important;
+            filter: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+          }
+          .orders-mobile-summary::before,
+          .orders-mobile-summary::after,
+          .orders-mobile-summary :global(.metric-grid)::before,
+          .orders-mobile-summary :global(.metric-grid)::after {
+            content: none !important;
+            display: none !important;
+            box-shadow: none !important;
+            filter: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+          }
+          .orders-mobile-summary :global(.metric-grid) {
+            margin: 0 0 28px !important;
+            padding: 0 !important;
+          }
+        }
+
         @media (max-width: 639px) {
           .orders-panel {
             position: relative;

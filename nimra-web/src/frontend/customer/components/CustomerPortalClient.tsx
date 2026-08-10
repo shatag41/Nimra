@@ -62,16 +62,30 @@ function CustomerPortalClient({ initialTab }: CustomerPortalClientProps) {
   const [portalLoadedAt] = React.useState(() => Date.now());
   const [summaryCardsVisible, setSummaryCardsVisible] = React.useState(false);
   const [showCancellationStatus, setShowCancellationStatus] = React.useState(false);
+  const [isMobilePortalLayout, setIsMobilePortalLayout] = React.useState(false);
   const summaryCardsRef = React.useRef<HTMLElement>(null);
+  const [summaryGridNode, setSummaryGridNode] = React.useState<HTMLElement | null>(null);
+  const setSummaryGridRef = React.useCallback((node: HTMLElement | null) => {
+    summaryCardsRef.current = node;
+    setSummaryGridNode(node);
+  }, []);
 
   React.useEffect(() => {
     setMounted(true);
   }, []);
 
   React.useEffect(() => {
-    if (summaryCardsVisible || !summaryCardsRef.current) return;
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    const updateLayout = () => setIsMobilePortalLayout(mediaQuery.matches);
+    updateLayout();
+    mediaQuery.addEventListener('change', updateLayout);
+    return () => mediaQuery.removeEventListener('change', updateLayout);
+  }, []);
 
-    const summaryGrid = summaryCardsRef.current;
+  React.useEffect(() => {
+    if (summaryCardsVisible || !summaryGridNode) return;
+
+    const summaryGrid = summaryGridNode;
     if (!('IntersectionObserver' in window)) {
       setSummaryCardsVisible(true);
       return;
@@ -93,7 +107,7 @@ function CustomerPortalClient({ initialTab }: CustomerPortalClientProps) {
       cancelAnimationFrame(firstFrame);
       cancelAnimationFrame(secondFrame);
     };
-  }, [isAuthenticated, isLoading, mounted, summaryCardsVisible, tab]);
+  }, [isAuthenticated, isLoading, mounted, summaryCardsVisible, summaryGridNode, tab]);
 
   React.useEffect(() => {
     if (mounted && !isLoading && !isAuthenticated) {
@@ -230,6 +244,15 @@ function CustomerPortalClient({ initialTab }: CustomerPortalClientProps) {
     };
   }, [isNewAccountSession, isRecentlyCreatedAccount, tab, user]);
 
+  const summaryGrid = (
+    <section ref={setSummaryGridRef} id="summary-cards-visible" className={`metric-grid ${summaryCardsVisible ? 'summary-cards-visible' : ''}`} aria-label="Account summary">
+      <CompactKpiCard title="Total Orders" value={orders.length} subtitle="Total orders placed" accent="blue" icon={<svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg>} />
+      <CompactKpiCard title="Active Orders" value={metrics.activeOrders} subtitle="Pending & In Transit" accent="orange" icon={<svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8Z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>} />
+      <CompactKpiCard title="Delivered" value={metrics.deliveredOrders} subtitle="Successfully delivered" accent="green" icon={<svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m22 4-10 10.01-3-3"/></svg>} />
+      <CompactKpiCard title={loadingOrders ? '' : metrics.latestOrder ? (recentStatusKind === 'cancellation' ? 'Recent Cancel Order Status' : 'Recent Order Status') : 'Shop Your First Order'} value={loadingOrders || !metrics.latestOrder ? null : <span className={`status-pill ${recentStatusPillClass}`}><span className={`status-dot ${recentStatusAccent === 'orange' ? 'pulse' : ''}`} /><span>{recentStatus}</span></span>} subtitle={loadingOrders || !metrics.latestOrder ? '' : (recentStatusKind === 'cancellation' ? 'Latest cancellation request' : 'Latest order update')} accent={recentStatusAccent} transitionKey={loadingOrders ? 'loading' : metrics.latestOrder ? `${recentStatusKind}-${recentStatus}` : 'first-order'} icon={<svg viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>} />
+    </section>
+  );
+
   if (!mounted || isLoading) {
     if (tab === 'profile') {
       return (
@@ -291,44 +314,7 @@ function CustomerPortalClient({ initialTab }: CustomerPortalClientProps) {
         </section>
       ) : (
         <>
-          <section ref={summaryCardsRef} className={`metric-grid ${summaryCardsVisible ? 'summary-cards-visible' : ''}`} aria-label="Account summary">
-            <CompactKpiCard
-              title="Total Orders"
-              value={orders.length}
-              subtitle="Total orders placed"
-              accent="blue"
-              icon={<svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg>}
-            />
-            <CompactKpiCard
-              title="Active Orders"
-              value={metrics.activeOrders}
-              subtitle="Pending & In Transit"
-              accent="orange"
-              icon={<svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8Z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>}
-            />
-            <CompactKpiCard
-              title="Delivered"
-              value={metrics.deliveredOrders}
-              subtitle="Successfully delivered"
-              accent="green"
-              icon={<svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m22 4-10 10.01-3-3"/></svg>}
-            />
-            <CompactKpiCard
-              title={loadingOrders ? '' : metrics.latestOrder
-                ? (recentStatusKind === 'cancellation' ? 'Recent Cancel Order Status' : 'Recent Order Status')
-                : 'Shop Your First Order'}
-              value={loadingOrders || !metrics.latestOrder ? null : (
-                <span className={`status-pill ${recentStatusPillClass}`}>
-                  <span className={`status-dot ${recentStatusAccent === 'orange' ? 'pulse' : ''}`} />
-                  <span>{recentStatus}</span>
-                </span>
-              )}
-              subtitle={loadingOrders || !metrics.latestOrder ? '' : (recentStatusKind === 'cancellation' ? 'Latest cancellation request' : 'Latest order update')}
-              accent={recentStatusAccent}
-              transitionKey={loadingOrders ? 'loading' : metrics.latestOrder ? `${recentStatusKind}-${recentStatus}` : 'first-order'}
-              icon={<svg viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>}
-            />
-          </section>
+          {!isMobilePortalLayout && summaryGrid}
 
           <section className="portal-grid">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -336,6 +322,7 @@ function CustomerPortalClient({ initialTab }: CustomerPortalClientProps) {
                 orders={orders}
                 loadingOrders={loadingOrders} 
                 onRefresh={refreshOrders} 
+                mobileSummary={isMobilePortalLayout ? summaryGrid : null}
               />
               <RecentlyViewedProducts products={products} />
             </div>
@@ -1074,12 +1061,7 @@ const portalStyles = `
 
   @media (max-width: 700px) {
     .portal-grid, .quick-section, .recommendations-grid { grid-template-columns: 1fr; padding: 0 1rem; }
-    .metric-grid + .portal-grid {
-      margin-top: 20px;
-      transform: none;
-    }
     .metric-grid {
-      margin-bottom: 0;
       transform: none;
     }
     .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0 1rem; margin-top: 1.25rem; }
@@ -1139,14 +1121,6 @@ const portalStyles = `
     /* Stack button groups fully */
     .next-progress-steps { font-size: 0.65rem; gap: 0.25rem; }
     .btn-next-step { padding: 0.55rem; font-size: 0.78rem; }
-  }
-
-  @media (max-width: 700px) {
-    .metric-grid + .portal-grid {
-      margin-top: 0 !important;
-      padding-top: 20px !important;
-      transform: none !important;
-    }
   }
 
   /* ── Panel visual enhancements & Next Step Card ── */

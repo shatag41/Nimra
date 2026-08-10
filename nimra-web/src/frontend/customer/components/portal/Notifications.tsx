@@ -70,6 +70,7 @@ export function PortalNotifications() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [showCategoryFilters, setShowCategoryFilters] = useState(false);
+  const [isCompactMobile, setIsCompactMobile] = useState(false);
   const categoryFilterRef = useRef<HTMLDivElement>(null);
   
   const { user } = useAuth();
@@ -91,6 +92,14 @@ export function PortalNotifications() {
       document.removeEventListener('touchstart', closeOnOutsideClick);
     };
   }, [showCategoryFilters]);
+
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 600px)');
+    const sync = () => setIsCompactMobile(query.matches);
+    sync();
+    query.addEventListener('change', sync);
+    return () => query.removeEventListener('change', sync);
+  }, []);
 
   const loadNotifications = useCallback(() => {
     import('@/utils/api').then((api) => {
@@ -345,6 +354,31 @@ export function PortalNotifications() {
           background: var(--primary-color);
           color: #ffffff;
         }
+        .notifications-toolbar {
+          display: flex;
+          flex-direction: column;
+          margin-bottom: 2rem;
+          padding: 1rem;
+          background: var(--bg-secondary);
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-lg);
+        }
+        .notifications-toolbar-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 1rem;
+        }
+        .notifications-status-toggle {
+          display: flex;
+          gap: .5rem;
+          padding: 4px;
+          background: var(--bg-primary);
+          border: 1px solid var(--border-color);
+          border-radius: 50px;
+        }
+        .notifications-status-toggle .filter-chip { border: 0; }
         .notification-filter-wrap {
           position: relative;
           flex: 1;
@@ -457,34 +491,49 @@ export function PortalNotifications() {
             height: 12px;
           }
           .notifications-toolbar {
-            padding: 0.45rem !important;
-            margin-bottom: 0.8rem !important;
-            border-radius: 12px !important;
+            min-height: 0 !important;
+            height: auto !important;
+            padding: 4px !important;
+            margin-bottom: 0.65rem !important;
+            border-radius: 9px !important;
+            box-sizing: border-box;
           }
           .notifications-toolbar-row {
             display: flex !important;
             flex-wrap: nowrap !important;
             justify-content: flex-start !important;
-            gap: 0.4rem !important;
+            align-items: center !important;
+            gap: 6px !important;
             width: 100%;
+            min-height: 0 !important;
+            height: 30px !important;
             min-width: 0;
           }
           .notifications-status-toggle {
             flex: 0 0 auto;
             align-items: center;
             gap: 2px !important;
-            height: 29px;
+            height: 30px;
             padding: 2px !important;
             border-radius: 8px !important;
             box-sizing: border-box;
           }
           .notifications-status-toggle .filter-chip {
-            min-height: 23px;
-            height: 23px;
-            padding: 0.15rem 0.4rem !important;
-            border-radius: 6px !important;
-            font-size: 0.62rem !important;
-            line-height: 1;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-height: 26px;
+            height: 26px;
+            padding: 0 0.42rem !important;
+            border-radius: 8px !important;
+            font-size: 0.65rem !important;
+            line-height: 1 !important;
+            box-sizing: border-box;
+          }
+          .notifications-status-toggle .filter-chip.active {
+            background: color-mix(in srgb, var(--primary-color) 15%, var(--bg-primary)) !important;
+            color: var(--primary-color) !important;
+            border-color: color-mix(in srgb, var(--primary-color) 22%, transparent) !important;
           }
           .notif-row,
           .notif-row.unread {
@@ -563,21 +612,40 @@ export function PortalNotifications() {
             opacity: 1;
           }
           .notification-filter-wrap {
-            flex: 1 1 auto;
-            flex-basis: auto;
-            width: auto;
+            display: flex;
+            align-items: center;
+            flex: 1 1 0;
+            width: 0;
             min-width: 0;
+            height: 30px;
+            padding: 0 3px 0 0;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-primary);
           }
           .notification-search-input {
+            flex: 1 1 0;
+            width: 0;
             min-width: 0;
-            height: 34px;
-            padding: 0.38rem 2.35rem 0.38rem 1.9rem;
+            height: 30px;
+            padding: 0.3rem 0.3rem 0.3rem 1.75rem;
             font-size: 0.75rem;
+            border: 0;
+            border-radius: 8px;
           }
           .notification-filter-toggle {
-            right: 0.2rem;
-            width: 1.8rem;
-            height: 1.8rem;
+            position: static !important;
+            flex: 0 0 26px;
+            width: 26px;
+            height: 26px;
+            margin: 0;
+            transform: none !important;
+            border-radius: 7px;
+          }
+          .notification-filter-toggle svg {
+            width: 12px;
+            height: 12px;
           }
           .notification-category-panel {
             gap: 0.4rem;
@@ -638,29 +706,31 @@ export function PortalNotifications() {
       </div>
 
       {/* Filters Toolbar */}
-      <div ref={categoryFilterRef} className="notifications-toolbar" style={{ display: 'flex', flexDirection: 'column', marginBottom: '2rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
-        <div className="notifications-toolbar-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+      <div ref={categoryFilterRef} className="notifications-toolbar" style={isCompactMobile ? { padding: 4, minHeight: 0, height: 'auto', boxSizing: 'border-box' } : undefined}>
+        <div className="notifications-toolbar-row" style={isCompactMobile ? { display: 'flex', alignItems: 'center', flexWrap: 'nowrap', gap: 6, minWidth: 0, height: 30 } : undefined}>
           
           {/* Status Toggles */}
-          <div className="notifications-status-toggle" style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-primary)', padding: '4px', borderRadius: '50px', border: '1px solid var(--border-color)' }}>
-            <button className={`filter-chip ${statusFilter === 'All' ? 'active' : ''}`} style={{ border: 'none' }} onClick={() => setStatusFilter('All')}>All</button>
-            <button className={`filter-chip ${statusFilter === 'Unread' ? 'active' : ''}`} style={{ border: 'none' }} onClick={() => setStatusFilter('Unread')}>Unread</button>
+          <div className="notifications-status-toggle" style={isCompactMobile ? { display: 'flex', alignItems: 'center', gap: 2, height: 30, padding: 2, borderRadius: 8, flex: '0 0 auto', boxSizing: 'border-box' } : undefined}>
+            <button className={`filter-chip ${statusFilter === 'All' ? 'active' : ''}`} style={isCompactMobile ? { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: 26, minHeight: 26, padding: '0 7px', borderRadius: 8, fontSize: '0.65rem', lineHeight: 1, background: statusFilter === 'All' ? 'color-mix(in srgb, var(--primary-color) 15%, var(--bg-primary))' : undefined, color: statusFilter === 'All' ? 'var(--primary-color)' : undefined } : undefined} onClick={() => setStatusFilter('All')}>All</button>
+            <button className={`filter-chip ${statusFilter === 'Unread' ? 'active' : ''}`} style={isCompactMobile ? { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: 26, minHeight: 26, padding: '0 7px', borderRadius: 8, fontSize: '0.65rem', lineHeight: 1, background: statusFilter === 'Unread' ? 'color-mix(in srgb, var(--primary-color) 15%, var(--bg-primary))' : undefined, color: statusFilter === 'Unread' ? 'var(--primary-color)' : undefined } : undefined} onClick={() => setStatusFilter('Unread')}>Unread</button>
           </div>
 
           {/* Search */}
-          <div className="notification-filter-wrap">
+          <div className="notification-filter-wrap" style={isCompactMobile ? { display: 'flex', alignItems: 'center', flex: '1 1 0', width: 0, minWidth: 0, height: 30, padding: '0 3px 0 0', overflow: 'hidden', borderRadius: 8, boxSizing: 'border-box' } : undefined}>
             <input 
               type="text" 
               placeholder="Search notifications..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="notification-search-input"
+              style={isCompactMobile ? { flex: '1 1 0', width: 0, minWidth: 0, height: 28, padding: '0.3rem 0.3rem 0.3rem 1.75rem', border: 0, borderRadius: 8 } : undefined}
             />
             <svg style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             <button
               type="button"
               onClick={() => setShowCategoryFilters(open => !open)}
               className={`notification-filter-toggle ${showCategoryFilters || categoryFilter !== 'All' ? 'active' : ''}`}
+              style={isCompactMobile ? { position: 'static', flex: '0 0 26px', width: 26, height: 26, margin: 0, transform: 'none', borderRadius: 7 } : undefined}
               aria-label={`${showCategoryFilters ? 'Hide' : 'Show'} notification category filters`}
               aria-expanded={showCategoryFilters}
               aria-controls="notification-category-filters"
