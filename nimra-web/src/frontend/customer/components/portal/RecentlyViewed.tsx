@@ -9,6 +9,7 @@ import { productId } from '../../utils/commerce';
 import { useAuth } from '../../contexts/AuthContext';
 import { readRecentlyViewed, RECENTLY_VIEWED_EVENT } from '../../utils/recentlyViewed';
 import { useCart } from '@/frontend/customer/hooks/useCart';
+import { resetMobileCarouselClock, subscribeToMobileCarouselClock } from '../../utils/mobileCarouselClock';
 
 const ProductDetailModal = dynamic(() => import('./ProductDetailModal'), { ssr: false });
 
@@ -24,8 +25,6 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
   const [desktopPage, setDesktopPage] = React.useState(0);
   const [isDesktopHovered, setIsDesktopHovered] = React.useState(false);
   const touchStartX = React.useRef<number | null>(null);
-  const autoplayTimerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
-  const resumeTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const desktopAutoplayRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
   const desktopResumeRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const { user, isLoading } = useAuth();
@@ -141,25 +140,12 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
   const hasViewedProducts = displayedProducts.length > 0;
   const hasMultipleMobilePages = mobilePageCount > 1;
 
-  const isMobileCarousel = React.useCallback(() => (
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
-  ), []);
-
-  const stopMobileAutoplay = React.useCallback(() => {
-    if (autoplayTimerRef.current) {
-      clearInterval(autoplayTimerRef.current);
-      autoplayTimerRef.current = null;
-    }
-  }, []);
-
-  const startMobileAutoplay = React.useCallback(() => {
-    stopMobileAutoplay();
-    if (!hasMultipleMobilePages || !isMobileCarousel()) return;
-
-    autoplayTimerRef.current = setInterval(() => {
+  React.useEffect(() => {
+    if (!hasMultipleMobilePages) return;
+    return subscribeToMobileCarouselClock(() => {
       setMobilePage((page) => (page + 1) % mobilePageCount);
-    }, 3000);
-  }, [hasMultipleMobilePages, isMobileCarousel, mobilePageCount, stopMobileAutoplay]);
+    });
+  }, [hasMultipleMobilePages, mobilePageCount]);
 
   const goToMobilePage = React.useCallback((page: number) => {
     if (mobilePageCount < 1) return;
@@ -167,60 +153,16 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
   }, [mobilePageCount]);
 
   const registerMobileCarouselInteraction = React.useCallback(() => {
-    stopMobileAutoplay();
-
-    if (resumeTimerRef.current) {
-      clearTimeout(resumeTimerRef.current);
-      resumeTimerRef.current = null;
-    }
-
-    if (!hasMultipleMobilePages || !isMobileCarousel()) return;
-
-    resumeTimerRef.current = setTimeout(() => {
-      resumeTimerRef.current = null;
-      startMobileAutoplay();
-    }, 3000);
-  }, [hasMultipleMobilePages, isMobileCarousel, startMobileAutoplay, stopMobileAutoplay]);
+    resetMobileCarouselClock();
+  }, []);
 
   const pauseMobileCarouselInteraction = React.useCallback(() => {
-    stopMobileAutoplay();
-    if (resumeTimerRef.current) {
-      clearTimeout(resumeTimerRef.current);
-      resumeTimerRef.current = null;
-    }
-  }, [stopMobileAutoplay]);
+    resetMobileCarouselClock();
+  }, []);
 
   const resumeMobileCarouselInteraction = React.useCallback(() => {
-    pauseMobileCarouselInteraction();
-    if (!hasMultipleMobilePages || !isMobileCarousel()) return;
-    resumeTimerRef.current = setTimeout(() => {
-      resumeTimerRef.current = null;
-      startMobileAutoplay();
-    }, 3000);
-  }, [hasMultipleMobilePages, isMobileCarousel, pauseMobileCarouselInteraction, startMobileAutoplay]);
-
-  React.useEffect(() => {
-    startMobileAutoplay();
-
-    const handleResize = () => {
-      if (resumeTimerRef.current) {
-        clearTimeout(resumeTimerRef.current);
-        resumeTimerRef.current = null;
-      }
-      startMobileAutoplay();
-    };
-
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      stopMobileAutoplay();
-      if (resumeTimerRef.current) {
-        clearTimeout(resumeTimerRef.current);
-        resumeTimerRef.current = null;
-      }
-    };
-  }, [startMobileAutoplay, stopMobileAutoplay]);
+    resetMobileCarouselClock();
+  }, []);
 
   const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
     pauseMobileCarouselInteraction();
@@ -365,22 +307,7 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
           onPointerCancel={resumeMobileCarouselInteraction}
           onFocusCapture={registerMobileCarouselInteraction}
         >
-          <div className={`recently-viewed-mobile-shell ${hasMultipleMobilePages ? 'has-nav' : 'single-page'}`}>
-            {hasMultipleMobilePages && (
-              <button
-                type="button"
-                className="recently-viewed-nav recently-viewed-nav-prev"
-                onClick={() => {
-                  registerMobileCarouselInteraction();
-                  goToMobilePage(mobilePage - 1);
-                }}
-                aria-label="Show previous recently viewed products"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M15 18l-6-6 6-6" />
-                </svg>
-              </button>
-            )}
+          <div className="recently-viewed-mobile-shell single-page">
             <div className="recently-viewed-mobile-viewport" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
               <div className="recently-viewed-mobile-track" style={{ transform: `translateX(-${mobilePage * 100}%)` }}>
                 {mobilePages.map((pageProducts, pageIndex) => (
@@ -390,24 +317,9 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
                 ))}
               </div>
             </div>
-            {hasMultipleMobilePages && (
-              <button
-                type="button"
-                className="recently-viewed-nav recently-viewed-nav-next"
-                onClick={() => {
-                  registerMobileCarouselInteraction();
-                  goToMobilePage(mobilePage + 1);
-                }}
-                aria-label="Show next recently viewed products"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M9 18l6-6-6-6" />
-                </svg>
-              </button>
-            )}
           </div>
           {hasMultipleMobilePages && (
-            <div 
+            <div
               aria-label={`Recently viewed page ${mobilePage + 1} of ${mobilePageCount}`}
               style={{
                 display: 'flex',

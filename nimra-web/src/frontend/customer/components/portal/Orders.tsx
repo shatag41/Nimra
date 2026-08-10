@@ -7,6 +7,8 @@ import { useNotification } from '@/frontend/customer/contexts/NotificationContex
 import { OrderRecord } from '@/types/cms';
 import { formatCurrency } from '../../utils/commerce';
 import { createReorderCheckoutDraft } from '../../utils/reorderDraft';
+import { resetMobileCarouselClock, subscribeToMobileCarouselClock } from '../../utils/mobileCarouselClock';
+import { MobileCarouselDots } from './MobileCarouselDots';
 
 interface OrdersProps {
   orders: OrderRecord[];
@@ -24,11 +26,53 @@ const formatDate = (value?: string) => {
 export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
   const router = useRouter();
   const { notify } = useNotification();
+  const [mobileOrderIndex, setMobileOrderIndex] = React.useState(0);
+  const mobileTouchStartX = React.useRef<number | null>(null);
   const displayedOrders = React.useMemo(() => {
     return orders
       .filter((o) => o.status?.toLowerCase() !== 'cancelled')
       .slice(0, 4);
   }, [orders]);
+
+  React.useEffect(() => {
+    setMobileOrderIndex((index) => Math.min(index, Math.max(displayedOrders.length - 1, 0)));
+  }, [displayedOrders.length]);
+
+  React.useEffect(() => {
+    if (displayedOrders.length <= 1) return;
+    return subscribeToMobileCarouselClock(() => {
+      setMobileOrderIndex((index) => (index + 1) % displayedOrders.length);
+    });
+  }, [displayedOrders.length]);
+
+  const showMobileOrder = React.useCallback((index: number) => {
+    if (displayedOrders.length < 1) return;
+    setMobileOrderIndex(((index % displayedOrders.length) + displayedOrders.length) % displayedOrders.length);
+    resetMobileCarouselClock();
+  }, [displayedOrders.length]);
+
+  const handleMobileOrderTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    resetMobileCarouselClock();
+    mobileTouchStartX.current = event.touches[0]?.clientX ?? null;
+  };
+
+  const handleMobileOrderTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (mobileTouchStartX.current === null) return;
+    const touchEndX = event.changedTouches[0]?.clientX;
+    const touchStartX = mobileTouchStartX.current;
+    mobileTouchStartX.current = null;
+    if (touchEndX === undefined) {
+      resetMobileCarouselClock();
+      return;
+    }
+
+    const deltaX = touchEndX - touchStartX;
+    if (Math.abs(deltaX) >= 42) {
+      showMobileOrder(mobileOrderIndex + (deltaX < 0 ? 1 : -1));
+    } else {
+      resetMobileCarouselClock();
+    }
+  };
 
   const handleReorder = (order: OrderRecord) => {
     try {
@@ -174,8 +218,19 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
 
           {/* Mobile cards — hidden by default, shown at ≤639px via CSS */}
           <div className="orders-mobile-cards">
-            {displayedOrders.map((order) => (
-              <div key={`mob-${order.orderId}`} className="order-mobile-card">
+            <div
+              className={`orders-mobile-track ${displayedOrders.length === 1 ? 'single-order' : ''}`}
+              style={{ transform: `translateX(-${mobileOrderIndex * 100}%)` }}
+              onTouchStart={handleMobileOrderTouchStart}
+              onTouchEnd={handleMobileOrderTouchEnd}
+              onTouchCancel={() => {
+                mobileTouchStartX.current = null;
+                resetMobileCarouselClock();
+              }}
+            >
+            {displayedOrders.map((order, index) => (
+              <div key={`mob-${order.orderId}`} className={`order-mobile-slide ${index === mobileOrderIndex ? 'active' : ''}`}>
+              <div className="order-mobile-card">
                 {/* Top row: order ID + copy btn | status badge */}
                 <div className="order-card-top-row">
                   <div className="order-card-id-block">
@@ -240,7 +295,15 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
                   </button>
                 </div>
               </div>
+              </div>
             ))}
+            </div>
+            <MobileCarouselDots
+              count={displayedOrders.length}
+              activeIndex={mobileOrderIndex}
+              label={`Order ${mobileOrderIndex + 1} of ${displayedOrders.length}`}
+              onSelect={showMobileOrder}
+            />
           </div>
         </div>
       ) : (
@@ -710,10 +773,47 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
           .orders-table {
             display: none;
           }
+          .table-wrap {
+            max-height: none;
+            overflow: hidden;
+          }
           .orders-mobile-cards {
             display: flex;
-            gap: 0.75rem;
-            padding: 0.1rem;
+            overflow: hidden;
+            gap: 0;
+            padding: 0.1rem 0.1rem 0.65rem;
+            box-sizing: border-box;
+            touch-action: pan-y;
+          }
+          .orders-mobile-track {
+            display: flex;
+            width: 100%;
+            align-items: stretch;
+            will-change: transform;
+            transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+          }
+          .orders-mobile-track.single-order { transition: none; }
+          .order-mobile-slide {
+            min-width: 100%;
+            width: 100%;
+            padding: 0.05rem;
+            box-sizing: border-box;
+            opacity: 0.72;
+            transform: scale(0.985);
+            transition: opacity 260ms ease, transform 340ms cubic-bezier(0.22, 1, 0.36, 1);
+          }
+          .order-mobile-slide.active {
+            opacity: 1;
+            transform: scale(1);
+          }
+          .orders-mobile-track.single-order .order-mobile-slide {
+            opacity: 1;
+            transform: none;
+            transition: none;
+          }
+          .order-mobile-slide .order-mobile-card {
+            height: 100%;
+            box-sizing: border-box;
           }
           .order-mobile-card {
             padding: 0.78rem;
