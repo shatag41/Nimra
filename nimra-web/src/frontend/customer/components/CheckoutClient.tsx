@@ -816,7 +816,7 @@ const styles = `
       cursor: pointer;
     }
     .co-confirm-modal .modal-actions { grid-template-columns: 1fr; }
-    .co-confirm-modal .modal-actions > .btn-secondary { display: none; }
-    .co-confirm-modal .modal-actions > .btn-primary { width: 100%; }
+    .co-confirm-modal .modal-actions .btn-secondary { display: none !important; }
+    .co-confirm-modal .modal-actions .btn-primary { width: 100% !important; }
   }
 `;
