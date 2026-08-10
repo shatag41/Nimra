@@ -994,6 +994,28 @@ const portalStyles = `
     -webkit-line-clamp: 2;
     overflow: hidden;
   }
+  @media (min-width: 701px) {
+    .side-stack .next-card { order: 1; }
+    .side-stack .desktop-profile-card { order: 2; }
+    .side-stack .portal-quick-controls-card { order: 3; }
+
+    .side-stack .portal-quick-controls-card {
+      gap: 0.65rem;
+      padding: 0.8rem;
+    }
+    .side-stack .quick-controls-head { gap: 0.08rem; }
+    .side-stack .quick-controls-eyebrow { padding: 0.1rem 0.5rem; font-size: 0.58rem; }
+    .side-stack .quick-controls-head h2 { margin: 0.12rem 0 0; font-size: 1rem; }
+    .side-stack .quick-controls-sub { font-size: 0.7rem; line-height: 1.3; }
+    .side-stack .quick-controls-list { gap: 0.4rem; }
+    .side-stack .quick-control-row { padding: 0.5rem 0.6rem; border-radius: 9px; }
+    .side-stack .quick-control-left { gap: 0.55rem; }
+    .side-stack .quick-control-icon-box { width: 29px; height: 29px; font-size: 1rem; border-radius: 7px; }
+    .side-stack .quick-control-text { gap: 0.05rem; }
+    .side-stack .quick-control-text h3 { font-size: 0.78rem; }
+    .side-stack .quick-control-text p { font-size: 0.66rem; line-height: 1.25; }
+    .side-stack .quick-control-arrow svg { width: 14px; height: 14px; }
+  }
   .completion { display: inline-flex; align-items: center; justify-content: center; padding: 0.2rem 0.7rem; border-radius: 999px; background: rgba(0,150,58,0.1); color: var(--primary-color); font-weight: 800; font-size: 0.9rem; border: 1px solid rgba(0,150,58,0.2); }
 
   .progress-track { width: 100%; height: 6px; overflow: hidden; border-radius: 999px; background: var(--bg-tertiary); margin-bottom: 1rem; }
