@@ -12,10 +12,14 @@ const TrashIcon = () => (
 );
 
 export function CartItemsList() {
-  const { items, updateQuantity, removeItem } = useCart();
+  const { items, updateQuantity, removeItem, clearCart } = useCart();
 
   const confirmRemove = (productId: string, name: string) => {
     if (window.confirm(`Remove ${name} from your cart?`)) removeItem(productId);
+  };
+
+  const clearWithConfirmation = () => {
+    if (window.confirm('Remove every item from your cart?')) clearCart();
   };
 
   return (
@@ -23,9 +27,13 @@ export function CartItemsList() {
       <div className="cart-list-heading">
         <div>
           <span className="cart-kicker">Selected products</span>
-          <h2 className="mobile-section-title">Your items</h2>
+          <h2 className="mobile-section-title">Your items<span className="cart-title-count-mobile"> ({items.length})</span></h2>
         </div>
         <span className="cart-item-count">{items.length} {items.length === 1 ? 'product' : 'products'}</span>
+        <button type="button" className="clear-cart-mobile" onClick={clearWithConfirmation}>
+          <TrashIcon />
+          <span>Clear Cart</span>
+        </button>
       </div>
 
       <div className="cart-items-scroll">

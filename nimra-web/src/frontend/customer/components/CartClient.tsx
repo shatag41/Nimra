@@ -166,6 +166,8 @@ const styles = `
   .continue-shopping svg,.clear-cart svg { width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round; }
   .continue-shopping:hover { transform:translateY(-2px); border-color:rgba(37,99,235,.55); box-shadow:0 10px 24px rgba(37,99,235,.12); }
   .clear-cart { border:0;background:transparent;color:#ef4444;padding-inline:.4rem; } .clear-cart:hover { text-decoration:underline;text-underline-offset:4px;transform:translateY(-1px); }
+  .clear-cart-mobile { display:none; }
+  .cart-title-count-mobile { display:none; }
   .cart-layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(300px,360px); gap:clamp(1rem,2.2vw,1.65rem); align-items:start; }
   .cart-list { grid-column:1;grid-row:1;display:flex; flex-direction:column; gap:.65rem; min-width:0; }
   .cart-items-scroll { display:contents; }
@@ -264,17 +266,7 @@ const styles = `
       overflow:visible!important;
     }
     .cart-page.cart-page .cart-actions-top {
-      display:flex!important;
-      width:100%!important;
-      margin:.45rem 0 .4rem!important;
-      padding:0!important;
-      align-items:center!important;
-      justify-content:flex-end!important;
-    }
-    .cart-page.cart-page .cart-actions-top .clear-cart {
-      width:auto!important;
-      margin:0 0 0 auto!important;
-      justify-content:flex-end!important;
+      display:none!important;
     }
     .cart-page .cart-list {
       display:flex!important;
@@ -309,7 +301,11 @@ const styles = `
       -webkit-overflow-scrolling:touch;
     }
     .cart-page .cart-list-heading h2 { margin:.02rem 0 0!important; }
-    .cart-page .cart-item-count { font-size:.65rem!important;white-space:nowrap; }
+    .cart-page .cart-title-count-mobile { display:inline!important; color:var(--text-muted)!important; font-weight:500!important; margin-left:0.25rem; }
+    .cart-page .cart-item-count { display:none!important; }
+    .cart-page .clear-cart-mobile { display:inline-flex!important; align-items:center; gap:0.35rem; padding:0; border:0; background:transparent; color:#ef4444; font-size:0.72rem; font-weight:750; cursor:pointer; }
+    .cart-page .clear-cart-mobile svg { width:14px; height:14px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+    .cart-page .clear-cart-mobile:hover { text-decoration:underline; text-underline-offset:3px; }
     .cart-page .cart-items-scroll>.cart-row {
       margin:0!important;
       border:0!important;
