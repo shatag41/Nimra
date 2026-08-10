@@ -1019,6 +1019,7 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
         }}
         isProcessing={isLoggingOut}
         processingText="Logging out..."
+        hideCancelOnMobile
       />
     </>
   );

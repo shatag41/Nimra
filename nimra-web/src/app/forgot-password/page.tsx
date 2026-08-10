@@ -1,223 +1,35 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { sendRequest } from '@/utils/api';
 import { useRouter } from 'next/navigation';
-import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
-import LoadingButton from '@/frontend/shared/LoadingButton';
 import AuthPageWrapper from '@/frontend/customer/components/AuthPageWrapper';
+import ForgotPasswordFlow from '@/frontend/customer/components/ForgotPasswordFlow';
 
 export default function ForgotPasswordPage() {
-  const { notify } = useNotification();
-  const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [step, setStep] = useState(1); // 1: Request OTP, 2: Reset Password
-  const [isLoading, setIsLoading] = useState(false);
-  const [resendSeconds, setResendSeconds] = useState(0);
   const router = useRouter();
-
-  useEffect(() => {
-    if (step !== 2 || resendSeconds <= 0) return;
-    const timer = window.setInterval(() => setResendSeconds((seconds) => Math.max(0, seconds - 1)), 1000);
-    return () => window.clearInterval(timer);
-  }, [resendSeconds, step]);
-
-  const requestOTP = async () => {
-    if (isLoading) return;
-    setIsLoading(true);
-
-    try {
-      const res = await sendRequest({ type: 'requestOTP', email });
-      if (res.success) {
-        notify.success('OTP Sent', res.message ?? 'OTP sent successfully.');
-        setStep(2);
-        setResendSeconds(30);
-      } else {
-        notify.error('OTP Failed', res.message ?? 'Failed to request OTP.');
-      }
-    } catch {
-      notify.error('OTP Error', 'Failed to request OTP.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleRequestOTP = (e: React.FormEvent) => {
-    e.preventDefault();
-    void requestOTP();
-  };
-
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isLoading) return;
-    setIsLoading(true);
-
-    try {
-      const res = await sendRequest({ type: 'resetPassword', email, otp, newPassword });
-      if (res.success) {
-        notify.success('Password Reset', 'Password reset successful! Redirecting to login...');
-        setTimeout(() => router.push('/login'), 2000);
-      } else {
-        notify.error('Reset Failed', res.message ?? 'Failed to reset password.');
-      }
-    } catch {
-      notify.error('Reset Error', 'Failed to reset password.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <AuthPageWrapper className="forgot-password-page">
-      <style dangerouslySetInnerHTML={{__html: `
-        .auth-shell.glass {
-          width: min(100%, 880px) !important;
-          grid-template-columns: 42% 58% !important;
-        }
-        .forgot-password-page .auth-logo span { font-size: clamp(.88rem, 1.6vw, 1.05rem) !important; }
-        .forgot-password-page .auth-brand-panel h1 { font-size: clamp(1.28rem, 2.25vw, 1.65rem) !important; }
-        .forgot-password-page .auth-brand-panel p { font-size: clamp(.7rem, 1.25vw, .8rem) !important; }
-        .forgot-password-page .auth-highlight strong { font-size: clamp(.72rem, 1.25vw, .82rem) !important; }
-        .forgot-password-page .auth-highlight span { font-size: clamp(.58rem, 1vw, .67rem) !important; }
-        .forgot-password-page .auth-brand-footer { font-size: clamp(.58rem, 1vw, .68rem) !important; }
-        .forgot-password-page .auth-kicker { font-size: clamp(.58rem, 1vw, .66rem) !important; }
-        .forgot-password-page .auth-card-header h2 { font-size: clamp(1.08rem, 2vw, 1.3rem) !important; }
-        .forgot-password-page .auth-card-header p { font-size: clamp(.68rem, 1.2vw, .78rem) !important; }
-        .forgot-password-page .auth-field label { font-size: clamp(.65rem, 1.1vw, .74rem) !important; }
-        .forgot-password-page .auth-input { font-size: clamp(.72rem, 1.2vw, .82rem) !important; }
-        .forgot-password-page .auth-submit { font-size: clamp(.7rem, 1.2vw, .8rem) !important; }
-        .forgot-password-page .auth-footer-link,
-        .forgot-password-page .auth-footer-link a { font-size: clamp(.66rem, 1.15vw, .76rem) !important; }
-        .forgot-password-page .otp-resend-prompt { display:flex; align-items:center; justify-content:center; gap:.3rem; margin:.15rem 0 0; color:var(--text-secondary); font-size:clamp(.68rem,1.2vw,.78rem); }
-        .forgot-password-page .otp-resend-button { padding:0; border:0; background:transparent; color:var(--primary-color); font:inherit; font-weight:700; cursor:pointer; }
-        .forgot-password-page .otp-resend-button:disabled { color:var(--text-muted); cursor:not-allowed; }
-      `}} />
-      <div className="auth-shell glass">
-        <aside className="auth-brand-panel">
-          <div className="auth-brand-content">
-            <div className="auth-logo">
-              <svg width="36" height="36" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M50 5C50 5 15 45 15 65C15 84.33 30.67 100 50 100C69.33 100 85 84.33 85 65C85 45 50 5 50 5Z" fill="url(#forgotWaterGrad)"/>
-                <path d="M43 75C37 75 32 70 32 64C32 63.45 32.45 63 33 63C33.55 63 34 63.45 34 64C34 68.97 38.03 73 43 73C43.55 73 44 73.45 44 74C44 74.55 43.55 75 43 75Z" fill="white" fillOpacity="0.6"/>
-                <defs>
-                  <linearGradient id="forgotWaterGrad" x1="50" y1="5" x2="50" y2="100" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#00E5FF"/>
-                    <stop offset="1" stopColor="#00a299"/>
-                  </linearGradient>
-                </defs>
-              </svg>
-              <span>NIMRA</span>
-            </div>
-            <h1>Reset access securely.</h1>
-            <p>Verify your registered email and create a new password for your NIMRA account.</p>
-            <div className="auth-highlights">
-              <div className="auth-highlight"><strong>OTP</strong><span>email verification</span></div>
-              <div className="auth-highlight"><strong>Quick</strong><span>password recovery</span></div>
-              <div className="auth-highlight"><strong>Safe</strong><span>account access</span></div>
-            </div>
-          </div>
-          <div className="auth-brand-footer">Secure recovery for NIMRA portal accounts</div>
-        </aside>
-
-        <div className="auth-card">
-          <div style={{ maxWidth: '300px', margin: '0 auto', width: '100%' }}>
-          <div className="auth-card-header" style={{ marginBottom: '0.8vh', textAlign: 'center' }}>
-            <span className="auth-kicker">Account Recovery</span>
-            <h2>Forgot Password</h2>
-            <p>{step === 1 ? 'Enter your registered email to receive an OTP.' : 'Enter the OTP and set your new password.'}</p>
-          </div>
-
-          {step === 1 ? (
-            <form className="auth-form" onSubmit={handleRequestOTP}>
-              <div className="auth-field">
-                <label htmlFor="email">Registered Email</label>
-                <input 
-                  id="email"
-                  type="email" 
-                  placeholder="john@example.com" 
-                  className="auth-input" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required 
-                />
-              </div>
-              <div>
-                <LoadingButton className="btn btn-primary auth-submit" type="submit" isLoading={isLoading} loadingText="Sending OTP...">Send OTP</LoadingButton>
-              </div>
-            </form>
-          ) : (
-            <form className="auth-form" onSubmit={handleResetPassword}>
-              <div className="auth-field">
-                <label htmlFor="reset-email">Email</label>
-                <input 
-                  id="reset-email"
-                  type="email" 
-                  className="auth-input" 
-                  value={email}
-                  disabled 
-                />
-              </div>
-              <div className="auth-field">
-                <label htmlFor="otp">Enter OTP</label>
-                <input 
-                  id="otp"
-                  type="text" 
-                  placeholder="6-digit OTP" 
-                  className="auth-input" 
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  required 
-                />
-              </div>
-              <p className="otp-resend-prompt">
-                <span>Didn&apos;t receive the code?</span>
-                <button type="button" className="otp-resend-button" onClick={() => void requestOTP()} disabled={resendSeconds > 0 || isLoading}>
-                  {isLoading ? 'Sending...' : resendSeconds > 0 ? `Resend OTP in ${resendSeconds}s` : 'Resend OTP'}
-                </button>
-              </p>
-              <div className="auth-field">
-                <label htmlFor="new-password">New Password</label>
-                <div className="auth-input-wrapper" style={{ position: 'relative' }}>
-                  <input 
-                    id="new-password"
-                    type={showPassword ? "text" : "password"} 
-                    placeholder="New password" 
-                    className="auth-input" 
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    required 
-                    style={{ paddingRight: '2.5rem' }}
-                  />
-                  <button 
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="password-toggle-btn"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                    style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}
-                  >
-                    {showPassword ? (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22"/></svg>
-                    ) : (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                    )}
-                  </button>
-                </div>
-              </div>
-              <div>
-                <LoadingButton className="btn btn-primary auth-submit" type="submit" isLoading={isLoading} loadingText="Saving...">Reset Password</LoadingButton>
-              </div>
-            </form>
-          )}
-
-          <div className="auth-footer-link" style={{ textAlign: 'center', marginTop: '0.8vh', color: 'var(--text-secondary)' }}>
-            Remember your password? <Link href="/login" style={{ color: 'var(--primary-color)', fontWeight: 'bold', textDecoration: 'none' }}>Login</Link>
-          </div>
-          </div>
-        </div>
-      </div>
-    </AuthPageWrapper>
-  );
+  return <AuthPageWrapper className="forgot-password-page">
+    <style dangerouslySetInnerHTML={{ __html: `
+      .auth-shell.glass { width:min(100%,880px)!important; grid-template-columns:42% 58%!important; }
+      .forgot-password-page .auth-logo span { font-size:clamp(.88rem,1.6vw,1.05rem)!important; }
+      .forgot-password-page .auth-brand-panel h1 { font-size:clamp(1.28rem,2.25vw,1.65rem)!important; }
+      .forgot-password-page .auth-brand-panel p { font-size:clamp(.7rem,1.25vw,.8rem)!important; }
+      .forgot-password-page .auth-highlight strong { font-size:clamp(.72rem,1.25vw,.82rem)!important; }
+      .forgot-password-page .auth-highlight span { font-size:clamp(.58rem,1vw,.67rem)!important; }
+      .forgot-password-page .auth-brand-footer { font-size:clamp(.58rem,1vw,.68rem)!important; }
+      .forgot-password-page .auth-kicker { font-size:clamp(.58rem,1vw,.66rem)!important; }
+      .forgot-password-page .auth-card-header h2 { font-size:clamp(1.08rem,2vw,1.3rem)!important; }
+      .forgot-password-page .auth-card-header p { font-size:clamp(.68rem,1.2vw,.78rem)!important; }
+      .forgot-password-page .auth-field label { font-size:clamp(.65rem,1.1vw,.74rem)!important; }
+      .forgot-password-page .auth-input { font-size:clamp(.72rem,1.2vw,.82rem)!important; }
+      .forgot-password-page .auth-submit { font-size:clamp(.7rem,1.2vw,.8rem)!important; }
+      .forgot-password-page .otp-resend-prompt { display:flex; align-items:center; justify-content:center; gap:.3rem; margin:.15rem 0 0; color:var(--text-secondary); font-size:clamp(.68rem,1.2vw,.78rem); }
+      .forgot-password-page .otp-resend-button { padding:0; border:0; background:transparent; color:var(--primary-color); font:inherit; font-weight:700; cursor:pointer; }
+      .forgot-password-page .otp-resend-button:disabled { color:var(--text-muted); cursor:not-allowed; }
+    ` }} />
+    <div className="auth-shell glass">
+      <aside className="auth-brand-panel"><div className="auth-brand-content"><div className="auth-logo"><svg width="36" height="36" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M50 5C50 5 15 45 15 65C15 84.33 30.67 100 50 100C69.33 100 85 84.33 85 65C85 45 50 5 50 5Z" fill="url(#forgotWaterGrad)"/><path d="M43 75C37 75 32 70 32 64C32 63.45 32.45 63 33 63C33.55 63 34 63.45 34 64C34 68.97 38.03 73 43 73C43.55 73 44 73.45 44 74C44 74.55 43.55 75 43 75Z" fill="white" fillOpacity="0.6"/><defs><linearGradient id="forgotWaterGrad" x1="50" y1="5" x2="50" y2="100" gradientUnits="userSpaceOnUse"><stop stopColor="#00E5FF"/><stop offset="1" stopColor="#00a299"/></linearGradient></defs></svg><span>NIMRA</span></div><h1>Reset access securely.</h1><p>Verify your registered email and create a new password for your NIMRA account.</p><div className="auth-highlights"><div className="auth-highlight"><strong>OTP</strong><span>email verification</span></div><div className="auth-highlight"><strong>Quick</strong><span>password recovery</span></div><div className="auth-highlight"><strong>Safe</strong><span>account access</span></div></div></div><div className="auth-brand-footer">Secure recovery for NIMRA portal accounts</div></aside>
+      <div className="auth-card"><div style={{ maxWidth: '300px', margin: '0 auto', width: '100%' }}><div className="auth-card-header" style={{ marginBottom: '0.8vh', textAlign: 'center' }}><span className="auth-kicker">Account Recovery</span><h2>Forgot Password</h2><p>Enter your registered email to receive an OTP, then set a new password.</p></div><ForgotPasswordFlow onSuccess={() => setTimeout(() => router.push('/login'), 2000)} /><div className="auth-footer-link" style={{ textAlign: 'center', marginTop: '0.8vh', color: 'var(--text-secondary)' }}>Remember your password? <Link href="/login" style={{ color: 'var(--primary-color)', fontWeight: 'bold', textDecoration: 'none' }}>Login</Link></div></div></div>
+    </div>
+  </AuthPageWrapper>;
 }

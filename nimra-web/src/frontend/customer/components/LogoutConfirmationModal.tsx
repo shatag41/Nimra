@@ -21,6 +21,7 @@ interface LogoutConfirmationModalProps {
   contentKey?: React.Key;
   stableFlowLayout?: boolean;
   centerContent?: boolean;
+  hideCancelOnMobile?: boolean;
 }
 
 const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
@@ -40,6 +41,7 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
   contentKey,
   stableFlowLayout = false,
   centerContent = false,
+  hideCancelOnMobile = false,
 }: LogoutConfirmationModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -115,18 +117,18 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
     return createPortal(
       <>
         <div ref={overlayRef} className="legacy-modal-overlay" onClick={() => !isProcessing && onClose()} role="presentation" aria-hidden="true" />
-        <div ref={contentRef} role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-description" className="legacy-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div ref={contentRef} role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-description" className={`legacy-modal-content ${hideCancelOnMobile ? 'hide-cancel-on-mobile' : ''}`} onClick={(e) => e.stopPropagation()}>
           <h2 id="modal-title" className="legacy-modal-title">{title}</h2>
           <p id="modal-description" className="legacy-modal-description">{description}</p>
           <div className="legacy-modal-actions">
-            {showCancelButton && <button ref={cancelButtonRef} className="btn btn-secondary" onClick={onClose} aria-label={cancelText} disabled={isProcessing}>{cancelText}</button>}
+            {showCancelButton && <button ref={cancelButtonRef} className="btn btn-secondary modal-cancel-button" onClick={onClose} aria-label={cancelText} disabled={isProcessing}>{cancelText}</button>}
             <LoadingButton ref={confirmButtonRef} className={confirmButtonClass} onClick={onConfirm} aria-label={confirmText} disabled={confirmDisabled} isLoading={isProcessing} loadingText={processingText}>{confirmText}</LoadingButton>
           </div>
         </div>
         <style jsx>{`
           .legacy-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.6); z-index: 10000; animation: legacyFadeIn .2s ease-out; }
           .legacy-modal-content { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--bg-primary); padding: 2rem; border-radius: var(--radius-xl); box-shadow: var(--shadow-xl); border: 1px solid var(--border-color); z-index: 10001; width: 90%; max-width: 400px; animation: legacyScaleIn .3s ease-out; }
-          .legacy-modal-title { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin: 0 0 .75rem; }
+          .legacy-modal-title { font-family: var(--font-heading); font-size: 16px !important; line-height: 1.2; font-weight: 700; color: var(--text-primary); margin: 0 0 .5rem; }
           .legacy-modal-description { color: var(--text-secondary); font-size: .95rem; margin: 0 0 1.5rem; }
           .legacy-modal-actions { display: flex; gap: 1rem; justify-content: flex-end; }
           @keyframes legacyFadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -135,6 +137,7 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
             .legacy-modal-content { width:95%; padding:1.5rem; }
             .legacy-modal-actions { display:flex; flex-direction:column; gap:0.75rem; }
             .legacy-modal-actions :global(button) { width:100%; min-height:44px; padding:0.75rem; border-radius:8px; justify-content:center; }
+            .hide-cancel-on-mobile .modal-cancel-button { display:none !important; }
           }
         `}</style>
       </>,
@@ -155,7 +158,7 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
           aria-modal="true"
           aria-labelledby="modal-title"
           aria-describedby="modal-description"
-          className={`modal-content ${centerContent ? 'centered-copy' : ''} ${contentKey === 'otp' || contentKey === 'google-auth' ? 'auth-verification-modal' : ''}`}
+          className={`modal-content ${centerContent ? 'centered-copy' : ''} ${contentKey === 'otp' || contentKey === 'google-auth' ? 'auth-verification-modal' : ''} ${hideCancelOnMobile ? 'hide-cancel-on-mobile' : ''}`}
           onClick={(e) => e.stopPropagation()}
         >
           <div key={contentKey} className="modal-step">
@@ -166,7 +169,7 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
           <div className="modal-actions">
             {showCancelButton && <button
               ref={cancelButtonRef}
-              className="btn btn-secondary"
+              className="btn btn-secondary modal-cancel-button"
               onClick={onClose}
               aria-label={cancelText}
               disabled={isProcessing}
@@ -254,7 +257,7 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
           .modal-title {
             flex: 0 0 auto;
             font-family: var(--font-heading);
-            font-size: 1.15rem;
+            font-size: 16px !important;
             font-weight: 700;
             color: var(--text-primary);
             margin: 0 0 0.35rem;
@@ -326,8 +329,9 @@ const LogoutConfirmationModal = React.memo(function LogoutConfirmationModal({
             .modal-content { width: 520px; max-width: 92vw; min-height: 200px; height: auto; padding: 1rem; }
             .modal-actions { display: flex; flex-direction: column; gap: 0.75rem; }
             .modal-actions :global(button) { width: 100%; min-height: 44px; padding: 0.75rem; border-radius: 8px; justify-content: center; }
+            .hide-cancel-on-mobile .modal-cancel-button { display: none !important; }
             .auth-verification-modal .modal-title {
-              font-size: clamp(1.05rem, 5vw, 1.25rem) !important;
+              font-size: 16px !important;
               line-height: 1.2 !important;
             }
           }

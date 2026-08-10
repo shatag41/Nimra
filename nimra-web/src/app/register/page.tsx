@@ -9,6 +9,7 @@ import { useNotification } from '@/frontend/customer/contexts/NotificationContex
 import { recentlyViewedKey } from '@/frontend/customer/utils/recentlyViewed';
 import LogoutConfirmationModal from '@/frontend/customer/components/LogoutConfirmationModal';
 import LoadingButton from '@/frontend/shared/LoadingButton';
+import OtpResendPrompt from '@/frontend/customer/components/OtpResendPrompt';
 import AuthPageWrapper from '@/frontend/customer/components/AuthPageWrapper';
 import type { User } from '@/frontend/customer/contexts/AuthContext';
 import { AUTH_ERROR_MESSAGES, isValidEmailAddress, isValidMobileNumber, normalizeAuthErrorMessage } from '@/utils/authMessages';
@@ -748,12 +749,7 @@ export default function RegisterPage() {
             />)}
           </div>
           {otpError && <p className="registration-otp-error">{otpError}</p>}
-          <p className="registration-resend-prompt">
-            <span>Didn&apos;t receive the code?</span>
-            <button type="button" className="registration-resend" onClick={handleResend} disabled={resendSeconds > 0 || isLoading || registrationComplete}>
-              {isLoading ? 'Sending...' : resendSeconds > 0 ? `Resend OTP in ${resendSeconds}s` : 'Resend OTP'}
-            </button>
-          </p>
+          <OtpResendPrompt seconds={resendSeconds} isLoading={isLoading} disabled={registrationComplete} onResend={handleResend} />
         </div>
       </LogoutConfirmationModal>
       <style jsx>{`

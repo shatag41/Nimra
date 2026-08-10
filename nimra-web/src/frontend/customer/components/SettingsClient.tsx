@@ -19,6 +19,7 @@ import { clearCustomerOrdersCache } from '@/frontend/customer/hooks/useCustomerO
 import CustomerPageHeader from './CustomerPageHeader';
 import LogoutConfirmationModal from './LogoutConfirmationModal';
 import LoadingButton from '@/frontend/shared/LoadingButton';
+import ForgotPasswordFlow from './ForgotPasswordFlow';
 
 type DeleteStep = 'closed' | 'confirm' | 'active' | 'verify';
 
@@ -53,6 +54,7 @@ export default function SettingsClient() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [deleteStep, setDeleteStep] = useState<DeleteStep>('closed');
   const [deletionEmail, setDeletionEmail] = useState('');
   const [deletionOtp, setDeletionOtp] = useState('');
@@ -257,6 +259,7 @@ export default function SettingsClient() {
             </div>
             <form onSubmit={handlePasswordChange} className="settings-form">
               <label>Current Password<input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} autoComplete="current-password" required /></label>
+              <button type="button" className="forgot-password-link" onClick={() => setShowForgotPassword(true)}>Forgot Password?</button>
               <label>New Password<input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} autoComplete="new-password" minLength={6} required /></label>
               <label>Confirm New Password<input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" minLength={6} required /></label>
               <button className="settings-btn primary" disabled={changingPassword}>{changingPassword ? 'Updating…' : 'Update Password'}</button>
@@ -317,6 +320,7 @@ export default function SettingsClient() {
         isProcessing={checkingDeletion || sendingOtp || deletingAccount}
         confirmDisabled={deleteStep === 'verify' && otpSent && !otpVerified}
         showCancelButton
+        hideCancelOnMobile
         contentKey={`${deleteStep}-${otpSent ? 'otp' : 'email'}`}
         stableFlowLayout
       >
@@ -327,6 +331,20 @@ export default function SettingsClient() {
           {otpSent && <button type="button" className="resend-otp" onClick={sendDeletionOtp} disabled={resendSeconds > 0 || sendingOtp}>{resendSeconds > 0 ? `Resend OTP in ${resendSeconds}s` : 'Resend OTP'}</button>}
         </div>}
       </LogoutConfirmationModal>
+      {showForgotPassword && <div className="password-recovery-overlay" role="dialog" aria-modal="true" aria-labelledby="password-recovery-title">
+        <div className="password-recovery-dialog">
+          <button type="button" className="password-recovery-close" aria-label="Close password recovery" onClick={() => setShowForgotPassword(false)}>×</button>
+          <h2 id="password-recovery-title">Forgot Password</h2>
+          <p>We&apos;ll send an OTP to your registered email.</p>
+          <ForgotPasswordFlow
+            initialEmail={String(user?.Username || '')}
+            fixedEmail
+            className="settings-forgot-flow"
+            submitClassName="settings-btn primary"
+            onSuccess={() => { setShowForgotPassword(false); setCurrentPassword(''); setNewPassword(''); setConfirmPassword(''); }}
+          />
+        </div>
+      </div>}
       <style jsx>{`
         .settings-page { min-height: 100vh; padding: 0.5rem 1rem 2rem; background: var(--bg-primary); color: var(--text-primary); }
         .settings-shell { display: grid; gap: clamp(1rem, 2vw, 1.25rem); width: min(1100px, 100%); margin: 0 auto; }
@@ -357,6 +375,12 @@ export default function SettingsClient() {
         .settings-btn:disabled { opacity: .55; cursor: not-allowed; }
         .settings-btn.primary { color: white; background: var(--primary-color); }
         .settings-form .settings-btn { justify-self: start; margin-top: .1rem; }
+        .forgot-password-link { justify-self: start; margin: -.1rem 0 .05rem; padding: 0; color: var(--primary-color); background: transparent; border: 0; font: inherit; font-size: .7rem; font-weight: 700; cursor: pointer; }
+        .password-recovery-overlay { position: fixed; inset: 0; z-index: 1100; display: grid; place-items: center; padding: 1rem; background: rgba(15, 23, 42, .55); }
+        .password-recovery-dialog { position: relative; width: min(100%, 380px); padding: 1.25rem; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); }
+        .password-recovery-dialog h2 { margin: 0 0 .15rem; font-size: 16px !important; line-height: 1.2 !important; font-weight: 700 !important; }.password-recovery-dialog > p { margin: 0 0 .65rem; color: var(--text-secondary); font-size: .72rem; line-height: 1.35; }
+        .password-recovery-close { position: absolute; top: .4rem; right: .55rem; padding: 0; color: var(--text-secondary); background: transparent; border: 0; font-size: 1.45rem; line-height: 1; cursor: pointer; }
+        .settings-forgot-flow :global(.auth-form) { display: grid; gap: .5rem; }.settings-forgot-flow :global(.auth-field) { display: grid; gap: .1rem; }.settings-forgot-flow :global(.registration-resend-prompt) { margin: -.05rem 0 .05rem; }.settings-forgot-flow :global(.settings-btn) { min-height: 24px; padding: .2rem .55rem; font-size: 12px !important; line-height: 1.2; }
         .preference-list { border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden; }
         .preference-row { position: relative; grid-template-columns: 1fr auto; align-items: center; gap: 0.75rem; padding: .65rem .75rem; border-bottom: 1px solid var(--border-color); cursor: pointer; }
         .preference-row:last-child { border-bottom: 0; }
