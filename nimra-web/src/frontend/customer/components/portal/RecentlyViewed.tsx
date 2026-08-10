@@ -10,6 +10,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { readRecentlyViewed, RECENTLY_VIEWED_EVENT } from '../../utils/recentlyViewed';
 import { useCart } from '@/frontend/customer/hooks/useCart';
 import { resetMobileCarouselClock, subscribeToMobileCarouselClock } from '../../utils/mobileCarouselClock';
+import sectionTitleStyles from './PortalSectionTitle.module.css';
 
 const ProductDetailModal = dynamic(() => import('./ProductDetailModal'), { ssr: false });
 
@@ -215,7 +216,7 @@ export function RecentlyViewedProducts({ products }: RecentlyViewedProductsProps
             </svg>
             History
           </span>
-          <h2>Recently Viewed Products</h2>
+          <h2 className={sectionTitleStyles.mobileTitle}>Recently Viewed Products</h2>
           {hasViewedProducts && <p className="subtitle-text">Continue where you left off</p>}
         </div>
       </div>

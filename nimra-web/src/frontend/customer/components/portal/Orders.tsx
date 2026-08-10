@@ -9,6 +9,7 @@ import { formatCurrency } from '../../utils/commerce';
 import { createReorderCheckoutDraft } from '../../utils/reorderDraft';
 import { resetMobileCarouselClock, subscribeToMobileCarouselClock } from '../../utils/mobileCarouselClock';
 import { MobileCarouselDots } from './MobileCarouselDots';
+import sectionTitleStyles from './PortalSectionTitle.module.css';
 
 interface OrdersProps {
   orders: OrderRecord[];
@@ -119,7 +120,7 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
             </svg>
             <span>Orders</span>
           </span>
-          <h2>Recent Activity</h2>
+          <h2 className={sectionTitleStyles.mobileTitle}>Recent Activity</h2>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <button 
@@ -332,9 +333,13 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
         }
         .panel-head h2 {
           margin: 0 !important;
-          font-size: 1.25rem !important;
-          font-weight: 700 !important;
           color: var(--text-primary);
+        }
+        @media (min-width: 640px) {
+          .panel-head h2 {
+            font-size: 1.25rem !important;
+            font-weight: 700 !important;
+          }
         }
         .eyebrow-badge {
           display: inline-flex;
@@ -754,6 +759,19 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
 
         /* ── Mobile breakpoint: hide table, show cards ── */
         @media (max-width: 639px) {
+          .orders-panel {
+            position: relative;
+            margin: 0;
+            transform: none;
+            overflow: visible;
+            border-radius: 18px;
+            border: 1px solid rgba(191, 219, 254, 0.45);
+            box-shadow: 0 5px 16px rgba(37, 99, 235, 0.07);
+          }
+          :global([data-theme="dark"]) .orders-panel {
+            border-color: rgba(59, 130, 246, 0.18);
+            box-shadow: 0 5px 18px rgba(0, 0, 0, 0.28);
+          }
           .panel-head {
             flex-direction: column;
             align-items: flex-start;
@@ -769,6 +787,53 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
             justify-content: center;
             font-size: 0.7rem;
             padding: 0.4rem 0.5rem;
+          }
+          .orders-panel .orders-action--view {
+            color: #2563eb;
+            background: rgba(37, 99, 235, 0.08);
+            border-color: rgba(37, 99, 235, 0.28);
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+          }
+          .orders-panel .orders-action--view:hover:not(:disabled) {
+            color: #1d4ed8;
+            background: rgba(37, 99, 235, 0.12);
+            border-color: rgba(37, 99, 235, 0.4);
+          }
+          .orders-panel .orders-action--view:active:not(:disabled) {
+            color: #1d4ed8;
+            background: rgba(37, 99, 235, 0.14);
+            border-color: #2563eb;
+            transform: scale(0.97);
+          }
+          .orders-panel .orders-action--view:focus-visible,
+          .order-card-actions-row .btn-table-reorder:focus-visible {
+            outline: 2px solid #2563eb;
+            outline-offset: 2px;
+          }
+          :global([data-theme="dark"]) .orders-panel .orders-action--view {
+            color: #60a5fa;
+            background: rgba(59, 130, 246, 0.14);
+            border-color: rgba(96, 165, 250, 0.32);
+          }
+          :global([data-theme="dark"]) .orders-panel .orders-action--view:hover:not(:disabled) {
+            color: #ffffff;
+            background: rgba(59, 130, 246, 0.2);
+            border-color: #60a5fa;
+          }
+          .order-card-actions-row .btn-table-reorder {
+            color: #ffffff;
+            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+            border: 0;
+            box-shadow: 0 3px 10px rgba(37, 99, 235, 0.22);
+          }
+          .order-card-actions-row .btn-table-reorder:hover {
+            color: #ffffff;
+            background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+          }
+          .order-card-actions-row .btn-table-reorder:active {
+            color: #ffffff;
+            transform: scale(0.97);
+            box-shadow: 0 2px 7px rgba(37, 99, 235, 0.2);
           }
           .orders-table {
             display: none;
@@ -1052,6 +1117,30 @@ export function Orders({ orders, loadingOrders, onRefresh }: OrdersProps) {
           .order-card-actions-row .btn-table-reorder {
             min-height: 44px;
             padding: 0.4rem 0.5rem;
+          }
+        }
+
+        @media (max-width: 639px) {
+          .orders-panel .order-card-actions-row .btn-table-reorder {
+            color: #ffffff !important;
+            background-color: #2563eb !important;
+            background-image: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%) !important;
+            border: 0 !important;
+            box-shadow: 0 3px 10px rgba(37, 99, 235, 0.22) !important;
+          }
+          .orders-panel .order-card-actions-row .btn-table-reorder svg {
+            color: #ffffff !important;
+            stroke: currentColor !important;
+          }
+          .orders-panel .order-card-actions-row .btn-table-reorder:hover {
+            color: #ffffff !important;
+            background-color: #1d4ed8 !important;
+            background-image: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%) !important;
+          }
+          .orders-panel .order-card-actions-row .btn-table-reorder:active {
+            color: #ffffff !important;
+            transform: scale(0.97) !important;
+            box-shadow: 0 2px 7px rgba(37, 99, 235, 0.2) !important;
           }
         }
       `}</style>

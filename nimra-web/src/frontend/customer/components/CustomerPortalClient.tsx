@@ -1074,6 +1074,14 @@ const portalStyles = `
 
   @media (max-width: 700px) {
     .portal-grid, .quick-section, .recommendations-grid { grid-template-columns: 1fr; padding: 0 1rem; }
+    .metric-grid + .portal-grid {
+      margin-top: 20px;
+      transform: none;
+    }
+    .metric-grid {
+      margin-bottom: 0;
+      transform: none;
+    }
     .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0 1rem; margin-top: 1.25rem; }
     .metric-grid > * {
       opacity: 0;
@@ -1093,6 +1101,8 @@ const portalStyles = `
     .guest-checkout { align-items: flex-start; flex-direction: column; padding: 1.25rem; }
     .portal-page { overflow-x: hidden; }
     .desktop-profile-card { display: none; }
+    .side-stack .next-card { order: 1; }
+    .side-stack .portal-quick-controls-card { order: 2; }
   }
 
   @media (max-width: 700px) and (prefers-reduced-motion: reduce) {
@@ -1129,6 +1139,14 @@ const portalStyles = `
     /* Stack button groups fully */
     .next-progress-steps { font-size: 0.65rem; gap: 0.25rem; }
     .btn-next-step { padding: 0.55rem; font-size: 0.78rem; }
+  }
+
+  @media (max-width: 700px) {
+    .metric-grid + .portal-grid {
+      margin-top: 0 !important;
+      padding-top: 20px !important;
+      transform: none !important;
+    }
   }
 
   /* ── Panel visual enhancements & Next Step Card ── */
