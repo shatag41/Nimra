@@ -167,13 +167,13 @@ export default function OrderModal({
         .status-warning-dialog textarea:focus { outline: 3px solid rgba(37, 99, 235, .16); border-color: var(--primary-color); }
         .status-message-error { margin: .4rem 0 0; color: #ef4444; font-size: .75rem; }
         .status-warning-actions { display: flex; justify-content: flex-end; gap: .75rem; margin-top: 1rem; }
-        @media (max-width: 520px) {
+        @media (max-width: 768px) {
           .status-warning-close { position:absolute;top:.6rem;right:.6rem;display:grid;place-items:center;width:2rem;height:2rem;padding:0;border:0;border-radius:50%;background:var(--bg-primary);color:var(--text-primary);font-size:1.3rem;cursor:pointer; }
           .status-transition { grid-template-columns: 1fr; }
           .status-transition > b { display: none; }
           .status-warning-actions { display:block; }
-          .status-warning-actions > .btn-secondary { display:none; }
-          .status-warning-actions :global(button:last-child) { width:100%; }
+          .status-warning-actions .btn-secondary { display:none !important; }
+          .status-warning-actions :global(button:last-child) { width:100% !important; }
         }
       `}</style>
     </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { FormEvent, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useCart } from '@/frontend/customer/hooks/useCart';
@@ -478,6 +479,15 @@ export default function CheckoutClient() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
+  useEffect(() => {
+    if (showConfirmModal) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }
+  }, [showConfirmModal]);
+
   if (!mounted) {
     return <div className="loading-state" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>Loading Checkout...</div>;
   }
@@ -551,9 +561,9 @@ export default function CheckoutClient() {
           </div>
         )}
       </div>
-      {showConfirmModal && (
-        <div className="co-confirm-modal-overlay">
-          <div className="co-confirm-modal card animate-scale-in">
+      {showConfirmModal && createPortal(
+        <div className="co-confirm-modal-overlay" onClick={() => setShowConfirmModal(false)}>
+          <div className="co-confirm-modal card animate-scale-in" onClick={(e) => e.stopPropagation()}>
             <button type="button" className="co-confirm-modal-close" onClick={() => setShowConfirmModal(false)} aria-label="Close">&times;</button>
             <header className="co-confirm-modal-header">
               <h3>Confirm Your Order</h3>
@@ -622,7 +632,8 @@ export default function CheckoutClient() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
       <style jsx>{styles}</style>
     </div>
@@ -650,16 +661,13 @@ const styles = `
   /* ── Confirmation Modal ── */
   .co-confirm-modal-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     background: rgba(15, 23, 42, 0.7);
     backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 10000;
     padding: 1rem;
   }
   .co-confirm-modal {
