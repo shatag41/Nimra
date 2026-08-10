@@ -7,6 +7,7 @@ type CompactKpiCardProps = {
   subtitle: string;
   icon: ReactNode;
   accent?: 'blue' | 'orange' | 'green' | 'red';
+  transitionKey?: string;
 };
 
 export function CompactKpiCard({
@@ -15,11 +16,12 @@ export function CompactKpiCard({
   subtitle,
   icon,
   accent = 'blue',
+  transitionKey,
 }: CompactKpiCardProps) {
   return (
-    <div className={`${styles.card} ${styles[accent]}`} tabIndex={0}>
+    <div className={`${styles.card} ${styles[accent]} ${transitionKey ? styles.statusCard : ''}`} tabIndex={0}>
       <span className={styles.icon} aria-hidden="true">{icon}</span>
-      <div className={styles.copy}>
+      <div key={transitionKey} className={`${styles.copy} ${transitionKey ? styles.transitioning : ''}`}>
         <strong className={styles.value}>{value}</strong>
         <span className={styles.title}>{title}</span>
         <small className={styles.subtitle}>{subtitle}</small>

@@ -61,6 +61,7 @@ function CustomerPortalClient({ initialTab }: CustomerPortalClientProps) {
   const [mounted, setMounted] = React.useState(false);
   const [portalLoadedAt] = React.useState(() => Date.now());
   const [summaryCardsVisible, setSummaryCardsVisible] = React.useState(false);
+  const [showCancellationStatus, setShowCancellationStatus] = React.useState(false);
   const summaryCardsRef = React.useRef<HTMLElement>(null);
 
   React.useEffect(() => {
@@ -149,6 +150,39 @@ function CustomerPortalClient({ initialTab }: CustomerPortalClientProps) {
     const createdAtMs = new Date(createdAt).getTime();
     return Number.isFinite(createdAtMs) && createdAtMs <= portalLoadedAt && portalLoadedAt - createdAtMs < 15 * 60 * 1000;
   }, [portalLoadedAt, user?.CreatedAt, user?.createdAt]);
+  const isFirstOrderState = isNewAccountSession && orders.length === 0;
+  const hasCancellationHistory = Boolean(metrics.latestCancelOrder);
+
+  React.useEffect(() => {
+    setShowCancellationStatus(false);
+    if (loadingOrders || !metrics.latestOrder || !hasCancellationHistory) return;
+
+    const interval = window.setInterval(() => {
+      setShowCancellationStatus((current) => !current);
+    }, 6000);
+    return () => window.clearInterval(interval);
+  }, [hasCancellationHistory, loadingOrders, metrics.latestOrder]);
+
+  const recentStatus = showCancellationStatus && metrics.latestCancelOrder
+    ? (metrics.latestCancelOrder.cancellationStatus || 'Cancelled')
+    : metrics.latestOrder?.status;
+  const recentStatusKind = showCancellationStatus && metrics.latestCancelOrder ? 'cancellation' : 'order';
+  const recentStatusAccent = !recentStatus
+    ? 'blue'
+    : /delivered|approved|completed/i.test(recentStatus)
+      ? 'green'
+      : /cancelled|rejected/i.test(recentStatus)
+        ? 'red'
+        : /pending|processing/i.test(recentStatus)
+          ? 'orange'
+          : 'blue';
+  const recentStatusPillClass = recentStatusAccent === 'green'
+    ? 'status-approved'
+    : recentStatusAccent === 'red'
+      ? 'status-rejected'
+      : recentStatusAccent === 'orange'
+        ? 'status-awaiting'
+        : 'status-current';
   
   const formatDate = React.useCallback((dateStr?: string) => {
     if (!dateStr) return '';
@@ -280,19 +314,18 @@ function CustomerPortalClient({ initialTab }: CustomerPortalClientProps) {
               icon={<svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m22 4-10 10.01-3-3"/></svg>}
             />
             <CompactKpiCard
-              title="Recent Cancel Status"
-              value={metrics.latestCancelOrder ? (() => {
-                const cancelStatus = metrics.latestCancelOrder.cancellationStatus || 'Cancelled';
-                const isPending = /pending/i.test(cancelStatus);
-                const isApproved = /approved|cancelled/i.test(cancelStatus.toLowerCase());
-                const isRejected = /rejected/i.test(cancelStatus);
-                let pillClass = 'status-pill status-pending';
-                if (isApproved) pillClass = 'status-pill status-approved';
-                else if (isRejected) pillClass = 'status-pill status-na';
-                return <span className={pillClass}><span className={`status-dot ${isPending ? 'pulse' : ''}`} /><span>{cancelStatus}</span></span>;
-              })() : <span className="status-pill status-na"><span className="status-dot" /><span>N/A</span></span>}
-              subtitle="Latest cancellation"
-              accent="red"
+              title={loadingOrders ? '' : metrics.latestOrder
+                ? (recentStatusKind === 'cancellation' ? 'Recent Cancel Order Status' : 'Recent Order Status')
+                : 'Shop Your First Order'}
+              value={loadingOrders || !metrics.latestOrder ? null : (
+                <span className={`status-pill ${recentStatusPillClass}`}>
+                  <span className={`status-dot ${recentStatusAccent === 'orange' ? 'pulse' : ''}`} />
+                  <span>{recentStatus}</span>
+                </span>
+              )}
+              subtitle={loadingOrders || !metrics.latestOrder ? '' : (recentStatusKind === 'cancellation' ? 'Latest cancellation request' : 'Latest order update')}
+              accent={recentStatusAccent}
+              transitionKey={loadingOrders ? 'loading' : metrics.latestOrder ? `${recentStatusKind}-${recentStatus}` : 'first-order'}
               icon={<svg viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>}
             />
           </section>
@@ -308,9 +341,7 @@ function CustomerPortalClient({ initialTab }: CustomerPortalClientProps) {
             </div>
 
             <aside className="side-stack">
-              <Profile user={user} />
-
-              <div className="panel next-card" tabIndex={0}>
+              {!loadingOrders && <div className="panel next-card" tabIndex={0}>
                 <div className="next-card-header">
                   <span className="eyebrow content-section-badge" style={{ color: 'var(--primary-color)', background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.15)', borderRadius: '999px', padding: '0.2rem 0.65rem', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.05em', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', marginBottom: 0 }}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -327,7 +358,7 @@ function CustomerPortalClient({ initialTab }: CustomerPortalClientProps) {
                     </svg>
                   </div>
                 </div>
-                <h2>{cart.totalItems > 0 ? 'Continue to Checkout' : 'Start Your First Order'}</h2>
+                <h2>{isFirstOrderState ? 'Start Your First Order' : 'Browse Your Next Order'}</h2>
                 <p>
                   {cart.totalItems > 0 ? (
                     <>
@@ -356,7 +387,7 @@ function CustomerPortalClient({ initialTab }: CustomerPortalClientProps) {
                     <polyline points="12 5 19 12 12 19"></polyline>
                   </svg>
                 </Link>
-              </div>
+              </div>}
 
               <div className="panel portal-quick-controls-card" tabIndex={0}>
                 <div className="quick-controls-head">
@@ -411,6 +442,10 @@ function CustomerPortalClient({ initialTab }: CustomerPortalClientProps) {
                     </div>
                   </Link>
                 </div>
+              </div>
+
+              <div className="desktop-profile-card">
+                <Profile user={user} />
               </div>
             </aside>
           </section>
@@ -843,6 +878,22 @@ const portalStyles = `
     color: var(--text-muted);
   }
 
+  .status-pill.status-awaiting {
+    background: rgba(249, 115, 22, 0.1);
+    border: 1px solid rgba(249, 115, 22, 0.22);
+    color: #c2410c;
+  }
+  .status-pill.status-current {
+    background: rgba(37, 99, 235, 0.09);
+    border: 1px solid rgba(37, 99, 235, 0.2);
+    color: #2563eb;
+  }
+  .status-pill.status-rejected {
+    background: rgba(239, 68, 68, 0.09);
+    border: 1px solid rgba(239, 68, 68, 0.22);
+    color: #dc2626;
+  }
+
   .status-dot {
     width: 6px;
     height: 6px;
@@ -925,6 +976,24 @@ const portalStyles = `
   .status-badge.cancelled { background: rgba(220,38,38,0.1); color: #b91c1c; border-color: rgba(220,38,38,0.2); }
 
   .side-stack { display: grid; gap: 1.25rem; }
+  .side-stack .portal-quick-controls-card { order: 1; }
+  .side-stack .desktop-profile-card { order: 2; min-width: 0; }
+  .side-stack .next-card { order: 3; }
+  .desktop-profile-card .profile-card { padding: 0.65rem; gap: 0.4rem; }
+  .desktop-profile-card .profile-header { gap: 0.35rem; }
+  .desktop-profile-card .profile-avatar { width: 28px; height: 28px; font-size: 0.78rem; }
+  .desktop-profile-card .profile-name { font-size: 0.82rem; }
+  .desktop-profile-card .profile-percent { font-size: 0.62rem; }
+  .desktop-profile-card .profile-details-list { padding: 0.25rem 0.45rem; }
+  .desktop-profile-card .profile-detail-item { gap: 0.35rem; padding: 0.16rem 0; }
+  .desktop-profile-card .profile-detail-label { width: 48px; font-size: 0.56rem; padding-top: 0.05rem; }
+  .desktop-profile-card .profile-detail-value { font-size: 0.72rem; line-height: 1.25; }
+  .desktop-profile-card .profile-detail-item:last-child .profile-detail-value {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
   .completion { display: inline-flex; align-items: center; justify-content: center; padding: 0.2rem 0.7rem; border-radius: 999px; background: rgba(0,150,58,0.1); color: var(--primary-color); font-weight: 800; font-size: 0.9rem; border: 1px solid rgba(0,150,58,0.2); }
 
   .progress-track { width: 100%; height: 6px; overflow: hidden; border-radius: 999px; background: var(--bg-tertiary); margin-bottom: 1rem; }
@@ -1001,6 +1070,7 @@ const portalStyles = `
     .panel-head { align-items: flex-start; flex-direction: column; }
     .guest-checkout { align-items: flex-start; flex-direction: column; padding: 1.25rem; }
     .portal-page { overflow-x: hidden; }
+    .desktop-profile-card { display: none; }
   }
 
   @media (max-width: 700px) and (prefers-reduced-motion: reduce) {

@@ -256,8 +256,14 @@ export function useCustomerOrders() {
     const activeOrders = orders.filter(isActiveOrder).length;
     const deliveredOrders = orders.filter((order) => /delivered/i.test(order.status)).length;
     const cancelledOrders = orders.filter((order) => /cancelled/i.test(order.status)).length;
-    const latestOrder = orders[0];
-    const latestCancelOrder = orders.find((order) => order.cancellationStatus || /cancelled/i.test(order.status));
+    const latestOrder = [...orders].sort((a, b) => orderTime(b) - orderTime(a))[0];
+    const latestCancelOrder = orders
+      .filter((order) => Boolean(order.cancellationStatus || order.cancellationRequestId || /cancelled/i.test(order.status)))
+      .sort((a, b) => {
+        const aTime = new Date(a.updatedAt || a.createdAt || '').getTime();
+        const bTime = new Date(b.updatedAt || b.createdAt || '').getTime();
+        return (Number.isNaN(bTime) ? 0 : bTime) - (Number.isNaN(aTime) ? 0 : aTime);
+      })[0];
     return { totalSpend, activeOrders, deliveredOrders, cancelledOrders, latestOrder, latestCancelOrder };
   }, [orders]);
 

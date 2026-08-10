@@ -64,6 +64,57 @@
   column-gap: 0.5rem;
 }
 
+.transitioning {
+  animation: kpiStatusTransition 420ms ease both;
+}
+
+.statusCard .copy {
+  flex: 1 1 auto;
+  width: auto;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: center;
+  align-items: start;
+  row-gap: 0.18rem;
+  column-gap: 0;
+}
+
+.statusCard .value,
+.statusCard .title,
+.statusCard .subtitle {
+  grid-column: 1;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.statusCard .title,
+.statusCard .subtitle {
+  white-space: nowrap;
+}
+
+.statusCard .value:empty,
+.statusCard .subtitle:empty {
+  display: none;
+}
+
+.statusCard :global(.status-pill) {
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+@keyframes kpiStatusTransition {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .transitioning { animation: none; }
+}
+
 .value {
   min-width: 0;
   overflow: hidden;
@@ -116,6 +167,15 @@
     min-width: 0;
     grid-template-columns: minmax(0, auto) minmax(0, 1fr);
     column-gap: 0.3rem;
+  }
+
+  .statusCard .copy {
+    width: auto;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .statusCard {
+    align-items: center;
   }
 
   .value {
@@ -210,5 +270,15 @@
   :global(.addresses-metrics) .subtitle {
     font-size: clamp(0.58rem, 2.5vw, 0.65rem);
     line-height: 1.25;
+  }
+}
+
+@media (max-width: 420px) {
+  .statusCard .title,
+  .statusCard .subtitle,
+  .statusCard :global(.status-pill) {
+    white-space: normal;
+    overflow-wrap: normal;
+    word-break: normal;
   }
 }
