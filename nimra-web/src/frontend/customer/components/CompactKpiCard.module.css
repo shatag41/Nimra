@@ -175,7 +175,11 @@
   }
 
   .statusCard {
-    align-items: center;
+    align-items: flex-start;
+  }
+
+  .statusCard .icon {
+    margin-top: 0.1rem;
   }
 
   .value {
