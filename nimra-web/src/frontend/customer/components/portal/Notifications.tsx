@@ -406,9 +406,178 @@ export function PortalNotifications() {
           transform: translateY(-0.35rem);
         }
         @media (max-width: 600px) {
-          .notification-filter-wrap {
-            flex-basis: 100%;
+          .notifications-panel {
+            padding: 0.7rem !important;
+          }
+          .notifications-header {
+            width: 100%;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            gap: 0.4rem !important;
+            margin-bottom: 0.65rem !important;
+          }
+          .notifications-heading-wrap {
+            flex: 1 1 auto;
             min-width: 0;
+          }
+          .notifications-title {
+            flex-wrap: nowrap;
+            gap: 0.3rem !important;
+            min-width: 0;
+            font-size: clamp(0.95rem, 4.4vw, 1.08rem) !important;
+            line-height: 1.15;
+            white-space: nowrap;
+          }
+          .notifications-unread-count {
+            flex: 0 0 auto;
+            padding: 2px 6px !important;
+            font-size: 0.62rem !important;
+            white-space: nowrap;
+          }
+          .notifications-subtitle {
+            display: none;
+          }
+          .notifications-header-actions {
+            flex: 0 0 auto;
+            gap: 0.18rem !important;
+            min-width: 0;
+          }
+          .notifications-header-actions .btn {
+            min-width: 0;
+            min-height: 30px !important;
+            height: 30px !important;
+            padding: 0.22rem 0.36rem !important;
+            border-radius: 7px !important;
+            font-size: clamp(0.56rem, 2.5vw, 0.64rem) !important;
+            line-height: 1;
+            white-space: nowrap;
+          }
+          .notifications-header-actions .btn svg {
+            width: 12px;
+            height: 12px;
+          }
+          .notifications-toolbar {
+            padding: 0.45rem !important;
+            margin-bottom: 0.8rem !important;
+            border-radius: 12px !important;
+          }
+          .notifications-toolbar-row {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            justify-content: flex-start !important;
+            gap: 0.4rem !important;
+            width: 100%;
+            min-width: 0;
+          }
+          .notifications-status-toggle {
+            flex: 0 0 auto;
+            align-items: center;
+            gap: 2px !important;
+            height: 29px;
+            padding: 2px !important;
+            border-radius: 8px !important;
+            box-sizing: border-box;
+          }
+          .notifications-status-toggle .filter-chip {
+            min-height: 23px;
+            height: 23px;
+            padding: 0.15rem 0.4rem !important;
+            border-radius: 6px !important;
+            font-size: 0.62rem !important;
+            line-height: 1;
+          }
+          .notif-row,
+          .notif-row.unread {
+            display: grid;
+            grid-template-columns: 36px minmax(0, 1fr);
+            align-items: start;
+            gap: 0.75rem;
+            width: 100%;
+            min-width: 0;
+            padding: 0.85rem 0.9rem;
+            box-sizing: border-box;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            box-shadow: none;
+          }
+          .notif-row.unread::before {
+            display: block;
+          }
+          .notif-card-icon {
+            grid-column: 1;
+            width: 36px !important;
+            height: 36px !important;
+            min-width: 36px;
+            flex-shrink: 0 !important;
+          }
+          .notif-card-content {
+            grid-column: 2;
+            width: 100%;
+            min-width: 0 !important;
+          }
+          .notif-card-heading {
+            display: flex !important;
+            align-items: flex-start !important;
+            justify-content: space-between !important;
+            gap: 0.65rem !important;
+            min-width: 0;
+          }
+          .notif-card-title-wrap {
+            flex: 1 1 auto;
+            min-width: 0;
+          }
+          .notif-card-title {
+            min-width: 0;
+            max-width: 100%;
+            font-size: 0.9rem !important;
+            line-height: 1.35;
+            white-space: normal;
+            word-break: normal;
+            overflow-wrap: anywhere;
+          }
+          .notif-card-time {
+            flex: 0 0 auto;
+            flex-shrink: 0 !important;
+            margin-left: auto;
+            text-align: right;
+            white-space: nowrap !important;
+          }
+          .notif-card-message {
+            width: 100%;
+            min-width: 0;
+            font-size: 0.82rem !important;
+            line-height: 1.45 !important;
+            overflow-wrap: break-word;
+          }
+          .notif-card-link {
+            align-self: flex-start;
+          }
+          .notif-actions {
+            position: absolute;
+            right: 0.65rem;
+            bottom: 0.55rem;
+            margin: 0;
+          }
+          .notif-row:focus-within .notif-actions {
+            opacity: 1;
+          }
+          .notification-filter-wrap {
+            flex: 1 1 auto;
+            flex-basis: auto;
+            width: auto;
+            min-width: 0;
+          }
+          .notification-search-input {
+            min-width: 0;
+            height: 34px;
+            padding: 0.38rem 2.35rem 0.38rem 1.9rem;
+            font-size: 0.75rem;
+          }
+          .notification-filter-toggle {
+            right: 0.2rem;
+            width: 1.8rem;
+            height: 1.8rem;
           }
           .notification-category-panel {
             gap: 0.4rem;
@@ -446,19 +615,19 @@ export function PortalNotifications() {
       `}} />
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <div className="notifications-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <div className="notifications-heading-wrap">
+          <h2 className="notifications-title" style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             Notifications
             {unreadCount > 0 && (
-              <span style={{ fontSize: '0.8rem', background: 'var(--primary-color)', color: '#fff', padding: '2px 8px', borderRadius: '50px', fontWeight: 700 }}>
+              <span className="notifications-unread-count" style={{ fontSize: '0.8rem', background: 'var(--primary-color)', color: '#fff', padding: '2px 8px', borderRadius: '50px', fontWeight: 700 }}>
                 {unreadCount} new
               </span>
             )}
           </h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '0', fontSize: '0.9rem', marginTop: '0.25rem' }}>View and manage your account updates.</p>
+          <p className="notifications-subtitle" style={{ color: 'var(--text-secondary)', marginBottom: '0', fontSize: '0.9rem', marginTop: '0.25rem' }}>View and manage your account updates.</p>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div className="notifications-header-actions" style={{ display: 'flex', gap: '0.75rem' }}>
           <button onClick={handleMarkAllAsRead} className="btn btn-secondary btn-sm" disabled={unreadCount === 0} style={{ opacity: unreadCount === 0 ? 0.5 : 1 }}>
             Mark all read
           </button>
@@ -469,11 +638,11 @@ export function PortalNotifications() {
       </div>
 
       {/* Filters Toolbar */}
-      <div ref={categoryFilterRef} style={{ display: 'flex', flexDirection: 'column', marginBottom: '2rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+      <div ref={categoryFilterRef} className="notifications-toolbar" style={{ display: 'flex', flexDirection: 'column', marginBottom: '2rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
+        <div className="notifications-toolbar-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           
           {/* Status Toggles */}
-          <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-primary)', padding: '4px', borderRadius: '50px', border: '1px solid var(--border-color)' }}>
+          <div className="notifications-status-toggle" style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-primary)', padding: '4px', borderRadius: '50px', border: '1px solid var(--border-color)' }}>
             <button className={`filter-chip ${statusFilter === 'All' ? 'active' : ''}`} style={{ border: 'none' }} onClick={() => setStatusFilter('All')}>All</button>
             <button className={`filter-chip ${statusFilter === 'Unread' ? 'active' : ''}`} style={{ border: 'none' }} onClick={() => setStatusFilter('Unread')}>Unread</button>
           </div>
@@ -565,31 +734,31 @@ export function PortalNotifications() {
                         <div key={n.ID} className={`notif-row ${isUnread ? 'unread' : ''}`}>
                           
                           {/* Icon */}
-                          <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'var(--text-primary)' }}>
+                          <div className="notif-card-icon" style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'var(--text-primary)' }}>
                             {getCategoryIcon(n.Category)}
                           </div>
 
                           {/* Content */}
-                          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                <h5 style={{ margin: 0, fontSize: '0.95rem', fontWeight: isUnread ? 700 : 600, color: 'var(--text-primary)' }}>{n.Title}</h5>
+                          <div className="notif-card-content" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                            <div className="notif-card-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
+                              <div className="notif-card-title-wrap" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                <h5 className="notif-card-title" style={{ margin: 0, fontSize: '0.95rem', fontWeight: isUnread ? 700 : 600, color: 'var(--text-primary)' }}>{n.Title}</h5>
                                 {priority !== 'low' && (
                                   <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: priorityColor }} title={`${priority} priority`} />
                                 )}
                               </div>
-                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                              <span className="notif-card-time" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                                 {getTimeAgo(n.CreatedAt || n.Timestamp)}
                               </span>
                             </div>
                             
-                            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                            <p className="notif-card-message" style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                               {n.Message}
                               {n.Title?.toLowerCase().includes('inquiry reviewed') && ' Our team will contact you shortly.'}
                             </p>
 
                             {n.ActionLink && !n.Title?.toLowerCase().includes('inquiry reviewed') && (
-                              <div style={{ marginTop: '0.5rem' }}>
+                              <div className="notif-card-link" style={{ marginTop: '0.5rem' }}>
                                 <button
                                   onClick={(e) => {
                                     if (isUnread) handleMarkAsRead(n.ID);

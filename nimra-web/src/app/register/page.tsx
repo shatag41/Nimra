@@ -748,8 +748,12 @@ export default function RegisterPage() {
             />)}
           </div>
           {otpError && <p className="registration-otp-error">{otpError}</p>}
-          <p className="registration-countdown">{resendSeconds > 0 ? `Resend available in ${resendSeconds} seconds` : otpExpired ? 'OTP expired.' : 'You can request a new code.'}</p>
-          <LoadingButton type="button" className="registration-resend" onClick={handleResend} disabled={resendSeconds > 0 || registrationComplete} isLoading={isLoading} loadingText="Sending OTP...">Resend OTP</LoadingButton>
+          <p className="registration-resend-prompt">
+            <span>Didn&apos;t receive the code?</span>
+            <button type="button" className="registration-resend" onClick={handleResend} disabled={resendSeconds > 0 || isLoading || registrationComplete}>
+              {isLoading ? 'Sending...' : resendSeconds > 0 ? `Resend OTP in ${resendSeconds}s` : 'Resend OTP'}
+            </button>
+          </p>
         </div>
       </LogoutConfirmationModal>
       <style jsx>{`
@@ -758,9 +762,58 @@ export default function RegisterPage() {
         .registration-otp-boxes input { width:42px; height:48px; text-align:center; font-size:1.25rem; font-weight:800; color:var(--text-primary); background:var(--bg-primary); border:1px solid var(--border-color); border-radius:var(--radius-md); outline:none; }
         .registration-otp-boxes input:focus { border-color:var(--primary-color); box-shadow:0 0 0 3px color-mix(in srgb, var(--primary-color) 12%, transparent); }
         .registration-otp-error { margin:0; color:#dc2626; font-size:.8rem; white-space:pre-line; }
-        .registration-countdown { margin:0; color:var(--text-muted); font-size:.75rem; }
-        .registration-resend { padding:0; color:var(--primary-color); background:transparent; border:0; font:inherit; font-size:.8rem; font-weight:700; cursor:pointer; }
-        .registration-resend:disabled { color:var(--text-muted); cursor:not-allowed; }
+        .registration-resend-prompt {
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          flex-wrap:nowrap;
+          gap:.28rem;
+          width:100%;
+          margin:0;
+          color:var(--text-secondary);
+          font-size:.8rem;
+          line-height:1.35;
+          white-space:nowrap;
+        }
+        .registration-resend {
+          appearance:none !important;
+          -webkit-appearance:none !important;
+          display:inline !important;
+          width:auto !important;
+          min-width:0 !important;
+          min-height:0 !important;
+          height:auto !important;
+          margin:0 !important;
+          padding:0 !important;
+          color:var(--primary-color) !important;
+          background:transparent !important;
+          background-image:none !important;
+          border:0 !important;
+          border-radius:0 !important;
+          box-shadow:none !important;
+          font:inherit !important;
+          font-size:.8rem !important;
+          font-weight:700 !important;
+          line-height:1.35 !important;
+          text-decoration:none !important;
+          cursor:pointer;
+          white-space:nowrap;
+        }
+        .registration-resend:hover:not(:disabled),
+        .registration-resend:focus-visible {
+          color:var(--primary-color) !important;
+          background:transparent !important;
+          box-shadow:none !important;
+          text-decoration:underline !important;
+          outline:none;
+        }
+        .registration-resend:disabled {
+          color:var(--text-muted) !important;
+          background:transparent !important;
+          box-shadow:none !important;
+          opacity:1 !important;
+          cursor:not-allowed;
+        }
         @media(max-width:480px){ .registration-otp-boxes { gap:.35rem; } .registration-otp-boxes input { width:36px; height:44px; } }
       `}</style>
     </AuthPageWrapper>

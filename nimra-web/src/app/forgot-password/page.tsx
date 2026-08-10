@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { sendRequest } from '@/utils/api';
 import { useRouter } from 'next/navigation';
@@ -16,10 +16,16 @@ export default function ForgotPasswordPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [step, setStep] = useState(1); // 1: Request OTP, 2: Reset Password
   const [isLoading, setIsLoading] = useState(false);
+  const [resendSeconds, setResendSeconds] = useState(0);
   const router = useRouter();
 
-  const handleRequestOTP = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    if (step !== 2 || resendSeconds <= 0) return;
+    const timer = window.setInterval(() => setResendSeconds((seconds) => Math.max(0, seconds - 1)), 1000);
+    return () => window.clearInterval(timer);
+  }, [resendSeconds, step]);
+
+  const requestOTP = async () => {
     if (isLoading) return;
     setIsLoading(true);
 
@@ -28,6 +34,7 @@ export default function ForgotPasswordPage() {
       if (res.success) {
         notify.success('OTP Sent', res.message ?? 'OTP sent successfully.');
         setStep(2);
+        setResendSeconds(30);
       } else {
         notify.error('OTP Failed', res.message ?? 'Failed to request OTP.');
       }
@@ -36,6 +43,11 @@ export default function ForgotPasswordPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleRequestOTP = (e: React.FormEvent) => {
+    e.preventDefault();
+    void requestOTP();
   };
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -79,6 +91,9 @@ export default function ForgotPasswordPage() {
         .forgot-password-page .auth-submit { font-size: clamp(.7rem, 1.2vw, .8rem) !important; }
         .forgot-password-page .auth-footer-link,
         .forgot-password-page .auth-footer-link a { font-size: clamp(.66rem, 1.15vw, .76rem) !important; }
+        .forgot-password-page .otp-resend-prompt { display:flex; align-items:center; justify-content:center; gap:.3rem; margin:.15rem 0 0; color:var(--text-secondary); font-size:clamp(.68rem,1.2vw,.78rem); }
+        .forgot-password-page .otp-resend-button { padding:0; border:0; background:transparent; color:var(--primary-color); font:inherit; font-weight:700; cursor:pointer; }
+        .forgot-password-page .otp-resend-button:disabled { color:var(--text-muted); cursor:not-allowed; }
       `}} />
       <div className="auth-shell glass">
         <aside className="auth-brand-panel">
@@ -157,6 +172,12 @@ export default function ForgotPasswordPage() {
                   required 
                 />
               </div>
+              <p className="otp-resend-prompt">
+                <span>Didn&apos;t receive the code?</span>
+                <button type="button" className="otp-resend-button" onClick={() => void requestOTP()} disabled={resendSeconds > 0 || isLoading}>
+                  {isLoading ? 'Sending...' : resendSeconds > 0 ? `Resend OTP in ${resendSeconds}s` : 'Resend OTP'}
+                </button>
+              </p>
               <div className="auth-field">
                 <label htmlFor="new-password">New Password</label>
                 <div className="auth-input-wrapper" style={{ position: 'relative' }}>
