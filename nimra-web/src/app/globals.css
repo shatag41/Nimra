@@ -17653,7 +17653,7 @@ body:has(.products-page-skeleton) {
   }
 
   .admin-container .admin-page-dashboard .main-header h1::before {
-    content: 'NIMRA Console';
+    content: 'NIMRA';
     display: block;
     min-width: 0;
     max-width: 100%;
