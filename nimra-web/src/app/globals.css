@@ -7122,6 +7122,56 @@ select {
     border: 1px solid transparent !important;
 }
 
+.spreadsheet-link {
+    min-height: 2.25rem;
+    padding: 0.35rem 0.2rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: 0.45rem;
+}
+
+.spreadsheet-link:is(:hover, :focus-visible) {
+    color: var(--primary-color);
+    background: color-mix(in srgb, var(--primary-color) 9%, transparent);
+    outline: none;
+}
+
+.spreadsheet-external-icon {
+    flex: 0 0 auto;
+}
+
+.spreadsheet-link-unavailable {
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+/* Keep the Sheets destination visible and easy to tap in the compact admin header. */
+@media (max-width: 768px) {
+    .admin-container .main-header .db-indicator {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        justify-self: start;
+        display: inline-flex !important;
+        width: fit-content;
+        max-width: 100%;
+        min-height: 2.5rem;
+        padding: 0.45rem 0.3rem;
+        gap: 0.4rem;
+        font-size: 0.68rem;
+        line-height: 1.15;
+        white-space: nowrap;
+    }
+
+    .admin-container .main-header .header-search-wrap {
+        grid-row: 3;
+    }
+
+    .admin-container .main-header .spreadsheet-external-icon {
+        width: 0.82rem;
+        height: 0.82rem;
+    }
+}
+
 /* Compact badges used inside page content only. Main page header badges use
    CustomerPageHeader's isolated customer-page-header__badge styling. */
 .content-section-badge.content-section-badge {

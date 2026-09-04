@@ -36,7 +36,20 @@ export default function Header({
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const isSuperAdminDashboard = activeTab === 'dashboard' && currentUser.role.toUpperCase().replaceAll(' ', '_') === 'SUPER_ADMIN';
-  const connectionLabel = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL ? 'Connected to Google Sheets' : 'Local Fallback Mode';
+  const isSheetsConnected = Boolean(process.env.NEXT_PUBLIC_APPS_SCRIPT_URL);
+  const configuredSpreadsheetUrl = process.env.NEXT_PUBLIC_GOOGLE_SHEETS_URL?.trim();
+  const configuredSpreadsheetId = process.env.NEXT_PUBLIC_GOOGLE_SHEETS_ID?.trim();
+  const spreadsheetUrl = configuredSpreadsheetUrl && /^https:\/\/docs\.google\.com\/spreadsheets\/d\/[A-Za-z0-9_-]+/.test(configuredSpreadsheetUrl)
+    ? configuredSpreadsheetUrl
+    : configuredSpreadsheetId && /^[A-Za-z0-9_-]+$/.test(configuredSpreadsheetId)
+      ? `https://docs.google.com/spreadsheets/d/${configuredSpreadsheetId}`
+      : undefined;
+  const connectionLabel = isSheetsConnected ? 'Connected to Google Sheets' : 'Local Fallback Mode';
+  const spreadsheetLinkLabel = spreadsheetUrl
+    ? connectionLabel
+    : isSheetsConnected
+      ? 'Google Sheets link unavailable'
+      : connectionLabel;
   
   // Close profile dropdown when clicking outside
   useEffect(() => {
@@ -136,7 +149,7 @@ export default function Header({
           <svg className="sync-button-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
           <span className="desktop-sync-label">{loading ? 'Syncing...' : '🔄 Sync Live Sheets'}</span>
           <span className="mobile-sync-label">{loading ? 'Syncing' : 'Sync'}</span>
-          <span className={`mobile-sync-status-dot ${process.env.NEXT_PUBLIC_APPS_SCRIPT_URL ? 'connected' : 'fallback'}`} aria-hidden="true" />
+          <span className={`mobile-sync-status-dot ${isSheetsConnected ? 'connected' : 'fallback'}`} aria-hidden="true" />
         </button>
         <div className="mobile-header-account-actions" aria-label="Admin account actions">
           <div className="mobile-header-theme-action" aria-label="Theme">
@@ -157,10 +170,28 @@ export default function Header({
             <span>Logout</span>
           </button>
         </div>
-        <span className="db-indicator">
+        {spreadsheetUrl ? (
+          <a
+            className="db-indicator spreadsheet-link"
+            href={spreadsheetUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Open the connected Google spreadsheet"
+          >
+            <span className="dot active" aria-hidden="true"></span>
+            <span>{spreadsheetLinkLabel}</span>
+            <svg className="spreadsheet-external-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M14 3h7v7"></path>
+              <path d="M10 14 21 3"></path>
+              <path d="M21 14v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h6"></path>
+            </svg>
+          </a>
+        ) : (
+          <span className="db-indicator spreadsheet-link-unavailable" title="A Google Sheets URL or ID has not been configured">
           <span className="dot active"></span>
-          {connectionLabel}
-        </span>
+          <span>{spreadsheetLinkLabel}</span>
+          </span>
+        )}
         
         {/* Profile Dropdown */}
         <div className="profile-dropdown" ref={profileDropdownRef}>
