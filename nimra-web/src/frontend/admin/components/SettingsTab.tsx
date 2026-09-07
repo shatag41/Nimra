@@ -130,7 +130,7 @@ export default function SettingsTab({
             <div className="form-group">
               <label>Quality Standards Narrative Text</label>
               <textarea
-                rows={3}
+                rows={4}
                 value={companyInfo.QualityText || ''}
                 onChange={(e) => handleSettingsFieldChange('QualityText', e.target.value)}
               />

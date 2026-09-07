@@ -15,7 +15,12 @@ export const useAdminFilters = () => {
 
   // Date sorting and Date range Filter States
   const [orderSort, setOrderSort] = useState('latest');
-  const [orderStartDate, setOrderStartDate] = useState('');
+  const [orderStartDate, updateOrderStartDate] = useState('');
+  const [orderExactStartDate, setOrderExactStartDate] = useState('');
+  const setOrderStartDate = (value: string) => {
+    updateOrderStartDate(value);
+    setOrderExactStartDate('');
+  };
   const [orderEndDate, setOrderEndDate] = useState('');
 
   const [inquirySort, setInquirySort] = useState('latest');
@@ -75,6 +80,8 @@ export const useAdminFilters = () => {
     setOrderSort,
     orderStartDate,
     setOrderStartDate,
+    orderExactStartDate,
+    setOrderExactStartDate,
     orderEndDate,
     setOrderEndDate,
     inquirySort,

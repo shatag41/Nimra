@@ -708,7 +708,7 @@ const styles = `
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
-    padding: 0 1.1rem;
+    padding: 0 1.1rem 0.65rem;
     overscroll-behavior: contain;
   }
   .modal-summary-section {
@@ -742,11 +742,15 @@ const styles = `
   }
   .modal-item-row {
     display: flex;
+    align-items: baseline;
+    min-width: 0;
+    flex-shrink: 0;
     justify-content: space-between;
     font-size: 0.78rem;
   }
   .modal-item-name {
     flex: 1;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -758,13 +762,15 @@ const styles = `
   }
   .modal-total-section {
     border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
-    padding: 0.58rem 0;
+    padding: 0.75rem 0 0.25rem;
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.4rem;
   }
   .modal-total-row {
     display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
     justify-content: space-between;
     font-size: 0.78rem;
     color: var(--text-secondary);
@@ -779,12 +785,14 @@ const styles = `
   .modal-total-row.grand-total strong {
     color: var(--primary-color, #2563eb);
   }
-  .modal-actions {
+  .co-confirm-modal .modal-actions {
+    position: static;
     flex: 0 0 auto;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.55rem;
-    margin-top: 0;
+    margin: 0;
+    min-width: 0;
     padding: 0.75rem 1.1rem 0.9rem;
     border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
     background: var(--glass-bg, rgba(30, 41, 59, 0.92));

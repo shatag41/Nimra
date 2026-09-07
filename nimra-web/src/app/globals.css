@@ -20199,3 +20199,57 @@ body:has(.products-page-skeleton) {
     border-radius: 7px !important;
   }
 }
+/* Shared Settings field tracks keep wrapped labels and controls aligned per row. */
+.admin-container .settings-tab .settings-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 1rem 1.5rem !important;
+  min-width: 0;
+}
+
+.admin-container .settings-tab .settings-grid > .form-group {
+  display: grid !important;
+  grid-row: span 2;
+  grid-template-rows: subgrid;
+  row-gap: 0.35rem !important;
+  min-width: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
+}
+
+.admin-container .settings-tab .settings-grid > .form-group > label {
+  margin: 0 !important;
+  align-self: start;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.admin-container .settings-tab .settings-grid > .form-group > :is(input, textarea) {
+  min-width: 0 !important;
+  max-width: 100%;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+}
+
+.admin-container .settings-tab .settings-grid > .form-group > input {
+  height: 44px !important;
+}
+
+.admin-container .settings-tab .settings-grid > .form-group > textarea {
+  height: 100% !important;
+}
+
+@media (max-width: 767px) {
+  .admin-container .settings-tab .settings-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    row-gap: 0.85rem !important;
+  }
+
+  .admin-container .settings-tab,
+  .admin-container .settings-form {
+    padding-bottom: 0 !important;
+  }
+
+  .admin-container .settings-tab .settings-submit-btn {
+    position: static !important;
+  }
+}

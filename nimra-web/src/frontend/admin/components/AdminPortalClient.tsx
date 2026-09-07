@@ -147,7 +147,7 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
     };
   }, [isMobileSidebarOpen]);
 
-  const handleNavigateToOrdersWithFilter = (statusFilter: string, view: 'active' | 'cancellations', startDate?: string) => {
+  const handleNavigateToOrdersWithFilter = (statusFilter: string, view: 'active' | 'cancellations', startDate?: string, exactStartDate?: string) => {
     filters.setOrderStatusFilter(statusFilter);
     setOrdersView(view);
     if (startDate) {
@@ -156,6 +156,11 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
     } else {
       filters.setOrderStartDate('');
       filters.setOrderEndDate('');
+    }
+    filters.setOrderExactStartDate(exactStartDate || '');
+    if (statusFilter === 'InTransit') {
+      filters.setGlobalSearch('');
+      filters.setOrderPaymentFilter('All');
     }
     setActiveTab('orders');
   };
@@ -208,8 +213,9 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
     filters.orderPaymentFilter,
     filters.orderSort,
     filters.orderStartDate,
-    filters.orderEndDate
-  ), [filters.orderEndDate, filters.orderPaymentFilter, filters.orderSort, filters.orderStartDate, filters.orderStatusFilter, orders, searchLower]);
+    filters.orderEndDate,
+    filters.orderStatusFilter === 'InTransit' ? filters.orderExactStartDate : ''
+  ), [filters.orderEndDate, filters.orderExactStartDate, filters.orderPaymentFilter, filters.orderSort, filters.orderStartDate, filters.orderStatusFilter, orders, searchLower]);
 
   const filteredProducts = useMemo(() => filterProducts(
     products,

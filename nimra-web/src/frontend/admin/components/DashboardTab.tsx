@@ -5,6 +5,7 @@ import { calculateDonutStats, formatDateLabel } from '../utils/chartUtils';
 import { useNotification } from '@/frontend/customer/contexts/NotificationContext';
 import LogoutConfirmationModal from '@/frontend/customer/components/LogoutConfirmationModal';
 import LiveEventsBar from './LiveEventsBar';
+import { isInTransitOrder } from '../utils/filterUtils';
 
 interface DashboardTabProps {
   orders: OrderRecord[];
@@ -17,7 +18,7 @@ interface DashboardTabProps {
   onOpenCancellationRequests: () => void;
   setActiveTab?: (tab: any) => void;
   notifications?: Notification[];
-  onNavigateToOrdersWithFilter?: (statusFilter: string, view: 'active' | 'cancellations', startDate?: string) => void;
+  onNavigateToOrdersWithFilter?: (statusFilter: string, view: 'active' | 'cancellations', startDate?: string, exactStartDate?: string) => void;
 }
 
 const DashboardTab = React.memo(function DashboardTab({
@@ -39,13 +40,7 @@ const DashboardTab = React.memo(function DashboardTab({
   const [timeFilter, setTimeFilter] = useState<'overall' | 'today' | 'week' | 'month'>('overall');
   const [hoveredTrendPoint, setHoveredTrendPoint] = useState<any | null>(null);
   const [hoveredBar, setHoveredBar] = useState<any | null>(null);
-  const [showPriorityAlerts, setShowPriorityAlerts] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('admin_show_priority_alerts');
-      return saved !== 'false';
-    }
-    return true;
-  });
+  const [priorityAlerts, setPriorityAlerts] = useState({ hasActions: false, expanded: false });
   // Confirmation Modal State
   const [confirmAction, setConfirmAction] = useState<{request: CancellationRequest, decision: 'Approved' | 'Rejected'} | null>(null);
   const [isProcessingAction, setIsProcessingAction] = useState(false);
@@ -260,7 +255,7 @@ const DashboardTab = React.memo(function DashboardTab({
 
   // Priority Alerts calculations
   const unconfirmedOrdersAlertCount = filteredOrdersInWindow.filter(o => o.status === 'Pending').length;
-  const inTransitOrdersAlertCount = filteredOrdersInWindow.filter(o => o.status !== 'Pending' && o.status !== 'Cancelled').length;
+  const inTransitOrdersAlertCount = (timeFilter === 'overall' ? orders : filteredOrdersInWindow).filter(isInTransitOrder).length;
   const failedDeliveriesAlertCount = filteredOrdersInWindow.filter(o => o.status === 'Cancelled' || o.cancellationStatus === 'Approved').length;
   const newInquiriesAlertCount = filteredInquiriesInWindow.filter(i => !i.Status || i.Status === 'New').length;
   const newRegistrationsAlertCount = newCustomersInWindow.length;
@@ -275,6 +270,17 @@ const DashboardTab = React.memo(function DashboardTab({
     failedDeliveriesAlertCount +
     newInquiriesAlertCount + 
     pendingCancellationRequests.length;
+
+  const hasPendingActions = pendingActionsCount > 0;
+  // Reset on empty/nonempty transitions, but allow toggling while actions remain.
+  if (priorityAlerts.hasActions !== hasPendingActions) {
+    setPriorityAlerts({ hasActions: hasPendingActions, expanded: hasPendingActions });
+  }
+  const showPriorityAlerts = hasPendingActions && priorityAlerts.expanded;
+  const togglePriorityAlerts = () => {
+    if (!hasPendingActions) return;
+    setPriorityAlerts({ hasActions: true, expanded: !showPriorityAlerts });
+  };
 
   const processReview = async (request: CancellationRequest, decision: 'Approved' | 'Rejected') => {
     const adminRemarks = decision === 'Rejected' ? (remarksByRequest[request.requestId] || '').trim() : 'Approved by admin.';
@@ -470,6 +476,11 @@ const DashboardTab = React.memo(function DashboardTab({
 
         <div 
           className={`stat-card kpi-card glass card-pending-actions ${showPriorityAlerts ? 'active-kpi-border' : ''}`}
+          role="button"
+          tabIndex={hasPendingActions ? 0 : -1}
+          aria-disabled={!hasPendingActions}
+          aria-expanded={showPriorityAlerts}
+          aria-controls="pending-actions-panel"
           style={{ 
             margin: 0,
             display: 'flex',
@@ -479,14 +490,14 @@ const DashboardTab = React.memo(function DashboardTab({
             borderRadius: 'var(--radius-lg)',
             border: showPriorityAlerts ? '1px solid #ef4444' : '1px solid var(--border-color)',
             background: showPriorityAlerts ? 'rgba(239, 68, 68, 0.03)' : 'var(--bg-secondary)',
-            cursor: 'pointer',
+            cursor: hasPendingActions ? 'pointer' : 'default',
             minHeight: '120px'
           }}
-          onClick={() => {
-            const nextVal = !showPriorityAlerts;
-            setShowPriorityAlerts(nextVal);
-            if (typeof window !== 'undefined') {
-              localStorage.setItem('admin_show_priority_alerts', String(nextVal));
+          onClick={togglePriorityAlerts}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              togglePriorityAlerts();
             }
           }}
         >
@@ -498,7 +509,7 @@ const DashboardTab = React.memo(function DashboardTab({
           </div>
           <strong className="stat-val" style={{ fontSize: '1.75rem', fontWeight: 800, color: pendingActionsCount > 0 ? '#ef4444' : 'var(--text-primary)' }}>{pendingActionsCount}</strong>
           <span className="stat-desc" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            {showPriorityAlerts ? '▲ Click to collapse alerts' : '▼ Click to expand alerts'}
+            {!hasPendingActions ? 'No pending actions' : showPriorityAlerts ? '▲ Click to collapse alerts' : '▼ Click to expand alerts'}
           </span>
           <span className={`pending-actions-connector ${showPriorityAlerts ? 'expanded' : ''}`} aria-hidden="true">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
@@ -529,7 +540,7 @@ const DashboardTab = React.memo(function DashboardTab({
       </div>
 
       {/* 3. Collapsible Priority Alerts Section (Accordion) */}
-      <div style={{
+      <div id="pending-actions-panel" aria-hidden={!showPriorityAlerts} inert={!showPriorityAlerts} style={{
         maxHeight: showPriorityAlerts ? '1000px' : '0px',
         opacity: showPriorityAlerts ? 1 : 0,
         overflow: 'hidden',
@@ -586,7 +597,8 @@ const DashboardTab = React.memo(function DashboardTab({
                         onNavigateToOrdersWithFilter(
                           alert.filter,
                           alert.view as any,
-                          timeFilter === 'overall' ? undefined : formatDateForInput(filterStartDate)
+                          timeFilter === 'overall' ? undefined : formatDateForInput(filterStartDate),
+                          alert.filter === 'InTransit' && timeFilter !== 'overall' ? filterStartDate.toISOString() : undefined
                         );
                       } else if (alert.onClickAction) {
                         alert.onClickAction();

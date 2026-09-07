@@ -1,5 +1,15 @@
 import { OrderRecord, Product, Banner, FAQ, Inquiry, AdminUser, Notification } from '@/types/cms';
 
+const transitStatuses = new Set(['confirmed', 'processing', 'dispatched', 'out for delivery']);
+const normalizeStatus = (status: unknown) => String(status ?? '').trim().toLowerCase();
+
+export const isInTransitOrder = (order: Pick<OrderRecord, 'status' | 'cancellationStatus'>): boolean => {
+  const cancellationStatus = normalizeStatus(order.cancellationStatus);
+  // A rejected cancellation allows delivery to continue; a rejected order does not.
+  return transitStatuses.has(normalizeStatus(order.status))
+    && (cancellationStatus === '' || cancellationStatus === 'rejected');
+};
+
 export const filterOrders = (
   orders: OrderRecord[],
   searchLower: string,
@@ -7,7 +17,8 @@ export const filterOrders = (
   paymentFilter: string,
   sortOrder: string,
   startDate: string,
-  endDate: string
+  endDate: string,
+  exactStartDate = ''
 ): OrderRecord[] => {
   const sorted = [...orders].sort((a, b) => {
     const dateA = new Date(a.createdAt || 0).getTime();
@@ -31,17 +42,17 @@ export const filterOrders = (
     if (statusFilter === 'All') {
       matchesStatus = true;
     } else if (statusFilter === 'InTransit') {
-      matchesStatus = o.status !== 'Pending' && o.status !== 'Cancelled';
+      matchesStatus = isInTransitOrder(o);
     } else {
       matchesStatus = o.status === statusFilter;
     }
     const matchesPayment = paymentFilter === 'All' || o.paymentMethod === paymentFilter;
     
     let matchesDateRange = true;
-    if (startDate) {
-      const start = new Date(startDate).getTime();
-      const created = new Date(o.createdAt).getTime();
-      if (created < start) matchesDateRange = false;
+    if (startDate || exactStartDate) {
+      const start = new Date(exactStartDate || startDate).getTime();
+      const created = new Date(statusFilter === 'InTransit' ? o.createdAt || o.updatedAt || new Date() : o.createdAt).getTime();
+      if (statusFilter === 'InTransit' ? !(created >= start) : created < start) matchesDateRange = false;
     }
     if (endDate) {
       const end = new Date(endDate);
