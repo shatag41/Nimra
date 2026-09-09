@@ -83,9 +83,9 @@ export default React.memo(function OrdersTab({
     orderSort !== 'latest' || 
     orderStartDate !== '' || 
     orderEndDate !== '';
-  const visibleOrders = orderStatusFilter === 'All'
-    ? filteredOrders.filter((order) => order.status !== 'Delivered' && order.status !== 'Cancelled')
-    : filteredOrders;
+  // `filteredOrders` already applies the selected status filter. In particular,
+  // "All" is a pass-through, so do not apply another status predicate here.
+  const visibleOrders = filteredOrders;
   let visibleCancellationRequests = orderStatusFilter === 'Pending'
     ? cancellationRequests.filter((r) => r.status === 'Pending')
     : orderStatusFilter === 'Confirmed' || orderStatusFilter === 'Approved'
