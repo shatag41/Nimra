@@ -17269,25 +17269,35 @@ body:has(.products-page-skeleton) {
     line-height: 1.35 !important;
   }
 
+  .admin-container .customer-activity-filter-wrapper {
+    width: 100% !important;
+    align-items: stretch !important;
+  }
+
   .admin-container .customer-activity-filter {
     display: flex !important;
     width: 100% !important;
     max-width: none !important;
     gap: 0.16rem !important;
     padding: 0.18rem !important;
-    flex-wrap: nowrap !important;
-    overflow: hidden;
+    flex-wrap: wrap !important;
+    overflow: visible;
   }
 
   .admin-container .customer-activity-filter button {
-    flex: 1 1 0 !important;
-    width: 25% !important;
+    flex: 1 1 auto !important;
     min-width: 0;
-    padding: 0.34rem clamp(0.48rem, 2.7vw, 0.72rem) !important;
+    padding: 0.34rem clamp(0.35rem, 1.8vw, 0.65rem) !important;
     font-size: 0.68rem !important;
     line-height: 1.15 !important;
     text-align: center;
     white-space: nowrap;
+  }
+
+  .admin-container .custom-date-range-picker {
+    justify-content: flex-start !important;
+    gap: 0.45rem !important;
+    padding: 0.35rem 0.5rem !important;
   }
 
   .admin-container .mobile-kpi-grid > .kpi-card {

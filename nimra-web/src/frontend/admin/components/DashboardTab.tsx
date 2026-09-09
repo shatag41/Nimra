@@ -18,7 +18,7 @@ interface DashboardTabProps {
   onOpenCancellationRequests: () => void;
   setActiveTab?: (tab: any) => void;
   notifications?: Notification[];
-  onNavigateToOrdersWithFilter?: (statusFilter: string, view: 'active' | 'cancellations', startDate?: string, exactStartDate?: string) => void;
+  onNavigateToOrdersWithFilter?: (statusFilter: string, view: 'active' | 'cancellations', startDate?: string, exactStartDate?: string, endDate?: string) => void;
 }
 
 const DashboardTab = React.memo(function DashboardTab({
@@ -37,7 +37,9 @@ const DashboardTab = React.memo(function DashboardTab({
 }: DashboardTabProps) {
   const { notify } = useNotification();
   const [remarksByRequest, setRemarksByRequest] = useState<Record<string, string>>({});
-  const [timeFilter, setTimeFilter] = useState<'overall' | 'today' | 'week' | 'month'>('overall');
+  const [timeFilter, setTimeFilter] = useState<'overall' | 'today' | 'week' | 'month' | 'custom'>('overall');
+  const [customStartDate, setCustomStartDate] = useState<string>('');
+  const [customEndDate, setCustomEndDate] = useState<string>('');
   const [hoveredTrendPoint, setHoveredTrendPoint] = useState<any | null>(null);
   const [hoveredBar, setHoveredBar] = useState<any | null>(null);
   const [priorityAlerts, setPriorityAlerts] = useState({ hasActions: false, expanded: false });
@@ -46,27 +48,6 @@ const DashboardTab = React.memo(function DashboardTab({
   const [isProcessingAction, setIsProcessingAction] = useState(false);
   const [lockedRequestIds, setLockedRequestIds] = useState<Set<string>>(() => new Set());
 
-  // Time-filtering calculation setup
-  const now = new Date();
-  let filterStartDate = new Date();
-  if (timeFilter === 'overall') {
-    const dates = [
-      ...orders.map(o => new Date(o.createdAt || o.updatedAt || now).getTime()),
-      ...users.filter(u => typeof u.ID === 'number' && u.ID > 1000000000000).map(u => new Date(u.ID).getTime()),
-    ];
-    const minDate = dates.length > 0 ? Math.min(...dates) : now.getTime() - 30 * 24 * 60 * 60 * 1000;
-    filterStartDate = new Date(minDate);
-    if (now.getTime() - filterStartDate.getTime() < 24 * 60 * 60 * 1000) {
-      filterStartDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    }
-  } else if (timeFilter === 'today') {
-    filterStartDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  } else if (timeFilter === 'week') {
-    filterStartDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  } else if (timeFilter === 'month') {
-    filterStartDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  }
-
   const formatDateForInput = (date: Date) => {
     const yyyy = date.getFullYear();
     const mm = String(date.getMonth() + 1).padStart(2, '0');
@@ -74,17 +55,66 @@ const DashboardTab = React.memo(function DashboardTab({
     return `${yyyy}-${mm}-${dd}`;
   };
 
+  const parseLocalDate = (dateStr: string, isEndOfDay = false): Date | null => {
+    if (!dateStr || typeof dateStr !== 'string') return null;
+    const parts = dateStr.trim().split('-').map(Number);
+    if (parts.length !== 3 || parts.some(isNaN)) return null;
+    const [year, month, day] = parts;
+    if (isEndOfDay) {
+      return new Date(year, month - 1, day, 23, 59, 59, 999);
+    }
+    return new Date(year, month - 1, day, 0, 0, 0, 0);
+  };
+
+  // Time-filtering calculation setup
+  const now = new Date();
+  let filterStartDate = new Date();
+  let filterEndDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+  const dates = [
+    ...orders.map(o => new Date(o.createdAt || o.updatedAt || now).getTime()),
+    ...users.filter(u => typeof u.ID === 'number' && u.ID > 1000000000000).map(u => new Date(u.ID).getTime()),
+  ].filter(t => !isNaN(t));
+  const minDate = dates.length > 0 ? Math.min(...dates) : now.getTime() - 30 * 24 * 60 * 60 * 1000;
+
+  if (timeFilter === 'overall') {
+    filterStartDate = new Date(minDate);
+    if (now.getTime() - filterStartDate.getTime() < 24 * 60 * 60 * 1000) {
+      filterStartDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    }
+    filterEndDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+  } else if (timeFilter === 'today') {
+    filterStartDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    filterEndDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+  } else if (timeFilter === 'week') {
+    filterStartDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    filterEndDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+  } else if (timeFilter === 'month') {
+    filterStartDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    filterEndDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+  } else if (timeFilter === 'custom') {
+    const parsedStart = parseLocalDate(customStartDate, false);
+    const parsedEnd = parseLocalDate(customEndDate, true);
+
+    filterStartDate = parsedStart || new Date(minDate);
+    filterEndDate = parsedEnd || new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+    if (filterStartDate.getTime() > filterEndDate.getTime()) {
+      filterStartDate = new Date(filterEndDate.getTime() - 24 * 60 * 60 * 1000);
+    }
+  }
+
   // General metrics calculations (filtered by selected time filter)
   const filteredOrdersInWindow = orders.filter(o => {
     const d = new Date(o.createdAt || o.updatedAt || now);
-    return d >= filterStartDate;
+    return d >= filterStartDate && d <= filterEndDate;
   });
 
   const normalizeOrderStatus = (status: unknown) => String(status || '').trim().toLowerCase();
   const deliveredOrders = orders.filter(o => normalizeOrderStatus(o.status) === 'delivered');
   const filteredDeliveredOrdersInWindow = deliveredOrders.filter(o => {
     const d = new Date(o.createdAt || o.updatedAt || now);
-    return d >= filterStartDate;
+    return d >= filterStartDate && d <= filterEndDate;
   });
 
   const totalRevenue = filteredDeliveredOrdersInWindow.reduce((sum, o) => sum + Number(o.total || 0), 0);
@@ -107,7 +137,7 @@ const DashboardTab = React.memo(function DashboardTab({
 
   const filteredActiveOrders = activeOrders.filter(o => {
     const d = new Date(o.createdAt || o.updatedAt || now);
-    return d >= filterStartDate;
+    return d >= filterStartDate && d <= filterEndDate;
   });
 
   const activeCustomers = users.filter(user =>
@@ -117,15 +147,20 @@ const DashboardTab = React.memo(function DashboardTab({
 
   const filteredInquiriesInWindow = filteredInquiries.filter(i => {
     const d = new Date(i.Timestamp || now);
-    return d >= filterStartDate;
+    return d >= filterStartDate && d <= filterEndDate;
   });
 
   // Identify new customers (Users registered in filter window - fallback is ID timestamp)
   const newCustomersInWindow = users.filter(u => {
-    if (u.Role !== 'Customer') return false;
-    if (typeof u.ID === 'number' && u.ID > 1000000000000) {
-      const d = new Date(u.ID);
-      return d >= filterStartDate;
+    if (u.Role !== 'Customer' && String(u.Role || '').trim().toUpperCase() !== 'CUSTOMER') return false;
+    let userDate: Date | null = null;
+    if (u.CreatedAt) {
+      userDate = new Date(u.CreatedAt);
+    } else if (typeof u.ID === 'number' && u.ID > 1000000000000) {
+      userDate = new Date(u.ID);
+    }
+    if (userDate && !isNaN(userDate.getTime())) {
+      return userDate >= filterStartDate && userDate <= filterEndDate;
     }
     return false;
   });
@@ -165,7 +200,7 @@ const DashboardTab = React.memo(function DashboardTab({
 
   // Customer Growth & Order Trends Line Chart calculations (7 intervals)
   const chartPointsCount = 7;
-  const timeSpan = now.getTime() - filterStartDate.getTime();
+  const timeSpan = Math.max(filterEndDate.getTime() - filterStartDate.getTime(), 1000 * 60 * 60);
   const intervalMs = timeSpan / chartPointsCount;
 
   const trendPoints = Array.from({ length: chartPointsCount }).map((_, idx) => {
@@ -178,17 +213,22 @@ const DashboardTab = React.memo(function DashboardTab({
     });
 
     const intervalSignups = newCustomersInWindow.filter(u => {
-      if (typeof u.ID === 'number' && u.ID > 1000000000000) {
-        const d = new Date(u.ID);
-        return d >= pStart && d < pEnd;
+      let userDate: Date | null = null;
+      if (u.CreatedAt) {
+        userDate = new Date(u.CreatedAt);
+      } else if (typeof u.ID === 'number' && u.ID > 1000000000000) {
+        userDate = new Date(u.ID);
+      }
+      if (userDate && !isNaN(userDate.getTime())) {
+        return userDate >= pStart && userDate < pEnd;
       }
       return false;
     });
 
     let label = '';
-    if (timeFilter === 'today') {
+    if (timeFilter === 'today' || timeSpan <= 24 * 60 * 60 * 1000) {
       label = pStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else if (timeFilter === 'overall') {
+    } else if (timeFilter === 'overall' || timeSpan > 90 * 24 * 60 * 60 * 1000) {
       label = pStart.toLocaleDateString([], { month: 'short', year: '2-digit' });
     } else {
       label = pStart.toLocaleDateString([], { month: 'short', day: 'numeric' });
@@ -220,7 +260,7 @@ const DashboardTab = React.memo(function DashboardTab({
 
   // Peak Ordering Hours calculations (grouped by hour categories)
   const hourCounts = Array.from({ length: 24 }, () => 0);
-  activeOrders.forEach(o => {
+  filteredActiveOrders.forEach(o => {
     const d = new Date(o.createdAt || o.updatedAt || now);
     const hour = d.getHours();
     hourCounts[hour] += 1;
@@ -261,7 +301,7 @@ const DashboardTab = React.memo(function DashboardTab({
   const newRegistrationsAlertCount = newCustomersInWindow.length;
   const pendingCancellationRequests = cancellationRequests.filter((request) => {
     const d = new Date(request.requestDate || now);
-    return d >= filterStartDate && request.status === 'Pending';
+    return d >= filterStartDate && d <= filterEndDate && request.status === 'Pending';
   });
 
   const pendingActionsCount = 
@@ -401,26 +441,135 @@ const DashboardTab = React.memo(function DashboardTab({
             Live enterprise e-commerce metrics, order trends, and customer analytics.
           </p>
         </div>
-        <div className="customer-activity-filter" style={{ display: 'flex', gap: '0.25rem', background: 'var(--bg-secondary)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-          {(['overall', 'today', 'week', 'month'] as const).map(filter => (
-            <button
-              key={filter}
-              onClick={() => setTimeFilter(filter)}
+        <div className="customer-activity-filter-wrapper" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem', maxWidth: '100%' }}>
+          <div className="customer-activity-filter" style={{ display: 'flex', gap: '0.25rem', background: 'var(--bg-secondary)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border-color)', flexWrap: 'wrap' }}>
+            {([
+              { id: 'overall', label: 'Overall' },
+              { id: 'today', label: 'Today' },
+              { id: 'week', label: 'Week' },
+              { id: 'month', label: 'Month' },
+              { id: 'custom', label: 'Custom Range' },
+            ] as const).map(filter => (
+              <button
+                key={filter.id}
+                type="button"
+                onClick={() => {
+                  setTimeFilter(filter.id);
+                  if (filter.id === 'custom' && (!customStartDate || !customEndDate)) {
+                    if (!customStartDate) setCustomStartDate(formatDateForInput(new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)));
+                    if (!customEndDate) setCustomEndDate(formatDateForInput(now));
+                  }
+                }}
+                style={{
+                  padding: '0.45rem 0.85rem',
+                  borderRadius: '6px',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: timeFilter === filter.id ? 'var(--primary-color)' : 'transparent',
+                  color: timeFilter === filter.id ? '#ffffff' : 'var(--text-secondary)',
+                  transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+
+          {timeFilter === 'custom' && (
+            <div 
+              className="custom-date-range-picker"
               style={{
-                padding: '0.45rem 1rem',
-                borderRadius: '6px',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                border: 'none',
-                cursor: 'pointer',
-                background: timeFilter === filter ? 'var(--primary-color)' : 'transparent',
-                color: timeFilter === filter ? '#ffffff' : 'var(--text-secondary)',
-                transition: 'all 0.15s ease'
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.65rem',
+                background: 'var(--bg-secondary)',
+                padding: '0.45rem 0.75rem',
+                borderRadius: '8px',
+                border: '1px solid var(--border-color)',
+                flexWrap: 'wrap',
+                width: '100%',
+                justifyContent: 'flex-end'
               }}
             >
-              {filter.charAt(0).toUpperCase() + filter.slice(1)}
-            </button>
-          ))}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                  From:
+                </label>
+                <div className="date-input-wrap" style={{ width: 'auto' }}>
+                  <input
+                    type="date"
+                    value={customStartDate}
+                    max={customEndDate || formatDateForInput(now)}
+                    onChange={(e) => setCustomStartDate(e.target.value)}
+                    className="form-input filter-input"
+                    style={{
+                      fontSize: '0.78rem',
+                      height: '30px',
+                      padding: '0 0.45rem',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-primary)',
+                      color: 'var(--text-primary)'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                  To:
+                </label>
+                <div className="date-input-wrap" style={{ width: 'auto' }}>
+                  <input
+                    type="date"
+                    value={customEndDate}
+                    min={customStartDate}
+                    max={formatDateForInput(now)}
+                    onChange={(e) => setCustomEndDate(e.target.value)}
+                    className="form-input filter-input"
+                    style={{
+                      fontSize: '0.78rem',
+                      height: '30px',
+                      padding: '0 0.45rem',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-primary)',
+                      color: 'var(--text-primary)'
+                    }}
+                  />
+                </div>
+              </div>
+
+              {(customStartDate || customEndDate) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCustomStartDate(formatDateForInput(new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)));
+                    setCustomEndDate(formatDateForInput(now));
+                  }}
+                  title="Reset to past 7 days"
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-muted)',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    padding: '0.2rem 0.4rem',
+                    borderRadius: '4px',
+                    transition: 'color 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--primary-color)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -598,7 +747,8 @@ const DashboardTab = React.memo(function DashboardTab({
                           alert.filter,
                           alert.view as any,
                           timeFilter === 'overall' ? undefined : formatDateForInput(filterStartDate),
-                          alert.filter === 'InTransit' && timeFilter !== 'overall' ? filterStartDate.toISOString() : undefined
+                          alert.filter === 'InTransit' && timeFilter !== 'overall' ? filterStartDate.toISOString() : undefined,
+                          timeFilter === 'overall' ? undefined : formatDateForInput(filterEndDate)
                         );
                       } else if (alert.onClickAction) {
                         alert.onClickAction();

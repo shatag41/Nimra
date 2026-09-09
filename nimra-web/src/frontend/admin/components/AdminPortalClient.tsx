@@ -147,15 +147,15 @@ export default function AdminPortalClient({ initialCMSData }: AdminPortalClientP
     };
   }, [isMobileSidebarOpen]);
 
-  const handleNavigateToOrdersWithFilter = (statusFilter: string, view: 'active' | 'cancellations', startDate?: string, exactStartDate?: string) => {
+  const handleNavigateToOrdersWithFilter = (statusFilter: string, view: 'active' | 'cancellations', startDate?: string, exactStartDate?: string, endDate?: string) => {
     filters.setOrderStatusFilter(statusFilter);
     setOrdersView(view);
     if (startDate) {
       filters.setOrderStartDate(startDate);
-      filters.setOrderEndDate('');
+      filters.setOrderEndDate(endDate || '');
     } else {
       filters.setOrderStartDate('');
-      filters.setOrderEndDate('');
+      filters.setOrderEndDate(endDate || '');
     }
     filters.setOrderExactStartDate(exactStartDate || '');
     if (statusFilter === 'InTransit') {
