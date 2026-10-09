@@ -26,7 +26,7 @@ const LocationIcon = () => (
 export const MobileFooterSeparator = () => <div className="mobile-footer-separator" aria-hidden="true" />;
 
 export default React.memo(function Footer({ companyInfo }: FooterProps) {
-  const currentYear = new Date().getFullYear();
+  const currentYear = 2023;
   const brandName = companyInfo.BrandName || 'NIMRA';
   const [emailName, emailDomain] = (companyInfo.Email || '').split('@');
 

@@ -122,7 +122,7 @@ export default function LoginClient() {
         </form>
 
         <div className="login-footer">
-          <p>© 2026 NIMRA. Secure Shopify-Like Console.</p>
+          <p>© 2023 NIMRA. Secure Shopify-Like Console.</p>
         </div>
       </div>
 

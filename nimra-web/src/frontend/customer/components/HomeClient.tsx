@@ -375,7 +375,7 @@ export default function HomeClient({ banners: initialBanners, products: initialP
                 </div>
               </div>
               <div className="story-badge-pill">
-                <span>Since 2026</span>
+                <span>Since 2023</span>
               </div>
             </div>
           </div>
