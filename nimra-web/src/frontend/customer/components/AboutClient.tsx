@@ -56,7 +56,6 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
   ];
 
   const features = [
-    { title: 'BIS Certified', desc: 'IS 14543 Standard', icon: '🏆' },
     { title: '10-Step Purity', desc: 'Advanced Filtration', icon: '🛡️' },
     { title: 'Touch-Free', desc: 'Automated Bottling', icon: '🤖' },
     { title: 'Mineral+', desc: 'Essential Nutrients', icon: '⚡' }
@@ -102,7 +101,7 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
                   <p>{companyInfo.AboutStory}</p>
                   <p>
                     Crafted with state-of-the-art technology, NIMRA delivers premium, 
-                    revitalizing hydration that rigorously exceeds BIS and FSSAI standards.
+                    revitalizing hydration that rigorously exceeds FSSAI standards.
                   </p>
                 </div>
                 

@@ -50,7 +50,6 @@ export default React.memo(function Footer({ companyInfo }: FooterProps) {
                 Reliable packaged drinking water, purified for homes, offices, and events across Pune.
               </p>
               <div className="footer-certs" aria-label="Certifications">
-                <span><CheckIcon /> BIS Certified</span>
                 <span><CheckIcon /> FSSAI Licensed</span>
                 <span><CheckIcon /> ISO Quality</span>
               </div>
