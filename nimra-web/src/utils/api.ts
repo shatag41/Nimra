@@ -131,7 +131,7 @@ export const mockCMSData: CMSData = {
     {
       ID: 2,
       Question: "Where is NIMRA water manufactured?",
-      Answer: "NIMRA water is manufactured at our state-of-the-art packaging plant located at SR No. 83/1/3/4/2, Near Jagtap Vasti, Daund, Pune, Lingali - 413801. Our facility complies with all FSSAI hygiene norms.",
+      Answer: "NIMRA water is manufactured at our state-of-the-art packaging plant located at SR No. 83/1/3/4/2, Near Daund, Pune - 413801. Our facility complies with all FSSAI hygiene norms.",
       Active: true
     },
     {
@@ -143,7 +143,7 @@ export const mockCMSData: CMSData = {
     {
       ID: 4,
       Question: "Is there a delivery fee for corporate jars?",
-      Answer: "Delivery charges vary based on distance, quantity, and scheduled frequency. For Camp (Pune) and Daund (Lingali) surrounding regions, we offer free shipping on minimum bulk orders.",
+      Answer: "Delivery charges vary based on distance, quantity, and scheduled frequency. For Camp (Pune) and Daund surrounding regions, we offer free shipping on minimum bulk orders.",
       Active: true
     }
   ],
@@ -152,13 +152,13 @@ export const mockCMSData: CMSData = {
     Phone: "+91 8888378411",
     Email: "tsenterprises.nat@gmail.com",
     OfficeAddress: "#10, Gulistan Building, K.B. Hidayatullah Road, Camp, Pune – 411001",
-    PlantAddress: "SR No. 83/1/3/4/2, Near Jagtap Vasti, Daund, Pune, Lingali – 413801",
+    PlantAddress: "SR No. 83/1/3/4/2, Near Daund, Pune - 413801",
     WhatsAppNumber: "918888378411",
     OfficeMapEmbed: "https://www.google.com/maps?q=Gulistan%20Building,%20K.B.%20Hidayatullah%20Road,%20Camp,%20Pune%20-%20411001&output=embed",
-    PlantMapEmbed: "https://www.google.com/maps?q=SR%20No.%2083/1/3/4/2,%20Near%20Jagtap%20Vasti,%20Daund,%20Pune,%20Lingali%20-%20413801&output=embed",
+    PlantMapEmbed: "https://www.google.com/maps?q=SR%20No.%2083/1/3/4/2,%20Near%20Daund,%20Pune%20-%20413801&output=embed",
     AboutStory: "At NIMRA, we believe that pure drinking water is the cornerstone of robust health and energetic living. Founded under T.S. Enterprises, NIMRA has committed itself to raising the standard of hydration. By merging nature's finest water sources with high-end, advanced purification technologies, we ensure that every sip of NIMRA packaged drinking water is crisp, refreshing, and filled with vital minerals.",
     QualityText: "Quality is not just a checklist at NIMRA; it is our philosophy. Our state-of-the-art testing labs run strict controls every hour. The water undergoes dual carbon filtration, high-pressure reverse osmosis membranes, mineral configuration balancing, and double sterilization through UV and ozone barriers to keep the water completely sterile, clean, and delicious.",
-    InfrastructureText: "Our Daund (Lingali) manufacturing plant represents the pinnacle of modern beverage packaging technology. Spanning several acres, the facility features fully automated bottle blow-moulding, touch-free filling lines, strict HEPA-filtered clean room environments, and rapid logistics storage to pack and dispatch thousands of cases daily with absolute cleanliness."
+    InfrastructureText: "Our Daund manufacturing plant represents the pinnacle of modern beverage packaging technology. Spanning several acres, the facility features fully automated bottle blow-moulding, touch-free filling lines, strict HEPA-filtered clean room environments, and rapid logistics storage to pack and dispatch thousands of cases daily with absolute cleanliness."
   }
 };
 
