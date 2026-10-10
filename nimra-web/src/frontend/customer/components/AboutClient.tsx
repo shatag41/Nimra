@@ -373,18 +373,20 @@ export default function AboutClient({ companyInfo, faqs }: AboutClientProps) {
         /* ── Feature Row ── */
         .feature-row {
           display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 6px;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 8px;
+          align-items: stretch;
         }
         .feature-card {
           display: flex;
           align-items: center;
-          gap: 6px;
+          gap: 8px;
           background: var(--bg-alt);
-          padding: 6px 10px;
+          padding: 8px 10px;
           border-radius: 8px;
           border: 1px solid var(--border);
           transition: all 0.2s;
+          height: 100%;
         }
         .feature-card:hover {
           background: var(--brand-light);
