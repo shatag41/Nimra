@@ -64,7 +64,7 @@ export default function Sidebar({ currentUser, activeTab, setActiveTab, isProfil
     { id: 'products', name: 'Products', icon: <NavIcon name="products" />, module: 'products' },
     { id: 'users', name: 'Customers', icon: <NavIcon name="customers" />, module: 'customers' },
     { id: 'admins', name: 'Admin Management', icon: <NavIcon name="admins" />, module: 'admins', superOnly: true },
-    { id: 'banners', name: 'Homepage Banners', icon: <NavIcon name="banners" />, module: 'banners' },
+    // { id: 'banners', name: 'Homepage Banners', icon: <NavIcon name="banners" />, module: 'banners' },
     { id: 'faqs', name: 'Store FAQs', icon: <NavIcon name="faqs" />, module: 'faqs' },
     { id: 'inquiries', name: 'Inquiries', icon: <NavIcon name="inquiries" />, module: 'inquiries' },
     { id: 'notifications', name: 'Notifications', icon: <NavIcon name="notifications" />, module: 'notifications' },

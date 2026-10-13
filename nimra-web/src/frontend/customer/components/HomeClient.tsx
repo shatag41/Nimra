@@ -176,13 +176,28 @@ export default function HomeClient({ banners: initialBanners, products: initialP
     <div className="home-page" ref={homePageRef}>
       {/* ─── 1. HERO CAROUSEL ───────────────────────────────────────────────── */}
       <section className="hero-section" ref={heroRef} onMouseMove={handleHeroPointer} onMouseLeave={resetHeroPointer}>
+         <video
+    className="hero-background-video"
+    autoPlay
+    muted
+    loop
+    playsInline
+    preload="auto"
+    aria-hidden="true"
+  >
+    <source
+      src="/videos/hero-background.mp4"
+      type="video/mp4"
+    />
+  </video>
+
         {banners.map((banner, index) => (
           <div
             key={banner.ID}
             className={`hero-slide ${index === activeBanner ? 'active' : ''}`}
             aria-hidden={index !== activeBanner}
           >
-            {loadedBannerIndexes.has(index) && banner.ImageUrl && (
+           {/* {loadedBannerIndexes.has(index) && banner.ImageUrl && (
               <Image
                 src={banner.ImageUrl}
                 alt=""
@@ -193,7 +208,9 @@ export default function HomeClient({ banners: initialBanners, products: initialP
                 sizes="100vw"
                 className="hero-slide-image"
               />
-            )}
+            )} */}
+            
+          
             <div className="hero-depth hero-crystals" aria-hidden="true" />
             <div className="hero-fog hero-fog-one" aria-hidden="true" />
             <div className="hero-fog hero-fog-two" aria-hidden="true" />
