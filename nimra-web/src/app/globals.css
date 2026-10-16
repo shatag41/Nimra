@@ -14148,12 +14148,18 @@ body:has(.products-page-skeleton) {
   border-radius:var(--radius-lg);
   background:var(--bg-primary);
   box-shadow:0 8px 24px rgba(15,23,42,.06);
-  overflow-x:auto;
+  max-height:70vh;
+  overflow:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
 }
 .admin-container .active-orders-table { border-collapse:separate; border-spacing:0; }
 .admin-container .active-orders-table thead th {
+  position:sticky;
+  top:0;
+  z-index:2;
   padding:.78rem 1rem !important;
-  background:rgba(var(--primary-rgb),.07) !important;
+  background:var(--bg-primary) !important;
   border-bottom:1px solid rgba(var(--primary-rgb),.16) !important;
   color:var(--text-secondary) !important;
   font-size:.68rem !important;
