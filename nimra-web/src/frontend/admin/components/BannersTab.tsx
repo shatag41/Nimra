@@ -55,7 +55,16 @@ export default function BannersTab({
         </div>
 
       <div className="table-responsive banners-table-wrap">
-        <table className="admin-table">
+        <table className="admin-table banners-admin-table">
+          <colgroup>
+            <col className="banner-image-col" />
+            <col className="banner-title-col" />
+            <col className="banner-subtitle-col" />
+            <col className="banner-button-col" />
+            <col className="banner-link-col" />
+            <col className="banner-status-col" />
+            <col className="banner-actions-col" />
+          </colgroup>
           <thead>
             <tr>
               <th>Slide Image</th>

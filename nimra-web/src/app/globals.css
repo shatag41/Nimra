@@ -20390,3 +20390,77 @@ body:has(.products-page-skeleton) {
   color: white;
 }
 
+/* Keep the Homepage Banners table within the admin content width. */
+.admin-container .banners-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden !important;
+}
+
+.admin-container .banners-admin-table {
+  width: 100%;
+  min-width: 0 !important;
+  table-layout: fixed;
+}
+
+.admin-container .banners-admin-table .banner-image-col { width: 8%; }
+.admin-container .banners-admin-table .banner-title-col { width: 17%; }
+.admin-container .banners-admin-table .banner-subtitle-col { width: 25%; }
+.admin-container .banners-admin-table .banner-button-col { width: 12%; }
+.admin-container .banners-admin-table .banner-link-col { width: 12%; }
+.admin-container .banners-admin-table .banner-status-col { width: 10%; }
+.admin-container .banners-admin-table .banner-actions-col { width: 16%; }
+
+.admin-container .banners-admin-table th,
+.admin-container .banners-admin-table td {
+  min-width: 0;
+  padding: 0.7rem 0.55rem !important;
+  text-align: left;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+
+.admin-container .banners-admin-table th:nth-child(5),
+.admin-container .banners-admin-table td:nth-child(5),
+.admin-container .banners-admin-table th:nth-child(6),
+.admin-container .banners-admin-table td:nth-child(6) {
+  white-space: nowrap;
+}
+
+.admin-container .banners-admin-table td:nth-child(5) code {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  font-size: 0.82em;
+}
+
+.admin-container .banners-admin-table td:nth-child(6) .badge {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.admin-container .banners-admin-table .actions-flex {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
+.admin-container .banners-admin-table .actions-flex .btn-table {
+  margin: 0;
+}
+
+@media (min-width: 769px) and (max-width: 1100px) {
+  .admin-container .banners-admin-table th,
+  .admin-container .banners-admin-table td {
+    padding-right: 0.35rem !important;
+    padding-left: 0.35rem !important;
+    font-size: 0.78rem !important;
+  }
+
+  .admin-container .banners-admin-table .table-thumbnail.wide {
+    width: 4rem;
+  }
+}
+
