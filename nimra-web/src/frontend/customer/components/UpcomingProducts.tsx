@@ -9,6 +9,13 @@ interface UpcomingProductsProps {
 }
 
 const AUTOPLAY_DELAY = 5500;
+const BUBBLES = [
+  { left: '8%', size: '8px', delay: '0s', duration: '9s' },
+  { left: '22%', size: '14px', delay: '1.2s', duration: '12s' },
+  { left: '46%', size: '6px', delay: '0.4s', duration: '8s' },
+  { left: '68%', size: '18px', delay: '2s', duration: '11s' },
+  { left: '85%', size: '10px', delay: '1.6s', duration: '10s' },
+];
 
 function getFeatures(product: Product) {
   const fallback = ['Premium Quality', 'Pure Taste', 'Event Ready'];
@@ -26,7 +33,7 @@ function getTagline(product: Product) {
   return firstSentence.length > 92 ? `${firstSentence.slice(0, 89).trim()}…` : firstSentence;
 }
 
-export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
+export const UpcomingProducts = React.memo(function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [direction, setDirection] = useState<'next' | 'previous'>('next');
@@ -101,13 +108,7 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
     >
       <div className="launch-aurora" aria-hidden="true" />
       <div className="bubble-bg" aria-hidden="true">
-        {[
-          { left: '8%', size: '8px', delay: '0s', duration: '9s' },
-          { left: '22%', size: '14px', delay: '1.2s', duration: '12s' },
-          { left: '46%', size: '6px', delay: '0.4s', duration: '8s' },
-          { left: '68%', size: '18px', delay: '2s', duration: '11s' },
-          { left: '85%', size: '10px', delay: '1.6s', duration: '10s' },
-        ].map((bubble, index) => (
+        {BUBBLES.map((bubble, index) => (
           <span
             key={index}
             className="bubble"
@@ -160,7 +161,7 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
               <div className="launch-product-wrap">
                 {product.ImageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img className="launch-product-image" src={product.ImageUrl} alt={product.Name} />
+                  <img className="launch-product-image" src={product.ImageUrl} alt={product.Name} loading="lazy" decoding="async" />
                 ) : (
                   <span className="launch-product-fallback">NIMRA</span>
                 )}
@@ -610,4 +611,4 @@ export function UpcomingProducts({ upcomingProducts }: UpcomingProductsProps) {
       `}</style>
     </section>
   );
-}
+});
