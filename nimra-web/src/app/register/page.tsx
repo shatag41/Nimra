@@ -84,7 +84,7 @@ export default function RegisterPage() {
     const storedCheckoutReturn = hasCheckoutNext || hasGuestCartItems() ? readCheckoutAuthReturn() : null;
     const isCheckoutRegistration = hasCheckoutNext || hasGuestCartItems();
     const redirectTo = isCheckoutRegistration
-      ? (hasCheckoutNext ? safeNext : storedCheckoutReturn || '/checkout')
+      ? (hasCheckoutNext ? safeNext || '/checkout' : storedCheckoutReturn || '/checkout')
       : '/customer-portal';
     registrationSourceRef.current = isCheckoutRegistration ? 'cart' : source;
     registrationRedirectRef.current = redirectTo;
