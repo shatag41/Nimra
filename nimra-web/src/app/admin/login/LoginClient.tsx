@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, FormEvent, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, FormEvent } from 'react';
 import { sendRequest } from '@/utils/api';
 import { useAuth } from '@/frontend/customer/contexts/AuthContext';
 import { isAdminRole } from '@/frontend/admin/utils/accessControl';
@@ -9,19 +8,11 @@ import LoadingButton from '@/frontend/shared/LoadingButton';
 import { AUTH_ERROR_MESSAGES, normalizeAuthErrorMessage } from '@/utils/authMessages';
 
 export default function LoginClient() {
-  const router = useRouter();
-  const { user, isLoading: authLoading, login } = useAuth();
+  const { login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  // Redirect if already logged in
-  useEffect(() => {
-    if (!authLoading && isAdminRole(user?.Role)) {
-      router.replace('/admin');
-    }
-  }, [authLoading, router, user]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
