@@ -1020,20 +1020,24 @@ export function Orders({ orders, loadingOrders, onRefresh, mobileSummary }: Orde
           color: var(--text-muted);
         }
         .order-card-id-value-row {
-          display: block;
-          line-height: 1.5;
+          display: flex;
+          align-items: center;
+          gap: 0.3rem;
           width: 100%;
+          min-width: 0;
+          flex-wrap: nowrap;
         }
-        /* Allow Order ID to wrap cleanly */
+        /* Keep long IDs inside the flex row beside the copy control. */
         .order-card-id-value {
+          min-width: 0;
+          flex: 1 1 auto;
           font-family: var(--font-heading);
           font-weight: 700;
           font-size: 0.82rem;
           color: var(--text-primary);
-          word-break: break-word;
-          overflow-wrap: break-word;
-          white-space: normal;
-          display: inline;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
         /* Status badge container */
         .order-card-top-row-right {
@@ -1054,11 +1058,9 @@ export function Orders({ orders, loadingOrders, onRefresh, mobileSummary }: Orde
           transition: color 150ms ease;
           min-width: 24px;
           min-height: 24px;
+          flex: 0 0 24px;
+          margin: 0;
           border-radius: 6px;
-          vertical-align: middle;
-          margin-left: 0.3rem;
-          position: relative;
-          top: -2px;
         }
         .order-card-copy-btn:hover {
           color: var(--primary-color);
