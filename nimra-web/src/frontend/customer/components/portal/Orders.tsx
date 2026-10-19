@@ -1002,15 +1002,15 @@ export function Orders({ orders, loadingOrders, onRefresh, mobileSummary }: Orde
           align-items: flex-start;
           justify-content: space-between;
           gap: 0.6rem;
-          flex-wrap: wrap; /* allow status badge to wrap if necessary */
+          flex-wrap: nowrap;
         }
-        /* ID block takes all remaining space and wraps */
+        /* Let the ID shrink before the status and copy controls. */
         .order-card-id-block {
           display: flex;
           flex-direction: column;
           gap: 0.12rem;
           min-width: 0;
-          flex: 1 1 min-content;
+          flex: 1 1 0;
         }
         .order-card-id-label {
           font-size: 0.62rem;
