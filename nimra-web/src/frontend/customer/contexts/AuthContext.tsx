@@ -300,6 +300,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(userData);
     setIsNewAccountSession(session.isNewAccount === true);
     setIsLoading(false);
+    window.location.replace(destination);
   }, []);
 
   const clearSession = useCallback(() => {
