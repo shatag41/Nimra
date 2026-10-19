@@ -1022,8 +1022,9 @@ export function Orders({ orders, loadingOrders, onRefresh, mobileSummary }: Orde
         }
         .order-mobile-card .order-card-id-value-row {
           display: flex;
+          flex-direction: row;
           align-items: center;
-          gap: 0.3rem;
+          gap: 8px;
           width: 100%;
           min-width: 0;
           flex-wrap: nowrap;
@@ -1031,7 +1032,7 @@ export function Orders({ orders, loadingOrders, onRefresh, mobileSummary }: Orde
         /* Keep long IDs inside the flex row beside the copy control. */
         .order-mobile-card .order-card-id-value {
           min-width: 0;
-          flex: 1;
+          flex: 1 1 0%;
           font-family: var(--font-heading);
           font-weight: 700;
           font-size: 0.82rem;
@@ -1045,7 +1046,7 @@ export function Orders({ orders, loadingOrders, onRefresh, mobileSummary }: Orde
           display: flex;
           align-items: center;
           gap: 0.3rem;
-          flex: 0 0 auto;
+          flex: 0 0 24px;
         }
         .order-mobile-card .order-card-copy-btn {
           background: none;

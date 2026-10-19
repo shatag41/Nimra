@@ -15207,6 +15207,50 @@ body:has(.products-page-skeleton) {
     word-break: normal;
   }
 
+  .portal-page .orders-panel .order-mobile-card .order-card-top-row {
+    min-width: 0;
+    flex-wrap: nowrap;
+  }
+
+  .portal-page .orders-panel .order-mobile-card .order-card-id-block {
+    min-width: 0;
+    flex: 1 1 0%;
+  }
+
+  .portal-page .orders-panel .order-mobile-card .order-card-id-value-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .portal-page .orders-panel .order-mobile-card .order-card-id-value {
+    flex: 1 1 0%;
+    min-width: 0;
+    white-space: nowrap !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  .portal-page .orders-panel .order-mobile-card .order-card-top-row-right {
+    flex: 0 0 auto;
+  }
+
+  .portal-page .orders-panel .order-mobile-card .order-card-copy-btn {
+    flex: 0 0 24px;
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .portal-page .profile-detail-item {
     display: grid !important;
     grid-template-columns: minmax(3.75rem, auto) minmax(0, 1fr);
