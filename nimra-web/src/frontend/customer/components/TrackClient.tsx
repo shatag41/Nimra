@@ -810,7 +810,7 @@ export default function TrackClient() {
 
         .results-dashboard {
           display: grid;
-          gap: clamp(1.25rem, 2vw, 1.8rem);
+          gap: clamp(0.8rem, 1.4vw, 1.1rem);
         }
 
         .premium-card {
@@ -866,6 +866,41 @@ export default function TrackClient() {
           letter-spacing: 0;
         }
 
+        .results-dashboard .order-info-card,
+        .results-dashboard .timeline-card {
+          padding: clamp(0.45rem, 0.7vw, 0.65rem);
+        }
+
+        .results-dashboard .card-heading {
+          gap: 0.35rem;
+          margin-bottom: 0.2rem;
+        }
+
+        .results-dashboard .card-heading h2 {
+          margin-top: 0;
+          margin-bottom: 0;
+        }
+
+        .results-dashboard .order-info-card .card-heading h2,
+        .results-dashboard .timeline-card .card-heading h2 {
+          font-size: clamp(1rem, 0.96rem + 0.24vw, 1.2rem);
+          font-weight: 700;
+        }
+
+        .results-dashboard .timeline-card .card-heading {
+          align-items: flex-start;
+        }
+
+        .timeline-card .progress-percent {
+          align-self: flex-start;
+        }
+
+        .order-info-card .status-pill,
+        .timeline-card .progress-percent {
+          min-height: 1.65rem;
+          padding: 0.2rem 0.58rem;
+        }
+
         .status-pill,
         .progress-percent,
         .item-count {
@@ -898,12 +933,12 @@ export default function TrackClient() {
         .info-grid {
           display: grid;
           grid-template-columns: repeat(6, minmax(0, 1fr));
-          gap: 0.65rem;
+          gap: 0.32rem;
         }
 
         .info-grid div {
           min-width: 0;
-          padding: 0.82rem;
+          padding: 0.28rem 0.42rem;
           border: 1px solid rgba(147, 197, 253, 0.22);
           border-radius: 16px;
           background: var(--track-inner-bg, rgba(255, 255, 255, 0.5));
@@ -919,7 +954,7 @@ export default function TrackClient() {
 
         .info-grid strong {
           display: block;
-          margin-top: 0.18rem;
+          margin-top: 0.06rem;
           overflow: hidden;
           color: var(--track-text);
           font-size: 0.92rem;
@@ -935,7 +970,7 @@ export default function TrackClient() {
 
         .info-grid .order-id-field {
           grid-column: span 2;
-          padding: 1rem;
+          padding: 0.32rem 0.48rem;
         }
 
         .info-grid .order-id-field strong {
@@ -946,7 +981,7 @@ export default function TrackClient() {
           display:block;
           width:100%;
           min-width:0;
-          margin:.18rem 0 0;
+          margin:.08rem 0 0;
           padding:0;
           overflow:hidden;
           border:0;
@@ -968,8 +1003,10 @@ export default function TrackClient() {
           position: relative;
           display: grid;
           grid-template-columns: repeat(6, minmax(0, 1fr));
-          gap: 0.7rem;
-          padding-top: 0.25rem;
+          gap: 0.18rem;
+          padding: 0.05rem 0 0.2rem;
+          min-width: 0;
+          overflow: visible;
         }
 
         .timeline.timeline-cancelled {
@@ -978,7 +1015,7 @@ export default function TrackClient() {
 
         .timeline-track {
           position: absolute;
-          top: 1.25rem;
+          top: 0.78rem;
           left: calc(100% / 12);
           right: calc(100% / 12);
           height: 3px;
@@ -1008,14 +1045,17 @@ export default function TrackClient() {
           z-index: 1;
           display: grid;
           justify-items: center;
-          gap: 0.32rem;
+          align-content: start;
+          gap: 0.06rem;
+          min-width: 0;
+          overflow: visible;
           text-align: center;
           color: var(--track-muted);
         }
 
         .step-dot {
-          width: 2.35rem;
-          height: 2.35rem;
+          width: 1.55rem;
+          height: 1.55rem;
           display: grid;
           place-items: center;
           border: 1px solid var(--track-step-border, rgba(147, 197, 253, 0.42));
@@ -1048,8 +1088,8 @@ export default function TrackClient() {
         }
 
         .inner-pulse {
-          width: 0.72rem;
-          height: 0.72rem;
+          width: 0.62rem;
+          height: 0.62rem;
           border-radius: 999px;
           background: var(--track-accent);
           box-shadow: 0 0 16px rgba(37, 99, 235, 0.8);
@@ -1057,16 +1097,18 @@ export default function TrackClient() {
 
         .timeline-step strong {
           color: var(--track-text);
-          font-size: 0.8rem;
+          font-size: 0.76rem;
           font-weight: 850;
-          line-height: 1.2;
+          line-height: 1.15;
         }
 
         .timeline-step p {
           max-width: 9rem;
+          margin: 0;
           color: var(--track-muted);
-          font-size: 0.68rem;
-          line-height: 1.35;
+          font-size: 0.64rem;
+          line-height: 1.25;
+          overflow-wrap: anywhere;
         }
 
         .detail-grid {
@@ -1263,7 +1305,33 @@ export default function TrackClient() {
 
           .info-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.32rem;
           }
+
+          .results-dashboard .order-info-card,
+          .results-dashboard .timeline-card {
+            padding: 0.48rem;
+          }
+
+          .info-grid div {
+            padding: 0.3rem 0.4rem;
+          }
+
+          .info-grid .order-id-field {
+            padding: 0.32rem 0.44rem;
+          }
+
+          .timeline {
+            gap: 0.2rem;
+          }
+
+          .timeline-step strong,
+          .timeline-step p {
+            overflow-wrap: anywhere;
+          }
+
+          .timeline-step strong { font-size: 0.73rem; }
+          .timeline-step p { font-size: 0.62rem; line-height: 1.22; }
 
         }
 
@@ -1272,6 +1340,10 @@ export default function TrackClient() {
             padding-top: 0;
             padding-bottom:calc(var(--mobile-nav-height,64px) + 1rem + env(safe-area-inset-bottom));
             overflow-x:hidden;
+          }
+
+          .track-page:has(.results-dashboard) {
+            padding-bottom: calc(var(--mobile-nav-height, 64px) + 3.5rem + env(safe-area-inset-bottom));
           }
 
           :global(body:has(.track-page .results-dashboard) .whatsapp-fab) {
@@ -1349,40 +1421,42 @@ export default function TrackClient() {
           .tracking-flow:not(.guest-view) .track-button { min-height:42px;padding-inline:.75rem;font-size:.75rem;box-shadow:0 8px 20px rgba(37,99,235,.24); }
 
           .info-grid {
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: minmax(0, 1fr);
             gap:.48rem;
           }
 
           .results-dashboard { min-width:0;gap:.72rem; }
-          .order-info-card,.timeline-card { min-width:0;border-radius:1rem; }
-          .card-heading { gap:.5rem;margin-bottom:.62rem; }
+          .results-dashboard .order-info-card,.results-dashboard .timeline-card { min-width:0;padding:.38rem;border-radius:1rem; }
+          .results-dashboard .card-heading { gap:.3rem;margin-bottom:.22rem; }
           .results-dashboard .card-heading h2 { margin-top:.06rem;font-size:16px !important;line-height:1.1 !important;font-weight:750;letter-spacing:-.01em; }
+          .results-dashboard .order-info-card .card-heading h2,
+          .results-dashboard .timeline-card .card-heading h2 { font-size:15px !important; }
           .eyebrow { font-size:.56rem;letter-spacing:.08em; }
-          .status-pill,.progress-percent { min-height:1.65rem;padding:.2rem .52rem;font-size:.66rem; }
-          .info-grid div { min-width:0;padding:.58rem .62rem;border-radius:.72rem; }
+          .status-pill,.progress-percent { min-height:1.5rem;padding:.14rem .42rem;font-size:.66rem; }
+          .info-grid div { min-width:0;padding:.28rem .4rem;border-radius:.72rem; }
           .info-grid span { font-size:.58rem; }
           .info-grid strong,.tracked-order-id { min-width:0;max-width:100%;font-size:.78rem;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
-          .info-grid .order-id-field { grid-column:1 / -1;padding:.62rem; }
+          .info-grid .order-id-field { grid-column:1;padding:.3rem .44rem; }
           .tracked-order-id { font-size:.82rem;font-weight:700; }
 
-          .timeline { gap:.55rem !important;padding-left:0 !important; }
-          .timeline-step { min-height:2.75rem;column-gap:.62rem; }
-          .step-dot { width:2rem;height:2rem; }
-          .timeline-track { left:.92rem; }
+          .timeline { gap:.24rem !important;padding:0 0 .12rem !important; }
+          .timeline-step { min-height:2.15rem;column-gap:.48rem; }
+          .step-dot { width:1.55rem;height:1.55rem; }
+          .timeline-track { left:.82rem; }
           .timeline-step strong { font-size:.76rem; }
           .timeline-step p { margin-top:.05rem;font-size:.63rem;line-height:1.28; }
 
           .timeline,
           .timeline.timeline-cancelled {
             grid-template-columns: 1fr;
-            gap: 0.8rem;
+            gap: 0.32rem;
             padding-left: 0.15rem;
           }
 
           .timeline-track {
-            top: 1.1rem;
-            bottom: 1.1rem;
-            left: 1.08rem;
+            top: 0.78rem;
+            bottom: 0.78rem;
+            left: 0.97rem;
             right: auto;
             width: 3px;
             height: auto;
@@ -1394,10 +1468,10 @@ export default function TrackClient() {
           }
 
           .timeline-step {
-            min-height: 3.2rem;
+            min-height: 2.15rem;
             grid-template-columns: auto minmax(0, 1fr);
             justify-items: start;
-            column-gap: 0.75rem;
+            column-gap: 0.48rem;
             text-align: left;
           }
 
@@ -1409,6 +1483,9 @@ export default function TrackClient() {
           .timeline-step p {
             grid-column: 2;
             max-width: none;
+            overflow-wrap: anywhere;
+            margin-top: 0;
+            padding-bottom: 0.08rem;
           }
 
           .notice-card {
@@ -1450,7 +1527,18 @@ export default function TrackClient() {
           }
 
           .info-grid {
-            grid-template-columns: minmax(0,1fr) minmax(4.5rem,.42fr);
+            grid-template-columns: minmax(0, 1fr);
+          }
+
+          .info-grid .order-id-field {
+            grid-column: 1;
+          }
+
+          .info-grid strong:not(.tracked-order-id) {
+            overflow: visible;
+            overflow-wrap: anywhere;
+            text-overflow: clip;
+            white-space: normal;
           }
 
           .card-heading {
@@ -1471,10 +1559,12 @@ export default function TrackClient() {
 
         @media (max-width:360px) {
           .track-shell { width:calc(100% - .5rem); }
-          .order-info-card,.timeline-card { padding:.62rem; }
+          .results-dashboard .order-info-card,.results-dashboard .timeline-card { padding:.34rem; }
           .info-grid { gap:.38rem; }
-          .info-grid div { padding:.5rem; }
+          .info-grid div { padding:.26rem .36rem; }
           .results-dashboard .card-heading h2 { font-size:15px !important; }
+          .results-dashboard .order-info-card .card-heading h2,
+          .results-dashboard .timeline-card .card-heading h2 { font-size:14px !important; }
           .tracked-order-id { font-size:.75rem; }
         }
 
