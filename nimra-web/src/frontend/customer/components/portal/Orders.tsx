@@ -234,7 +234,7 @@ export function Orders({ orders, loadingOrders, onRefresh, mobileSummary }: Orde
             {displayedOrders.map((order, index) => (
               <div key={`mob-${order.orderId}`} className={`order-mobile-slide ${index === mobileOrderIndex ? 'active' : ''}`}>
               <div className="order-mobile-card">
-                {/* Top row: order ID + copy btn | status badge */}
+                {/* Status badge sits above the full-width order ID row. */}
                 <div className="order-card-top-row">
                   <div className="order-card-id-block">
                     <span className="order-card-id-label">Order ID</span>
@@ -886,13 +886,18 @@ export function Orders({ orders, loadingOrders, onRefresh, mobileSummary }: Orde
           .orders-mobile-track {
             display: flex;
             width: 100%;
+            min-width: 0;
+            max-width: 100%;
+            box-sizing: border-box;
             align-items: stretch;
             will-change: transform;
             transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
           }
           .orders-mobile-track.single-order { transition: none; }
           .order-mobile-slide {
-            min-width: 100%;
+            flex: 0 0 100%;
+            min-width: 0;
+            max-width: 100%;
             width: 100%;
             padding: 0.05rem;
             box-sizing: border-box;
@@ -911,6 +916,8 @@ export function Orders({ orders, loadingOrders, onRefresh, mobileSummary }: Orde
           }
           .order-mobile-slide .order-mobile-card {
             height: 100%;
+            min-width: 0;
+            max-width: 100%;
             box-sizing: border-box;
           }
           .order-mobile-card {
@@ -982,6 +989,9 @@ export function Orders({ orders, loadingOrders, onRefresh, mobileSummary }: Orde
           display: flex;
           flex-direction: column;
           gap: 0.55rem;
+          min-width: 0;
+          max-width: 100%;
+          box-sizing: border-box;
           transition: border-color 200ms ease, background 200ms ease;
         }
         .order-mobile-card:hover {
@@ -998,22 +1008,29 @@ export function Orders({ orders, loadingOrders, onRefresh, mobileSummary }: Orde
         }
 
         .order-mobile-card .order-card-top-row {
-          display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          gap: 0.6rem;
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          grid-template-rows: auto auto;
+          row-gap: 0.25rem;
+          width: 100%;
           min-width: 0;
-          flex-wrap: nowrap;
+          max-width: 100%;
+          box-sizing: border-box;
         }
-        /* Let the ID shrink before the status and copy controls. */
+        /* Keep the badge at the upper-right and give the ID the full row below. */
         .order-mobile-card .order-card-id-block {
           display: flex;
           flex-direction: column;
           gap: 0.12rem;
+          grid-column: 1 / -1;
+          grid-row: 2;
+          width: 100%;
           min-width: 0;
-          flex: 1 1 0%;
+          max-width: 100%;
+          box-sizing: border-box;
         }
         .order-card-id-label {
+          display: block;
           font-size: 0.62rem;
           font-weight: 700;
           letter-spacing: 0.06em;
@@ -1024,29 +1041,43 @@ export function Orders({ orders, loadingOrders, onRefresh, mobileSummary }: Orde
           display: flex;
           flex-direction: row;
           align-items: center;
-          gap: 8px;
+          flex-wrap: nowrap;
+          gap: 6px;
           width: 100%;
           min-width: 0;
-          flex-wrap: nowrap;
+          max-width: 100%;
+          box-sizing: border-box;
         }
-        /* Keep long IDs inside the flex row beside the copy control. */
+        /* Use the card width for the ID and truncate only when it cannot fit. */
         .order-mobile-card .order-card-id-value {
           min-width: 0;
-          flex: 1 1 0%;
+          flex: 1 1 auto;
           font-family: var(--font-heading);
           font-weight: 700;
-          font-size: 0.82rem;
+          font-size: 0.875rem;
           color: var(--text-primary);
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
+          overflow-wrap: normal;
+          word-break: normal;
         }
         /* Status badge container */
         .order-mobile-card .order-card-top-row-right {
           display: flex;
           align-items: center;
-          gap: 0.3rem;
-          flex: 0 0 24px;
+          justify-self: end;
+          grid-column: 2;
+          grid-row: 1;
+          min-width: 0;
+          max-width: 100%;
+          box-sizing: border-box;
+        }
+        .order-mobile-card .order-card-top-row-right .status-badge-portal {
+          min-width: 0;
+          max-width: 100%;
+          white-space: nowrap;
+          box-sizing: border-box;
         }
         .order-mobile-card .order-card-copy-btn {
           background: none;
@@ -1058,12 +1089,12 @@ export function Orders({ orders, loadingOrders, onRefresh, mobileSummary }: Orde
           align-items: center;
           justify-content: center;
           transition: color 150ms ease;
-          min-width: 24px;
+          position: static;
+          flex: 0 0 28px;
+          width: 28px;
+          min-width: 28px;
           min-height: 24px;
-          flex: 0 0 auto;
-          flex-shrink: 0;
           box-sizing: border-box;
-          width: 24px;
           height: 24px;
           margin: 0;
           border-radius: 6px;
