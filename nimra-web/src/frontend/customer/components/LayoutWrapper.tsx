@@ -68,7 +68,7 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
       const nextPath = searchParams?.get('next');
       const safeNextPath = nextPath?.startsWith('/') && !nextPath.startsWith('//') ? nextPath : null;
       const customerReturnPath = readCheckoutAuthReturn();
-      router.replace(safeNextPath || (isAdminRole(user?.Role) ? '/admin' : customerReturnPath || '/customer-portal'));
+      router.replace(isAdminRole(user?.Role) ? '/admin' : safeNextPath || customerReturnPath || '/customer-portal');
     } else if (isAdmin && !isAdminLogin && !isAuthenticated) {
       router.replace('/');
     } else if (isAdmin && !isAdminLogin && !isAdminRole(user?.Role)) {
