@@ -15153,7 +15153,6 @@ body:has(.products-page-skeleton) {
   .portal-page .profile-header,
   .portal-page .next-card-header,
   .portal-page .quick-control-row,
-  .portal-page .order-card-top-row,
   .portal-page .order-card-actions-row {
     min-width: 0;
     flex-wrap: wrap;
@@ -15197,7 +15196,6 @@ body:has(.products-page-skeleton) {
   .portal-page .profile-detail-value,
   .portal-page .quick-control-text,
   .portal-page .quick-control-text p,
-  .portal-page .order-card-id-value,
   .portal-page .full-address,
   .portal-page .city-pin-text {
     max-width: 100%;
@@ -15205,50 +15203,6 @@ body:has(.products-page-skeleton) {
     white-space: normal !important;
     overflow-wrap: anywhere;
     word-break: normal;
-  }
-
-  .portal-page .orders-panel .order-mobile-card .order-card-top-row {
-    min-width: 0;
-    flex-wrap: nowrap;
-  }
-
-  .portal-page .orders-panel .order-mobile-card .order-card-id-block {
-    min-width: 0;
-    flex: 1 1 0%;
-  }
-
-  .portal-page .orders-panel .order-mobile-card .order-card-id-value-row {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    min-width: 0;
-  }
-
-  .portal-page .orders-panel .order-mobile-card .order-card-id-value {
-    flex: 1 1 0%;
-    min-width: 0;
-    white-space: nowrap !important;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    overflow-wrap: normal;
-    word-break: normal;
-  }
-
-  .portal-page .orders-panel .order-mobile-card .order-card-top-row-right {
-    flex: 0 0 auto;
-  }
-
-  .portal-page .orders-panel .order-mobile-card .order-card-copy-btn {
-    flex: 0 0 24px;
-    flex-shrink: 0;
-    width: 24px;
-    height: 24px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
   }
 
   .portal-page .profile-detail-item {
