@@ -12,6 +12,7 @@ import AuthPageWrapper from '@/frontend/customer/components/AuthPageWrapper';
 import LogoutConfirmationModal from '@/frontend/customer/components/LogoutConfirmationModal';
 import { AUTH_ERROR_MESSAGES, isValidEmailAddress, isValidMobileNumber, normalizeAuthErrorMessage } from '@/utils/authMessages';
 import {
+  clearCheckoutAuthHandoff,
   persistCheckoutAuthHandoff,
   restoreGuestCartFromAuthHandoff,
 } from '@/frontend/customer/utils/checkoutAuthHandoff';
@@ -40,8 +41,12 @@ function LoginPageContent() {
     : '/register';
 
   React.useEffect(() => {
+    if (!nextPath?.startsWith('/checkout')) {
+      clearCheckoutAuthHandoff();
+      return;
+    }
     restoreGuestCartFromAuthHandoff();
-    if (nextPath?.startsWith('/checkout')) persistCheckoutAuthHandoff(nextPath);
+    persistCheckoutAuthHandoff(nextPath);
   }, [nextPath]);
 
   React.useEffect(() => {
