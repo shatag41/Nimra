@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import Header from './Header';
 import Footer from './Footer';
 import { CompanyInfo } from '@/types/cms';
-import { useAuth } from '../contexts/AuthContext';
+import { consumeLoginRedirect, useAuth } from '../contexts/AuthContext';
 import { isAdminRole } from '@/frontend/admin/utils/accessControl';
 import { meaningfulPath, recordNavigation } from '../navigation/navigationHistory';
 import { persistCheckoutAuthHandoff, readCheckoutAuthReturn } from '../utils/checkoutAuthHandoff';
@@ -65,10 +65,13 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
     if (isLoading) return;
 
     if (isAuthenticated && isAuthPage) {
+      const pendingLoginRedirect = consumeLoginRedirect();
       const nextPath = searchParams?.get('next');
       const safeNextPath = nextPath?.startsWith('/') && !nextPath.startsWith('//') ? nextPath : null;
       const customerReturnPath = readCheckoutAuthReturn();
-      router.replace(isAdminRole(user?.Role) ? '/admin' : safeNextPath || customerReturnPath || '/customer-portal');
+      router.replace(isAdminRole(user?.Role)
+        ? '/admin'
+        : pendingLoginRedirect || safeNextPath || customerReturnPath || '/customer-portal');
     } else if (isAdmin && !isAdminLogin && !isAuthenticated) {
       router.replace('/');
     } else if (isAdmin && !isAdminLogin && !isAdminRole(user?.Role)) {

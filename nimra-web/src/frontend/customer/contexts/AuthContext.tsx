@@ -65,7 +65,47 @@ const AuthContext = createContext<AuthContextType>({
 const SESSION_DAYS = 7;
 const SESSION_COOKIE = 'nimra_session';
 const USER_COOKIE = 'nimra_user';
+const USER_PROFILE_STORAGE_KEY = 'nimra_user_profile';
 const TAB_SESSION_KEY = 'nimra_live_tab_session';
+export const LOGIN_REDIRECT_STORAGE_KEY = 'nimra_login_redirect_to';
+
+const getSessionUser = (userData: User): User => ({
+  ID: userData.ID,
+  Name: userData.Name,
+  Username: userData.Username,
+  Mobile: userData.Mobile,
+  Role: userData.Role,
+  Active: userData.Active,
+});
+
+const persistUserSession = (userData: User) => {
+  if (typeof window !== 'undefined') {
+    try {
+      window.localStorage.setItem(USER_PROFILE_STORAGE_KEY, JSON.stringify(userData));
+    } catch (error) {
+      console.warn('Could not persist the full user profile locally.', error);
+    }
+  }
+
+  const secureCookie = typeof window !== 'undefined' && window.location.protocol === 'https:';
+  Cookies.set(USER_COOKIE, JSON.stringify(getSessionUser(userData)), {
+    path: '/',
+    sameSite: 'lax',
+    secure: secureCookie,
+  });
+};
+
+const safeInternalRedirect = (value?: string | null) =>
+  value?.startsWith('/') && !value.startsWith('//') && !value.includes('\\')
+    ? value
+    : null;
+
+export const consumeLoginRedirect = () => {
+  if (typeof window === 'undefined') return null;
+  const pending = window.sessionStorage.getItem(LOGIN_REDIRECT_STORAGE_KEY);
+  window.sessionStorage.removeItem(LOGIN_REDIRECT_STORAGE_KEY);
+  return safeInternalRedirect(pending);
+};
 
 const createSessionToken = () => {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -90,11 +130,15 @@ export const clearBrowserSession = () => {
   // theme, location, cart, notification state, or recently viewed products.
   window.localStorage.removeItem('nimra_admin_user');
   window.localStorage.removeItem('nimra_admin_active_tab');
+  window.localStorage.removeItem(USER_PROFILE_STORAGE_KEY);
   window.sessionStorage.removeItem(TAB_SESSION_KEY);
+  window.sessionStorage.removeItem(LOGIN_REDIRECT_STORAGE_KEY);
   resetNavigationHistory();
 };
 
-const readStoredUser = (): User | null => {
+type RestoredAuthState = { user: User; isNewAccount: boolean };
+
+const readStoredUser = (): RestoredAuthState | null => {
   if (typeof window === 'undefined') return null;
 
   const storedUser = Cookies.get(USER_COOKIE);
@@ -134,25 +178,24 @@ const readStoredUser = (): User | null => {
       return null;
     }
 
-    return parsedUser;
+    try {
+      const profileRaw = window.localStorage.getItem(USER_PROFILE_STORAGE_KEY);
+      const profile = profileRaw ? JSON.parse(profileRaw) as User : null;
+      if (profile && String(profile.ID) === String(parsedUser.ID)) {
+        return {
+          user: { ...profile, ...parsedUser },
+          isNewAccount: parsedSession.isNewAccount === true,
+        };
+      }
+    } catch {
+      // The compact identity cookie remains sufficient to restore authentication.
+    }
+
+    return { user: parsedUser, isNewAccount: parsedSession.isNewAccount === true };
   } catch {
     console.error('Failed to parse user session');
     clearBrowserSession();
     return null;
-  }
-};
-
-const readNewAccountSessionFlag = (): boolean => {
-  if (typeof window === 'undefined') return false;
-
-  try {
-    const storedSession = Cookies.get(SESSION_COOKIE);
-    const liveTabSession = window.sessionStorage.getItem(TAB_SESSION_KEY);
-    if (!storedSession || !liveTabSession) return false;
-    const parsedSession = JSON.parse(storedSession) as StoredSession;
-    return parsedSession.token === liveTabSession && parsedSession.isNewAccount === true;
-  } catch {
-    return false;
   }
 };
 
@@ -162,24 +205,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isNewAccountSession, setIsNewAccountSession] = useState(false);
   const sessionMutationRef = useRef(0);
+  const sessionRestoreStartedRef = useRef(false);
   const router = useRouter();
 
   useEffect(() => {
-    let cancelled = false;
+    if (sessionRestoreStartedRef.current) return;
+    sessionRestoreStartedRef.current = true;
     const restoreVersion = sessionMutationRef.current;
-
-    queueMicrotask(() => {
-      if (cancelled || restoreVersion !== sessionMutationRef.current) return;
-      const storedUser = readStoredUser();
-      if (cancelled || restoreVersion !== sessionMutationRef.current) return;
-      setUser(storedUser);
-      setIsNewAccountSession(Boolean(storedUser) && readNewAccountSessionFlag());
-      setIsLoading(false);
-    });
-
-    return () => {
-      cancelled = true;
-    };
+    const restoredSession = readStoredUser();
+    if (restoreVersion !== sessionMutationRef.current) return;
+    setUser(restoredSession?.user || null);
+    setIsNewAccountSession(Boolean(restoredSession?.isNewAccount));
+    setIsLoading(false);
   }, []);
 
   const login = useCallback((userData: User, options?: LoginOptions) => {
@@ -187,10 +224,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       throw new Error('Invalid login response. Missing user identity.');
     }
 
+    const roleValue = userData.Role.trim().toUpperCase().replace(/[\s-]+/g, '_');
+    if (!isAdminRole(userData.Role) && roleValue !== 'CUSTOMER') {
+      throw new Error('Invalid login response. Unrecognized account role.');
+    }
+
     const isAdminUser = isAdminRole(userData.Role);
     const nextPath = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('next') : null;
     const requestedRedirect = options?.redirectTo || nextPath || readCheckoutAuthReturn();
-    const safeNextPath = requestedRedirect?.startsWith('/') && !requestedRedirect.startsWith('//') ? requestedRedirect : null;
+    const safeNextPath = safeInternalRedirect(requestedRedirect);
+    const destination = isAdminUser ? '/admin' : (safeNextPath || '/customer-portal');
     const expiresAt = Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000;
     const session: StoredSession = {
       token: createSessionToken(),
@@ -202,11 +245,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     sessionMutationRef.current += 1;
     const secureCookie = typeof window !== 'undefined' && window.location.protocol === 'https:';
-    Cookies.set(USER_COOKIE, JSON.stringify(userData), { path: '/', sameSite: 'lax', secure: secureCookie });
+    persistUserSession(userData);
     Cookies.set(SESSION_COOKIE, JSON.stringify(session), { path: '/', sameSite: 'lax', secure: secureCookie });
 
     if (typeof window !== 'undefined') {
       window.sessionStorage.setItem(TAB_SESSION_KEY, session.token);
+      window.sessionStorage.setItem(LOGIN_REDIRECT_STORAGE_KEY, destination);
       resetNavigationHistory(userData.Role);
       discardLegacyRecentlyViewed();
       notifyRecentlyViewedChanged();
@@ -256,8 +300,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(userData);
     setIsNewAccountSession(session.isNewAccount === true);
     setIsLoading(false);
-    router.replace(isAdminUser ? '/admin' : (safeNextPath || '/customer-portal'));
-  }, [router]);
+  }, []);
 
   const clearSession = useCallback(() => {
     sessionMutationRef.current += 1;
@@ -273,15 +316,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const updateUserSession = useCallback((userData: User) => {
     sessionMutationRef.current += 1;
     setUser(userData);
-    Cookies.set(USER_COOKIE, JSON.stringify(userData), { path: '/', sameSite: 'lax' });
+    persistUserSession(userData);
   }, []);
 
   useEffect(() => {
     if (!user || typeof window === 'undefined') return;
 
     const expireIfNeeded = () => {
-      const currentUser = readStoredUser();
-      if (!currentUser) {
+      const currentSession = readStoredUser();
+      if (!currentSession) {
         setUser(null);
         setIsNewAccountSession(false);
         router.replace('/');
