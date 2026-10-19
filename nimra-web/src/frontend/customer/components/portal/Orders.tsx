@@ -997,20 +997,21 @@ export function Orders({ orders, loadingOrders, onRefresh, mobileSummary }: Orde
           background: rgba(59, 130, 246, 0.05);
         }
 
-        .order-card-top-row {
+        .order-mobile-card .order-card-top-row {
           display: flex;
           align-items: flex-start;
           justify-content: space-between;
           gap: 0.6rem;
+          min-width: 0;
           flex-wrap: nowrap;
         }
         /* Let the ID shrink before the status and copy controls. */
-        .order-card-id-block {
+        .order-mobile-card .order-card-id-block {
           display: flex;
           flex-direction: column;
           gap: 0.12rem;
           min-width: 0;
-          flex: 1 1 0;
+          flex: 1 1 0%;
         }
         .order-card-id-label {
           font-size: 0.62rem;
@@ -1019,7 +1020,7 @@ export function Orders({ orders, loadingOrders, onRefresh, mobileSummary }: Orde
           text-transform: uppercase;
           color: var(--text-muted);
         }
-        .order-card-id-value-row {
+        .order-mobile-card .order-card-id-value-row {
           display: flex;
           align-items: center;
           gap: 0.3rem;
@@ -1028,9 +1029,9 @@ export function Orders({ orders, loadingOrders, onRefresh, mobileSummary }: Orde
           flex-wrap: nowrap;
         }
         /* Keep long IDs inside the flex row beside the copy control. */
-        .order-card-id-value {
+        .order-mobile-card .order-card-id-value {
           min-width: 0;
-          flex: 1 1 auto;
+          flex: 1;
           font-family: var(--font-heading);
           font-weight: 700;
           font-size: 0.82rem;
@@ -1040,13 +1041,13 @@ export function Orders({ orders, loadingOrders, onRefresh, mobileSummary }: Orde
           white-space: nowrap;
         }
         /* Status badge container */
-        .order-card-top-row-right {
+        .order-mobile-card .order-card-top-row-right {
           display: flex;
           align-items: center;
           gap: 0.3rem;
-          flex-shrink: 0;
+          flex: 0 0 auto;
         }
-        .order-card-copy-btn {
+        .order-mobile-card .order-card-copy-btn {
           background: none;
           border: none;
           cursor: pointer;
@@ -1058,7 +1059,11 @@ export function Orders({ orders, loadingOrders, onRefresh, mobileSummary }: Orde
           transition: color 150ms ease;
           min-width: 24px;
           min-height: 24px;
-          flex: 0 0 24px;
+          flex: 0 0 auto;
+          flex-shrink: 0;
+          box-sizing: border-box;
+          width: 24px;
+          height: 24px;
           margin: 0;
           border-radius: 6px;
         }
