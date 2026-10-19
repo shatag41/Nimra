@@ -20,6 +20,7 @@ import {
   registrationSourceFromSearch,
 } from '@/frontend/customer/utils/registrationCart';
 import {
+  clearCheckoutAuthHandoff,
   persistCheckoutAuthHandoff,
   readCheckoutAuthReturn,
   restoreGuestCartFromAuthHandoff,
@@ -68,20 +69,22 @@ export default function RegisterPage() {
 
   useEffect(() => {
     let cancelled = false;
-    restoreGuestCartFromAuthHandoff();
     const source = registrationSourceFromSearch(window.location.search);
     const registrationParams = new URLSearchParams(window.location.search);
     const requestedNext = registrationParams.get('next');
+    const hasCheckoutNext = requestedNext?.startsWith('/checkout') === true;
+    if (hasCheckoutNext) restoreGuestCartFromAuthHandoff();
+    else clearCheckoutAuthHandoff();
     const prefilledGoogleEmail = registrationParams.get('email')?.trim().toLowerCase();
     if (prefilledGoogleEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(prefilledGoogleEmail)) {
       setEmail(prefilledGoogleEmail);
       sessionStorage.removeItem(REGISTRATION_DRAFT_KEY);
     }
     const safeNext = requestedNext?.startsWith('/') && !requestedNext.startsWith('//') ? requestedNext : null;
-    const storedCheckoutReturn = readCheckoutAuthReturn();
-    const isCheckoutRegistration = source === 'cart' || Boolean(storedCheckoutReturn);
+    const storedCheckoutReturn = hasCheckoutNext || hasGuestCartItems() ? readCheckoutAuthReturn() : null;
+    const isCheckoutRegistration = hasCheckoutNext || hasGuestCartItems();
     const redirectTo = isCheckoutRegistration
-      ? (safeNext?.startsWith('/checkout') ? safeNext : storedCheckoutReturn || '/checkout')
+      ? (hasCheckoutNext ? safeNext || '/checkout' : storedCheckoutReturn || '/checkout')
       : '/customer-portal';
     registrationSourceRef.current = isCheckoutRegistration ? 'cart' : source;
     registrationRedirectRef.current = redirectTo;

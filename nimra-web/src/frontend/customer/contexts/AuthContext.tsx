@@ -231,9 +231,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const isAdminUser = isAdminRole(userData.Role);
     const nextPath = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('next') : null;
-    const requestedRedirect = options?.redirectTo || nextPath || readCheckoutAuthReturn();
+    const requestedRedirect = options?.redirectTo || nextPath;
     const safeNextPath = safeInternalRedirect(requestedRedirect);
-    const destination = isAdminUser ? '/admin' : (safeNextPath || '/customer-portal');
+    let destination = isAdminUser ? '/admin' : (safeNextPath || '/customer-portal');
     const expiresAt = Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000;
     const session: StoredSession = {
       token: createSessionToken(),
@@ -249,8 +249,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     Cookies.set(SESSION_COOKIE, JSON.stringify(session), { path: '/', sameSite: 'lax', secure: secureCookie });
 
     if (typeof window !== 'undefined') {
+      let hasCartItems = false;
       window.sessionStorage.setItem(TAB_SESSION_KEY, session.token);
-      window.sessionStorage.setItem(LOGIN_REDIRECT_STORAGE_KEY, destination);
       resetNavigationHistory(userData.Role);
       discardLegacyRecentlyViewed();
       notifyRecentlyViewedChanged();
@@ -264,12 +264,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           ...(Array.isArray(guestCart1) ? guestCart1 : []),
           ...(Array.isArray(guestCart2) ? guestCart2 : []),
         ].map((item) => normalizeCartItem(item as CartItem)));
+        const userCartKey = `nimra-cart-${userData.ID}`;
+        const initialUserCart: unknown = JSON.parse(localStorage.getItem(userCartKey) || '[]');
+        let userItems = mergeCartSnapshots(
+          (Array.isArray(initialUserCart) ? initialUserCart : []).map((item) => normalizeCartItem(item as CartItem))
+        );
         
         if (guestItems.length > 0) {
           const userCartKey = `nimra-cart-${userData.ID}`;
           const userCartStr = localStorage.getItem(userCartKey);
           const userCart: unknown = userCartStr ? JSON.parse(userCartStr) : [];
-          const userItems = mergeCartSnapshots(
+          userItems = mergeCartSnapshots(
             (Array.isArray(userCart) ? userCart : []).map((item) => normalizeCartItem(item as CartItem))
           );
           const mergedList = mergeCartItems([...userItems, ...guestItems]);
@@ -279,9 +284,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           localStorage.removeItem('nimra-cart');
           localStorage.removeItem('nimra-cart-v2:guest');
         }
+        hasCartItems = guestItems.length > 0 || userItems.length > 0;
       } catch (e) {
         console.error('Error merging guest cart on login:', e);
       }
+      const checkoutReturn = !safeNextPath && hasCartItems ? readCheckoutAuthReturn() : null;
+      if (!safeNextPath && checkoutReturn) destination = checkoutReturn;
+      if (destination.startsWith('/checkout') && !hasCartItems) {
+        destination = '/customer-portal';
+      }
+      window.sessionStorage.setItem(LOGIN_REDIRECT_STORAGE_KEY, destination);
+      clearCheckoutAuthHandoff();
     }
 
     if (isAdminUser) {

@@ -68,10 +68,18 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
       const pendingLoginRedirect = consumeLoginRedirect();
       const nextPath = searchParams?.get('next');
       const safeNextPath = nextPath?.startsWith('/') && !nextPath.startsWith('//') ? nextPath : null;
-      const customerReturnPath = readCheckoutAuthReturn();
+      let hasCartItems = false;
+      try {
+        const cartItems = JSON.parse(localStorage.getItem(`nimra-cart-${user?.ID}`) || '[]');
+        hasCartItems = Array.isArray(cartItems) && cartItems.length > 0;
+      } catch {
+        hasCartItems = false;
+      }
+      const hasCheckoutNext = safeNextPath?.startsWith('/checkout') === true;
+      const customerReturnPath = hasCheckoutNext || hasCartItems ? readCheckoutAuthReturn() : null;
       router.replace(isAdminRole(user?.Role)
         ? '/admin'
-        : pendingLoginRedirect || safeNextPath || customerReturnPath || '/customer-portal');
+        : pendingLoginRedirect || (safeNextPath && (!safeNextPath.startsWith('/checkout') || hasCartItems) ? safeNextPath : null) || customerReturnPath || '/customer-portal');
     } else if (isAdmin && !isAdminLogin && !isAuthenticated) {
       router.replace('/');
     } else if (isAdmin && !isAdminLogin && !isAdminRole(user?.Role)) {
