@@ -4345,7 +4345,7 @@ function sendOrderConfirmationEmail(email, name, orderId, products, totalAmount,
     return { sent: false, error: 'User opted out of order confirmation emails.' };
   }
   var displayName = String(name || 'Customer').trim();
-  var trackingUrl = 'https://nimrawater.com/track?orderId=' + encodeURIComponent(orderId) + '&mobile=' + encodeURIComponent(mobile || '') + '&autoSubmit=true';
+  var trackingUrl = 'https://drinknimra.in/track?orderId=' + encodeURIComponent(orderId) + '&mobile=' + encodeURIComponent(mobile || '') + '&autoSubmit=true';
   var subject = 'NIMRA Order Confirmation - ' + orderId;
   var plainBody = 'Hello ' + displayName + ',\n\n' +
     'Thank you for your order! Your order ' + orderId + ' has been placed successfully.\n\n' +
@@ -4418,7 +4418,7 @@ function sendCancellationDecisionEmail(email, name, orderId, decision, adminRema
   }
   var displayName = String(name || 'Customer').trim();
   var approved = decision === 'Approved';
-  var trackingUrl = 'https://nimrawater.com/track?orderId=' + encodeURIComponent(orderId) + '&mobile=' + encodeURIComponent(mobile || '') + '&autoSubmit=true';
+  var trackingUrl = 'https://drinknimra.in/track?orderId=' + encodeURIComponent(orderId) + '&mobile=' + encodeURIComponent(mobile || '') + '&autoSubmit=true';
   var subject = approved ? 'NIMRA Order #' + orderId + ' Cancellation Confirmed' : 'NIMRA Order #' + orderId + ' Cancellation Request Update';
   var plainBody = 'Hello ' + displayName + ',\n\n' +
     (approved ? 'Your cancellation request has been approved and your order is now Cancelled.' : 'Your cancellation request was reviewed and rejected.') + '\n\n' +
