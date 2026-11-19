@@ -36,7 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: `${brand} Packaged Drinking Water`,
       description: 'Experience pure hydration with mineral-balanced packaged drinking water from NIMRA.',
-      url: 'https://nimrawater.com',
+      url: 'https://drinknimra.in',
       siteName: brand,
       locale: 'en_IN',
       type: 'website',
