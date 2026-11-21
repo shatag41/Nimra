@@ -4345,6 +4345,7 @@ function sendOrderConfirmationEmail(email, name, orderId, products, totalAmount,
     return { sent: false, error: 'User opted out of order confirmation emails.' };
   }
   var displayName = String(name || 'Customer').trim();
+  var trackingUrl = 'https://drinknimra.in/track?orderId=' + encodeURIComponent(orderId) + '&mobile=' + encodeURIComponent(mobile || '') + '&autoSubmit=true';
   var subject = 'NIMRA Order Confirmation - ' + orderId;
   var plainBody = 'Hello ' + displayName + ',\n\n' +
     'Thank you for your order! Your order ' + orderId + ' has been placed successfully.\n\n' +
