@@ -67,6 +67,8 @@ const SESSION_COOKIE = 'nimra_session';
 const USER_COOKIE = 'nimra_user';
 const USER_PROFILE_STORAGE_KEY = 'nimra_user_profile';
 const TAB_SESSION_KEY = 'nimra_live_tab_session';
+const LOGOUT_SYNC_STORAGE_KEY = 'nimra_auth_logout_sync';
+const AUTH_HISTORY_GUARD_KEY = 'nimra_auth_history_guard_v3';
 export const LOGIN_REDIRECT_STORAGE_KEY = 'nimra_login_redirect_to';
 
 const getSessionUser = (userData: User): User => ({
@@ -132,6 +134,7 @@ export const clearBrowserSession = () => {
   window.localStorage.removeItem('nimra_admin_active_tab');
   window.localStorage.removeItem(USER_PROFILE_STORAGE_KEY);
   window.sessionStorage.removeItem(TAB_SESSION_KEY);
+  window.sessionStorage.removeItem(AUTH_HISTORY_GUARD_KEY);
   window.sessionStorage.removeItem(LOGIN_REDIRECT_STORAGE_KEY);
   resetNavigationHistory();
 };
@@ -206,6 +209,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isNewAccountSession, setIsNewAccountSession] = useState(false);
   const sessionMutationRef = useRef(0);
   const sessionRestoreStartedRef = useRef(false);
+  const logoutInProgressRef = useRef(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -325,7 +329,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     clearCheckoutAuthHandoff();
     resetNavigationHistory();
     notifyRecentlyViewedChanged();
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('nimra-auth-logout'));
   }, []);
+
+  useEffect(() => {
+    const syncLogoutAcrossTabs = (event: StorageEvent) => {
+      if (event.key !== LOGOUT_SYNC_STORAGE_KEY || !event.newValue) return;
+      clearSession();
+      router.replace('/');
+      router.refresh();
+    };
+
+    window.addEventListener('storage', syncLogoutAcrossTabs);
+    return () => window.removeEventListener('storage', syncLogoutAcrossTabs);
+  }, [clearSession, router]);
 
   const updateUserSession = useCallback((userData: User) => {
     sessionMutationRef.current += 1;
@@ -371,17 +388,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [router, user]);
 
   const logout = useCallback(async (beforeNavigate?: () => void) => {
-    if (isLoggingOut) return;
+    if (logoutInProgressRef.current) return;
+    logoutInProgressRef.current = true;
     setIsLoggingOut(true);
 
+    // Start the server revocation while the request can still carry the
+    // session cookie, then clear client identity immediately for every header
+    // and protected route in this tab.
+    let revokeRequest: Promise<Response> | null = null;
     try {
-      await fetch('/api/auth/logout', {
+      revokeRequest = fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'same-origin',
         cache: 'no-store',
       });
     } catch (error) {
-      console.error('Server logout failed; completing local logout:', error);
+      console.error('Could not start server logout; completing local logout:', error);
     }
 
     setUser(null);
@@ -392,6 +414,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     notifyRecentlyViewedChanged();
 
     if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.setItem(LOGOUT_SYNC_STORAGE_KEY, `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+      } catch {
+        // The current tab still completes logout when storage is unavailable.
+      }
       Object.keys(window.sessionStorage)
         .filter((key) =>
           key.startsWith('nimra-orders:')
@@ -403,33 +430,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     beforeNavigate?.();
+    setIsLoggingOut(false);
     router.replace('/');
-
-    await new Promise<void>((resolve) => {
-      if (typeof window === 'undefined') {
-        resolve();
-        return;
-      }
-      window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve()));
-    });
     router.refresh();
 
-    if (typeof window !== 'undefined') {
-      if (window.location.pathname === '/') {
-        setIsLoggingOut(false);
-        return;
-      }
-      window.setTimeout(() => {
-        if (window.location.pathname !== '/') {
-          window.location.replace('/');
-        } else {
-          setIsLoggingOut(false);
-        }
-      }, 1500);
-      return;
+    logoutInProgressRef.current = false;
+    if (revokeRequest) {
+      void revokeRequest.catch((error) => {
+        console.error('Server logout failed; local session was cleared:', error);
+      });
     }
-    setIsLoggingOut(false);
-  }, [isLoggingOut, router]);
+  }, [router]);
 
   // Synchronize Recently Viewed Products with Database
   useEffect(() => {

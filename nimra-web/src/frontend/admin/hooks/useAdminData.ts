@@ -58,10 +58,10 @@ export const useAdminData = (initialCMSData: CMSData) => {
   const [authChecked, setAuthChecked] = useState(false);
 
   // Tab State
-  const [activeTab, setActiveTab] = useState<string>(() => {
+  const [activeTab, updateActiveTab] = useState<string>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('nimra_admin_active_tab');
-      if (saved) return saved as any;
+      const requestedTab = new URLSearchParams(window.location.search).get('tab');
+      if (requestedTab) return requestedTab;
     }
     return 'dashboard';
   });
@@ -70,6 +70,27 @@ export const useAdminData = (initialCMSData: CMSData) => {
   useEffect(() => {
     localStorage.setItem('nimra_admin_active_tab', activeTab);
   }, [activeTab]);
+
+  // Admin sections are views within one route, so record their transitions in
+  // the URL/history. This lets browser Back move between admin views before it
+  // reaches the authenticated area's exit boundary.
+  const setActiveTab = (tab: string) => {
+    if (typeof window !== 'undefined' && tab !== activeTab) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', tab);
+      window.history.pushState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+    }
+    updateActiveTab(tab);
+  };
+
+  useEffect(() => {
+    const restoreTabFromHistory = () => {
+      const tab = new URLSearchParams(window.location.search).get('tab') || 'dashboard';
+      updateActiveTab(tab);
+    };
+    window.addEventListener('popstate', restoreTabFromHistory);
+    return () => window.removeEventListener('popstate', restoreTabFromHistory);
+  }, []);
 
   // DB States
   const [orders, setOrders] = useState<OrderRecord[]>([]);
