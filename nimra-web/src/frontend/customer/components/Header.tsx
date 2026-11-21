@@ -86,6 +86,17 @@ export default React.memo(function Header({ companyInfo }: HeaderProps) {
   }, [notifications]);
   const dashboardHref = isAdminRole(activeRoleValue) ? '/admin' : '/customer-portal';
   const logoHref = activeUser ? dashboardHref : '/';
+
+  useEffect(() => {
+    const closeAuthenticatedMenus = () => {
+      setProfileDropdownOpen(false);
+      setNotificationDropdownOpen(false);
+      setMobileMenuOpen(false);
+    };
+    window.addEventListener('nimra-auth-logout', closeAuthenticatedMenus);
+    return () => window.removeEventListener('nimra-auth-logout', closeAuthenticatedMenus);
+  }, []);
+
   const prefetchProfileSettings = useCallback(() => {
     if (activeUser && activeRole === 'CUSTOMER') {
       router.prefetch('/profile-settings');

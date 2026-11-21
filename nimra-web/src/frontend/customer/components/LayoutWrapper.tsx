@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import Header from './Header';
 import Footer from './Footer';
@@ -9,18 +9,38 @@ import { consumeLoginRedirect, useAuth } from '../contexts/AuthContext';
 import { isAdminRole } from '@/frontend/admin/utils/accessControl';
 import { meaningfulPath, recordNavigation } from '../navigation/navigationHistory';
 import { persistCheckoutAuthHandoff, readCheckoutAuthReturn } from '../utils/checkoutAuthHandoff';
+import LogoutConfirmationModal from './LogoutConfirmationModal';
 
 interface LayoutWrapperProps {
   children: React.ReactNode;
   companyInfo: CompanyInfo;
 }
 
+const isAuthenticatedSection = (path: string) => {
+  const normalizedPath = path.split('?')[0];
+  const publicRoutes = ['/about', '/contact', '/products', '/cart', '/track', '/login', '/register', '/forgot-password', '/admin/login'];
+  if (normalizedPath === '/' || publicRoutes.some((route) => normalizedPath === route || normalizedPath.startsWith(`${route}/`))) {
+    return false;
+  }
+
+  // The explicit list preserves the existing protected customer area. Other
+  // non-public application routes are treated as authenticated sections so
+  // new role portals inherit the guard without role-specific branches.
+  return true;
+};
+
+const AUTH_HISTORY_GUARD_KEY = 'nimra_auth_history_guard_v3';
+const AUTH_HISTORY_BASE_STATE = '__nimraAuthHistoryBase';
+const AUTH_HISTORY_GUARD_STATE = '__nimraAuthHistoryGuard';
+
 export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { user, isAuthenticated, isLoading, isLoggingOut } = useAuth();
+  const { user, isAuthenticated, isLoading, isLoggingOut, logout } = useAuth();
   const [mounted, setMounted] = useState(false);
+  const [showBackLogoutConfirmation, setShowBackLogoutConfirmation] = useState(false);
+  const returningToGuardRef = useRef(false);
 
   useEffect(() => {
     if ('scrollRestoration' in window.history) {
@@ -51,15 +71,52 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
   const isAdminLogin = pathname === '/admin/login';
   const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password' || isAdminLogin;
   const isCheckout = pathname === '/checkout' || pathname?.startsWith('/checkout/');
-  const isProtectedCustomerRoute = isCheckout
-    || pathname === '/orders'
-    || pathname?.startsWith('/orders/')
-    || pathname === '/customer-portal'
-    || pathname?.startsWith('/customer-portal/')
-    || pathname === '/settings'
-    || pathname?.startsWith('/settings/')
-    || pathname === '/profile-settings'
-    || pathname?.startsWith('/profile-settings/');
+  useEffect(() => {
+    if (isLoading || isLoggingOut || !isAuthenticated || !pathname || !isAuthenticatedSection(pathname)) return;
+
+    let guardId = window.sessionStorage.getItem(AUTH_HISTORY_GUARD_KEY);
+    if (!guardId) {
+      guardId = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+      // Mark the authenticated entry already in the stack, then add one
+      // forward entry as its guard. Internal Next.js navigations continue to
+      // add and remove their own entries normally above this boundary.
+      const baseState = window.history.state && typeof window.history.state === 'object'
+        ? { ...window.history.state }
+        : {};
+      baseState[AUTH_HISTORY_BASE_STATE] = guardId;
+      window.history.replaceState(baseState, '', window.location.href);
+      const guardState = { ...baseState, [AUTH_HISTORY_GUARD_STATE]: guardId };
+      delete guardState[AUTH_HISTORY_BASE_STATE];
+      window.history.pushState(guardState, '', window.location.href);
+      window.sessionStorage.setItem(AUTH_HISTORY_GUARD_KEY, guardId);
+    }
+
+    const handlePopState = (event: PopStateEvent) => {
+      const state = event.state && typeof event.state === 'object' ? event.state : {};
+      const reachedGuard = state[AUTH_HISTORY_GUARD_STATE] === guardId;
+      const reachedBoundary = state[AUTH_HISTORY_BASE_STATE] === guardId;
+
+      if (returningToGuardRef.current && reachedGuard) {
+        returningToGuardRef.current = false;
+        setShowBackLogoutConfirmation(true);
+        return;
+      }
+
+      if (reachedBoundary) {
+        // Move back to the tagged guard entry without adding history. Cancel
+        // leaves this entry active, so the next Back repeats this exact path.
+        returningToGuardRef.current = true;
+        window.history.forward();
+        return;
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [isAuthenticated, isLoading, isLoggingOut, pathname]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -80,21 +137,37 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
       router.replace(isAdminRole(user?.Role)
         ? '/admin'
         : pendingLoginRedirect || (safeNextPath && (!safeNextPath.startsWith('/checkout') || hasCartItems) ? safeNextPath : null) || customerReturnPath || '/customer-portal');
-    } else if (isAdmin && !isAdminLogin && !isAuthenticated) {
-      router.replace('/');
     } else if (isAdmin && !isAdminLogin && !isAdminRole(user?.Role)) {
       router.replace('/customer-portal');
     } else if (!isAuthenticated && isCheckout) {
       const fullPath = window.location.pathname + window.location.search;
       persistCheckoutAuthHandoff(fullPath);
       router.replace(`/login?next=${encodeURIComponent(fullPath)}`);
-    } else if (!isAuthenticated && isProtectedCustomerRoute) {
+    } else if (!isAuthenticated && isAuthenticatedSection(pathname || '')) {
       router.replace('/');
     }
-  }, [isAdmin, isAdminLogin, isAuthPage, isAuthenticated, isCheckout, isLoading, isLoggingOut, isProtectedCustomerRoute, pathname, router, searchParams, user]);
+  }, [isAdmin, isAdminLogin, isAuthPage, isAuthenticated, isCheckout, isLoading, isLoggingOut, pathname, router, searchParams, user]);
+
+  const backLogoutConfirmation = (
+    <LogoutConfirmationModal
+      isOpen={showBackLogoutConfirmation}
+      onClose={() => setShowBackLogoutConfirmation(false)}
+      onConfirm={() => {
+        setShowBackLogoutConfirmation(false);
+        void logout();
+      }}
+      title="Are you sure you want to logout?"
+      description="You are currently logged in to your NIMRA account. Do you want to logout and return to the homepage?"
+      cancelText="Cancel / Stay Logged In"
+      confirmText="Yes, Logout"
+      isProcessing={isLoggingOut}
+      processingText="Logging out..."
+    />
+  );
 
   const renderBareShell = (content: React.ReactNode, includeMobileHeader = false) => (
     <div className="ds-app-shell">
+      {backLogoutConfirmation}
       {includeMobileHeader && (
         <div className="mobile-only-site-header">
           <Header companyInfo={companyInfo} />
@@ -106,7 +179,7 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
     </div>
   );
 
-  const isProtectedRoute = (isAdmin && !isAdminLogin) || isProtectedCustomerRoute;
+  const isProtectedRoute = isAuthenticatedSection(pathname || '');
 
   if (isLoggingOut) {
     return renderBareShell(
@@ -128,11 +201,11 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
   if (isLoading && isProtectedRoute) return renderBareShell(null, !isAdmin);
 
   // Also block access if not authenticated
-  if (isAdmin && !isAdminLogin && (!isAuthenticated || !isAdminRole(user?.Role))) {
+  if (isProtectedRoute && !isAuthenticated) {
     return renderBareShell(null);
   }
 
-  if (!isAuthenticated && isProtectedCustomerRoute) {
+  if (isAdmin && !isAdminLogin && !isAdminRole(user?.Role)) {
     return renderBareShell(null);
   }
 
@@ -152,6 +225,7 @@ export default function LayoutWrapper({ children, companyInfo }: LayoutWrapperPr
 
   return (
     <div className="ds-app-shell">
+      {backLogoutConfirmation}
       <Header companyInfo={companyInfo} />
       <main className={`ds-main with-site-header ${pathname === '/' ? 'home-main' : ''} ${pathname === '/settings' || pathname?.startsWith('/settings/') ? 'settings-route-main' : ''}`}>
         <div className={`route-transition ${pathname === '/settings' || pathname?.startsWith('/settings/') ? 'settings-route-transition' : ''}`}>
