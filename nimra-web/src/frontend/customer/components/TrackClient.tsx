@@ -405,8 +405,8 @@ export default function TrackClient() {
           --track-success-soft: rgba(209, 250, 229, 0.72);
           --track-route: rgba(37, 99, 235, 0.2);
           --track-particle: rgba(37, 99, 235, 0.28);
-          --track-shadow: 0 16px 42px rgba(15, 23, 42, 0.08);
-          --track-shadow-hover: 0 22px 52px rgba(37, 99, 235, 0.13);
+          --track-shadow: 0 18px 48px rgba(15, 23, 42, 0.075), 0 3px 10px rgba(37, 99, 235, 0.035);
+          --track-shadow-hover: 0 24px 56px rgba(37, 99, 235, 0.12);
           --track-input-shadow: 0 6px 18px rgba(37, 99, 235, 0.10);
           --track-active-shadow: 0 0 0 6px rgba(37, 99, 235, 0.10), 0 12px 26px rgba(37, 99, 235, 0.20);
           --track-active-shadow-strong: 0 0 0 10px rgba(37, 99, 235, 0.06), 0 16px 34px rgba(37, 99, 235, 0.24);
@@ -415,7 +415,7 @@ export default function TrackClient() {
           position: relative;
           isolation: isolate;
           min-height: calc(100vh - 5rem);
-          padding: 0 0 clamp(2rem, 4vw, 3.5rem);
+          padding: 0 0 clamp(2.5rem, 5vw, 4.5rem);
           overflow: hidden;
           font-family: var(--font-body);
           background: var(--track-bg);
@@ -524,13 +524,13 @@ export default function TrackClient() {
         .track-bg i:nth-child(13) { top: 44%; right: 7%; animation-delay: -9s; }
 
         .track-shell {
-          width: min(94%, 1360px);
+          width: min(92%, 1180px);
           margin: 0 auto;
         }
 
         .tracking-flow {
           display: grid;
-          gap: clamp(0.8rem, 1.2vw, 1rem);
+          gap: clamp(1rem, 1.8vw, 1.5rem);
         }
 
         .tracking-flow.has-result .track-form,
@@ -549,7 +549,7 @@ export default function TrackClient() {
         .search-card {
           width: min(100%, 900px);
           margin-inline: auto;
-          padding: clamp(1rem, 1.5vw, 1.25rem);
+          padding: clamp(1.15rem, 2vw, 1.65rem);
         }
 
         .field-group {
@@ -570,11 +570,11 @@ export default function TrackClient() {
           position: relative;
           display: flex;
           align-items: center;
-          min-height: 52px;
+          min-height: 56px;
           border: 1px solid var(--track-input-border);
           border-radius: 16px;
           background: var(--track-input-bg);
-          box-shadow: var(--track-input-shadow);
+          box-shadow: 0 5px 16px rgba(37, 99, 235, 0.055);
           color: var(--track-accent);
           transition: border-color 240ms ease, box-shadow 240ms ease, background 240ms ease, transform 240ms ease;
         }
@@ -582,12 +582,13 @@ export default function TrackClient() {
         .input-shell:focus-within {
           border-color: var(--track-accent);
           background: var(--track-input-bg-focus, rgba(255, 255, 255, 0.88));
-          box-shadow: var(--track-input-shadow);
+          box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1), 0 10px 22px rgba(37, 99, 235, 0.1);
+          transform: translateY(-1px);
         }
 
         .input-shell :global(svg) {
           position: absolute;
-          left: 1.6rem;
+          left: 1.15rem;
           width: 1.05rem;
           height: 1.05rem;
           top: 50%;
@@ -598,8 +599,8 @@ export default function TrackClient() {
         .input-shell input {
           width: 100%;
           height: 100%;
-          min-height: 52px;
-          padding: 0.8rem 1rem 0.8rem 3.65rem;
+          min-height: 56px;
+          padding: 0.8rem 1rem 0.8rem 3rem;
           border: 0 !important;
           border-radius: inherit !important;
           outline: 0 !important;
@@ -634,18 +635,18 @@ export default function TrackClient() {
         }
 
         .track-button {
-          min-height: 48px;
-          min-width: 8.25rem;
+          min-height: 54px;
+          min-width: 9rem;
           display: inline-flex;
           align-items: center;
           justify-content: center;
           gap: 0.48rem;
           padding: 0 1.05rem;
           border: 1px solid rgba(191, 219, 254, 0.4);
-          border-radius: 999px;
+          border-radius: 15px;
           color: white;
           background: linear-gradient(135deg, var(--track-button-start, #1d4ed8), var(--track-accent) 52%, var(--track-accent-2));
-          box-shadow: 0 16px 34px rgba(37, 99, 235, 0.3);
+          box-shadow: 0 12px 28px rgba(37, 99, 235, 0.25), inset 0 1px 0 rgba(255,255,255,.24);
           font: inherit;
           font-size: 0.88rem;
           font-weight: 850;
@@ -687,14 +688,14 @@ export default function TrackClient() {
         }
 
         .empty-card {
-          min-height: 140px;
+          min-height: 188px;
           display: grid;
           place-items: center;
-          gap: 0.4rem;
-          padding: clamp(1rem, 2vw, 1.25rem);
+          gap: 0.55rem;
+          padding: clamp(1.5rem, 3vw, 2rem);
           text-align: center;
           border: 1px solid rgba(96, 165, 250, 0.34);
-          border-radius: 22px;
+          border-radius: 24px;
           background:
             radial-gradient(circle at 50% 18%, rgba(59, 130, 246, 0.11), transparent 42%),
             rgba(255, 255, 255, 0.4);
@@ -744,7 +745,7 @@ export default function TrackClient() {
           align-items: center;
           padding: 1rem;
           border: 1px solid rgba(248, 113, 113, 0.26);
-          border-radius: var(--track-radius);
+          border-radius: 24px;
           background:
             radial-gradient(circle at 0% 0%, rgba(248, 113, 113, 0.1), transparent 38%),
             var(--track-card-bg);
@@ -866,25 +867,20 @@ export default function TrackClient() {
           letter-spacing: 0;
         }
 
-        .results-dashboard .order-info-card,
-        .results-dashboard .timeline-card {
-          padding: clamp(0.45rem, 0.7vw, 0.65rem);
-        }
-
         .results-dashboard .card-heading {
-          gap: 0.35rem;
-          margin-bottom: 0.2rem;
+          gap: 0.75rem;
+          margin-bottom: 1.1rem;
         }
 
         .results-dashboard .card-heading h2 {
-          margin-top: 0;
+          margin-top: 0.15rem;
           margin-bottom: 0;
         }
 
         .results-dashboard .order-info-card .card-heading h2,
         .results-dashboard .timeline-card .card-heading h2 {
-          font-size: clamp(1rem, 0.96rem + 0.24vw, 1.2rem);
-          font-weight: 700;
+          font-size: clamp(1.12rem, 1rem + 0.35vw, 1.35rem);
+          font-weight: 800;
         }
 
         .results-dashboard .timeline-card .card-heading {
@@ -932,16 +928,16 @@ export default function TrackClient() {
 
         .info-grid {
           display: grid;
-          grid-template-columns: repeat(6, minmax(0, 1fr));
-          gap: 0.32rem;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 0.7rem;
         }
 
         .info-grid div {
           min-width: 0;
-          padding: 0.28rem 0.42rem;
+          padding: 0.8rem 0.9rem;
           border: 1px solid rgba(147, 197, 253, 0.22);
-          border-radius: 16px;
-          background: var(--track-inner-bg, rgba(255, 255, 255, 0.5));
+          border-radius: 15px;
+          background: linear-gradient(145deg, var(--track-inner-bg, rgba(255,255,255,.72)), rgba(219,234,254,.26));
         }
 
         .info-grid span,
@@ -954,7 +950,7 @@ export default function TrackClient() {
 
         .info-grid strong {
           display: block;
-          margin-top: 0.06rem;
+          margin-top: 0.34rem;
           overflow: hidden;
           color: var(--track-text);
           font-size: 0.92rem;
@@ -970,7 +966,7 @@ export default function TrackClient() {
 
         .info-grid .order-id-field {
           grid-column: span 2;
-          padding: 0.32rem 0.48rem;
+          padding: 0.8rem 0.9rem;
         }
 
         .info-grid .order-id-field strong {
@@ -1003,8 +999,8 @@ export default function TrackClient() {
           position: relative;
           display: grid;
           grid-template-columns: repeat(6, minmax(0, 1fr));
-          gap: 0.18rem;
-          padding: 0.05rem 0 0.2rem;
+          gap: 0.35rem;
+          padding: 0.35rem 0 0.55rem;
           min-width: 0;
           overflow: visible;
         }
@@ -1015,10 +1011,10 @@ export default function TrackClient() {
 
         .timeline-track {
           position: absolute;
-          top: 0.78rem;
+          top: 1rem;
           left: calc(100% / 12);
           right: calc(100% / 12);
-          height: 3px;
+          height: 4px;
           border-radius: 999px;
           background: var(--track-step-line, rgba(147, 197, 253, 0.34));
           overflow: hidden;
@@ -1046,7 +1042,8 @@ export default function TrackClient() {
           display: grid;
           justify-items: center;
           align-content: start;
-          gap: 0.06rem;
+          gap: 0.38rem;
+          padding-inline: 0.2rem;
           min-width: 0;
           overflow: visible;
           text-align: center;
@@ -1054,8 +1051,8 @@ export default function TrackClient() {
         }
 
         .step-dot {
-          width: 1.55rem;
-          height: 1.55rem;
+          width: 2rem;
+          height: 2rem;
           display: grid;
           place-items: center;
           border: 1px solid var(--track-step-border, rgba(147, 197, 253, 0.42));
@@ -1103,11 +1100,11 @@ export default function TrackClient() {
         }
 
         .timeline-step p {
-          max-width: 9rem;
+          max-width: 10rem;
           margin: 0;
           color: var(--track-muted);
-          font-size: 0.64rem;
-          line-height: 1.25;
+          font-size: 0.68rem;
+          line-height: 1.4;
           overflow-wrap: anywhere;
         }
 
@@ -1308,17 +1305,12 @@ export default function TrackClient() {
             gap: 0.32rem;
           }
 
-          .results-dashboard .order-info-card,
-          .results-dashboard .timeline-card {
-            padding: 0.48rem;
-          }
-
           .info-grid div {
-            padding: 0.3rem 0.4rem;
+            padding: 0.7rem 0.75rem;
           }
 
           .info-grid .order-id-field {
-            padding: 0.32rem 0.44rem;
+            padding: 0.7rem 0.75rem;
           }
 
           .timeline {
@@ -1330,8 +1322,8 @@ export default function TrackClient() {
             overflow-wrap: anywhere;
           }
 
-          .timeline-step strong { font-size: 0.73rem; }
-          .timeline-step p { font-size: 0.62rem; line-height: 1.22; }
+          .timeline-step strong { font-size: 0.76rem; }
+          .timeline-step p { font-size: 0.66rem; line-height: 1.35; }
 
         }
 
@@ -1403,48 +1395,48 @@ export default function TrackClient() {
           .timeline-card,
           .products-card,
           .pricing-card {
-            padding:.78rem;
+            padding:1rem;
           }
 
           .tracking-flow:not(.guest-view) .search-card {
-            gap:.5rem;
-            padding:.58rem .62rem;
-            border-radius:.9rem;
+            gap:.72rem;
+            padding:.9rem;
+            border-radius:1.15rem;
           }
-          .tracking-flow:not(.guest-view) .field-group { gap:.22rem; }
-          .tracking-flow:not(.guest-view) .field-group > span { font-size:.6rem;letter-spacing:.065em; }
+          .tracking-flow:not(.guest-view) .field-group { gap:.38rem; }
+          .tracking-flow:not(.guest-view) .field-group > span { font-size:.67rem;letter-spacing:.07em; }
           .tracking-flow:not(.guest-view) .input-shell,
-          .tracking-flow:not(.guest-view) .input-shell input { min-height:42px; }
-          .tracking-flow:not(.guest-view) .input-shell { border-radius:.72rem; }
-          .tracking-flow:not(.guest-view) .input-shell :global(svg) { left:.82rem;width:.9rem;height:.9rem; }
-          .tracking-flow:not(.guest-view) .input-shell input { padding:.48rem .7rem .48rem 2.35rem;font-size:.78rem; }
-          .tracking-flow:not(.guest-view) .track-button { min-height:42px;padding-inline:.75rem;font-size:.75rem;box-shadow:0 8px 20px rgba(37,99,235,.24); }
+          .tracking-flow:not(.guest-view) .input-shell input { min-height:48px; }
+          .tracking-flow:not(.guest-view) .input-shell { border-radius:.85rem; }
+          .tracking-flow:not(.guest-view) .input-shell :global(svg) { left:1rem;width:.95rem;height:.95rem; }
+          .tracking-flow:not(.guest-view) .input-shell input { padding:.62rem .8rem .62rem 2.8rem;font-size:.88rem; }
+          .tracking-flow:not(.guest-view) .track-button { min-height:48px;padding-inline:1rem;font-size:.84rem;box-shadow:0 8px 20px rgba(37,99,235,.24); }
 
           .info-grid {
             grid-template-columns: minmax(0, 1fr);
             gap:.48rem;
           }
 
-          .results-dashboard { min-width:0;gap:.72rem; }
-          .results-dashboard .order-info-card,.results-dashboard .timeline-card { min-width:0;padding:.38rem;border-radius:1rem; }
-          .results-dashboard .card-heading { gap:.3rem;margin-bottom:.22rem; }
-          .results-dashboard .card-heading h2 { margin-top:.06rem;font-size:16px !important;line-height:1.1 !important;font-weight:750;letter-spacing:-.01em; }
+          .results-dashboard { min-width:0;gap:.9rem; }
+          .results-dashboard .order-info-card,.results-dashboard .timeline-card { min-width:0;padding:1rem;border-radius:1.15rem; }
+          .results-dashboard .card-heading { gap:.65rem;margin-bottom:.9rem; }
+          .results-dashboard .card-heading h2 { margin-top:.08rem;font-size:18px !important;line-height:1.2 !important;font-weight:800;letter-spacing:-.01em; }
           .results-dashboard .order-info-card .card-heading h2,
-          .results-dashboard .timeline-card .card-heading h2 { font-size:15px !important; }
-          .eyebrow { font-size:.56rem;letter-spacing:.08em; }
-          .status-pill,.progress-percent { min-height:1.5rem;padding:.14rem .42rem;font-size:.66rem; }
-          .info-grid div { min-width:0;padding:.28rem .4rem;border-radius:.72rem; }
-          .info-grid span { font-size:.58rem; }
-          .info-grid strong,.tracked-order-id { min-width:0;max-width:100%;font-size:.78rem;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
-          .info-grid .order-id-field { grid-column:1;padding:.3rem .44rem; }
-          .tracked-order-id { font-size:.82rem;font-weight:700; }
+          .results-dashboard .timeline-card .card-heading h2 { font-size:17px !important; }
+          .eyebrow { font-size:.62rem;letter-spacing:.09em; }
+          .status-pill,.progress-percent { min-height:1.7rem;padding:.2rem .58rem;font-size:.7rem; }
+          .info-grid div { min-width:0;padding:.68rem .75rem;border-radius:.85rem; }
+          .info-grid span { font-size:.64rem; }
+          .info-grid strong,.tracked-order-id { min-width:0;max-width:100%;font-size:.86rem;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+          .info-grid .order-id-field { grid-column:1;padding:.68rem .75rem; }
+          .tracked-order-id { font-size:.9rem;font-weight:800; }
 
-          .timeline { gap:.24rem !important;padding:0 0 .12rem !important; }
-          .timeline-step { min-height:2.15rem;column-gap:.48rem; }
-          .step-dot { width:1.55rem;height:1.55rem; }
-          .timeline-track { left:.82rem; }
-          .timeline-step strong { font-size:.76rem; }
-          .timeline-step p { margin-top:.05rem;font-size:.63rem;line-height:1.28; }
+          .timeline { gap:.5rem !important;padding:0 0 .2rem !important; }
+          .timeline-step { min-height:2.7rem;column-gap:.7rem; }
+          .step-dot { width:1.8rem;height:1.8rem; }
+          .timeline-track { left:.92rem; }
+          .timeline-step strong { font-size:.82rem; }
+          .timeline-step p { margin-top:.12rem;font-size:.7rem;line-height:1.35; }
 
           .timeline,
           .timeline.timeline-cancelled {
@@ -1454,9 +1446,9 @@ export default function TrackClient() {
           }
 
           .timeline-track {
-            top: 0.78rem;
-            bottom: 0.78rem;
-            left: 0.97rem;
+            top: 0.9rem;
+            bottom: 0.9rem;
+            left: 1.04rem;
             right: auto;
             width: 3px;
             height: auto;
@@ -1468,16 +1460,16 @@ export default function TrackClient() {
           }
 
           .timeline-step {
-            min-height: 2.15rem;
+            min-height: 2.7rem;
             grid-template-columns: auto minmax(0, 1fr);
             justify-items: start;
-            column-gap: 0.48rem;
+            column-gap: 0.7rem;
             text-align: left;
           }
 
           .timeline-step strong {
             align-self: end;
-            font-size: 0.86rem;
+            font-size: 0.88rem;
           }
 
           .timeline-step p {
@@ -1517,7 +1509,7 @@ export default function TrackClient() {
 
         @media (max-width: 520px) {
           .track-shell {
-            width: min(100% - 0.85rem, 1360px);
+            width: min(100% - 1.2rem, 1180px);
           }
 
           .input-shell,
@@ -1558,14 +1550,20 @@ export default function TrackClient() {
         }
 
         @media (max-width:360px) {
-          .track-shell { width:calc(100% - .5rem); }
-          .results-dashboard .order-info-card,.results-dashboard .timeline-card { padding:.34rem; }
+          .track-shell { width:calc(100% - .75rem); }
+          .results-dashboard .order-info-card,.results-dashboard .timeline-card { padding:.85rem; }
           .info-grid { gap:.38rem; }
-          .info-grid div { padding:.26rem .36rem; }
-          .results-dashboard .card-heading h2 { font-size:15px !important; }
+          .info-grid div { padding:.62rem .68rem; }
+          .results-dashboard .card-heading h2 { font-size:16px !important; }
           .results-dashboard .order-info-card .card-heading h2,
-          .results-dashboard .timeline-card .card-heading h2 { font-size:14px !important; }
+          .results-dashboard .timeline-card .card-heading h2 { font-size:15px !important; }
           .tracked-order-id { font-size:.75rem; }
+        }
+
+        @media (min-width: 1041px) {
+          .tracking-flow.has-result,
+          .tracking-flow.is-searching { gap: 1.35rem; }
+          .results-dashboard { gap: 1.25rem; }
         }
 
         @media (max-width: 760px) and (max-height: 700px) {
@@ -1630,6 +1628,10 @@ export default function TrackClient() {
         :global([data-theme="dark"]) .empty-orbit span,
         :global([data-theme="dark"]) .step-dot {
           background: var(--track-step-bg);
+        }
+
+        :global([data-theme="dark"]) .info-grid div {
+          background: linear-gradient(145deg, rgba(30, 41, 59, 0.82), rgba(15, 23, 42, 0.7));
         }
       `}</style>
     </section>
